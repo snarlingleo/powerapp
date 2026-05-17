@@ -52,6 +52,7 @@ const STATIC_ASSETS = [
   './assets/icons/icon-512.png',
 
   // Sons
+  './js/sounds.js', 
   './assets/sounds/pr.mp3',
   './assets/sounds/rest.mp3',
   './assets/sounds/beep.mp3'
