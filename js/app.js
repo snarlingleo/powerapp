@@ -1697,10 +1697,6 @@ async function init() {
     naviguer('home');
     _updateHeaderXP();
 
-    else {
-      console.warn('[App] #btn-menu introuvable dans index.html');
-    }
-
     console.log('✅ PowerApp v3.0 — Prêt !');
 
   } catch(e) {
