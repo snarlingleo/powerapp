@@ -48,49 +48,8 @@
       </div>
       <div class="header-right">
         <div class="header-xp" id="header-xp"></div>
-
-        <!-- ✅ FIX — id="btn-menu" + SANS onclick inline -->
-        <button class="header-icon-btn"
-                id="btn-menu"
-                aria-label="Menu">
-          <svg width="16" height="4" viewBox="0 0 16 4"
-               fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="2"  cy="2" r="2" fill="currentColor"/>
-            <circle cx="8"  cy="2" r="2" fill="currentColor"/>
-            <circle cx="14" cy="2" r="2" fill="currentColor"/>
-          </svg>
-        </button>
       </div>
     </header>
-
-    <!-- MENU DROPDOWN -->
-    <div id="app-menu" class="app-menu hidden">
-      <div class="app-menu-inner">
-        <!-- ✅ FIX — onclick sur les items : pas de capture:true
-             donc ils reçoivent bien les clics -->
-        <div class="menu-item"
-             onclick="naviguer('settings')">
-          ⚙️ Paramètres
-        </div>
-        <div class="menu-item"
-             onclick="naviguer('offline')">
-          📵 Mode hors-ligne
-        </div>
-        <div class="menu-item"
-             onclick="naviguer('social')">
-          📱 Partage réseaux
-        </div>
-        <div class="menu-item"
-             onclick="Utils.exporterJSON();UI.fermerMenu()">
-          📤 Exporter données
-        </div>
-        <div class="menu-separator"></div>
-        <div class="menu-item menu-danger"
-             onclick="UI.fermerMenu();UI.confirmerReset()">
-          🗑️ Réinitialiser
-        </div>
-      </div>
-    </div>
 
     <!-- PAGES -->
     <main class="app-main">
