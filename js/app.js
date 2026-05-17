@@ -1714,17 +1714,6 @@ async function init() {
 
     naviguer('home');
     _updateHeaderXP(); 
-     
-    // ✅ FIX — Fermer le menu au clic en dehors
-    document.addEventListener('click', (e) => {
-      const menu    = document.getElementById('app-menu');
-      const btnMenu = document.querySelector('.header-icon-btn');
-      if (!menu || menu.classList.contains('hidden')) return;
-      if (!menu.contains(e.target)
-          && !btnMenu?.contains(e.target)) {
-        UI.fermerMenu();
-      }
-    }, true);
 
     // ✅ FIX — Fermer le menu à la navigation
     window.addEventListener('naviguer', () => UI.fermerMenu());
