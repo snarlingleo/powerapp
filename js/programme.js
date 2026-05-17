@@ -879,6 +879,425 @@ const Programme = {
 };
 
 // ════════════════════════════════════════════════════════════
+// ✅ NOUVEAU — PROGRAMME AUTO-ADAPTATIF
+// ════════════════════════════════════════════════════════════
+const ProgrammeAdaptatif = {
+
+  CLE: 'ft_adaptatif_config',
+
+  getConfig() {
+    return Utils.storage.get(this.CLE, {
+      actif:            true,
+      augmentationAuto: true,
+      seuilPR:          3,      // Nombre de PRs pour augmenter
+      pourcentageHausse: 2.5,   // kg d'augmentation
+      detectionStagnation: true,
+      semStagnation:    3,      // Semaines avant d'alerter
+      variationsAuto:   true,
+      surmenageProtection: true
+    });
+  },
+
+  /**
+   * Analyse les performances et retourne des recommandations
+   */
+  analyser() {
+    const prs      = {};
+    const analyses = {};
+    try { Object.assign(prs, Tracker.getAllPRs()); } catch(e) {}
+
+    Object.keys(window.EXERCICES||{}).forEach(ref => {
+      try {
+        const hist = Tracker.getHistoriqueExercice(ref, 60);
+        if (hist.length < 3) return;
+
+        const recents  = hist.slice(0, 6);
+        const anciens  = hist.slice(6, 12);
+
+        const moyRec  = recents.reduce((a,h) => a + (h.rm1||0), 0)
+          / recents.length;
+        const moyAnc  = anciens.length
+          ? anciens.reduce((a,h) => a + (h.rm1||0), 0) / anciens.length
+          : moyRec;
+
+        const delta    = moyRec - moyAnc;
+        const tendance = delta > 2
+          ? 'progression'
+          : delta < -2
+            ? 'regression'
+            : 'stagnation';
+
+        analyses[ref] = {
+          ref,
+          nom:      window.EXERCICES[ref]?.nom || ref,
+          emoji:    window.EXERCICES[ref]?.emoji || '💪',
+          tendance,
+          delta:    Math.round(delta * 10) / 10,
+          rm1:      prs[ref]?.rm1 || 0,
+          rm1Moy:   Math.round(moyRec)
+        };
+      } catch(e) {}
+    });
+
+    return analyses;
+  },
+
+  /**
+   * Suggère des ajustements de charges basés sur l'analyse
+   */
+  getRecommandationsCharges() {
+    const config   = this.getConfig();
+    const analyses = this.analyser();
+    const sugges   = [];
+
+    Object.values(analyses).forEach(a => {
+      if (!a.rm1) return;
+
+      if (a.tendance === 'progression' && config.augmentationAuto) {
+        sugges.push({
+          ref:     a.ref,
+          nom:     a.nom,
+          emoji:   a.emoji,
+          type:    'hausse',
+          message: `+${config.pourcentageHausse}kg recommandé`,
+          delta:   config.pourcentageHausse,
+          color:   'var(--fd-mint)'
+        });
+      } else if (a.tendance === 'stagnation'
+                 && config.detectionStagnation) {
+        sugges.push({
+          ref:     a.ref,
+          nom:     a.nom,
+          emoji:   a.emoji,
+          type:    'variation',
+          message: 'Essaie une variation pour relancer la progression',
+          delta:   0,
+          color:   'var(--fd-lemon)'
+        });
+      } else if (a.tendance === 'regression') {
+        sugges.push({
+          ref:     a.ref,
+          nom:     a.nom,
+          emoji:   a.emoji,
+          type:    'baisse',
+          message: '-5kg recommandé (signe de fatigue)',
+          delta:   -5,
+          color:   'var(--fd-coral)'
+        });
+      }
+    });
+
+    return sugges;
+  },
+
+  /**
+   * Détecte si l'utilisateur est en surmenage
+   */
+  detecterSurmenage() {
+    try {
+      const seances = Tracker.getHistoriqueSeances(14);
+      const rpes    = seances
+        .filter(s => s.rpeMoyen)
+        .map(s => s.rpeMoyen);
+
+      if (rpes.length < 3) return false;
+
+      const moyRPE  = rpes.reduce((a,b) => a+b, 0) / rpes.length;
+      const seances7 = seances.filter(s => {
+        const debut = Utils.ajouterJours(Utils.aujourd_hui(), -7);
+        return s.date >= debut;
+      }).length;
+
+      return moyRPE > 8.5 || seances7 >= 6;
+    } catch(e) { return false; }
+  },
+
+  /**
+   * Retourne les exercices de variation pour un exercice
+   * qui stagne
+   */
+  getVariations(ref) {
+    const variations = {
+      bench_press:    ['incline_halteres','chest_press_machine','pompes'],
+      squat:          ['presse_cuisses','fentes','hip_thrust'],
+      tractions:      ['lat_pulldown','rowing_barre','pullover'],
+      dev_militaire:  ['shoulder_press_machine','elev_laterales','oiseau'],
+      curl_halteres:  ['curl_barre','curl_marteau','curl_machine'],
+      rowing_barre:   ['rowing_machine','lat_pulldown','tractions'],
+      ext_triceps_poulie: ['barre_front','dips_triceps'],
+      soulevé_terre:  ['squat','hip_thrust','romanian_deadlift']
+    };
+    return (variations[ref] || []).map(r => ({
+      ref:   r,
+      nom:   window.EXERCICES?.[r]?.nom   || r,
+      emoji: window.EXERCICES?.[r]?.emoji || '💪'
+    }));
+  },
+
+  /**
+   * Render de l'interface adaptative
+   */
+  render(container) {
+    if (!container) return;
+
+    const config    = this.getConfig();
+    const analyses  = this.analyser();
+    const sugges    = this.getRecommandationsCharges();
+    const surmenage = this.detecterSurmenage();
+
+    const progressions = Object.values(analyses)
+      .filter(a => a.tendance === 'progression');
+    const stagnations  = Object.values(analyses)
+      .filter(a => a.tendance === 'stagnation');
+    const regressions  = Object.values(analyses)
+      .filter(a => a.tendance === 'regression');
+
+    container.innerHTML = `
+
+      <!-- ═══ ALERTE SURMENAGE ═══ -->
+      ${surmenage ? `
+        <div class="card mb-md"
+             style="border-color:var(--fd-coral);
+                    background:rgba(255,141,150,0.08)">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:2rem">⚠️</div>
+            <div>
+              <div style="font-weight:700;color:var(--fd-coral)">
+                Surmenage détecté !
+              </div>
+              <div style="font-size:.78rem;color:var(--text-muted)">
+                Ton RPE moyen est élevé ou tu t'entraînes trop souvent.
+                Prends 1-2 jours de repos.
+              </div>
+            </div>
+          </div>
+        </div>` : ''}
+
+      <!-- ═══ RÉSUMÉ ═══ -->
+      <div class="card mb-md"
+           style="background:linear-gradient(135deg,
+                  rgba(75,75,249,0.15),
+                  rgba(139,240,187,0.05))">
+        <div class="card-label mb-md">🧠 Analyse de ta progression</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value" style="color:var(--fd-mint)">
+              ${progressions.length}
+            </span>
+            <span class="stat-label">En hausse</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" style="color:var(--fd-lemon)">
+              ${stagnations.length}
+            </span>
+            <span class="stat-label">Stagnation</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" style="color:var(--fd-coral)">
+              ${regressions.length}
+            </span>
+            <span class="stat-label">En baisse</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" style="color:var(--fd-indigo)">
+              ${sugges.length}
+            </span>
+            <span class="stat-label">Suggestions</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SUGGESTIONS ═══ -->
+      ${sugges.length > 0 ? `
+        <div class="section-title">💡 Recommandations</div>
+        ${sugges.map(s => `
+          <div class="card mb-md"
+               style="border-left:4px solid ${s.color}">
+            <div class="flex justify-between items-center">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="font-size:1.5rem">${s.emoji}</span>
+                <div>
+                  <div style="font-weight:700;font-size:.9rem">
+                    ${s.nom}
+                  </div>
+                  <div style="font-size:.72rem;color:${s.color};
+                              font-weight:600">
+                    ${s.message}
+                  </div>
+                </div>
+              </div>
+              ${s.type === 'variation' ? `
+                <button onclick="ProgrammeAdaptatif
+                          ._voirVariations('${s.ref}')"
+                        style="padding:4px 10px;
+                               background:${s.color}22;
+                               border:1px solid ${s.color}44;
+                               border-radius:var(--radius-full);
+                               color:${s.color};
+                               font-size:.68rem;font-weight:600;
+                               cursor:pointer">
+                  Voir →
+                </button>` : ''}
+            </div>
+          </div>`).join('')}` : `
+        <div class="card mb-md"
+             style="text-align:center;padding:var(--space-xl)">
+          <div style="font-size:2rem;margin-bottom:8px">📊</div>
+          <div style="color:var(--text-muted);font-size:.85rem">
+            Pas encore assez de données.<br>
+            Fais quelques séances pour voir l'analyse !
+          </div>
+        </div>`}
+
+      <!-- ═══ EXERCICES EN PROGRESSION ═══ -->
+      ${progressions.length > 0 ? `
+        <div class="section-title">
+          📈 En progression (${progressions.length})
+        </div>
+        ${progressions.map(a => `
+          <div class="card mb-md"
+               style="border-color:rgba(139,240,187,0.3)">
+            <div class="flex justify-between items-center">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span>${a.emoji}</span>
+                <div style="font-size:.85rem;font-weight:600">
+                  ${a.nom}
+                </div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:.82rem;font-weight:700;
+                            color:var(--fd-mint)">
+                  +${a.delta}kg
+                </div>
+                <div style="font-size:.65rem;color:var(--text-muted)">
+                  sur les dernières séances
+                </div>
+              </div>
+            </div>
+          </div>`).join('')}` : ''}
+
+      <!-- ═══ STAGNATIONS ═══ -->
+      ${stagnations.length > 0 ? `
+        <div class="section-title">
+          ⏸ Stagnation (${stagnations.length})
+        </div>
+        ${stagnations.map(a => `
+          <div class="card mb-md"
+               style="border-color:rgba(249,239,119,0.3)">
+            <div class="flex justify-between items-center">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span>${a.emoji}</span>
+                <div style="font-size:.85rem;font-weight:600">
+                  ${a.nom}
+                </div>
+              </div>
+              <button onclick="ProgrammeAdaptatif
+                        ._voirVariations('${a.ref}')"
+                      style="padding:4px 10px;
+                             background:rgba(249,239,119,0.1);
+                             border:1px solid rgba(249,239,119,0.3);
+                             border-radius:var(--radius-full);
+                             color:var(--fd-lemon);
+                             font-size:.68rem;font-weight:600;
+                             cursor:pointer">
+                Variations →
+              </button>
+            </div>
+          </div>`).join('')}` : ''}
+
+      <!-- ═══ CONFIG ═══ -->
+      <div class="card mt-md">
+        <div class="card-label mb-md">⚙️ Paramètres adaptatifs</div>
+        ${[
+          { cle:'augmentationAuto',    label:'Augmentation auto des charges' },
+          { cle:'detectionStagnation', label:'Détection stagnation'          },
+          { cle:'variationsAuto',      label:'Suggestions de variations'     },
+          { cle:'surmenageProtection', label:'Protection surmenage'          }
+        ].map(p => `
+          <div class="score-row">
+            <span class="score-row-label"
+                  style="font-size:.82rem">${p.label}</span>
+            <label style="position:relative;display:inline-block;
+                          width:44px;height:24px">
+              <input type="checkbox"
+                     ${config[p.cle] ? 'checked':''}
+                     onchange="ProgrammeAdaptatif
+                       ._toggleConfig('${p.cle}', this.checked)"
+                     style="opacity:0;width:0;height:0" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>`).join('')}
+      </div>
+
+      <div id="variations-panel"></div>
+    `;
+  },
+
+  _voirVariations(ref) {
+    const panel    = document.getElementById('variations-panel');
+    if (!panel) return;
+
+    const variations = this.getVariations(ref);
+    const exo        = window.EXERCICES?.[ref];
+
+    if (!variations.length) {
+      Utils.toast('Pas de variation disponible', 'info');
+      return;
+    }
+
+    panel.innerHTML = `
+      <div class="card mt-md"
+           style="border-color:var(--fd-lemon)">
+        <div class="card-label mb-md">
+          🔄 Variations pour ${exo?.nom||ref}
+        </div>
+        ${variations.map(v => `
+          <div style="display:flex;align-items:center;gap:12px;
+                      padding:var(--space-sm) 0;
+                      border-bottom:1px solid var(--border-color)">
+            <span style="font-size:1.3rem">${v.emoji}</span>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:.88rem">
+                ${v.nom}
+              </div>
+            </div>
+            <button onclick="naviguer('live')"
+                    style="padding:4px 10px;
+                           background:var(--fd-indigo);
+                           color:white;border:none;
+                           border-radius:var(--radius-full);
+                           font-size:.68rem;font-weight:600;
+                           cursor:pointer">
+              Essayer
+            </button>
+          </div>`).join('')}
+        <button onclick="document.getElementById(
+                  'variations-panel').innerHTML=''"
+                class="btn-secondary mt-md"
+                style="width:100%;font-size:.78rem">
+          Fermer
+        </button>
+      </div>
+    `;
+
+    panel.scrollIntoView({ behavior:'smooth' });
+  },
+
+  _toggleConfig(cle, val) {
+    this.getConfig();
+    const config = Utils.storage.get(this.CLE, {});
+    config[cle]  = val;
+    Utils.storage.set(this.CLE, config);
+    Utils.toast(
+      `${val ? '✅' : '❌'} ${cle} ${val ? 'activé' : 'désactivé'}`,
+      'success', 1500
+    );
+  }
+};
+
+window.ProgrammeAdaptatif = ProgrammeAdaptatif;
+
+// ════════════════════════════════════════════════════════════
 // EXPOSITION GLOBALE
 // ════════════════════════════════════════════════════════════
 window.EXERCICES               = EXERCICES;
