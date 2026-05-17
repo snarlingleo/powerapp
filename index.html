@@ -12,7 +12,8 @@
   <meta name="description"
         content="PowerApp — Ton coach fitness personnel" />
   <meta name="theme-color" content="#09092d" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style"
         content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="PowerApp" />
@@ -318,7 +319,7 @@
   <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('./sw.js')
       .then(reg => {
         reg.addEventListener('updatefound', () => {
           const newSW = reg.installing;
