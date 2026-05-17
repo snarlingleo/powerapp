@@ -308,31 +308,33 @@
 
   <!-- Service Worker -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => {
-            // ✅ FIX — Détecter les mises à jour SW
-            reg.addEventListener('updatefound', () => {
-              const newSW = reg.installing;
-              newSW.addEventListener('statechange', () => {
-                if (newSW.state === 'installed'
-                    && navigator.serviceWorker.controller) {
-                  const banner = document.getElementById('update-banner');
-                  if (banner) banner.style.display = 'flex';
-                }
-              });
-            });
-          })
-          .catch(err => console.warn('[SW]', err));
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW.addEventListener('statechange', () => {
+            // ✅ FIX — Ne montrer la bannière QUE si
+            // un SW précédent contrôle déjà la page
+            if (newSW.state === 'installed'
+                && navigator.serviceWorker.controller) {
+              const banner = document.getElementById('update-banner');
+              if (banner) banner.style.display = 'flex';
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('[SW]', err));
 
-        // Recharger si le SW change
-        navigator.serviceWorker.addEventListener(
-          'controllerchange', () => window.location.reload()
-        );
-      });
-    }
-  </script>
+    // Recharger si le SW change
+    navigator.serviceWorker.addEventListener(
+      'controllerchange',
+      () => window.location.reload()
+    );
+  });
+}
+</script>
 
 </body>
 </html>
