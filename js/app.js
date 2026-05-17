@@ -682,7 +682,7 @@ function _rendreLive(container, options = {}) {
                   margin-top:var(--space-sm)">
           Aucune séance planifiée aujourd'hui.
         </p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;
+        <div style="display:flex;flex-wrap:wrap;
                     gap:var(--space-sm);margin-top:var(--space-lg)">
           <button onclick="naviguer('training')"
                   class="btn-secondary">
@@ -690,6 +690,7 @@ function _rendreLive(container, options = {}) {
           </button>
           <button onclick="naviguer('live',{ seanceId:'full_body' })"
                   class="btn-primary">
+                  style="flex:1;min-width:140px">
             ⚡ Séance express
           </button>
         </div>
