@@ -725,6 +725,17 @@ function _renderLiveHeader(seance) {
   let charge = null;
   try { charge = Predict.analyserFatigue(); } catch(e) {}
 
+  // ✅ Démarrer le chrono automatiquement
+  setTimeout(() => {
+    const chronoContainer =
+      document.getElementById('chrono-container');
+    if (chronoContainer && !Chrono._actif) {
+      Chrono.reset();
+      Chrono.renderWidget(chronoContainer);
+      Chrono.demarrer();
+    }
+  }, 100);
+
   return `
     <div class="card mb-md"
          style="background:linear-gradient(135deg,
@@ -742,16 +753,21 @@ function _renderLiveHeader(seance) {
             · ${seance.exercices?.length||0} exos
           </div>
         </div>
-        ${charge ? `
-          <div style="text-align:center">
-            <div style="font-size:1.2rem;font-weight:700;
-                        color:${charge.recommandation?.couleur||'white'}">
-              ${charge.score}/100
-            </div>
-            <div style="font-size:.6rem;color:var(--text-muted)">
-              ${charge.recommandation?.emoji||'💪'} Forme
-            </div>
-          </div>` : ''}
+        <div style="display:flex;flex-direction:column;
+                    align-items:flex-end;gap:6px">
+          ${charge ? `
+            <div style="text-align:center">
+              <div style="font-size:1rem;font-weight:700;
+                          color:${charge.recommandation?.couleur||'white'}">
+                ${charge.score}/100
+              </div>
+              <div style="font-size:.6rem;color:var(--text-muted)">
+                ${charge.recommandation?.emoji||'💪'} Forme
+              </div>
+            </div>` : ''}
+          <!-- ✅ Chronomètre -->
+          <div id="chrono-container"></div>
+        </div>
       </div>
     </div>`;
 }
@@ -806,45 +822,11 @@ function _renderExercicesLive(seance, seanceId) {
           </span>` : ''}
       </div>
 
-      ${supersets.length > 0 ? `
-        <div style="margin-bottom:var(--space-md)">
-          <div style="font-size:.72rem;font-weight:700;
-                      color:var(--fd-lavender);
-                      margin-bottom:var(--space-sm)">
-            ⚡ Supersets disponibles
-          </div>
-          ${supersets.map(ss => `
-            <div style="display:flex;justify-content:space-between;
-                        align-items:center;padding:var(--space-sm);
-                        background:rgba(191,161,255,0.08);
-                        border-radius:var(--radius-sm);
-                        margin-bottom:4px">
-              <div>
-                <span style="font-size:.82rem;font-weight:600;
-                             color:var(--fd-lavender)">
-                  ${ss.emoji||'⚡'} ${ss.nom}
-                </span>
-                <div style="font-size:.65rem;color:var(--text-muted)">
-                  ${ss.exercices?.length||0} exercices
-                </div>
-              </div>
-              <button onclick="Superset.lancerUI(
-                        '${ss.id}','${seanceId}')"
-                      style="padding:4px 10px;
-                             background:var(--fd-lavender);
-                             color:#09092d;border:none;
-                             border-radius:var(--radius-full);
-                             font-size:.72rem;font-weight:700;
-                             cursor:pointer">
-                ▶ Lancer
-              </button>
-            </div>`).join('')}
-        </div>` : ''}
-
       ${exos.map((ex, idx) => {
         const exo        = ex.details || {};
         const pr         = _getPRExo(ex.ref);
         const chargeReco = _getChargeReco(ex.ref);
+        const youtubeId  = exo.youtube || null;
 
         return `
           <div class="live-exo-card"
@@ -855,8 +837,9 @@ function _renderExercicesLive(seance, seanceId) {
                       margin-bottom:var(--space-sm);
                       border:1px solid var(--border-color)">
 
+            <!-- Header exercice -->
             <div class="flex justify-between items-center mb-sm">
-              <div>
+              <div style="flex:1">
                 <div style="font-weight:700;font-size:.95rem">
                   ${exo.emoji||'💪'} ${exo.nom||ex.ref}
                 </div>
@@ -864,7 +847,7 @@ function _renderExercicesLive(seance, seanceId) {
                   ${exo.muscle||''}
                 </div>
               </div>
-              <div style="text-align:right">
+              <div style="text-align:right;flex-shrink:0">
                 ${pr ? `
                   <div style="font-size:.72rem;color:var(--fd-lemon);
                               font-weight:600">
@@ -878,6 +861,38 @@ function _renderExercicesLive(seance, seanceId) {
               </div>
             </div>
 
+            <!-- ✅ Boutons actions -->
+            <div style="display:flex;gap:6px;
+                        margin-bottom:var(--space-sm);
+                        flex-wrap:wrap">
+              ${youtubeId ? `
+                <button onclick="VideoDemo.ouvrir(
+                          '${youtubeId}',
+                          '${(exo.nom||ex.ref).replace(/'/g,"\\'")}',
+                          '${exo.muscle||''}')"
+                        style="display:flex;align-items:center;
+                               gap:4px;padding:5px 10px;
+                               background:rgba(255,0,0,0.12);
+                               border:1px solid rgba(255,0,0,0.25);
+                               border-radius:var(--radius-full);
+                               font-size:.68rem;font-weight:600;
+                               color:#ff4444;cursor:pointer">
+                  ▶ Voir démo
+                </button>` : ''}
+              <button onclick="Calculateur.renderCalculateur(
+                        '${ex.ref}', ${idx})"
+                      style="display:flex;align-items:center;
+                             gap:4px;padding:5px 10px;
+                             background:rgba(75,75,249,0.12);
+                             border:1px solid rgba(75,75,249,0.25);
+                             border-radius:var(--radius-full);
+                             font-size:.68rem;font-weight:600;
+                             color:var(--fd-indigo);cursor:pointer">
+                🧮 Calculateur
+              </button>
+            </div>
+
+            <!-- Séries -->
             ${Array.from({length:ex.series}, (_,s) => `
               <div class="serie-row"
                    id="serie-${idx}-${s}"
