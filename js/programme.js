@@ -11,250 +11,333 @@ const EXERCICES = {
   bench_press: {
     nom:'Développé couché', muscle:'Pectoraux',
     muscles_sec:['Triceps','Épaules'],
-    equipement:'Barre olympique + Banc plat', emoji:'💪', difficulte:2,
+    equipement:'Barre olympique + Banc plat',
+    emoji:'💪', difficulte:2,
+    youtube:'rT7DgCr-3pg',
     description:'Allongé sur le banc, prise légèrement plus large que les épaules.',
     conseils:['Omoplates serrées et déprimées','Pieds bien à plat au sol','Ne pas rebondir sur la poitrine','Coudes à 75° du corps']
   },
   incline_halteres: {
     nom:'Développé incliné haltères', muscle:'Pectoraux Hauts',
     muscles_sec:['Épaules','Triceps'],
-    equipement:'Haltères + Banc incliné 30-45°', emoji:'💪', difficulte:2,
+    equipement:'Haltères + Banc incliné 30-45°',
+    emoji:'💪', difficulte:2,
+    youtube:'DbFgADa2PL8',
     description:'Banc incliné à 30-45°, haltères en pronation.',
     conseils:['Angle 30-45° maximum','Amplitude complète','Contrôle total en descente','Ne pas trop monter l\'inclinaison']
   },
   chest_press_machine: {
     nom:'Chest Press Machine', muscle:'Pectoraux',
     muscles_sec:['Triceps'],
-    equipement:'Machine Chest Press', emoji:'🤖', difficulte:1,
+    equipement:'Machine Chest Press',
+    emoji:'🤖', difficulte:1,
+    youtube:'taI4XduLpTk',
     description:'Machine guidée.',
     conseils:['Régler le siège correctement','Ne pas verrouiller les coudes','Pression constante']
   },
   ecarte_poulie: {
     nom:'Écarté poulie haute', muscle:'Pectoraux',
-    muscles_sec:[], equipement:'Câble crossover', emoji:'🔄', difficulte:2,
+    muscles_sec:[],
+    equipement:'Câble crossover',
+    emoji:'🔄', difficulte:2,
+    youtube:'eozdVDA78K0',
     description:'Câbles en position haute.',
     conseils:['Légère flexion du coude','Squeeze fort en fin','Contrôle en ouverture']
   },
   dips: {
     nom:'Dips', muscle:'Pectoraux / Triceps',
     muscles_sec:['Épaules'],
-    equipement:'Barres parallèles', emoji:'⬇️', difficulte:3,
+    equipement:'Barres parallèles',
+    emoji:'⬇️', difficulte:3,
+    youtube:'yN6Q1UI_xkE',
     description:'Se pencher légèrement en avant pour cibler les pectoraux.',
     conseils:['Pencher = pectoraux, droit = triceps','Contrôle total en descente','Pas d\'à-coup dans le bas']
   },
   pompes: {
     nom:'Pompes', muscle:'Pectoraux',
     muscles_sec:['Triceps','Épaules','Core'],
-    equipement:'Poids du corps', emoji:'⬆️', difficulte:1,
+    equipement:'Poids du corps',
+    emoji:'⬆️', difficulte:1,
+    youtube:'IODxDxX7oi4',
     description:'Mains légèrement plus larges que les épaules.',
     conseils:['Corps rigide','Coudes à 45°','Amplitude complète']
   },
   tractions: {
     nom:'Tractions', muscle:'Grand Dorsal',
     muscles_sec:['Biceps','Rhomboïdes'],
-    equipement:'Barre de traction', emoji:'🔗', difficulte:3,
+    equipement:'Barre de traction',
+    emoji:'🔗', difficulte:3,
+    youtube:'eGo4IYlbE5g',
     description:'Prise pronation légèrement plus large que les épaules.',
     conseils:['Scapulas déprimées avant de tirer','Pas d\'à-coup','Descente complète']
   },
   rowing_barre: {
     nom:'Rowing barre', muscle:'Dos Moyen',
     muscles_sec:['Biceps','Trapèzes'],
-    equipement:'Barre olympique', emoji:'🔗', difficulte:3,
+    equipement:'Barre olympique',
+    emoji:'🔗', difficulte:3,
+    youtube:'6FZHhZMqDgg',
     description:'Dos parallèle au sol, prise pronation.',
     conseils:['Dos plat OBLIGATOIRE','Tirage vers le nombril','Coudes proches du corps']
   },
   lat_pulldown: {
     nom:'Tirage poulie haute', muscle:'Grand Dorsal',
     muscles_sec:['Biceps'],
-    equipement:'Lat Pulldown', emoji:'⬇️', difficulte:1,
+    equipement:'Lat Pulldown',
+    emoji:'⬇️', difficulte:1,
+    youtube:'CAwf7n6Luuc',
     description:'Prise large, tirer la barre vers le haut de la poitrine.',
     conseils:['Ne pas se pencher excessivement','Initier par les coudes','Amplitude complète']
   },
   rowing_machine: {
     nom:'Rowing machine assise', muscle:'Dos Moyen',
     muscles_sec:['Biceps','Rhomboïdes'],
-    equipement:'Machine Rowing', emoji:'🤖', difficulte:1,
+    equipement:'Machine Rowing',
+    emoji:'🤖', difficulte:1,
+    youtube:'GZbfZ033f74',
     description:'Dos droit, tirer les poignées vers le ventre.',
     conseils:['Dos droit','Pas de balancement','Serrer les omoplates en fin']
   },
   'soulevé_terre': {
     nom:'Soulevé de terre', muscle:'Chaîne postérieure',
     muscles_sec:['Fessiers','Ischio-jambiers','Dos','Trapèzes'],
-    equipement:'Barre olympique', emoji:'🏋️', difficulte:4,
+    equipement:'Barre olympique',
+    emoji:'🏋️', difficulte:4,
+    youtube:'op9kVnSso6Q',
     description:'Pieds largeur des hanches, barre contre les tibias.',
     conseils:['Dos NEUTRE — jamais arrondi','Barre proche du corps','Pousser le sol','Inspirez avant la montée']
   },
   pullover: {
     nom:'Pull-over haltère', muscle:'Grand Dorsal',
     muscles_sec:['Pectoraux'],
-    equipement:'Haltère + Banc plat', emoji:'🔄', difficulte:2,
+    equipement:'Haltère + Banc plat',
+    emoji:'🔄', difficulte:2,
+    youtube:'FK2SqQxNRmA',
     description:'Allongé, haltère tenu à deux mains.',
     conseils:['Légère flexion du coude','Ne pas descendre trop bas','Amplitude progressive']
   },
   dev_militaire: {
     nom:'Développé militaire', muscle:'Épaules',
     muscles_sec:['Triceps','Trapèzes'],
-    equipement:'Haltères ou Barre', emoji:'💪', difficulte:3,
+    equipement:'Haltères ou Barre',
+    emoji:'💪', difficulte:3,
+    youtube:'CnBmiBqp-AI',
     description:'Debout ou assis, pousser au-dessus de la tête.',
     conseils:['Core bien gainé','Ne pas cambrer','Lockout complet en haut']
   },
   elev_laterales: {
     nom:'Élévations latérales', muscle:'Deltoïdes Latéraux',
-    muscles_sec:[], equipement:'Haltères', emoji:'🦅', difficulte:1,
+    muscles_sec:[],
+    equipement:'Haltères',
+    emoji:'🦅', difficulte:1,
+    youtube:'kDqklk1ZESo',
     description:'Bras légèrement fléchis, lever à hauteur d\'épaule.',
     conseils:['Ne pas hausser les épaules','Coudes légèrement fléchis','Contrôle en descente']
   },
   shoulder_press_machine: {
     nom:'Shoulder Press Machine', muscle:'Épaules',
     muscles_sec:['Triceps'],
-    equipement:'Machine Épaules', emoji:'🤖', difficulte:1,
+    equipement:'Machine Épaules',
+    emoji:'🤖', difficulte:1,
+    youtube:'6Z15_WdXmVw',
     description:'Machine guidée.',
     conseils:['Régler la hauteur du siège','Pas de verrouillage brutal','Expirer en poussant']
   },
   face_pull: {
     nom:'Face Pull', muscle:'Deltoïdes Postérieurs',
     muscles_sec:['Trapèzes','Rhomboïdes'],
-    equipement:'Câble poulie haute + corde', emoji:'🔄', difficulte:2,
+    equipement:'Câble poulie haute + corde',
+    emoji:'🔄', difficulte:2,
+    youtube:'HSoHeSt2VWo',
     description:'Câble à hauteur du visage.',
     conseils:['Coudes à hauteur des épaules','Rotation externe en fin','Léger poids, focus technique']
   },
   oiseau: {
     nom:'Oiseau', muscle:'Deltoïdes Postérieurs',
     muscles_sec:['Rhomboïdes'],
-    equipement:'Haltères', emoji:'🦢', difficulte:2,
+    equipement:'Haltères',
+    emoji:'🦢', difficulte:2,
+    youtube:'sOiBHj9MEFQ',
     description:'Penché en avant dos plat.',
     conseils:['Dos plat et horizontal','Mouvement lent','Coudes légèrement fléchis']
   },
   curl_halteres: {
     nom:'Curl haltères', muscle:'Biceps',
     muscles_sec:['Avant-bras'],
-    equipement:'Haltères', emoji:'💪', difficulte:1,
+    equipement:'Haltères',
+    emoji:'💪', difficulte:1,
+    youtube:'sAq_ocpS3zY',
     description:'Coudes fixés contre le corps.',
     conseils:['Coudes fixes','Supination complète','Descente lente']
   },
   curl_barre: {
     nom:'Curl barre EZ', muscle:'Biceps',
     muscles_sec:['Avant-bras'],
-    equipement:'Barre EZ', emoji:'💪', difficulte:1,
+    equipement:'Barre EZ',
+    emoji:'💪', difficulte:1,
+    youtube:'kwG2ipFRgfo',
     description:'Barre EZ pour protéger les poignets.',
     conseils:['Pas de balancement','Coudes fixes','Prise EZ plus confortable']
   },
   curl_marteau: {
     nom:'Curl marteau', muscle:'Brachial',
     muscles_sec:['Biceps','Avant-bras'],
-    equipement:'Haltères', emoji:'🔨', difficulte:1,
+    equipement:'Haltères',
+    emoji:'🔨', difficulte:1,
+    youtube:'zC3nLlEvin4',
     description:'Prise neutre (pouces vers le haut).',
     conseils:['Prise neutre','Coudes fixes','Mouvement lent']
   },
   curl_machine: {
     nom:'Curl machine', muscle:'Biceps',
-    muscles_sec:[], equipement:'Machine Curl', emoji:'🤖', difficulte:1,
+    muscles_sec:[],
+    equipement:'Machine Curl',
+    emoji:'🤖', difficulte:1,
+    youtube:'fIWP-FRFNU0',
     description:'Machine guidée, isolation parfaite.',
     conseils:['Bras bien collés au pupitre','Amplitude complète','Squeeze fort en haut']
   },
   ext_triceps_poulie: {
     nom:'Extension triceps poulie', muscle:'Triceps',
-    muscles_sec:[], equipement:'Câble poulie haute + corde', emoji:'⬇️', difficulte:1,
+    muscles_sec:[],
+    equipement:'Câble poulie haute + corde',
+    emoji:'⬇️', difficulte:1,
+    youtube:'vB5OHsJ3EME',
     description:'Coudes fixes contre le corps.',
     conseils:['Coudes fixes','Extension complète','Écarter légèrement la corde en bas']
   },
   barre_front: {
     nom:'Barre au front', muscle:'Triceps',
-    muscles_sec:[], equipement:'Barre EZ + Banc plat', emoji:'💥', difficulte:2,
+    muscles_sec:[],
+    equipement:'Barre EZ + Banc plat',
+    emoji:'💥', difficulte:2,
+    youtube:'NIKnG_8szOQ',
     description:'Allongé, barre descend vers le front.',
     conseils:['Coudes fixes','Contrôle total','Ne jamais toucher le front !']
   },
   dips_triceps: {
     nom:'Dips triceps (banc)', muscle:'Triceps',
     muscles_sec:['Épaules'],
-    equipement:'Banc', emoji:'⬇️', difficulte:1,
+    equipement:'Banc',
+    emoji:'⬇️', difficulte:1,
+    youtube:'wjUmnZH528Y',
     description:'Mains sur le banc, corps proche.',
     conseils:['Corps proche du banc','Coudes vers l\'arrière','Amplitude complète']
   },
   squat: {
     nom:'Squat', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Ischio-jambiers','Core'],
-    equipement:'Rack à squat + Barre', emoji:'🦵', difficulte:3,
+    equipement:'Rack à squat + Barre',
+    emoji:'🦵', difficulte:3,
+    youtube:'ultWZbUMPL8',
     description:'Pieds largeur épaules ou légèrement plus larges.',
     conseils:['Genoux dans l\'axe des pieds','Talons au sol','Dos droit','Profondeur ≥ parallèle']
   },
   presse_cuisses: {
     nom:'Presse à cuisses', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Ischio-jambiers'],
-    equipement:'Machine Presse inclinée', emoji:'🤖', difficulte:1,
+    equipement:'Machine Presse inclinée',
+    emoji:'🤖', difficulte:1,
+    youtube:'IZxyjW7SKSA',
     description:'Pieds à plat à largeur des épaules.',
     conseils:['Ne pas décoller les fesses','Pieds à plat','Ne pas verrouiller en haut']
   },
   fentes: {
     nom:'Fentes marchées', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Ischio-jambiers'],
-    equipement:'Haltères', emoji:'🚶', difficulte:2,
+    equipement:'Haltères',
+    emoji:'🚶', difficulte:2,
+    youtube:'QOVaHwm-Q6U',
     description:'Grand pas en avant, descendre le genou arrière.',
     conseils:['Genou avant dans l\'axe','Torse droit','Contrôle de l\'équilibre']
   },
   leg_curl: {
     nom:'Leg Curl couché', muscle:'Ischio-jambiers',
-    muscles_sec:[], equipement:'Machine Leg Curl', emoji:'🦵', difficulte:1,
+    muscles_sec:[],
+    equipement:'Machine Leg Curl',
+    emoji:'🦵', difficulte:1,
+    youtube:'ELOCsoDSmrg',
     description:'Allongé, fléchir les genoux.',
     conseils:['Hanches collées','Amplitude complète','Pas d\'à-coup en haut']
   },
   leg_extension: {
     nom:'Leg Extension', muscle:'Quadriceps',
-    muscles_sec:[], equipement:'Machine Leg Extension', emoji:'🦵', difficulte:1,
+    muscles_sec:[],
+    equipement:'Machine Leg Extension',
+    emoji:'🦵', difficulte:1,
+    youtube:'ljO4jkNWCKk',
     description:'Assis, étendre les jambes.',
     conseils:['Pas de verrouillage brutal','Contrôle en descente','Squeeze en position haute']
   },
   mollets: {
     nom:'Mollets debout', muscle:'Mollets',
-    muscles_sec:[], equipement:'Machine Mollets / Smith Machine', emoji:'⬆️', difficulte:1,
+    muscles_sec:[],
+    equipement:'Machine Mollets / Smith Machine',
+    emoji:'⬆️', difficulte:1,
+    youtube:'gwLzBJYoWlA',
     description:'Monter sur la pointe des pieds.',
     conseils:['Amplitude complète','Tenir 1s en position haute','Descente lente']
   },
   hip_thrust: {
     nom:'Hip Thrust', muscle:'Fessiers',
     muscles_sec:['Ischio-jambiers'],
-    equipement:'Barre + Banc', emoji:'🍑', difficulte:2,
+    equipement:'Barre + Banc',
+    emoji:'🍑', difficulte:2,
+    youtube:'SEdqd1n0cvg',
     description:'Dos contre le banc, barre sur les hanches.',
     conseils:['Squeeze fort en haut','Menton rentré','Pieds à plat']
   },
   planche: {
     nom:'Planche', muscle:'Core',
     muscles_sec:['Épaules','Fessiers'],
-    equipement:'Tapis / Sol', emoji:'━', difficulte:1,
+    equipement:'Tapis / Sol',
+    emoji:'━', difficulte:1,
+    youtube:'pSHjTRCQxIw',
     description:'Corps en ligne droite, appui sur les avant-bras.',
     conseils:['Dos parfaitement plat','Ne pas lever les fesses','Respirer normalement','Gainage actif']
   },
   crunch_machine: {
     nom:'Crunch machine', muscle:'Abdominaux',
-    muscles_sec:[], equipement:'Machine Abdos', emoji:'🤖', difficulte:1,
+    muscles_sec:[],
+    equipement:'Machine Abdos',
+    emoji:'🤖', difficulte:1,
+    youtube:'Xyd_fa5zoEU',
     description:'Flexion du tronc en expirant.',
     conseils:['Expirer en fléchissant','Pas d\'élan','Amplitude contrôlée']
   },
   releve_jambes: {
     nom:'Relevé de jambes suspendu', muscle:'Abdominaux Bas',
     muscles_sec:['Hip Flexors'],
-    equipement:'Barre de traction', emoji:'⬆️', difficulte:3,
+    equipement:'Barre de traction',
+    emoji:'⬆️', difficulte:3,
+    youtube:'JB2oyawG9KQ',
     description:'Suspendu à la barre, lever les jambes.',
     conseils:['Pas de balancement','Contrôle total','Rétroversion du bassin']
   },
   russian_twist: {
     nom:'Russian Twist', muscle:'Obliques',
     muscles_sec:['Abdominaux'],
-    equipement:'Haltère / Médecine ball', emoji:'🔄', difficulte:2,
+    equipement:'Haltère / Médecine ball',
+    emoji:'🔄', difficulte:2,
+    youtube:'wkD8rjkodUI',
     description:'Assis, tourner le tronc alternativement.',
     conseils:['Talons au sol ou légèrement levés','Rotation depuis le tronc','Contrôle']
   },
   rameur: {
     nom:'Rameur', muscle:'Full Body Cardio',
     muscles_sec:['Dos','Jambes','Bras'],
-    equipement:'Rameur', emoji:'🚣', difficulte:2,
+    equipement:'Rameur',
+    emoji:'🚣', difficulte:2,
+    youtube:'j3G1dQbnABQ',
     description:'60% jambes / 30% dos / 10% bras.',
     conseils:['Jambes d\'abord','Incliner le dos ensuite','Bras en dernier']
   },
   velo: {
     nom:'Vélo stationnaire', muscle:'Cardio / Jambes',
     muscles_sec:['Quadriceps','Mollets'],
-    equipement:'Vélo', emoji:'🚴', difficulte:1,
+    equipement:'Vélo',
+    emoji:'🚴', difficulte:1,
+    youtube:'',
     description:'Cardio low-impact.',
     conseils:['Selle à hauteur de hanche','Résistance progressive','Cadence régulière']
   }
