@@ -1,37 +1,24 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark">
 <head>
-  <!-- ✅ FIX — charset en premier absolu -->
   <meta charset="UTF-8" />
-
-  <!-- ✅ FIX — viewport-fit=cover pour les safe areas iOS -->
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0,
                  viewport-fit=cover" />
-
-  <meta name="description"
-        content="PowerApp — Ton coach fitness personnel" />
-  <meta name="theme-color" content="#09092d" />
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style"
         content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="PowerApp" />
-
+  <meta name="theme-color" content="#09092d" />
   <title>PowerApp ⚡</title>
-
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="assets/icons/icon-180.png" />
-
-  <!-- Style unique -->
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 
-  <!-- ═══════════════════════════════════════════════════ -->
-  <!-- SPLASH SCREEN                                       -->
-  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       SPLASH SCREEN
+  ════════════════════════════════════════ -->
   <div id="splash-screen">
     <div class="splash-content">
       <div class="splash-logo">⚡</div>
@@ -43,14 +30,14 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════ -->
-  <!-- ONBOARDING                                          -->
-  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       ONBOARDING
+  ════════════════════════════════════════ -->
   <div id="onboarding-screen" class="onboarding hidden"></div>
 
-  <!-- ═══════════════════════════════════════════════════ -->
-  <!-- APP WRAPPER                                         -->
-  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════
+       APP WRAPPER
+  ════════════════════════════════════════ -->
   <div id="app-wrapper" style="display:none">
 
     <!-- HEADER -->
@@ -61,16 +48,16 @@
       </div>
       <div class="header-right">
         <div class="header-xp" id="header-xp"></div>
+
+        <!-- ✅ FIX — id="btn-menu" + SANS onclick inline -->
         <button class="header-icon-btn"
-          onclick="event.stopPropagation(); UI.toggleMenu()"
-          aria-label="Menu">⋮</button>
-          <svg width="16" height="4"
-           viewBox="0 0 16 4"
-           fill="none"
-           xmlns="http://www.w3.org/2000/svg">
-          <circle cx="2"  cy="2" r="2" fill="currentColor"/>
-          <circle cx="8"  cy="2" r="2" fill="currentColor"/>
-          <circle cx="14" cy="2" r="2" fill="currentColor"/>
+                id="btn-menu"
+                aria-label="Menu">
+          <svg width="16" height="4" viewBox="0 0 16 4"
+               fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="2"  cy="2" r="2" fill="currentColor"/>
+            <circle cx="8"  cy="2" r="2" fill="currentColor"/>
+            <circle cx="14" cy="2" r="2" fill="currentColor"/>
           </svg>
         </button>
       </div>
@@ -79,16 +66,18 @@
     <!-- MENU DROPDOWN -->
     <div id="app-menu" class="app-menu hidden">
       <div class="app-menu-inner">
+        <!-- ✅ FIX — onclick sur les items : pas de capture:true
+             donc ils reçoivent bien les clics -->
         <div class="menu-item"
-             onclick="naviguer('settings');UI.fermerMenu()">
+             onclick="naviguer('settings')">
           ⚙️ Paramètres
         </div>
         <div class="menu-item"
-             onclick="naviguer('offline');UI.fermerMenu()">
+             onclick="naviguer('offline')">
           📵 Mode hors-ligne
         </div>
         <div class="menu-item"
-             onclick="naviguer('social');UI.fermerMenu()">
+             onclick="naviguer('social')">
           📱 Partage réseaux
         </div>
         <div class="menu-item"
@@ -97,23 +86,20 @@
         </div>
         <div class="menu-separator"></div>
         <div class="menu-item menu-danger"
-             onclick="UI.confirmerReset();UI.fermerMenu()">
+             onclick="UI.fermerMenu();UI.confirmerReset()">
           🗑️ Réinitialiser
         </div>
       </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <main class="app-main" id="app-main">
-
-      <!-- Pages principales -->
-      <div id="page-home"     class="page"></div>
+    <!-- PAGES -->
+    <main class="app-main">
+      <div id="page-home"     class="page active"></div>
       <div id="page-training" class="page"></div>
       <div id="page-live"     class="page"></div>
       <div id="page-stats"    class="page"></div>
       <div id="page-profil"   class="page"></div>
 
-      <!-- Pages secondaires -->
       <div id="page-coach"        class="page"></div>
       <div id="page-defis"        class="page"></div>
       <div id="page-predict"      class="page"></div>
@@ -126,77 +112,70 @@
       <div id="page-offline"      class="page"></div>
       <div id="page-settings"     class="page"></div>
       <div id="page-nutrition"    class="page"></div>
-
-      <!-- ✅ FIX — Pages manquantes ajoutées -->
-      <div id="page-mon_profil" class="page"></div>
-      <div id="page-journal"    class="page"></div>
-      <div id="page-objectifs"  class="page"></div>
-      <div id="page-blessures"  class="page"></div>
-
+      <div id="page-mon_profil"   class="page"></div>
+      <div id="page-journal"      class="page"></div>
+      <div id="page-objectifs"    class="page"></div>
+      <div id="page-blessures"    class="page"></div>
     </main>
 
-    <!-- NAVIGATION BAS -->
+    <!-- NAV BAS -->
     <nav class="app-nav">
       <button class="nav-btn active" id="nav-home"
-              onclick="naviguer('home')"
-              aria-label="Accueil">
+              onclick="naviguer('home')">
         <span class="nav-icon">🏠</span>
         <span class="nav-label">Accueil</span>
       </button>
       <button class="nav-btn" id="nav-training"
-              onclick="naviguer('training')"
-              aria-label="Programme">
+              onclick="naviguer('training')">
         <span class="nav-icon">📅</span>
         <span class="nav-label">Programme</span>
       </button>
       <button class="nav-btn nav-btn-live" id="nav-live"
-              onclick="naviguer('live')"
-              aria-label="Live">
+              onclick="naviguer('live')">
         <span class="nav-icon">⚡</span>
         <span class="nav-label">Live</span>
       </button>
       <button class="nav-btn" id="nav-stats"
-              onclick="naviguer('stats')"
-              aria-label="Stats">
+              onclick="naviguer('stats')">
         <span class="nav-icon">📊</span>
         <span class="nav-label">Stats</span>
       </button>
       <button class="nav-btn" id="nav-profil"
-              onclick="naviguer('profil')"
-              aria-label="Profil">
+              onclick="naviguer('profil')">
         <span class="nav-icon">👤</span>
         <span class="nav-label">Profil</span>
       </button>
     </nav>
 
-  </div><!-- /app-wrapper -->
+  </div><!-- fin #app-wrapper -->
 
-  <!-- ═══════════════════════════════════════════════════ -->
-  <!-- MODALS                                              -->
-  <!-- ═══════════════════════════════════════════════════ -->
 
-  <!-- Modal Info générique -->
+  <!-- ═══════════════════════════════════════
+       MODALS
+  ════════════════════════════════════════ -->
+
+  <!-- Modal Info / Résumé séance -->
   <div id="modal-info" class="modal hidden">
     <div class="modal-overlay"
          onclick="document.getElementById('modal-info')
-           .classList.add('hidden')">
+                    .classList.add('hidden')">
     </div>
     <div class="modal-inner modal-sm">
-      <button class="modal-close"
-              id="modal-info-close"
-              aria-label="Fermer">✕</button>
+      <button class="modal-close" id="modal-info-close">✕</button>
       <div class="modal-content" id="modal-info-content"></div>
     </div>
   </div>
 
-  <!-- Modal Confirm -->
+  <!-- Modal Confirmation -->
   <div id="modal-confirm" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-inner modal-sm">
       <div class="modal-content">
         <div style="font-size:1.1rem;font-weight:700;
                     margin-bottom:var(--space-sm)"
-             id="modal-confirm-title">Confirmer</div>
+             id="modal-confirm-titre">
+          Confirmer
+        </div>
         <p style="font-size:.85rem;color:var(--text-muted);
                   margin-bottom:var(--space-lg)"
            id="modal-confirm-msg"></p>
@@ -215,86 +194,81 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════ -->
-  <!-- OVERLAYS GLOBAUX                                    -->
-  <!-- ═══════════════════════════════════════════════════ -->
-
-  <!-- Toast container -->
-  <div id="toast-container" aria-live="polite"></div>
+  <!-- ═══════════════════════════════════════
+       OVERLAYS GLOBAUX
+  ════════════════════════════════════════ -->
 
   <!-- Confetti canvas -->
-  <canvas id="confetti-canvas"
-          style="position:fixed;inset:0;
-                 pointer-events:none;
-                 z-index:9999"></canvas>
+  <canvas id="confetti-canvas"></canvas>
 
-  <!-- Bannière offline -->
-  <div id="offline-banner"
-       style="display:none;position:fixed;top:0;left:0;
-              right:0;z-index:9998;
-              background:var(--fd-coral);
-              color:#09092d;text-align:center;
-              padding:8px var(--space-md);
-              font-size:.78rem;font-weight:700">
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- Timer repos overlay -->
+  <div id="timer-repos-overlay" class="hidden"></div>
+
+  <!-- Offline banner -->
+  <div id="offline-banner" class="hidden"
+       style="position:fixed;bottom:calc(var(--nav-height) + 8px);
+              left:var(--space-md);right:var(--space-md);
+              z-index:300;background:#333;color:white;
+              border-radius:var(--radius-md);
+              padding:var(--space-sm) var(--space-md);
+              font-size:.78rem;font-weight:600;
+              display:none;align-items:center;gap:var(--space-sm)">
     📵 Mode hors-ligne
   </div>
 
   <!-- Sync indicator -->
-  <div id="sync-indicator"
-       style="display:none;position:fixed;
-              bottom:calc(var(--nav-height) + 8px);
-              left:50%;transform:translateX(-50%);
-              z-index:901;
-              background:var(--fd-indigo);
-              color:white;padding:6px 14px;
+  <div id="sync-indicator" class="hidden"
+       style="position:fixed;top:calc(var(--header-height) + 8px);
+              right:var(--space-md);z-index:300;
+              background:var(--fd-indigo);color:white;
               border-radius:var(--radius-full);
-              font-size:.72rem;font-weight:700">
+              padding:4px 12px;font-size:.72rem;font-weight:600;
+              display:none;align-items:center;gap:4px">
     🔄 Synchronisation...
   </div>
 
   <!-- PWA Install button -->
-  <div id="pwa-install-btn"
-       style="display:none;position:fixed;
-              bottom:calc(var(--nav-height) + 16px);
-              left:50%;transform:translateX(-50%);
-              z-index:900">
-  </div>
+  <div id="pwa-install-btn" class="hidden"></div>
 
   <!-- Update banner -->
   <div id="update-banner"
-     style="display:none;
-            position:fixed;
-            bottom:calc(var(--nav-height) + 8px);
-            left:var(--space-md);
-            right:var(--space-md);
-            z-index:300;    /* ✅ Réduit */
-            background:var(--fd-indigo);
-            color:white;
-            border-radius:var(--radius-lg);
-            padding:var(--space-md);
-            align-items:center;
-            justify-content:space-between;
-            box-shadow:var(--shadow-lg);
-            gap:var(--space-sm)">
-    <span style="font-size:.82rem;font-weight:700">
+       style="display:none;
+              position:fixed;
+              bottom:calc(var(--nav-height) + 16px);
+              left:var(--space-md);
+              right:var(--space-md);
+              z-index:300;
+              background:var(--fd-indigo);
+              color:white;
+              border-radius:var(--radius-lg);
+              padding:var(--space-md);
+              align-items:center;
+              justify-content:space-between;
+              box-shadow:var(--shadow-lg);
+              gap:var(--space-sm)">
+    <span style="font-size:.82rem;font-weight:600">
       🆕 Nouvelle version disponible !
     </span>
-    <!-- ✅ FIX — Bouton update force le nouveau SW -->
-    <button onclick="
-        navigator.serviceWorker?.getRegistration()
-          .then(r => r?.waiting?.postMessage({type:'SKIP_WAITING'}));
-        setTimeout(() => window.location.reload(), 500)"
-            style="background:white;color:var(--fd-indigo);
-                   border:none;border-radius:var(--radius-full);
-                   padding:4px 12px;font-size:.75rem;
-                   font-weight:700;cursor:pointer">
+    <button id="update-btn"
+            style="padding:6px 14px;
+                   background:white;
+                   color:var(--fd-indigo);
+                   border:none;
+                   border-radius:var(--radius-full);
+                   font-size:.78rem;font-weight:700;
+                   cursor:pointer">
       Mettre à jour
     </button>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════ -->
-  <!-- SCRIPTS — ✅ FIX : defer + ordre garanti            -->
-  <!-- ═══════════════════════════════════════════════════ -->
+
+  <!-- ═══════════════════════════════════════
+       SCRIPTS
+  ════════════════════════════════════════ -->
+  <script src="js/sounds.js"        defer></script>
   <script src="js/utils.js"         defer></script>
   <script src="js/tracker.js"       defer></script>
   <script src="js/programme.js"     defer></script>
@@ -310,40 +284,37 @@
   <script src="js/superset.js"      defer></script>
   <script src="js/offline.js"       defer></script>
   <script src="js/social.js"        defer></script>
-  <script src="js/sounds.js"        3defer></script>
   <script src="js/i18n.js"          defer></script>
-  <!-- app.js TOUJOURS EN DERNIER -->
   <script src="js/app.js"           defer></script>
 
   <!-- Service Worker -->
   <script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => {
-        reg.addEventListener('updatefound', () => {
-          const newSW = reg.installing;
-          newSW.addEventListener('statechange', () => {
-            // ✅ FIX — Ne montrer la bannière QUE si
-            // un SW précédent contrôle déjà la page
-            if (newSW.state === 'installed'
-                && navigator.serviceWorker.controller) {
-              const banner = document.getElementById('update-banner');
-              if (banner) banner.style.display = 'flex';
-            }
-          });
-        });
-      })
-      .catch(err => console.warn('[SW]', err));
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => {
+            reg.addEventListener('updatefound', () => {
+              const newSW = reg.installing;
+              newSW.addEventListener('statechange', () => {
+                // ✅ FIX — Afficher bannière SEULEMENT
+                // si un SW précédent contrôle déjà la page
+                if (newSW.state === 'installed'
+                    && navigator.serviceWorker.controller) {
+                  const banner =
+                    document.getElementById('update-banner');
+                  if (banner) banner.style.display = 'flex';
+                }
+              });
+            });
+          })
+          .catch(err => console.warn('[SW]', err));
 
-    // Recharger si le SW change
-    navigator.serviceWorker.addEventListener(
-      'controllerchange',
-      () => window.location.reload()
-    );
-  });
-}
-</script>
+        navigator.serviceWorker.addEventListener(
+          'controllerchange', () => window.location.reload()
+        );
+      });
+    }
+  </script>
 
 </body>
 </html>
