@@ -1713,14 +1713,19 @@ async function init() {
     } catch(e) {}
 
     naviguer('home');
+    // ✅ FIX — Fermer le menu au clic en dehors
     document.addEventListener('click', (e) => {
-     const menu   = document.getElementById('app-menu');
-     const btnMenu = document.querySelector('.header-icon-btn');
-     if (!menu || menu.classList.contains('hidden')) return;
-     if (!menu.contains(e.target) && !btnMenu?.contains(e.target)) {
-       UI.fermerMenu();
-     }
-   }, true); 
+      const menu    = document.getElementById('app-menu');
+      const btnMenu = document.querySelector('.header-icon-btn');
+      if (!menu || menu.classList.contains('hidden')) return;
+      if (!menu.contains(e.target)
+          && !btnMenu?.contains(e.target)) {
+        UI.fermerMenu();
+      }
+    }, true);
+
+    // ✅ FIX — Fermer le menu à la navigation
+    window.addEventListener('naviguer', () => UI.fermerMenu());
     _updateHeaderXP();
 
     console.log('✅ PowerApp v3.0 — Prêt !');
@@ -1762,7 +1767,7 @@ function _renderEtapeOnboarding(etape, data) {
         <div style="margin-top:var(--space-lg)">
           <div class="input-label">Ton prénom *</div>
           <input class="input mb-md" id="ob-nom"
-                 placeholder="ex: Alex"
+                 placeholder="ex: Othmane"
                  value="${data.nom||''}"
                  autocomplete="given-name" />
           <div class="input-label">Ton poids (kg)</div>
