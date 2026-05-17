@@ -1687,6 +1687,14 @@ async function init() {
     } catch(e) {}
 
     naviguer('home');
+    document.addEventListener('click', (e) => {
+     const menu   = document.getElementById('app-menu');
+     const btnMenu = document.querySelector('.header-icon-btn');
+     if (!menu || menu.classList.contains('hidden')) return;
+     if (!menu.contains(e.target) && !btnMenu?.contains(e.target)) {
+       UI.fermerMenu();
+     }
+   }, true); 
     _updateHeaderXP();
 
     console.log('✅ PowerApp v3.0 — Prêt !');
