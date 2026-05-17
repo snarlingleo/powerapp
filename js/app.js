@@ -1568,26 +1568,34 @@ const UI = {
   toggleMenu() {
     const menu = document.getElementById('app-menu');
     if (!menu) return;
-    const ouvert = !menu.classList.contains('hidden');
-    ouvert ? UI.fermerMenu() : UI.ouvrirMenu();
-  },
 
-  ouvrirMenu() {
-    const menu = document.getElementById('app-menu');
-    if (!menu) return;
-    menu.classList.remove('hidden');
-    // Écouter clics extérieurs
-    setTimeout(() => {
-      document.addEventListener(
-        'click', UI._handler, true
-      );
-    }, 50);
+    const estOuvert = !menu.classList.contains('hidden');
+
+    if (estOuvert) {
+      UI.fermerMenu();
+    } else {
+      menu.classList.remove('hidden');
+
+      // ✅ Attendre 50ms puis écouter
+      setTimeout(() => {
+        document.addEventListener(
+          'click', UI._handler, true
+        );
+      }, 50);
+    }
   },
 
   _handler(e) {
     const menu   = document.getElementById('app-menu');
-    const bouton = document.getElementById('btn-menu');
-    if (!menu) return;
+    const bouton = document.querySelector('.header-icon-btn');
+
+    if (!menu || menu.classList.contains('hidden')) {
+      document.removeEventListener(
+        'click', UI._handler, true
+      );
+      return;
+    }
+
     if (!menu.contains(e.target)
         && !bouton?.contains(e.target)) {
       UI.fermerMenu();
@@ -1612,6 +1620,7 @@ const UI = {
     Utils.toast('Données supprimées.', 'info');
     setTimeout(() => window.location.reload(), 1000);
   }
+
 };
 
 window.UI = UI;
