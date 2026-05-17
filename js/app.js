@@ -94,6 +94,8 @@ function _updateHeader(page) {
     mon_profil:   { emoji:'👤', titre:'Mon profil'      },
     journal:      { emoji:'📔', titre:'Journal'         },
     objectifs:    { emoji:'🎯', titre:'Objectifs'       },
+    circuit:      { emoji:'🔄', titre:'Circuit Training' },
+    adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif'},   
     blessures:    { emoji:'🩹', titre:'Blessures'       }
   };
 
@@ -147,7 +149,23 @@ function _rendreContenu(page, container, options = {}) {
       case 'supersets':    Superset.render(container);                    break;
       case 'offline':      Offline.render(container);                     break;
       case 'settings':     _rendreSettings(container);                    break;
-      case 'nutrition':    _rendreNutrition(container);                   break;
+      case 'nutrition':
+  // ✅ NOUVEAU — Nutrition module complet
+  try { Nutrition.render(container); }
+  catch(e) { _rendreNutrition(container); }
+  break;
+
+// ✅ NOUVEAU — Circuit Training
+case 'circuit':
+  try { Circuit.render(container); }
+  catch(e) { _rendrePlaceholder(container, '🔄', 'Circuit', 'Module circuit'); }
+  break;
+
+// ✅ NOUVEAU — Programme Adaptatif
+case 'adaptatif':
+  try { ProgrammeAdaptatif.render(container); }
+  catch(e) { _rendrePlaceholder(container, '🧠', 'Programme Adaptatif', 'Analyse ta progression'); }
+  break;
       case 'mon_profil':   _renderMonProfil(container);                   break;
 
       case 'journal':
@@ -429,13 +447,13 @@ function _rendreHome(container) {
     <div style="display:grid;grid-template-columns:repeat(3,1fr);
                 gap:var(--space-sm);margin-bottom:var(--space-md)">
       ${[
-        { emoji:'📈', label:'Predict',    page:'predict'  },
-        { emoji:'🤖', label:'Coach',      page:'coach'    },
-        { emoji:'🏆', label:'Défis',      page:'defis'    },
-        { emoji:'📸', label:'Photos',     page:'photos'   },
-        { emoji:'📱', label:'Réseaux',    page:'social'   },
-        { emoji:'📅', label:'Historique', page:'history'  }
-      ].map(a => `
+        { emoji:'📈', label:'Predict',    page:'predict'   },
+        { emoji:'🤖', label:'Coach',      page:'coach'     },
+        { emoji:'🏆', label:'Défis',      page:'defis'     },
+        { emoji:'🔄', label:'Circuit',    page:'circuit'   },
+        { emoji:'🥗', label:'Nutrition',  page:'nutrition' },
+        { emoji:'🧠', label:'Adaptatif',  page:'adaptatif' }
+      ].map(a => 
         <button onclick="naviguer('${a.page}')"
                 class="card"
                 style="text-align:center;cursor:pointer;
@@ -1072,6 +1090,9 @@ function _rendreProfil(container) {
       {page:'gamification', emoji:'⭐', label:'XP & Niveaux'     },
       {page:'history',      emoji:'📅', label:'Historique'       },
       {page:'photos',       emoji:'📸', label:'Photos'           },
+      {page:'circuit',   emoji:'🔄', label:'Circuit Training'    },
+      {page:'adaptatif', emoji:'🧠', label:'Programme Adaptatif' },
+      {page:'nutrition', emoji:'🥗', label:'Nutrition'           }, 
       {page:'settings',     emoji:'⚙️', label:'Paramètres'       }
     ].map(s => `
       <div class="card mb-md"
