@@ -301,7 +301,7 @@ a {
   right:    max(0px, calc(50% - 240px));
   left:     auto;
   width:    240px;
-  z-index:  500; /* ✅ > 499 de l'overlay */
+  z-index:  200; /* ✅ > 499 de l'overlay */
   padding:  var(--space-sm);
 }
 
