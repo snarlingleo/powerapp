@@ -1557,48 +1557,39 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
 // ════════════════════════════════════════════════════════════
 // UI HELPERS
 // ════════════════════════════════════════════════════════════
+// ════════════════════════
+// UI
+// ════════════════════════
+// ════════════════════════
+// UI
+// ════════════════════════
 const UI = {
 
   toggleMenu() {
     const menu = document.getElementById('app-menu');
     if (!menu) return;
-
-    const estOuvert = !menu.classList.contains('hidden');
-
-    if (estOuvert) {
-      // ✅ Déjà ouvert → fermer
-      UI.fermerMenu();
-    } else {
-      // ✅ Fermé → ouvrir + écouter clics extérieurs
-      menu.classList.remove('hidden');
-
-      // Délai 0 pour ignorer le clic d'ouverture
-      setTimeout(() => {
-        document.addEventListener(
-          'click',
-          UI._fermerMenuHandler,
-          { capture: true, once: false }
-        );
-      }, 0);
-    }
+    const ouvert = !menu.classList.contains('hidden');
+    ouvert ? UI.fermerMenu() : UI.ouvrirMenu();
   },
 
-  _fermerMenuHandler(e) {
-    const menu   = document.getElementById('app-menu');
-    const bouton = document.querySelector('.header-icon-btn');
-
-    if (!menu) {
-      document.removeEventListener(
-        'click', UI._fermerMenuHandler, true
+  ouvrirMenu() {
+    const menu = document.getElementById('app-menu');
+    if (!menu) return;
+    menu.classList.remove('hidden');
+    // Écouter clics extérieurs
+    setTimeout(() => {
+      document.addEventListener(
+        'click', UI._handler, true
       );
-      return;
-    }
+    }, 50);
+  },
 
-    // ✅ Clic EN DEHORS du menu ET du bouton → fermer
-    const clicDanMenu   = menu.contains(e.target);
-    const clicDanBouton = bouton?.contains(e.target);
-
-    if (!clicDanMenu && !clicDanBouton) {
+  _handler(e) {
+    const menu   = document.getElementById('app-menu');
+    const bouton = document.getElementById('btn-menu');
+    if (!menu) return;
+    if (!menu.contains(e.target)
+        && !bouton?.contains(e.target)) {
       UI.fermerMenu();
     }
   },
@@ -1606,12 +1597,8 @@ const UI = {
   fermerMenu() {
     const menu = document.getElementById('app-menu');
     if (menu) menu.classList.add('hidden');
-
-    // ✅ Toujours nettoyer le listener
     document.removeEventListener(
-      'click',
-      UI._fermerMenuHandler,
-      true
+      'click', UI._handler, true
     );
   },
 
@@ -1737,6 +1724,11 @@ async function init() {
 
     naviguer('home');
     _updateHeaderXP(); 
+    document.getElementById('btn-menu')
+  ?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    UI.toggleMenu();
+  }); 
 
     // ✅ FIX — Fermer le menu à la navigation
     window.addEventListener('naviguer', () => UI.fermerMenu());
