@@ -453,7 +453,7 @@ function _rendreHome(container) {
         { emoji:'🔄', label:'Circuit',    page:'circuit'   },
         { emoji:'🥗', label:'Nutrition',  page:'nutrition' },
         { emoji:'🧠', label:'Adaptatif',  page:'adaptatif' }
-      ].map(a => 
+      ].map(a => ` 
         <button onclick="naviguer('${a.page}')"
                 class="card"
                 style="text-align:center;cursor:pointer;
