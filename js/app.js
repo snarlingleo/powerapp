@@ -1274,7 +1274,7 @@ function _rendreSettings(container) {
     <div style="text-align:center;font-size:.65rem;
                 color:var(--text-muted);
                 margin-top:var(--space-md)">
-      PowerApp v3.0 · EverGPT Turbo<br>Build 2026
+      PowerApp v3.0 · Othmane Turbo<br>Build 2026
     </div>
   `;
 
