@@ -394,7 +394,11 @@ a {
 
 /* Bouton Live spécial */
 .nav-btn-live {
-  position:   relative;
+  position:        relative;
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;    /* ✅ FIX — ajouté */
+  justify-content: center;    /* ✅ FIX — ajouté */
 }
 
 .nav-btn-live .nav-icon {
@@ -834,9 +838,11 @@ select.input {
 }
 
 .modal-sm {
+  position:      relative;
   border-radius: var(--radius-xl);
-  margin:        0 var(--space-md);
+  margin:        auto var(--space-md); /* ✅ FIX — auto pour centrage */
   max-height:    80vh;
+  align-self:    center;              /* ✅ FIX — centré dans le flex */
 }
 
 .modal-close {
@@ -950,20 +956,18 @@ select.input {
 }
 
 .photo-cell-overlay {
-  position:   absolute;
-  bottom:     0;
-  left:       0;
-  right:      0;
-  background: linear-gradient(
-    transparent, rgba(0,0,0,0.75)
-  );
-  padding:    20px 6px 4px;
-  font-size:  .58rem;
-  color:      white;
-  font-weight:600;
-  display:    flex;
+  position:        absolute;
+  bottom:          0;
+  left:            0;
+  right:           0;
+  background:      linear-gradient(transparent, rgba(0,0,0,0.75));
+  padding:         20px 6px 4px;
+  font-size:       .58rem;
+  color:           white;
+  font-weight:     600;
+  display:         flex;
   justify-content: space-between;
-  align-items:bottom;
+  align-items:     flex-end; /* ✅ FIX — bottom → flex-end */
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1289,19 +1293,9 @@ select.input {
 /* ════════════════════════════════════════════════════════════
    RESPONSIVE TABLET
 ════════════════════════════════════════════════════════════ */
-@media (min-width: 480px) {
-  #app-wrapper,
-  .app-header,
-  .app-nav {
-    max-width: 480px;
-    left:      50%;
-    transform: translateX(-50%);
-  }
-
-  .app-header,
-  .app-nav {
-    left:  50%;
-    right: auto;
+@media (max-width: 320px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
