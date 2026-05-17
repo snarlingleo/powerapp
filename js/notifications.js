@@ -642,6 +642,17 @@ const Notifications = {
         await this.verifierSemaineParf();
       }
 
+      // ✅ NOUVEAU — Vérifications smart
+      if (heure === 22 && minutes === 0) {
+        await this.verifierSurmenage();
+        await this.verifierMilestoneXP();
+      }
+
+      if (heure === 10 && minutes === 0) {
+        await this.envoyerRappelPersonnalise();
+        await this.notifierComeback();
+      } 
+
     }, 60 * 1000);
 
     console.log('[Notifs] Planification active');
@@ -682,18 +693,209 @@ const Notifications = {
   // INIT
   // ════════════════════════════════════════════════════════
   async init() {
+  const config = this.getConfig();
+  if (!config.active) return;
+
+  const autorisee = await this.demanderPermission();
+  if (autorisee) {
+    this.planifierRappels();
+    setTimeout(() => this.verifierAuLancement(), 4000);
+
+    // ✅ NOUVEAU — Notifications intelligentes basées sur routine
+    setTimeout(() => this._analyserRoutine(), 8000);
+
+    console.log('✅ Notifications v3.0 + Smart initialisées');
+  } else {
+    console.log('[Notifs] Permissions non accordées');
+  }
+},
+
+// ════════════════════════════════════════════════════════
+// ✅ NOUVEAU — NOTIFICATIONS INTELLIGENTES
+// ════════════════════════════════════════════════════════
+
+/**
+ * Analyse la routine de l'utilisateur et adapte
+ * les rappels à ses habitudes réelles
+ */
+_analyserRoutine() {
+  try {
+    const hist     = Tracker.getHistoriqueSeances(30);
+    const heures   = hist.map(s => {
+      const h = s.heureDebut || '18:00';
+      return parseInt(h.split(':')[0]);
+    }).filter(h => !isNaN(h));
+
+    if (heures.length < 3) return;
+
+    // Heure moyenne d'entraînement
+    const moy     = Math.round(heures.reduce((a,b) => a+b, 0) / heures.length);
+    const config  = this.getConfig();
+
+    // Adapter l'heure de rappel si différente de +/- 2h
+    const hConf   = parseInt((config.heureRappel||'07:30').split(':')[0]);
+    if (Math.abs(moy - hConf) > 2) {
+      const nouvelleHeure = `${String(Math.max(6, moy-1)).padStart(2,'0')}:00`;
+      this.sauvegarderConfig({ heureRappel: nouvelleHeure });
+      console.log(`[Notifs Smart] Heure rappel adaptée: ${nouvelleHeure}`);
+    }
+  } catch(e) {}
+},
+
+/**
+ * Détecte si l'utilisateur est en surmenage
+ * (trop de séances consécutives sans repos)
+ */
+async verifierSurmenage() {
+  try {
     const config = this.getConfig();
     if (!config.active) return;
 
-    const autorisee = await this.demanderPermission();
-    if (autorisee) {
-      this.planifierRappels();
-      setTimeout(() => this.verifierAuLancement(), 4000);
-      console.log('✅ Notifications v3.0 initialisées');
-    } else {
-      console.log('[Notifs] Permissions non accordées');
+    const hist    = Tracker.getHistoriqueSeances(7);
+    const seances = hist.length;
+
+    // Plus de 6 séances sur 7 jours → alerte surmenage
+    if (seances >= 6) {
+      let nom = 'Athlète';
+      try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+
+      const cle = 'ft_notif_surmenage_' + Utils.aujourd_hui();
+      if (Utils.storage.get(cle, false)) return;
+
+      await this.envoyer(
+        '⚠️ Attention au surmenage !',
+        `${nom}, ${seances} séances en 7 jours. Ton corps a besoin de récupérer pour progresser. Prends 1-2 jours de repos ! 🛌`,
+        { tag:'surmenage', vibrate:[300,100,300] }
+      );
+      Utils.storage.set(cle, true);
     }
-  },
+  } catch(e) {}
+},
+
+/**
+ * Notifie quand l'utilisateur approche d'un milestone XP
+ */
+async verifierMilestoneXP() {
+  try {
+    const config = this.getConfig();
+    if (!config.active) return;
+
+    let xp = { total:0, niveau:{ numero:1 } };
+    try { xp = Gamification.getXP(); } catch(e) { return; }
+
+    // XP milestones : 500, 1000, 2500, 5000, 10000
+    const milestones = [500, 1000, 2500, 5000, 10000];
+    for (const m of milestones) {
+      const diff = m - xp.total;
+      if (diff > 0 && diff <= 100) {
+        const cle = `ft_notif_xp_${m}`;
+        if (Utils.storage.get(cle, false)) continue;
+
+        let nom = 'Athlète';
+        try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+
+        await this.envoyer(
+          `⭐ Plus que ${diff} XP !`,
+          `${nom}, il te manque seulement ${diff} XP pour atteindre ${m} XP ! Une séance suffit ! 💪`,
+          { tag:`milestone-xp-${m}` }
+        );
+        Utils.storage.set(cle, true);
+        break;
+      }
+    }
+  } catch(e) {}
+},
+
+/**
+ * Rappel personnalisé basé sur le jour de la semaine
+ * et le planning habituel
+ */
+async envoyerRappelPersonnalise() {
+  try {
+    const config = this.getConfig();
+    if (!config.active || !config.rappelQuotidien) return;
+
+    // ✅ Vérifier si séance planifiée aujourd'hui
+    const planning = window.PLANNING_SEMAINE?.[
+      Utils.indexJourSemaine(Utils.aujourd_hui())
+    ];
+    if (!planning?.seanceId) return;
+
+    // Déjà fait aujourd'hui ?
+    let seanceFaite = false;
+    try {
+      const sej = Tracker.getSeanceDuJour?.();
+      seanceFaite = sej?.complete || false;
+    } catch(e) {}
+    if (seanceFaite) return;
+
+    const cle = 'ft_rappel_perso_' + Utils.aujourd_hui();
+    if (Utils.storage.get(cle, false)) return;
+
+    let nom    = 'Athlète';
+    let seance = null;
+    try { nom    = Tracker.getProfil().nom  || 'Athlète'; } catch(e) {}
+    try { seance = Programme.getSeanceduJour();            } catch(e) {}
+
+    const streak = (() => {
+      try { return Tracker.getStreak().count; } catch(e) { return 0; }
+    })();
+
+    // Message enrichi
+    let msg = this.getMessage('rappel_quotidien', { nom });
+    if (seance) {
+      msg += `\n${seance.emoji} ${seance.nom}`;
+      if (streak > 0) msg += `\n🔥 Streak actuel: ${streak} jours`;
+    }
+
+    await this.envoyer(
+      `💪 ${nom}, ta séance t'attend !`,
+      msg,
+      {
+        tag:'rappel-perso',
+        actions: [
+          { action:'go',    title:'▶ Démarrer !'  },
+          { action:'later', title:'⏰ Dans 1h'     }
+        ]
+      }
+    );
+
+    Utils.storage.set(cle, true);
+  } catch(e) {}
+},
+
+/**
+ * Message de comeback après une longue absence
+ */
+async notifierComeback() {
+  try {
+    const config = this.getConfig();
+    if (!config.active) return;
+
+    const cle = 'ft_notif_comeback_' + Utils.aujourd_hui();
+    if (Utils.storage.get(cle, false)) return;
+
+    const vientDeRevenir = Utils.storage.get('ft_comeback', false);
+    if (!vientDeRevenir) return;
+
+    let nom    = 'Athlète';
+    let jours  = 7;
+    try { nom   = Tracker.getProfil().nom  || 'Athlète'; } catch(e) {}
+    try { jours = Tracker.getJoursAbsence();              } catch(e) {}
+
+    await this.envoyer(
+      `🎉 Bienvenue de retour ${nom} !`,
+      `${jours} jours de pause, c'est du passé. Repars doucement avec des charges réduites. Ton corps va vite retrouver ses sensations ! 💪`,
+      {
+        tag:'comeback',
+        actions: [{ action:'go', title:'💪 C\'est reparti !' }]
+      }
+    );
+
+    Utils.storage.set(cle, true);
+    Utils.storage.remove('ft_comeback');
+  } catch(e) {}
+},
 
   getStatsDuJour() {
     const today = Utils.aujourd_hui();
