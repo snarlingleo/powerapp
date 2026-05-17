@@ -1564,33 +1564,34 @@ const UI = {
     const isHidden = menu?.classList.contains('hidden');
 
     if (isHidden) {
-      // ✅ Ouvrir le menu
       menu.classList.remove('hidden');
-
-      // ✅ Créer un overlay transparent pour fermer au clic extérieur
-      const overlay    = document.createElement('div');
-      overlay.id       = 'menu-overlay';
-      overlay.style.cssText = `
-        position: fixed;
-        inset:    0;
-        z-index:  499;
-        background: transparent;
-      `;
-      overlay.onclick  = () => UI.fermerMenu();
-      document.body.appendChild(overlay);
-
+      // ✅ Listener unique qui se supprime lui-même
+      setTimeout(() => {
+        document.addEventListener('click', UI._fermerMenuHandler);
+      }, 0);
     } else {
       UI.fermerMenu();
     }
   },
 
+  // ✅ Handler nommé pour pouvoir le supprimer proprement
+  _fermerMenuHandler(e) {
+    const menu = document.getElementById('app-menu');
+    if (!menu) { return; }
+
+    // Si le clic est EN DEHORS du menu → fermer
+    if (!menu.contains(e.target)) {
+      UI.fermerMenu();
+    }
+  },
+
   fermerMenu() {
-    // Masquer le menu
     document.getElementById('app-menu')
       ?.classList.add('hidden');
-    // Supprimer l'overlay
-    document.getElementById('menu-overlay')
-      ?.remove();
+    // ✅ Supprimer le listener proprement
+    document.removeEventListener(
+      'click', UI._fermerMenuHandler
+    );
   },
 
   async confirmerReset() {
@@ -1599,7 +1600,6 @@ const UI = {
       'Toutes tes données seront supprimées définitivement.'
     );
     if (!ok) return;
-
     localStorage.clear();
     Utils.toast('Données supprimées.', 'info');
     setTimeout(() => window.location.reload(), 1000);
