@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <!-- ✅ FIX — charset en premier absolu -->
+  <meta charset="UTF-8" />
+
+  <!-- ✅ FIX — viewport-fit=cover pour les safe areas iOS -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,
+                 viewport-fit=cover" />
+
+  <meta name="description"
+        content="PowerApp — Ton coach fitness personnel" />
+  <meta name="theme-color" content="#09092d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PowerApp" />
+
+  <title>PowerApp ⚡</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-180.png" />
+
+  <!-- Style unique -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SPLASH SCREEN                                       -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div id="splash-screen">
+    <div class="splash-content">
+      <div class="splash-logo">⚡</div>
+      <div class="splash-title">PowerApp</div>
+      <div class="splash-subtitle">Ton coach fitness personnel</div>
+      <div class="splash-loader">
+        <div class="splash-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- ONBOARDING                                          -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div id="onboarding-screen" class="onboarding hidden"></div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- APP WRAPPER                                         -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div id="app-wrapper" style="display:none">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="header-left">
+        <span class="header-emoji" id="header-emoji">⚡</span>
+        <span class="header-title" id="header-title">PowerApp</span>
+      </div>
+      <div class="header-right">
+        <div class="header-xp" id="header-xp"></div>
+        <button class="header-icon-btn"
+                onclick="UI.toggleMenu()"
+                aria-label="Menu">⋮</button>
+      </div>
+    </header>
+
+    <!-- MENU DROPDOWN -->
+    <div id="app-menu" class="app-menu hidden">
+      <div class="app-menu-inner">
+        <div class="menu-item"
+             onclick="naviguer('settings');UI.fermerMenu()">
+          ⚙️ Paramètres
+        </div>
+        <div class="menu-item"
+             onclick="naviguer('offline');UI.fermerMenu()">
+          📵 Mode hors-ligne
+        </div>
+        <div class="menu-item"
+             onclick="naviguer('social');UI.fermerMenu()">
+          📱 Partage réseaux
+        </div>
+        <div class="menu-item"
+             onclick="Utils.exporterJSON();UI.fermerMenu()">
+          📤 Exporter données
+        </div>
+        <div class="menu-separator"></div>
+        <div class="menu-item menu-danger"
+             onclick="UI.confirmerReset();UI.fermerMenu()">
+          🗑️ Réinitialiser
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="app-main" id="app-main">
+
+      <!-- Pages principales -->
+      <div id="page-home"     class="page"></div>
+      <div id="page-training" class="page"></div>
+      <div id="page-live"     class="page"></div>
+      <div id="page-stats"    class="page"></div>
+      <div id="page-profil"   class="page"></div>
+
+      <!-- Pages secondaires -->
+      <div id="page-coach"        class="page"></div>
+      <div id="page-defis"        class="page"></div>
+      <div id="page-predict"      class="page"></div>
+      <div id="page-share"        class="page"></div>
+      <div id="page-gamification" class="page"></div>
+      <div id="page-history"      class="page"></div>
+      <div id="page-photos"       class="page"></div>
+      <div id="page-social"       class="page"></div>
+      <div id="page-supersets"    class="page"></div>
+      <div id="page-offline"      class="page"></div>
+      <div id="page-settings"     class="page"></div>
+      <div id="page-nutrition"    class="page"></div>
+
+      <!-- ✅ FIX — Pages manquantes ajoutées -->
+      <div id="page-mon_profil" class="page"></div>
+      <div id="page-journal"    class="page"></div>
+      <div id="page-objectifs"  class="page"></div>
+      <div id="page-blessures"  class="page"></div>
+
+    </main>
+
+    <!-- NAVIGATION BAS -->
+    <nav class="app-nav">
+      <button class="nav-btn active" id="nav-home"
+              onclick="naviguer('home')"
+              aria-label="Accueil">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Accueil</span>
+      </button>
+      <button class="nav-btn" id="nav-training"
+              onclick="naviguer('training')"
+              aria-label="Programme">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Programme</span>
+      </button>
+      <button class="nav-btn nav-btn-live" id="nav-live"
+              onclick="naviguer('live')"
+              aria-label="Live">
+        <span class="nav-icon">⚡</span>
+        <span class="nav-label">Live</span>
+      </button>
+      <button class="nav-btn" id="nav-stats"
+              onclick="naviguer('stats')"
+              aria-label="Stats">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Stats</span>
+      </button>
+      <button class="nav-btn" id="nav-profil"
+              onclick="naviguer('profil')"
+              aria-label="Profil">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Profil</span>
+      </button>
+    </nav>
+
+  </div><!-- /app-wrapper -->
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- MODALS                                              -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <!-- Modal Info générique -->
+  <div id="modal-info" class="modal hidden">
+    <div class="modal-overlay"
+         onclick="document.getElementById('modal-info')
+           .classList.add('hidden')">
+    </div>
+    <div class="modal-inner modal-sm">
+      <button class="modal-close"
+              id="modal-info-close"
+              aria-label="Fermer">✕</button>
+      <div class="modal-content" id="modal-info-content"></div>
+    </div>
+  </div>
+
+  <!-- Modal Confirm -->
+  <div id="modal-confirm" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-inner modal-sm">
+      <div class="modal-content">
+        <div style="font-size:1.1rem;font-weight:700;
+                    margin-bottom:var(--space-sm)"
+             id="modal-confirm-title">Confirmer</div>
+        <p style="font-size:.85rem;color:var(--text-muted);
+                  margin-bottom:var(--space-lg)"
+           id="modal-confirm-msg"></p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;
+                    gap:var(--space-sm)">
+          <button id="modal-confirm-non"
+                  class="btn-secondary">
+            Annuler
+          </button>
+          <button id="modal-confirm-oui"
+                  class="btn-primary">
+            Confirmer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- OVERLAYS GLOBAUX                                    -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <!-- Toast container -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- Confetti canvas -->
+  <canvas id="confetti-canvas"
+          style="position:fixed;inset:0;
+                 pointer-events:none;
+                 z-index:9999"></canvas>
+
+  <!-- Bannière offline -->
+  <div id="offline-banner"
+       style="display:none;position:fixed;top:0;left:0;
+              right:0;z-index:9998;
+              background:var(--fd-coral);
+              color:#09092d;text-align:center;
+              padding:8px var(--space-md);
+              font-size:.78rem;font-weight:700">
+    📵 Mode hors-ligne
+  </div>
+
+  <!-- Sync indicator -->
+  <div id="sync-indicator"
+       style="display:none;position:fixed;
+              bottom:calc(var(--nav-height) + 8px);
+              left:50%;transform:translateX(-50%);
+              z-index:901;
+              background:var(--fd-indigo);
+              color:white;padding:6px 14px;
+              border-radius:var(--radius-full);
+              font-size:.72rem;font-weight:700">
+    🔄 Synchronisation...
+  </div>
+
+  <!-- PWA Install button -->
+  <div id="pwa-install-btn"
+       style="display:none;position:fixed;
+              bottom:calc(var(--nav-height) + 16px);
+              left:50%;transform:translateX(-50%);
+              z-index:900">
+  </div>
+
+  <!-- Update banner -->
+  <div id="update-banner"
+       style="display:none;position:fixed;
+              bottom:calc(var(--nav-height) + 8px);
+              left:var(--space-md);right:var(--space-md);
+              z-index:902;
+              background:var(--fd-indigo);
+              color:white;border-radius:var(--radius-lg);
+              padding:var(--space-md);
+              display:flex;align-items:center;
+              justify-content:space-between;
+              box-shadow:var(--shadow-lg)">
+    <span style="font-size:.82rem;font-weight:700">
+      🆕 Nouvelle version disponible !
+    </span>
+    <!-- ✅ FIX — Bouton update force le nouveau SW -->
+    <button onclick="
+        navigator.serviceWorker?.getRegistration()
+          .then(r => r?.waiting?.postMessage({type:'SKIP_WAITING'}));
+        setTimeout(() => window.location.reload(), 500)"
+            style="background:white;color:var(--fd-indigo);
+                   border:none;border-radius:var(--radius-full);
+                   padding:4px 12px;font-size:.75rem;
+                   font-weight:700;cursor:pointer">
+      Mettre à jour
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SCRIPTS — ✅ FIX : defer + ordre garanti            -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <script src="js/utils.js"         defer></script>
+  <script src="js/tracker.js"       defer></script>
+  <script src="js/programme.js"     defer></script>
+  <script src="js/gamification.js"  defer></script>
+  <script src="js/coach.js"         defer></script>
+  <script src="js/notifications.js" defer></script>
+  <script src="js/defis.js"         defer></script>
+  <script src="js/predict.js"       defer></script>
+  <script src="js/share.js"         defer></script>
+  <script src="js/stats.js"         defer></script>
+  <script src="js/history.js"       defer></script>
+  <script src="js/photos.js"        defer></script>
+  <script src="js/superset.js"      defer></script>
+  <script src="js/offline.js"       defer></script>
+  <script src="js/social.js"        defer></script>
+  <!-- app.js TOUJOURS EN DERNIER -->
+  <script src="js/app.js"           defer></script>
+
+  <!-- Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => {
+            // ✅ FIX — Détecter les mises à jour SW
+            reg.addEventListener('updatefound', () => {
+              const newSW = reg.installing;
+              newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'installed'
+                    && navigator.serviceWorker.controller) {
+                  const banner = document.getElementById('update-banner');
+                  if (banner) banner.style.display = 'flex';
+                }
+              });
+            });
+          })
+          .catch(err => console.warn('[SW]', err));
+
+        // Recharger si le SW change
+        navigator.serviceWorker.addEventListener(
+          'controllerchange', () => window.location.reload()
+        );
+      });
+    }
+  </script>
+
+</body>
+</html>
