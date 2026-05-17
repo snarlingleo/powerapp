@@ -228,6 +228,7 @@
        SCRIPTS
   ════════════════════════════════════════ -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
   <script src="js/sounds.js"        defer></script>
   <script src="js/utils.js"         defer></script>
   <script src="js/tracker.js"       defer></script>
@@ -252,32 +253,31 @@
 
   <!-- Service Worker -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => {
-            reg.addEventListener('updatefound', () => {
-              const newSW = reg.installing;
-              newSW.addEventListener('statechange', () => {
-                // ✅ FIX — Afficher bannière SEULEMENT
-                // si un SW précédent contrôle déjà la page
-                if (newSW.state === 'installed'
-                    && navigator.serviceWorker.controller) {
-                  const banner =
-                    document.getElementById('update-banner');
-                  if (banner) banner.style.display = 'flex';
-                }
-              });
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      // ✅ ./ au lieu de / 
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => {
+          reg.addEventListener('updatefound', () => {
+            const newSW = reg.installing;
+            newSW.addEventListener('statechange', () => {
+              if (newSW.state === 'installed'
+                  && navigator.serviceWorker.controller) {
+                const banner =
+                  document.getElementById('update-banner');
+                if (banner) banner.style.display = 'flex';
+              }
             });
-          })
-          .catch(err => console.warn('[SW]', err));
+          });
+        })
+        .catch(err => console.warn('[SW]', err));
 
-        navigator.serviceWorker.addEventListener(
-          'controllerchange', () => window.location.reload()
-        );
-      });
-    }
-  </script>
+      navigator.serviceWorker.addEventListener(
+        'controllerchange', () => window.location.reload()
+      );
+    });
+  }
+</script>
 
 </body>
 </html>
