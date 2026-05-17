@@ -1561,12 +1561,36 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
 const UI = {
 
   toggleMenu() {
-    document.getElementById('app-menu')?.classList.toggle('hidden');
-  },
+  const menu = document.getElementById('app-menu');
+  const isHidden = menu?.classList.contains('hidden');
+  
+  menu?.classList.toggle('hidden');
+  
+  // ✅ FIX — Overlay pour fermer en cliquant ailleurs
+  if (isHidden) {
+    // Ouvre → créer overlay
+    const overlay = document.createElement('div');
+    overlay.id    = 'menu-overlay';
+    overlay.style.cssText = `
+      position:fixed;inset:0;z-index:${parseInt(
+        getComputedStyle(document.documentElement)
+          .getPropertyValue('--z-modal')
+      ) - 1};`;
+    overlay.onclick = () => {
+      UI.fermerMenu();
+      overlay.remove();
+    };
+    document.body.appendChild(overlay);
+  } else {
+    // Ferme → supprimer overlay
+    document.getElementById('menu-overlay')?.remove();
+  }
+},
 
-  fermerMenu() {
-    document.getElementById('app-menu')?.classList.add('hidden');
-  },
+fermerMenu() {
+  document.getElementById('app-menu')?.classList.add('hidden');
+  document.getElementById('menu-overlay')?.remove();
+},
 
   async confirmerReset() {
     const ok = await Utils.confirmer(
