@@ -1628,44 +1628,11 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
 // ════════════════════════════════════════════════════════════
 const UI = {
 
-  toggleMenu() {
-    const menu = document.getElementById('app-menu');
-    if (!menu) return;
-    const estOuvert = !menu.classList.contains('hidden');
-    estOuvert ? UI.fermerMenu() : UI.ouvrirMenu();
-  },
-
-  ouvrirMenu() {
-    const menu = document.getElementById('app-menu');
-    if (!menu) return;
-    menu.classList.remove('hidden');
-    // ✅ Délai pour ignorer le clic d'ouverture
-    setTimeout(() => {
-      document.addEventListener('click', UI._handler);
-    }, 50);
-  },
-
-  // ✅ PAS de capture:true → les clics sur les items passent
-  _handler(e) {
-    const menu   = document.getElementById('app-menu');
-    const bouton = document.getElementById('btn-menu');
-    if (!menu) {
-      document.removeEventListener('click', UI._handler);
-      return;
-    }
-    // Clic dans le menu ou sur le bouton → ne pas fermer
-    if (menu.contains(e.target) || bouton?.contains(e.target)) {
-      return;
-    }
-    // Clic en dehors → fermer
-    UI.fermerMenu();
-  },
-
-  fermerMenu() {
-    const menu = document.getElementById('app-menu');
-    if (menu) menu.classList.add('hidden');
-    document.removeEventListener('click', UI._handler);
-  },
+  // ✅ Fonctions vides — plus de menu
+  toggleMenu()  {},
+  ouvrirMenu()  {},
+  fermerMenu()  {},
+  _handler()    {},
 
   async confirmerReset() {
     const ok = await Utils.confirmer(
@@ -1730,14 +1697,7 @@ async function init() {
     naviguer('home');
     _updateHeaderXP();
 
-    // ✅ FIX FINAL — Bouton menu via addEventListener
-    const btnMenu = document.getElementById('btn-menu');
-    if (btnMenu) {
-      btnMenu.addEventListener('click', (e) => {
-        e.stopPropagation();
-        UI.toggleMenu();
-      });
-    } else {
+    else {
       console.warn('[App] #btn-menu introuvable dans index.html');
     }
 
