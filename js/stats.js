@@ -1730,132 +1730,369 @@ const Stats = {
   // GRAPHIQUES TAB — ✅ FIX styles preset-btn inline
   // ════════════════════════════════════════════════════════
   _renderGraphiques(el) {
-    const refs    = Object.keys(window.EXERCICES||{}).filter(r => Tracker.getPR(r));
-    const periodes = ['30','60','90','180'];
+  const refs     = Object.keys(window.EXERCICES||{})
+    .filter(r => Tracker.getPR(r));
+  const periodes = ['30','60','90','180'];
 
-    el.innerHTML = `
-      <div class="card mb-md">
-        <div class="card-label mb-md">📈 Progression exercice</div>
-        <div class="flex gap-sm"
-             style="flex-wrap:wrap;margin-bottom:var(--space-md)">
-          <select id="sel-graph-exo" class="input" style="flex:1">
-            <option value="">-- Exercice --</option>
-            ${refs.map(r => `
-              <option value="${r}">
-                ${window.EXERCICES[r]?.nom||r}
-              </option>`).join('')}
-          </select>
-          <select id="sel-graph-metric" class="input" style="flex:1">
-            <option value="rm1">1RM (kg)</option>
-            <option value="poids">Poids (kg)</option>
-            <option value="reps">Reps</option>
-          </select>
-        </div>
-
-        <!-- ✅ FIX — Boutons période avec styles inline -->
-        <div class="flex gap-sm mb-md">
-          ${periodes.map((p,i) => `
-            <button id="preset-${p}"
-                    onclick="Stats._changerPeriode(this)"
-                    data-periode="${p}"
-                    style="flex:1;padding:6px;
-                           border-radius:var(--radius-full);
-                           border:1px solid ${i===0
-                             ? 'var(--fd-indigo)'
-                             : 'var(--border-color)'};
-                           background:${i===0
-                             ? 'var(--fd-indigo)'
-                             : 'var(--bg-input)'};
-                           color:${i===0
-                             ? 'white'
-                             : 'var(--text-muted)'};
-                           font-size:.78rem;font-weight:600;
-                           cursor:pointer">
-              ${p}j
-            </button>`).join('')}
-        </div>
-        <canvas id="chart-main" height="180"></canvas>
+  el.innerHTML = `
+    <!-- ═══ PROGRESSION EXERCICE ═══ -->
+    <div class="card mb-md">
+      <div class="card-label mb-md">📈 Progression exercice</div>
+      <div style="display:flex;gap:var(--space-sm);
+                  flex-wrap:wrap;margin-bottom:var(--space-sm)">
+        <select id="sel-graph-exo" class="input" style="flex:2;min-width:140px">
+          <option value="">-- Choisir un exercice --</option>
+          ${refs.map(r => `
+            <option value="${r}">
+              ${window.EXERCICES[r]?.emoji||''}
+              ${window.EXERCICES[r]?.nom||r}
+            </option>`).join('')}
+        </select>
+        <select id="sel-graph-metric" class="input" style="flex:1;min-width:100px">
+          <option value="rm1">1RM (kg)</option>
+          <option value="poids">Poids (kg)</option>
+          <option value="reps">Reps</option>
+        </select>
       </div>
 
-      <!-- Volume 8 semaines -->
-      <div class="card mb-md">
-        <div class="card-label">📊 Volume total — 8 semaines</div>
-        <canvas id="chart-vol-8" height="160"
-                style="margin-top:var(--space-sm)"></canvas>
+      <!-- Période -->
+      <div style="display:flex;gap:6px;margin-bottom:var(--space-md)">
+        ${periodes.map((p,i) => `
+          <button data-periode="${p}"
+                  onclick="Stats._chartChangerPeriode(this)"
+                  style="flex:1;padding:6px 4px;
+                         border-radius:var(--radius-full);
+                         font-size:.75rem;font-weight:600;
+                         cursor:pointer;
+                         border:1px solid ${i===0
+                           ? 'var(--fd-indigo)'
+                           : 'var(--border-color)'};
+                         background:${i===0
+                           ? 'var(--fd-indigo)'
+                           : 'var(--bg-input)'};
+                         color:${i===0
+                           ? 'white'
+                           : 'var(--text-muted)'}">
+            ${p}j
+          </button>`).join('')}
       </div>
 
-      <!-- Séances par jour -->
-      <div class="card mb-md">
-        <div class="card-label">📅 Séances par jour de la semaine</div>
-        <canvas id="chart-jours" height="140"
-                style="margin-top:var(--space-sm)"></canvas>
+      <div id="chart-prog-placeholder"
+           style="text-align:center;padding:var(--space-xl);
+                  color:var(--text-muted);font-size:.85rem">
+        Sélectionne un exercice pour voir sa progression
       </div>
-    `;
+      <canvas id="chart-progression" height="200"
+              style="display:none"></canvas>
+    </div>
 
-    requestAnimationFrame(() => {
-      const vol   = this.getVolumeParSemaine(8);
-      const cvol  = document.getElementById('chart-vol-8');
-      if (cvol) Utils.graphiques.barres(
-        cvol, vol.map(v => v.label), vol.map(v => v.volume)
-      );
+    <!-- ═══ VOLUME 8 SEMAINES ═══ -->
+    <div class="card mb-md">
+      <div class="card-label">📊 Volume total — 8 semaines</div>
+      <canvas id="chart-vol-8w" height="180"
+              style="margin-top:var(--space-sm)"></canvas>
+    </div>
 
-      const jours  = Tracker.getSeancesParJourSemaine();
-      const cjours = document.getElementById('chart-jours');
-      if (cjours) Utils.graphiques.barres(
-        cjours,
-        ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'],
-        jours,
-        { color:'#8bf0bb' }
-      );
-    });
+    <!-- ═══ 1RM TOP EXERCICES ═══ -->
+    <div class="card mb-md">
+      <div class="card-label">💪 Top 1RM estimés</div>
+      <canvas id="chart-top-rm" height="200"
+              style="margin-top:var(--space-sm)"></canvas>
+    </div>
 
-    const update = () => {
-      const ref     = document.getElementById('sel-graph-exo')?.value;
-      const metric  = document.getElementById('sel-graph-metric')?.value || 'rm1';
-      const periode = document.querySelector('[data-periode][style*="var(--fd-indigo)"]')
-        ?.dataset.periode || '30';
-      if (!ref) return;
-      const prog   = this.getProgressionExercice(ref, parseInt(periode));
-      const canvas = document.getElementById('chart-main');
-      if (canvas && prog.length > 0) {
-        Utils.graphiques.ligne(
-          canvas,
-          prog.map(p => p.label),
-          [{ valeurs:prog.map(p => p[metric]||0), color:'#4b4bf9' }]
-        );
+    <!-- ═══ SÉANCES PAR JOUR ═══ -->
+    <div class="card mb-md">
+      <div class="card-label">📅 Séances par jour de la semaine</div>
+      <canvas id="chart-jours-sem" height="160"
+              style="margin-top:var(--space-sm)"></canvas>
+    </div>
+
+    <!-- ═══ RPE ÉVOLUTION ═══ -->
+    <div class="card mb-md">
+      <div class="card-label">😤 Évolution RPE moyen</div>
+      <canvas id="chart-rpe-evo" height="160"
+              style="margin-top:var(--space-sm)"></canvas>
+    </div>
+  `;
+
+  // ✅ Détruire les anciens charts pour éviter les conflits
+  Stats._detruireCharts([
+    'chart-vol-8w','chart-top-rm',
+    'chart-jours-sem','chart-rpe-evo'
+  ]);
+
+  requestAnimationFrame(() => {
+    const defautOptions = {
+      responsive:          true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#09092d',
+          titleColor:      '#ffffff',
+          bodyColor:       '#bfa1ff',
+          borderColor:     '#4b4bf9',
+          borderWidth:     1
+        }
+      },
+      scales: {
+        x: {
+          ticks:  { color:'#888', font:{ size:10 } },
+          grid:   { color:'rgba(255,255,255,0.05)' }
+        },
+        y: {
+          ticks:  { color:'#888', font:{ size:10 } },
+          grid:   { color:'rgba(255,255,255,0.05)' }
+        }
       }
     };
 
-    document.getElementById('sel-graph-exo')?.addEventListener('change', update);
-    document.getElementById('sel-graph-metric')?.addEventListener('change', update);
-  },
-
-  _changerPeriode(btn) {
-    // ✅ FIX — Styles inline au lieu de classList
-    document.querySelectorAll('[data-periode]').forEach(b => {
-      b.style.background  = 'var(--bg-input)';
-      b.style.borderColor = 'var(--border-color)';
-      b.style.color       = 'var(--text-muted)';
-    });
-    btn.style.background  = 'var(--fd-indigo)';
-    btn.style.borderColor = 'var(--fd-indigo)';
-    btn.style.color       = 'white';
-
-    const exo     = document.getElementById('sel-graph-exo')?.value;
-    const metric  = document.getElementById('sel-graph-metric')?.value || 'rm1';
-    const periode = btn.dataset.periode;
-    if (!exo) return;
-
-    const prog   = this.getProgressionExercice(exo, parseInt(periode));
-    const canvas = document.getElementById('chart-main');
-    if (canvas && prog.length > 0) {
-      Utils.graphiques.ligne(
-        canvas,
-        prog.map(p => p.label),
-        [{ valeurs:prog.map(p => p[metric]||0), color:'#4b4bf9' }]
-      );
+    // ── Volume 8 semaines ──────────────────────────────
+    const vol    = Stats.getVolumeParSemaine(8);
+    const cvol   = document.getElementById('chart-vol-8w');
+    if (cvol && vol.length > 0) {
+      Stats._charts = Stats._charts || {};
+      Stats._charts['chart-vol-8w'] = new Chart(cvol, {
+        type: 'bar',
+        data: {
+          labels:   vol.map(v => v.label),
+          datasets: [{
+            data:            vol.map(v => v.volume),
+            backgroundColor: 'rgba(75,75,249,0.7)',
+            borderColor:     '#4b4bf9',
+            borderWidth:     2,
+            borderRadius:    6
+          }]
+        },
+        options: {
+          ...defautOptions,
+          plugins: {
+            ...defautOptions.plugins,
+            tooltip: {
+              ...defautOptions.plugins.tooltip,
+              callbacks: {
+                label: ctx => `${ctx.parsed.y.toFixed(0)} kg`
+              }
+            }
+          }
+        }
+      });
     }
-  },
+
+    // ── Top 1RM ───────────────────────────────────────
+    const top   = Stats.getTopExercices(8);
+    const crm   = document.getElementById('chart-top-rm');
+    if (crm && top.length > 0) {
+      const colors = [
+        '#4b4bf9','#8bf0bb','#f9ef77',
+        '#bfa1ff','#ff8d96','#4b4bf9',
+        '#8bf0bb','#f9ef77'
+      ];
+      Stats._charts['chart-top-rm'] = new Chart(crm, {
+        type: 'bar',
+        data: {
+          labels:   top.map(e => e.nom),
+          datasets: [{
+            label:           '1RM (kg)',
+            data:            top.map(e => e.rm1),
+            backgroundColor: colors.map(c => c + 'cc'),
+            borderColor:     colors,
+            borderWidth:     2,
+            borderRadius:    6
+          }]
+        },
+        options: {
+          ...defautOptions,
+          indexAxis: 'y',
+          plugins: {
+            ...defautOptions.plugins,
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    // ── Séances par jour de semaine ───────────────────
+    const jours  = Tracker.getSeancesParJourSemaine();
+    const cjours = document.getElementById('chart-jours-sem');
+    if (cjours) {
+      Stats._charts['chart-jours-sem'] = new Chart(cjours, {
+        type: 'bar',
+        data: {
+          labels:   ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'],
+          datasets: [{
+            data:            jours,
+            backgroundColor: 'rgba(139,240,187,0.6)',
+            borderColor:     '#8bf0bb',
+            borderWidth:     2,
+            borderRadius:    6
+          }]
+        },
+        options: defautOptions
+      });
+    }
+
+    // ── RPE évolution ─────────────────────────────────
+    const rpe  = Tracker.getRPEParSemaine(10);
+    const crpe = document.getElementById('chart-rpe-evo');
+    if (crpe && rpe.length > 1) {
+      Stats._charts['chart-rpe-evo'] = new Chart(crpe, {
+        type: 'line',
+        data: {
+          labels:   rpe.map(r => r.semaine),
+          datasets: [{
+            data:            rpe.map(r => r.rpe),
+            borderColor:     '#ff8d96',
+            backgroundColor: 'rgba(255,141,150,0.1)',
+            borderWidth:     2,
+            pointRadius:     4,
+            pointBackgroundColor: '#ff8d96',
+            tension:         0.4,
+            fill:            true
+          }]
+        },
+        options: {
+          ...defautOptions,
+          scales: {
+            ...defautOptions.scales,
+            y: {
+              ...defautOptions.scales.y,
+              min: 0, max: 10,
+              ticks: {
+                color: '#888',
+                font:  { size:10 },
+                callback: v => `${v}/10`
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+
+  // ── Listeners ──────────────────────────────────────
+  document.getElementById('sel-graph-exo')
+    ?.addEventListener('change', () => Stats._chartMettreAJourProg());
+  document.getElementById('sel-graph-metric')
+    ?.addEventListener('change', () => Stats._chartMettreAJourProg());
+},
+
+// ════════════════════════════════════════════════════════
+// HELPERS CHART.JS
+// ════════════════════════════════════════════════════════
+_charts: {},
+
+_detruireCharts(ids) {
+  Stats._charts = Stats._charts || {};
+  ids.forEach(id => {
+    if (Stats._charts[id]) {
+      Stats._charts[id].destroy();
+      delete Stats._charts[id];
+    }
+  });
+},
+
+_chartChangerPeriode(btn) {
+  document.querySelectorAll('[data-periode]').forEach(b => {
+    b.style.background  = 'var(--bg-input)';
+    b.style.borderColor = 'var(--border-color)';
+    b.style.color       = 'var(--text-muted)';
+  });
+  btn.style.background  = 'var(--fd-indigo)';
+  btn.style.borderColor = 'var(--fd-indigo)';
+  btn.style.color       = 'white';
+  Stats._chartMettreAJourProg();
+},
+
+_chartMettreAJourProg() {
+  const ref     = document.getElementById('sel-graph-exo')?.value;
+  const metric  = document.getElementById('sel-graph-metric')?.value || 'rm1';
+  const periode = document.querySelector('[data-periode][style*="var(--fd-indigo)"]')
+    ?.dataset?.periode || '30';
+
+  const placeholder = document.getElementById('chart-prog-placeholder');
+  const canvas      = document.getElementById('chart-progression');
+
+  if (!ref) {
+    if (placeholder) placeholder.style.display = 'block';
+    if (canvas)      canvas.style.display      = 'none';
+    return;
+  }
+
+  const prog = Stats.getProgressionExercice(ref, parseInt(periode));
+
+  if (!prog.length) {
+    if (placeholder) {
+      placeholder.style.display   = 'block';
+      placeholder.textContent     = 'Pas encore assez de données pour cet exercice';
+    }
+    if (canvas) canvas.style.display = 'none';
+    return;
+  }
+
+  if (placeholder) placeholder.style.display = 'none';
+  if (canvas)      canvas.style.display      = 'block';
+
+  // Détruire ancien chart si existe
+  Stats._detruireCharts(['chart-progression']);
+
+  const metricLabels = {
+    rm1:   '1RM estimé (kg)',
+    poids: 'Poids soulevé (kg)',
+    reps:  'Répétitions'
+  };
+  const metricColors = {
+    rm1:   '#bfa1ff',
+    poids: '#4b4bf9',
+    reps:  '#8bf0bb'
+  };
+
+  Stats._charts['chart-progression'] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels:   prog.map(p => p.label),
+      datasets: [{
+        label:               metricLabels[metric],
+        data:                prog.map(p => p[metric] || 0),
+        borderColor:         metricColors[metric],
+        backgroundColor:     metricColors[metric] + '22',
+        borderWidth:         2.5,
+        pointRadius:         5,
+        pointHoverRadius:    7,
+        pointBackgroundColor: metricColors[metric],
+        tension:             0.35,
+        fill:                true
+      }]
+    },
+    options: {
+      responsive:          true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          display: true,
+          labels:  { color:'#888', font:{ size:11 } }
+        },
+        tooltip: {
+          backgroundColor: '#09092d',
+          titleColor:      '#ffffff',
+          bodyColor:       metricColors[metric],
+          borderColor:     metricColors[metric],
+          borderWidth:     1
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color:'#888', font:{ size:10 } },
+          grid:  { color:'rgba(255,255,255,0.05)' }
+        },
+        y: {
+          ticks: { color:'#888', font:{ size:10 } },
+          grid:  { color:'rgba(255,255,255,0.05)' }
+        }
+      }
+    }
+  });
+},
 
   // ════════════════════════════════════════════════════════
   // CALENDRIER TAB — ✅ FIX boutons navigation inline
