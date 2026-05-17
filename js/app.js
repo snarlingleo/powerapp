@@ -690,8 +690,7 @@ function _rendreLive(container, options = {}) {
           </button>
           <button onclick="naviguer('live',{ seanceId:'full_body' })"
                   class="btn-primary">
-                  style="flex:1;min-width:140px">
-            ⚡ Séance express
+               ⚡ Séance express
           </button>
         </div>
       </div>`;
