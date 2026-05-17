@@ -1,5 +1,5 @@
 /* ============================================================
-   FitTracker Pro — App.js v3.0 CORRIGÉ
+   PowerApp — App.js v3.0 CORRIGÉ
    Point d'entrée principal + Navigation + Init + UI
    ============================================================ */
 
@@ -55,6 +55,7 @@ function naviguer(page, options = {}) {
 
     _rendreContenu(page, pageEl, options);
 
+    // ✅ Fermer le menu à chaque navigation
     UI.fermerMenu();
 
   } catch(e) {
@@ -90,7 +91,6 @@ function _updateHeader(page) {
     offline:      { emoji:'📵', titre:'Hors-ligne'      },
     settings:     { emoji:'⚙️', titre:'Paramètres'      },
     nutrition:    { emoji:'🥗', titre:'Nutrition'       },
-    // ✅ FIX — Pages manquantes ajoutées
     mon_profil:   { emoji:'👤', titre:'Mon profil'      },
     journal:      { emoji:'📔', titre:'Journal'         },
     objectifs:    { emoji:'🎯', titre:'Objectifs'       },
@@ -131,52 +131,44 @@ function _updateHeaderXP() {
 function _rendreContenu(page, container, options = {}) {
   try {
     switch(page) {
-
-      case 'home':        _rendreHome(container);                        break;
-      case 'training':    _rendreTraining(container);                    break;
-      case 'live':        _rendreLive(container, options);               break;
-      case 'stats':       Stats.render(container);                       break;
-      case 'profil':      _rendreProfil(container);                      break;
-      case 'coach':       Coach.renderCoachTab(container);               break;
-      case 'defis':       Defis.render(container);                       break;
-      case 'predict':     Predict.render(container);                     break;
-      case 'share':       Share.render(container);                       break;
-      case 'gamification':Gamification.renderGamificationTab(container); break;
-      case 'history':     History.render(container);                     break;
-      case 'photos':      Photos.render(container);                      break;
-      case 'social':      Social.render(container);                      break;
-      case 'supersets':   Superset.render(container);                    break;
-      case 'offline':     Offline.render(container);                     break;
-      case 'settings':    _rendreSettings(container);                    break;
-      case 'nutrition':   _rendreNutrition(container);                   break;
-
-      // ✅ FIX — Pages manquantes dans le switch
-      case 'mon_profil':
-        _renderMonProfil(container);
-        break;
+      case 'home':         _rendreHome(container);                        break;
+      case 'training':     _rendreTraining(container);                    break;
+      case 'live':         _rendreLive(container, options);               break;
+      case 'stats':        Stats.render(container);                       break;
+      case 'profil':       _rendreProfil(container);                      break;
+      case 'coach':        Coach.renderCoachTab(container);               break;
+      case 'defis':        Defis.render(container);                       break;
+      case 'predict':      Predict.render(container);                     break;
+      case 'share':        Share.render(container);                       break;
+      case 'gamification': Gamification.renderGamificationTab(container); break;
+      case 'history':      History.render(container);                     break;
+      case 'photos':       Photos.render(container);                      break;
+      case 'social':       Social.render(container);                      break;
+      case 'supersets':    Superset.render(container);                    break;
+      case 'offline':      Offline.render(container);                     break;
+      case 'settings':     _rendreSettings(container);                    break;
+      case 'nutrition':    _rendreNutrition(container);                   break;
+      case 'mon_profil':   _renderMonProfil(container);                   break;
 
       case 'journal':
-        try {
-          Stats.renderJournal(container);
-        } catch(e) {
+        try { Stats.renderJournal(container); }
+        catch(e) {
           _rendrePlaceholder(container, '📔', 'Journal',
             'Ton journal d\'entraînement sera disponible ici.');
         }
         break;
 
       case 'objectifs':
-        try {
-          Stats.renderObjectifs(container);
-        } catch(e) {
+        try { Stats.renderObjectifs(container); }
+        catch(e) {
           _rendrePlaceholder(container, '🎯', 'Objectifs',
             'Définis et suis tes objectifs ici.');
         }
         break;
 
       case 'blessures':
-        try {
-          Stats.renderBlessures(container);
-        } catch(e) {
+        try { Stats.renderBlessures(container); }
+        catch(e) {
           _rendrePlaceholder(container, '🩹', 'Blessures',
             'Suivi de tes blessures et zones sensibles.');
         }
@@ -189,11 +181,9 @@ function _rendreContenu(page, container, options = {}) {
     console.error(`[App] Erreur rendu page ${page}:`, e);
     container.innerHTML = `
       <div class="card mt-md"
-           style="text-align:center;
-                  padding:var(--space-xl)">
+           style="text-align:center;padding:var(--space-xl)">
         <div style="font-size:2rem">⚠️</div>
-        <p style="color:var(--text-muted);
-                  margin-top:var(--space-sm)">
+        <p style="color:var(--text-muted);margin-top:var(--space-sm)">
           Erreur chargement de la page.<br>
           <button onclick="naviguer('home')"
                   class="btn-secondary mt-md">
@@ -204,12 +194,10 @@ function _rendreContenu(page, container, options = {}) {
   }
 }
 
-// ✅ NOUVEAU — Placeholder générique pour modules en cours
 function _rendrePlaceholder(container, emoji, titre, desc) {
   container.innerHTML = `
     <div class="card mt-md"
-         style="text-align:center;
-                padding:var(--space-xl)">
+         style="text-align:center;padding:var(--space-xl)">
       <div style="font-size:2.5rem;margin-bottom:var(--space-sm)">
         ${emoji}
       </div>
@@ -217,8 +205,7 @@ function _rendrePlaceholder(container, emoji, titre, desc) {
                   margin-bottom:var(--space-sm)">
         ${titre}
       </div>
-      <p style="color:var(--text-muted);
-                font-size:.85rem;
+      <p style="color:var(--text-muted);font-size:.85rem;
                 line-height:1.5">
         ${desc}
       </p>
@@ -236,23 +223,23 @@ function _rendreHome(container) {
   let profil   = { nom:'Athlète', avatar:'💪' };
   let seance   = null, prochaine = null;
   let infos    = { label:'S1', cycle:1,
-                   phase:{ emoji:'🌱', nom:'Reprise', couleur:'#8bf0bb' } };
+                   phase:{ emoji:'🌱', nom:'Reprise',
+                           couleur:'#8bf0bb' } };
   let streak   = { count:0, max:0 };
   let xp       = { total:0, pourcentage:0,
                    niveau:{ emoji:'💪', numero:1, nom:'Débutant' } };
-  let analyse  = { seances:0, objectif:4, volume:0, rpe:0,
-                   recommendation:'Continue !' };
+  let analyse  = { seances:0, objectif:4, volume:0, rpe:0 };
   let msg      = { emoji:'💡', message:'Bonne séance !' };
   let defisSem = [];
 
-  try { profil    = Tracker.getProfil();                               } catch(e) {}
-  try { seance    = Programme.getSeanceduJour();                       } catch(e) {}
-  try { prochaine = Programme.getProchaineSeance();                    } catch(e) {}
-  try { infos     = Programme.getInfosProgramme();                     } catch(e) {}
-  try { streak    = Tracker.getStreak();                               } catch(e) {}
-  try { xp        = Gamification.getXP();                             } catch(e) {}
-  try { analyse   = Coach.getAnalyseSemaine();                         } catch(e) {}
-  try { msg       = Coach.getMessageDuJour();                          } catch(e) {}
+  try { profil    = Tracker.getProfil();                    } catch(e) {}
+  try { seance    = Programme.getSeanceduJour();            } catch(e) {}
+  try { prochaine = Programme.getProchaineSeance();         } catch(e) {}
+  try { infos     = Programme.getInfosProgramme();          } catch(e) {}
+  try { streak    = Tracker.getStreak();                    } catch(e) {}
+  try { xp        = Gamification.getXP();                  } catch(e) {}
+  try { analyse   = Coach.getAnalyseSemaine();              } catch(e) {}
+  try { msg       = Coach.getMessageDuJour();               } catch(e) {}
   try {
     defisSem = (Defis.mettreAJourProgression()||[])
       .filter(d => !d.complete).slice(0, 2);
@@ -380,7 +367,8 @@ function _rendreHome(container) {
             color:'var(--fd-indigo)' },
           { label:'Volume',   val:Utils.formatVolume(analyse.volume),
             color:'var(--fd-mint)'  },
-          { label:'RPE moy.', val:analyse.rpe > 0 ? `${analyse.rpe}/10` : '—',
+          { label:'RPE moy.', val:analyse.rpe > 0
+              ? `${analyse.rpe}/10` : '—',
             color:'var(--fd-lemon)' }
         ].map(s => `
           <div style="text-align:center;padding:var(--space-sm);
@@ -498,10 +486,10 @@ function _renderHumeurFatigue() {
                       margin-bottom:6px">Niveau de fatigue</div>
           <div style="display:flex;gap:6px">
             ${[
-              {val:0, label:'Frais',   color:'var(--fd-mint)'  },
-              {val:1, label:'OK',      color:'var(--fd-lemon)' },
-              {val:2, label:'Mod.',    color:'#ffa500'         },
-              {val:3, label:'Épuisé',  color:'var(--fd-coral)' }
+              {val:0, label:'Frais',  color:'var(--fd-mint)'  },
+              {val:1, label:'OK',     color:'var(--fd-lemon)' },
+              {val:2, label:'Mod.',   color:'#ffa500'         },
+              {val:3, label:'Épuisé', color:'var(--fd-coral)' }
             ].map(f => `
               <button onclick="App.setFatigue(${f.val})"
                       style="flex:1;padding:6px 2px;
@@ -528,9 +516,9 @@ function _rendreTraining(container) {
   let seances  = [];
   let planning = [];
 
-  try { infos   = Programme.getInfosProgramme();  } catch(e) {}
-  try { seances = Programme.getAllSeances();       } catch(e) {}
-  try { planning= Programme.getSeancesSemaine();  } catch(e) {}
+  try { infos    = Programme.getInfosProgramme(); } catch(e) {}
+  try { seances  = Programme.getAllSeances();      } catch(e) {}
+  try { planning = Programme.getSeancesSemaine(); } catch(e) {}
 
   container.innerHTML = `
     <div class="card mb-md"
@@ -633,7 +621,8 @@ function _renderCarteSeanceTraining(seance) {
             ~${seance.duree_estimee}min
             · ${seance.exercices?.length||0} exercices
             ${supersets.length > 0
-              ? `· ${supersets.length} superset${supersets.length>1?'s':''}` : ''}
+              ? `· ${supersets.length} superset${
+                  supersets.length>1?'s':''}` : ''}
           </div>
         </div>
         <button onclick="naviguer('live',{ seanceId:'${seance.id}' })"
@@ -651,7 +640,7 @@ function _renderCarteSeanceTraining(seance) {
       </div>
       <div style="margin-top:var(--space-sm);font-size:.75rem;
                   color:var(--text-muted)">
-        ${(seance.exercices||[]).slice(0, 4).map(ex => {
+        ${(seance.exercices||[]).slice(0,4).map(ex => {
           const exo = (window.EXERCICES||{})[ex.ref]||{};
           return `${exo.emoji||'💪'} ${exo.nom||ex.ref}`;
         }).join(' · ')}
@@ -662,7 +651,7 @@ function _renderCarteSeanceTraining(seance) {
 }
 
 // ════════════════════════════════════════════════════════════
-// PAGE LIVE — ✅ FIX Timer de séance démarré automatiquement
+// PAGE LIVE
 // ════════════════════════════════════════════════════════════
 function _rendreLive(container, options = {}) {
   const seanceId = options.seanceId
@@ -683,14 +672,17 @@ function _rendreLive(container, options = {}) {
           Aucune séance planifiée aujourd'hui.
         </p>
         <div style="display:flex;flex-wrap:wrap;
-                    gap:var(--space-sm);margin-top:var(--space-lg)">
+                    gap:var(--space-sm);
+                    margin-top:var(--space-lg)">
           <button onclick="naviguer('training')"
-                  class="btn-secondary">
+                  class="btn-secondary"
+                  style="flex:1;min-width:140px">
             📅 Voir le programme
           </button>
           <button onclick="naviguer('live',{ seanceId:'full_body' })"
-                  class="btn-primary">
-               ⚡ Séance express
+                  class="btn-primary"
+                  style="flex:1;min-width:140px">
+            ⚡ Séance express
           </button>
         </div>
       </div>`;
@@ -712,9 +704,9 @@ function _rendreLive(container, options = {}) {
     return;
   }
 
-  // ✅ FIX — Démarrer le timer de séance automatiquement
   try {
-    const cleStart = `ft_seance_start_${Utils.aujourd_hui()}_${seanceId}`;
+    const cleStart =
+      `ft_seance_start_${Utils.aujourd_hui()}_${seanceId}`;
     if (!Utils.storage.get(cleStart)) {
       Tracker.demarrerSeance(seanceId);
     }
@@ -836,7 +828,8 @@ function _renderExercicesLive(seance, seanceId) {
                   ${ss.exercices?.length||0} exercices
                 </div>
               </div>
-              <button onclick="Superset.lancerUI('${ss.id}','${seanceId}')"
+              <button onclick="Superset.lancerUI(
+                        '${ss.id}','${seanceId}')"
                       style="padding:4px 10px;
                              background:var(--fd-lavender);
                              color:#09092d;border:none;
@@ -939,7 +932,8 @@ function _renderExercicesLive(seance, seanceId) {
                 <div style="font-size:.72rem;color:var(--text-muted);
                             margin-top:var(--space-xs);
                             padding-left:var(--space-sm)">
-                  ${exo.conseils.map(c => `<div>• ${c}</div>`).join('')}
+                  ${exo.conseils.map(c =>
+                    `<div>• ${c}</div>`).join('')}
                 </div>
               </details>` : ''}
           </div>`;
@@ -992,26 +986,29 @@ function _getPRExo(ref) {
 }
 
 function _getChargeReco(ref) {
-  try { return Predict.recommanderCharge(ref); } catch(e) { return null; }
+  try { return Predict.recommanderCharge(ref); }
+  catch(e) { return null; }
 }
 
 // ════════════════════════════════════════════════════════════
 // PAGE PROFIL
 // ════════════════════════════════════════════════════════════
 function _rendreProfil(container) {
-  let profil   = { nom:'Athlète', avatar:'💪', poids:80,
-                   taille:175, objectif:'forme' };
-  let xp       = { total:0, niveau:{ emoji:'💪', numero:1, nom:'Débutant' } };
+  let profil   = { nom:'Athlète', avatar:'💪',
+                   poids:80, taille:175, objectif:'forme' };
+  let xp       = { total:0,
+                   niveau:{ emoji:'💪', numero:1, nom:'Débutant' } };
   let streak   = { count:0, max:0 };
   let total    = 0;
   let trophees = 0;
 
-  try { profil   = Tracker.getProfil();                               } catch(e) {}
-  try { xp       = Gamification.getXP();                             } catch(e) {}
-  try { streak   = Tracker.getStreak();                              } catch(e) {}
-  try { total    = Tracker.getTotalSeances();                         } catch(e) {}
+  try { profil   = Tracker.getProfil();           } catch(e) {}
+  try { xp       = Gamification.getXP();          } catch(e) {}
+  try { streak   = Tracker.getStreak();           } catch(e) {}
+  try { total    = Tracker.getTotalSeances();      } catch(e) {}
   try {
-    trophees = Gamification.getTrophees().filter(t => t.debloquee).length;
+    trophees = Gamification.getTrophees()
+      .filter(t => t.debloquee).length;
   } catch(e) {}
 
   container.innerHTML = `
@@ -1046,22 +1043,21 @@ function _rendreProfil(container) {
     </div>
 
     ${[
-      // ✅ FIX — Naviguer vers les bonnes pages
-      {page:'mon_profil',   emoji:'👤', label:'Mon profil'        },
-      {page:'journal',      emoji:'📔', label:'Journal'           },
-      {page:'objectifs',    emoji:'🎯', label:'Objectifs'         },
-      {page:'blessures',    emoji:'🩹', label:'Blessures'         },
-      {page:'coach',        emoji:'🤖', label:'Coach IA'          },
-      {page:'defis',        emoji:'🏆', label:'Défis'             },
-      {page:'predict',      emoji:'📈', label:'Prédictions'       },
-      {page:'share',        emoji:'📤', label:'Partage'           },
-      {page:'supersets',    emoji:'⚡', label:'Supersets'         },
-      {page:'social',       emoji:'📱', label:'Réseaux sociaux'   },
-      {page:'offline',      emoji:'📵', label:'Hors-ligne'        },
-      {page:'gamification', emoji:'⭐', label:'XP & Niveaux'      },
-      {page:'history',      emoji:'📅', label:'Historique'        },
-      {page:'photos',       emoji:'📸', label:'Photos'            },
-      {page:'settings',     emoji:'⚙️', label:'Paramètres'        }
+      {page:'mon_profil',   emoji:'👤', label:'Mon profil'       },
+      {page:'journal',      emoji:'📔', label:'Journal'          },
+      {page:'objectifs',    emoji:'🎯', label:'Objectifs'        },
+      {page:'blessures',    emoji:'🩹', label:'Blessures'        },
+      {page:'coach',        emoji:'🤖', label:'Coach IA'         },
+      {page:'defis',        emoji:'🏆', label:'Défis'            },
+      {page:'predict',      emoji:'📈', label:'Prédictions'      },
+      {page:'share',        emoji:'📤', label:'Partage'          },
+      {page:'supersets',    emoji:'⚡', label:'Supersets'        },
+      {page:'social',       emoji:'📱', label:'Réseaux sociaux'  },
+      {page:'offline',      emoji:'📵', label:'Hors-ligne'       },
+      {page:'gamification', emoji:'⭐', label:'XP & Niveaux'     },
+      {page:'history',      emoji:'📅', label:'Historique'       },
+      {page:'photos',       emoji:'📸', label:'Photos'           },
+      {page:'settings',     emoji:'⚙️', label:'Paramètres'       }
     ].map(s => `
       <div class="card mb-md"
            style="cursor:pointer"
@@ -1074,7 +1070,9 @@ function _rendreProfil(container) {
               ${s.label}
             </span>
           </div>
-          <span style="color:var(--text-muted);font-size:.9rem">›</span>
+          <span style="color:var(--text-muted);font-size:.9rem">
+            ›
+          </span>
         </div>
       </div>`).join('')}
 
@@ -1092,7 +1090,7 @@ function _rendreProfil(container) {
 }
 
 // ════════════════════════════════════════════════════════════
-// ✅ NOUVEAU — PAGE MON PROFIL
+// PAGE MON PROFIL
 // ════════════════════════════════════════════════════════════
 function _renderMonProfil(container) {
   let profil = {
@@ -1120,8 +1118,7 @@ function _renderMonProfil(container) {
         ${avatars.map(a => `
           <button onclick="App._selectAvatar('${a}', this)"
                   class="profil-avatar-btn"
-                  style="width:44px;height:44px;
-                         font-size:1.5rem;
+                  style="width:44px;height:44px;font-size:1.5rem;
                          background:${profil.avatar===a
                            ? 'var(--fd-indigo-dim)'
                            : 'var(--bg-input)'};
@@ -1143,13 +1140,11 @@ function _renderMonProfil(container) {
                value="${profil.nom||''}"
                placeholder="Ton prénom"
                autocomplete="given-name" />
-
         <div class="input-label">Poids (kg)</div>
         <input class="input mb-md" id="profil-edit-poids"
                type="number" step="0.1"
                value="${profil.poids||''}"
                placeholder="80" />
-
         <div class="input-label">Taille (cm)</div>
         <input class="input mb-md" id="profil-edit-taille"
                type="number"
@@ -1178,7 +1173,6 @@ function _renderMonProfil(container) {
             class="btn-primary btn-full mb-md">
       💾 Sauvegarder
     </button>
-
     <button onclick="retourArriere()"
             class="btn-secondary btn-full">
       ← Retour
@@ -1256,14 +1250,18 @@ function _rendreSettings(container) {
               <button onclick="Utils.storage.set(
                         'ft_objectif_seances_semaine',${n});
                         naviguer('settings')"
-                      style="width:44px;height:44px;border-radius:50%;
-                             font-weight:700;font-size:.9rem;cursor:pointer;
+                      style="width:44px;height:44px;
+                             border-radius:50%;
+                             font-weight:700;font-size:.9rem;
+                             cursor:pointer;
                              background:${current===n
-                               ? 'var(--fd-indigo)':'var(--bg-input)'};
+                               ? 'var(--fd-indigo)'
+                               : 'var(--bg-input)'};
                              color:${current===n
                                ? 'white':'var(--text-muted)'};
                              border:2px solid ${current===n
-                               ? 'var(--fd-indigo)':'var(--border-color)'}">
+                               ? 'var(--fd-indigo)'
+                               : 'var(--border-color)'}">
                 ${n}
               </button>`;
           }).join('')}
@@ -1276,15 +1274,82 @@ function _rendreSettings(container) {
     <div style="text-align:center;font-size:.65rem;
                 color:var(--text-muted);
                 margin-top:var(--space-md)">
-      PowerApp v3.0 · EverGPT Turbo<br>
-      Build 2026
+      PowerApp v3.0 · EverGPT Turbo<br>Build 2026
     </div>
   `;
 
   try {
-    i18n.renderSelecteur(document.getElementById('settings-langue'));
-    Offline.render(document.getElementById('offline-content'));
+    i18n.renderSelecteur(
+      document.getElementById('settings-langue')
+    );
+    Offline.render(
+      document.getElementById('offline-content')
+    );
   } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════
+// PAGE NUTRITION
+// ════════════════════════════════════════════════════════════
+function _rendreNutrition(container) {
+  let profil = { poids:80 };
+  try { profil = Tracker.getProfil(); } catch(e) {}
+  const prot = Math.round((profil.poids||80) * 2);
+  const cal  = Math.round((profil.poids||80) * 35);
+  const eau  = ((profil.poids||80) * 0.035).toFixed(1);
+
+  container.innerHTML = `
+    <div class="card mb-md"
+         style="text-align:center;border-color:var(--fd-mint)">
+      <div style="font-size:2rem">🥗</div>
+      <div style="font-weight:700;font-size:1.1rem;
+                  margin-top:var(--space-sm)">
+        Recommandations nutrition
+      </div>
+      <div style="font-size:.75rem;color:var(--text-muted);
+                  margin-top:4px">
+        Basé sur ton profil (${profil.poids||80}kg)
+      </div>
+    </div>
+
+    ${[
+      {emoji:'🥩',label:'Protéines',
+       val:`${prot}g/jour`,         color:'var(--fd-coral)'   },
+      {emoji:'🔥',label:'Calories',
+       val:`~${cal} kcal`,          color:'var(--fd-lemon)'   },
+      {emoji:'💧',label:'Eau',
+       val:`${eau}L/jour`,          color:'var(--fd-indigo)'  },
+      {emoji:'⏰',label:'Repas pré-séance',
+       val:'2-3h avant',            color:'var(--fd-mint)'    },
+      {emoji:'🥛',label:'Post-séance',
+       val:'Protéines+glucides 30min',color:'var(--fd-lavender)'}
+    ].map(r => `
+      <div class="card mb-md">
+        <div class="flex justify-between items-center">
+          <div style="display:flex;align-items:center;
+                      gap:var(--space-md)">
+            <span style="font-size:1.5rem">${r.emoji}</span>
+            <div style="font-weight:600;font-size:.88rem">
+              ${r.label}
+            </div>
+          </div>
+          <div style="font-size:.92rem;font-weight:800;
+                      color:${r.color}">
+            ${r.val}
+          </div>
+        </div>
+      </div>`).join('')}
+
+    <div class="card"
+         style="text-align:center;padding:var(--space-lg);
+                opacity:.6">
+      <div style="font-size:1.5rem">🚀</div>
+      <div style="font-size:.82rem;color:var(--text-muted);
+                  margin-top:var(--space-sm)">
+        Module Nutrition complet — Bientôt disponible
+      </div>
+    </div>
+  `;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1292,7 +1357,6 @@ function _rendreSettings(container) {
 // ════════════════════════════════════════════════════════════
 const App = {
 
-  // ✅ Sélecteurs de profil (utilisés dans _renderMonProfil)
   _avatarChoisi:   null,
   _objectifChoisi: null,
 
@@ -1316,19 +1380,21 @@ const App = {
     btn.style.background  = 'var(--fd-indigo-dim)';
   },
 
-  // ✅ NOUVEAU — sauvegarderProfil()
   sauvegarderProfil() {
     try {
-      const nom    = document.getElementById('profil-edit-nom')?.value?.trim();
-      const poids  = parseFloat(document.getElementById('profil-edit-poids')?.value);
-      const taille = parseFloat(document.getElementById('profil-edit-taille')?.value);
+      const nom    = document.getElementById('profil-edit-nom')
+        ?.value?.trim();
+      const poids  = parseFloat(
+        document.getElementById('profil-edit-poids')?.value);
+      const taille = parseFloat(
+        document.getElementById('profil-edit-taille')?.value);
 
       if (!nom) {
         Utils.toast('Entre ton prénom !', 'error');
         return;
       }
 
-      const profil = Tracker.getProfil();
+      const profil  = Tracker.getProfil();
       const updates = {
         nom,
         poids:  isNaN(poids)  ? profil.poids  : poids,
@@ -1375,7 +1441,8 @@ const App = {
       );
     } catch(e) {}
 
-    const btn = document.getElementById(`btn-serie-${exoIdx}-${serieIdx}`);
+    const btn =
+      document.getElementById(`btn-serie-${exoIdx}-${serieIdx}`);
     if (btn) {
       btn.textContent       = '✅';
       btn.style.background  = 'var(--fd-mint)';
@@ -1390,10 +1457,12 @@ const App = {
     } catch(e) {}
 
     if (result.isPR) {
-      try { timerRepos.jouerSon('pr'); } catch(e) {}
-      try { Gamification.recompenser('PR_BATTU'); } catch(e) {}
+      try { timerRepos.jouerSon('pr');               } catch(e) {}
+      try { Gamification.recompenser('PR_BATTU');    } catch(e) {}
       try { Notifications.notifierPR(exoRef, poids, reps); } catch(e) {}
-      Utils.toast(`🏆 Nouveau record ! ${poids}kg × ${reps}`, 'pr', 4000);
+      Utils.toast(
+        `🏆 Nouveau record ! ${poids}kg × ${reps}`, 'pr', 4000
+      );
       Utils.vibrerPR();
     } else {
       Utils.vibrerSuccess();
@@ -1414,10 +1483,9 @@ const App = {
 
   async terminerSeance(seanceId) {
     try {
-      // ✅ FIX — getDureeSeance et getPRsSeance maintenant définis
       const duree  = Tracker.getDureeSeance?.(seanceId) || 0;
-      const volume = Tracker.getVolumeSemaine?.() || 0;
-      const prs    = Tracker.getPRsSeance?.(seanceId) || 0;
+      const volume = Tracker.getVolumeSemaine?.()       || 0;
+      const prs    = Tracker.getPRsSeance?.(seanceId)   || 0;
       const seance = (window.SEANCES_BASE||{})[seanceId];
       const nom    = seance?.nom || 'Séance';
 
@@ -1428,12 +1496,13 @@ const App = {
         Gamification.verifierTrophees();
       } catch(e) {}
 
-      try { Defis.mettreAJourProgression(); } catch(e) {}
-      try { Notifications.notifierFinSeance(nom, duree, volume); } catch(e) {}
-      try { Notifications.verifierSemaineParf(); } catch(e) {}
+      try { Defis.mettreAJourProgression();              } catch(e) {}
+      try { Notifications.notifierFinSeance(nom,duree,volume); } catch(e) {}
+      try { Notifications.verifierSemaineParf();         } catch(e) {}
 
       try {
-        if (Programme.isDecharge?.()) Notifications.notifierDecharge();
+        if (Programme.isDecharge?.())
+          Notifications.notifierDecharge();
       } catch(e) {}
 
       try {
@@ -1462,7 +1531,6 @@ const App = {
       'Ta progression sera sauvegardée.'
     );
     if (!ok) return;
-
     try { Tracker.terminerSeance?.(seanceId); } catch(e) {}
     Utils.toast('Séance arrêtée.', 'info');
     naviguer('home');
@@ -1509,12 +1577,14 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
                   margin-bottom:var(--space-lg)">
         ${seance.emoji} ${seance.nom}
       </div>
-
       <div class="stats-grid mb-md">
         ${[
-          {label:'Volume',  val:Utils.formatVolume(volume), color:'var(--fd-mint)'  },
-          {label:'Durée',   val:Utils.formatDuree(duree),   color:'var(--fd-indigo)'},
-          {label:'Records', val:prs,                        color:'var(--fd-lemon)' }
+          {label:'Volume', val:Utils.formatVolume(volume),
+           color:'var(--fd-mint)'  },
+          {label:'Durée',  val:Utils.formatDuree(duree),
+           color:'var(--fd-indigo)'},
+          {label:'Records',val:prs,
+           color:'var(--fd-lemon)' }
         ].map(s => `
           <div class="stat-card">
             <span class="stat-value" style="color:${s.color}">
@@ -1523,7 +1593,6 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
             <span class="stat-label">${s.label}</span>
           </div>`).join('')}
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;
                   gap:var(--space-sm)">
         <button onclick="
@@ -1555,59 +1624,47 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
 }
 
 // ════════════════════════════════════════════════════════════
-// UI HELPERS
+// UI — Menu dropdown
 // ════════════════════════════════════════════════════════════
-// ════════════════════════
-// UI
-// ════════════════════════
-// ════════════════════════
-// UI
-// ════════════════════════
 const UI = {
 
   toggleMenu() {
     const menu = document.getElementById('app-menu');
     if (!menu) return;
-
     const estOuvert = !menu.classList.contains('hidden');
-
-    if (estOuvert) {
-      UI.fermerMenu();
-    } else {
-      menu.classList.remove('hidden');
-
-      // ✅ Attendre 50ms puis écouter
-      setTimeout(() => {
-        document.addEventListener(
-          'click', UI._handler, true
-        );
-      }, 50);
-    }
+    estOuvert ? UI.fermerMenu() : UI.ouvrirMenu();
   },
 
+  ouvrirMenu() {
+    const menu = document.getElementById('app-menu');
+    if (!menu) return;
+    menu.classList.remove('hidden');
+    // ✅ Délai pour ignorer le clic d'ouverture
+    setTimeout(() => {
+      document.addEventListener('click', UI._handler);
+    }, 50);
+  },
+
+  // ✅ PAS de capture:true → les clics sur les items passent
   _handler(e) {
     const menu   = document.getElementById('app-menu');
-    const bouton = document.querySelector('.header-icon-btn');
-
-    if (!menu || menu.classList.contains('hidden')) {
-      document.removeEventListener(
-        'click', UI._handler, true
-      );
+    const bouton = document.getElementById('btn-menu');
+    if (!menu) {
+      document.removeEventListener('click', UI._handler);
       return;
     }
-
-    if (!menu.contains(e.target)
-        && !bouton?.contains(e.target)) {
-      UI.fermerMenu();
+    // Clic dans le menu ou sur le bouton → ne pas fermer
+    if (menu.contains(e.target) || bouton?.contains(e.target)) {
+      return;
     }
+    // Clic en dehors → fermer
+    UI.fermerMenu();
   },
 
   fermerMenu() {
     const menu = document.getElementById('app-menu');
     if (menu) menu.classList.add('hidden');
-    document.removeEventListener(
-      'click', UI._handler, true
-    );
+    document.removeEventListener('click', UI._handler);
   },
 
   async confirmerReset() {
@@ -1620,70 +1677,9 @@ const UI = {
     Utils.toast('Données supprimées.', 'info');
     setTimeout(() => window.location.reload(), 1000);
   }
-
 };
 
 window.UI = UI;
-
-// ════════════════════════════════════════════════════════════
-// PAGE NUTRITION
-// ════════════════════════════════════════════════════════════
-function _rendreNutrition(container) {
-  let profil = { poids:80 };
-  try { profil = Tracker.getProfil(); } catch(e) {}
-  const prot = Math.round((profil.poids||80) * 2);
-  const cal  = Math.round((profil.poids||80) * 35);
-  const eau  = ((profil.poids||80) * 0.035).toFixed(1);
-
-  container.innerHTML = `
-    <div class="card mb-md"
-         style="text-align:center;border-color:var(--fd-mint)">
-      <div style="font-size:2rem">🥗</div>
-      <div style="font-weight:700;font-size:1.1rem;
-                  margin-top:var(--space-sm)">
-        Recommandations nutrition
-      </div>
-      <div style="font-size:.75rem;color:var(--text-muted);
-                  margin-top:4px">
-        Basé sur ton profil (${profil.poids||80}kg)
-      </div>
-    </div>
-
-    ${[
-      {emoji:'🥩', label:'Protéines',       val:`${prot}g/jour`,          color:'var(--fd-coral)'   },
-      {emoji:'🔥', label:'Calories',        val:`~${cal} kcal`,           color:'var(--fd-lemon)'   },
-      {emoji:'💧', label:'Eau',             val:`${eau}L/jour`,           color:'var(--fd-indigo)'  },
-      {emoji:'⏰', label:'Repas pré-séance',val:'2-3h avant',             color:'var(--fd-mint)'    },
-      {emoji:'🥛', label:'Post-séance',     val:'Protéines+glucides 30min',color:'var(--fd-lavender)'}
-    ].map(r => `
-      <div class="card mb-md">
-        <div class="flex justify-between items-center">
-          <div style="display:flex;align-items:center;
-                      gap:var(--space-md)">
-            <span style="font-size:1.5rem">${r.emoji}</span>
-            <div>
-              <div style="font-weight:600;font-size:.88rem">
-                ${r.label}
-              </div>
-            </div>
-          </div>
-          <div style="font-size:.92rem;font-weight:800;
-                      color:${r.color}">
-            ${r.val}
-          </div>
-        </div>
-      </div>`).join('')}
-
-    <div class="card"
-         style="text-align:center;padding:var(--space-lg);opacity:.6">
-      <div style="font-size:1.5rem">🚀</div>
-      <div style="font-size:.82rem;color:var(--text-muted);
-                  margin-top:var(--space-sm)">
-        Module Nutrition complet — Bientôt disponible
-      </div>
-    </div>
-  `;
-}
 
 // ════════════════════════════════════════════════════════════
 // INIT PRINCIPAL
@@ -1703,13 +1699,12 @@ async function init() {
     document.getElementById('splash-screen').style.display = 'none';
     document.getElementById('app-wrapper').style.display   = 'flex';
 
-    try { Tracker.init?.(); } catch(e) {}
-    try { Programme.getDateDebut(); } catch(e) {}
-
+    try { Tracker.init?.();          } catch(e) {}
+    try { Programme.getDateDebut();  } catch(e) {}
     try { Gamification.verifierTrophees(); } catch(e) {}
     try { await Notifications.init(); } catch(e) {}
-    try { Offline.init(); } catch(e) {}
-    try { Offline.initInstall(); } catch(e) {}
+    try { Offline.init();            } catch(e) {}
+    try { Offline.initInstall();     } catch(e) {}
 
     try {
       const jours = Tracker.getJoursAbsence();
@@ -1726,33 +1721,38 @@ async function init() {
     } catch(e) {}
 
     try {
-      if (Offline.estEnLigne() && Offline._pendingQueue?.length > 0) {
+      if (Offline.estEnLigne()
+          && Offline._pendingQueue?.length > 0) {
         setTimeout(() => Offline.syncPendingQueue(), 4000);
       }
     } catch(e) {}
 
     naviguer('home');
-    _updateHeaderXP(); 
-    document.getElementById('btn-menu')
-  ?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    UI.toggleMenu();
-  }); 
+    _updateHeaderXP();
 
-    // ✅ FIX — Fermer le menu à la navigation
-    window.addEventListener('naviguer', () => UI.fermerMenu());
-    
+    // ✅ FIX FINAL — Bouton menu via addEventListener
+    const btnMenu = document.getElementById('btn-menu');
+    if (btnMenu) {
+      btnMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        UI.toggleMenu();
+      });
+    } else {
+      console.warn('[App] #btn-menu introuvable dans index.html');
+    }
+
     console.log('✅ PowerApp v3.0 — Prêt !');
 
   } catch(e) {
     console.error('[App] Erreur init:', e);
     document.getElementById('splash-screen')
-      ?.style.setProperty('display', 'none');
+      ?.style.setProperty('display','none');
     document.getElementById('app-wrapper')
-      ?.style.setProperty('display', 'flex');
+      ?.style.setProperty('display','flex');
     naviguer('home');
   }
-  try { Sounds.init(); } catch(e) {} 
+
+  try { Sounds.init(); } catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════════
@@ -1763,7 +1763,6 @@ function _afficherOnboarding() {
   const ob = document.getElementById('onboarding-screen');
   ob.classList.remove('hidden');
 
-  // ✅ FIX — Réinitialiser _obData proprement à chaque ouverture
   window._obData = {
     nom:'', poids:null, taille:null,
     objectif:'forme', niveau:'intermediaire'
@@ -1825,9 +1824,12 @@ function _renderEtapeOnboarding(etape, data) {
         <div style="display:grid;gap:var(--space-sm);
                     margin-top:var(--space-lg)">
           ${[
-            {val:'debutant',      label:'🌱 Débutant',      desc:'< 6 mois'      },
-            {val:'intermediaire', label:'💪 Intermédiaire', desc:'6 mois — 2 ans'},
-            {val:'avance',        label:'🔥 Avancé',        desc:'2 ans +'       }
+            {val:'debutant',
+             label:'🌱 Débutant',      desc:'< 6 mois'      },
+            {val:'intermediaire',
+             label:'💪 Intermédiaire', desc:'6 mois — 2 ans'},
+            {val:'avance',
+             label:'🔥 Avancé',        desc:'2 ans +'       }
           ].map(n => `
             <button onclick="_selectNiv('${n.val}', this)"
                     class="btn-secondary ob-niv"
@@ -1847,10 +1849,10 @@ function _renderEtapeOnboarding(etape, data) {
       titre:'C\'est parti ! 🚀',
       sousTitre:'Ton programme est prêt',
       contenu:`
-        <div style="text-align:center;
-                    padding:var(--space-xl) 0">
-          <div style="font-size:4rem;
-                      margin-bottom:var(--space-md)">⚡</div>
+        <div style="text-align:center;padding:var(--space-xl) 0">
+          <div style="font-size:4rem;margin-bottom:var(--space-md)">
+            ⚡
+          </div>
           <div style="font-size:1.1rem;font-weight:700;
                       margin-bottom:var(--space-sm)">
             Prêt ${data.nom} !
@@ -1934,16 +1936,23 @@ function _selectNiv(val, btn) {
 
 function _suivantOb(etapeActuelle) {
   if (etapeActuelle === 1) {
-    const nom    = document.getElementById('ob-nom')?.value?.trim();
-    const poids  = parseFloat(document.getElementById('ob-poids')?.value);
-    const taille = parseFloat(document.getElementById('ob-taille')?.value);
-    if (!nom) { Utils.toast('Entre ton prénom !', 'error'); return; }
+    const nom    = document.getElementById('ob-nom')
+      ?.value?.trim();
+    const poids  = parseFloat(
+      document.getElementById('ob-poids')?.value);
+    const taille = parseFloat(
+      document.getElementById('ob-taille')?.value);
+    if (!nom) {
+      Utils.toast('Entre ton prénom !', 'error');
+      return;
+    }
     window._obData.nom    = nom;
     window._obData.poids  = isNaN(poids)  ? null : poids;
     window._obData.taille = isNaN(taille) ? null : taille;
   }
   const ob = document.getElementById('onboarding-screen');
-  ob.innerHTML = _renderEtapeOnboarding(etapeActuelle + 1, window._obData);
+  ob.innerHTML =
+    _renderEtapeOnboarding(etapeActuelle + 1, window._obData);
 }
 
 function _renderEtapeOb(etape) {
