@@ -1699,6 +1699,7 @@ async function init() {
       ?.style.setProperty('display', 'flex');
     naviguer('home');
   }
+  try { Sounds.init(); } catch(e) {} 
 }
 
 // ════════════════════════════════════════════════════════════
