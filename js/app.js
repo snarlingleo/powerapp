@@ -1560,37 +1560,58 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
 const UI = {
 
   toggleMenu() {
-    const menu     = document.getElementById('app-menu');
-    const isHidden = menu?.classList.contains('hidden');
+    const menu = document.getElementById('app-menu');
+    if (!menu) return;
 
-    if (isHidden) {
-      menu.classList.remove('hidden');
-      // ✅ Listener unique qui se supprime lui-même
-      setTimeout(() => {
-        document.addEventListener('click', UI._fermerMenuHandler);
-      }, 0);
-    } else {
+    const estOuvert = !menu.classList.contains('hidden');
+
+    if (estOuvert) {
+      // ✅ Déjà ouvert → fermer
       UI.fermerMenu();
+    } else {
+      // ✅ Fermé → ouvrir + écouter clics extérieurs
+      menu.classList.remove('hidden');
+
+      // Délai 0 pour ignorer le clic d'ouverture
+      setTimeout(() => {
+        document.addEventListener(
+          'click',
+          UI._fermerMenuHandler,
+          { capture: true, once: false }
+        );
+      }, 0);
     }
   },
 
-  // ✅ Handler nommé pour pouvoir le supprimer proprement
   _fermerMenuHandler(e) {
-    const menu = document.getElementById('app-menu');
-    if (!menu) { return; }
+    const menu   = document.getElementById('app-menu');
+    const bouton = document.querySelector('.header-icon-btn');
 
-    // Si le clic est EN DEHORS du menu → fermer
-    if (!menu.contains(e.target)) {
+    if (!menu) {
+      document.removeEventListener(
+        'click', UI._fermerMenuHandler, true
+      );
+      return;
+    }
+
+    // ✅ Clic EN DEHORS du menu ET du bouton → fermer
+    const clicDanMenu   = menu.contains(e.target);
+    const clicDanBouton = bouton?.contains(e.target);
+
+    if (!clicDanMenu && !clicDanBouton) {
       UI.fermerMenu();
     }
   },
 
   fermerMenu() {
-    document.getElementById('app-menu')
-      ?.classList.add('hidden');
-    // ✅ Supprimer le listener proprement
+    const menu = document.getElementById('app-menu');
+    if (menu) menu.classList.add('hidden');
+
+    // ✅ Toujours nettoyer le listener
     document.removeEventListener(
-      'click', UI._fermerMenuHandler
+      'click',
+      UI._fermerMenuHandler,
+      true
     );
   },
 
@@ -1605,6 +1626,8 @@ const UI = {
     setTimeout(() => window.location.reload(), 1000);
   }
 };
+
+window.UI = UI;
 
 // ════════════════════════════════════════════════════════════
 // PAGE NUTRITION
