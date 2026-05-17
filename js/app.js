@@ -1713,6 +1713,8 @@ async function init() {
     } catch(e) {}
 
     naviguer('home');
+    _updateHeaderXP(); 
+     
     // ✅ FIX — Fermer le menu au clic en dehors
     document.addEventListener('click', (e) => {
       const menu    = document.getElementById('app-menu');
@@ -1726,8 +1728,7 @@ async function init() {
 
     // ✅ FIX — Fermer le menu à la navigation
     window.addEventListener('naviguer', () => UI.fermerMenu());
-    _updateHeaderXP();
-
+    
     console.log('✅ PowerApp v3.0 — Prêt !');
 
   } catch(e) {
