@@ -1144,55 +1144,61 @@ const timerRepos = {
     }
   },
 
-  jouerSon(type = 'beep') {
-    try {
-      const config = Utils.storage.get('ft_notifs_config', {});
-      if (config.son === false) return;
+  // Dans timerRepos — remplacer jouerSon() et _jouerSonSynth()
 
-      const sons = {
-        beep: './assets/sounds/beep.mp3',
-        pr:   './assets/sounds/pr.mp3',
-        rest: './assets/sounds/rest.mp3'
-      };
+jouerSon(type = 'beep') {
+  try {
+    const config = Utils.storage.get('ft_notifs_config', {});
+    if (config.son === false) return;
 
-      try {
-        const audio   = new Audio(sons[type] || sons.beep);
-        audio.volume  = 0.5;
-        audio.play().catch(() => this._jouerSonSynth(type));
-      } catch(e) {
-        this._jouerSonSynth(type);
-      }
-    } catch(e) {}
-  },
+    // ✅ Priorité 1 — Module Sounds (synthèse directe)
+    if (window.Sounds) {
+      window.Sounds.jouer(type);
+      return;
+    }
 
-  _jouerSonSynth(type) {
-    try {
-      const ctx   = new (window.AudioContext || window.webkitAudioContext)();
-      const osc   = ctx.createOscillator();
-      const gain  = ctx.createGain();
+    // ✅ Priorité 2 — Fichiers .mp3 si disponibles
+    const sons = {
+      beep: './assets/sounds/beep.mp3',
+      pr:   './assets/sounds/pr.mp3',
+      rest: './assets/sounds/rest.mp3'
+    };
 
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+    const audio  = new Audio(sons[type] || sons.beep);
+    audio.volume = 0.5;
+    audio.play().catch(() => this._jouerSonSynth(type));
 
-      const configs = {
-        beep: { freq:880, duree:.1,  type:'sine'   },
-        pr:   { freq:523, duree:.4,  type:'square' },
-        rest: { freq:440, duree:.2,  type:'sine'   }
-      };
+  } catch(e) {}
+},
 
-      const cfg = configs[type] || configs.beep;
+_jouerSonSynth(type) {
+  // Fallback minimal si Sounds.js non chargé
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
 
-      osc.frequency.setValueAtTime(cfg.freq, ctx.currentTime);
-      osc.type = cfg.type;
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(
-        0.001, ctx.currentTime + cfg.duree
-      );
+    osc.connect(gain);
+    gain.connect(ctx.destination);
 
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + cfg.duree);
-    } catch(e) {}
-  }
+    const configs = {
+      beep: { freq:880, dur:.12, type:'sine'     },
+      pr:   { freq:523, dur:.4,  type:'square'   },
+      rest: { freq:440, dur:.2,  type:'sine'     }
+    };
+
+    const cfg     = configs[type] || configs.beep;
+    osc.frequency.setValueAtTime(cfg.freq, ctx.currentTime);
+    osc.type = cfg.type;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001, ctx.currentTime + cfg.dur
+    );
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + cfg.dur);
+  } catch(e) {}
+}
 };
 
 // ════════════════════════════════════════════════════════════
