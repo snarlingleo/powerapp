@@ -276,7 +276,6 @@ self.addEventListener('message', (event) => {
       break;
 
     case 'CLEAR_CACHE': {
-      // ✅ FIX — bloc {} pour éviter erreur const dans switch
       const nameToDelete = payload || CACHE_DYNAMIC;
       caches.delete(nameToDelete).then(() => {
         _notifierClients({ type:'CACHE_CLEARED', nameToDelete });
@@ -288,6 +287,19 @@ self.addEventListener('message', (event) => {
       _getCacheSize().then(size => {
         event.source?.postMessage({ type:'CACHE_SIZE', size });
       });
+      break;
+
+    // ✅ NOUVEAU — Alarme téléphone verrouillé
+    case 'PLANIFIER_ALARME': {
+      const { heure, message, repetitions } = payload || {};
+      _planifierAlarmeLocale(heure, message, repetitions);
+      console.log('[SW] Alarme planifiée à', heure);
+      break;
+    }
+
+    case 'ANNULER_ALARME':
+      _annulerAlarmeLocale();
+      console.log('[SW] Alarme annulée');
       break;
 
     default:
@@ -439,6 +451,53 @@ async function _getCacheSize() {
     total += keys.length;
   }
   return total;
+}
+
+// ════════════════════════════════════════════════════════════
+// ALARME — Fonctionne téléphone verrouillé
+// ════════════════════════════════════════════════════════════
+let _alarmeTimer = null;
+
+function _planifierAlarmeLocale(heure, message, repetitions = 3) {
+  _annulerAlarmeLocale();
+
+  _alarmeTimer = setInterval(() => {
+    const now    = new Date();
+    const [h, m] = heure.split(':').map(Number);
+
+    if (now.getHours()   === h
+        && now.getMinutes() === m
+        && now.getSeconds() <= 10) {
+
+      for (let i = 0; i < repetitions; i++) {
+        setTimeout(() => {
+          self.registration.showNotification(
+            '⚡ PowerApp — Go t\'entraîner !', {
+              body:               message || 'C\'est l\'heure du sport !',
+              icon:               './assets/icons/icon-192.png',
+              badge:              './assets/icons/icon-72.png',
+              silent:             false,
+              requireInteraction: true,
+              renotify:           true,
+              tag:                `powerapp-alarme-${i}`,
+              vibrate: [500,200,500,200,500,500,200,500,200,500],
+              actions: [
+                { action:'go',    title:'💪 J\'y vais !' },
+                { action:'later', title:'⏰ +30 min'     }
+              ]
+            }
+          );
+        }, i * 120000);
+      }
+    }
+  }, 5000);
+}
+
+function _annulerAlarmeLocale() {
+  if (_alarmeTimer) {
+    clearInterval(_alarmeTimer);
+    _alarmeTimer = null;
+  }
 }
 
 // ════════════════════════════════════════════════════════════
