@@ -201,8 +201,10 @@ const Defis = {
     const selectionnes = [];
 
     // ✅ FIX — graine basée sur la semaine (déterministe mais variée)
-    const graine = new Date(semaine).getTime();
-    const seed   = Math.floor(graine / (1000 * 60 * 60 * 24));
+    const graine = new Date(semaine + 'T00:00:00').getTime();
+    const seed   = isNaN(graine)
+      ? Math.floor(Date.now() / (1000 * 60 * 60 * 24))
+      : Math.floor(graine / (1000 * 60 * 60 * 24));
 
     categories.forEach((cat, ci) => {
       const dispo = disponibles.filter(
