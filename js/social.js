@@ -776,8 +776,30 @@ const Social = {
     const tmpl = this.TEMPLATES[templateId];
     if (!tmpl) return;
 
-    const overlay = document.getElementById('social-modal-overlay');
-    const content = document.getElementById('social-modal-content');
+    let overlay = document.getElementById('social-modal-overlay');
+    let content = document.getElementById('social-modal-content');
+
+    // ✅ FIX — Créer le modal si la page social n'est pas ouverte
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'social-modal-overlay';
+      overlay.style.cssText = `display:none;position:fixed;inset:0;z-index:500;
+        background:rgba(0,0,0,0.85);overflow-y:auto;padding:var(--space-lg)`;
+      overlay.onclick = (e) => { if (e.target === overlay) Social._fermerModal(); };
+
+      const inner = document.createElement('div');
+      inner.id = 'social-modal-inner';
+      inner.style.cssText = `max-width:480px;margin:0 auto;
+        background:var(--bg-card);border-radius:var(--radius-lg);overflow:hidden`;
+
+      content = document.createElement('div');
+      content.id = 'social-modal-content';
+
+      inner.appendChild(content);
+      overlay.appendChild(inner);
+      document.body.appendChild(overlay);
+    }
+
     if (!overlay || !content) return;
 
     content.innerHTML = `
