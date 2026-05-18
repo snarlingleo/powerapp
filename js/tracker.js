@@ -141,7 +141,8 @@ const Tracker = {
     const d    = date || Utils.aujourd_hui();
     const cle  = this.CLE.SEANCE(d, seanceId);
     const data = Utils.storage.get(cle, null);
-    return data?.prs?.length || 0;
+    // ✅ Retourne le tableau complet (app.js fait .length dessus)
+    return data?.prs || [];
   },
 
   ajouterNoteSeance(seanceId, note, date = null) {
@@ -730,9 +731,10 @@ const Tracker = {
 
     for (let i = 0; i < nbJours; i++) {
       const date     = Utils.ajouterJours(Utils.aujourd_hui(), -i);
-      const planning = window.PLANNING_SEMAINE?.[
-        Utils.indexJourSemaine(date)
-      ];
+      // ✅ FIX — Fallback si PLANNING_SEMAINE non défini
+      const planning = (window.PLANNING_SEMAINE || window.SEANCES_BASE)
+        ? window.PLANNING_SEMAINE?.[Utils.indexJourSemaine(date)]
+        : null;
       const seance   = this.getSeanceDuJour(date);
 
       if (planning && !planning.seanceId) {
@@ -936,6 +938,13 @@ const Tracker = {
         const muscle = ex?.muscle || 'Autre';
         const vol    = (sr.poids||0) * (sr.reps||0);
         muscles[muscle] = (muscles[muscle]||0) + vol;
+
+        // ✅ Compter aussi les muscles secondaires (50% du volume)
+        if (ex?.muscles_sec?.length) {
+          ex.muscles_sec.forEach(ms => {
+            muscles[ms] = (muscles[ms]||0) + (vol * 0.5);
+          });
+        }
       });
     });
 
@@ -1024,6 +1033,32 @@ const Tracker = {
   }
 
 };
+
+// ✅ Polyfill — au cas où Utils.indexJourSemaine n'existe pas
+if (typeof Utils !== 'undefined' && !Utils.indexJourSemaine) {
+  Utils.indexJourSemaine = function(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return (d.getDay() + 6) % 7; // Lundi = 0
+  };
+}
+
+if (typeof Utils !== 'undefined' && !Utils.debutSemaine) {
+  Utils.debutSemaine = function(dateStr) {
+    const d   = new Date(dateStr + 'T00:00:00');
+    const day = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - day);
+    return d.toISOString().split('T')[0];
+  };
+}
+
+if (typeof Utils !== 'undefined' && !Utils.finSemaine) {
+  Utils.finSemaine = function(dateStr) {
+    const d   = new Date(dateStr + 'T00:00:00');
+    const day = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() + (6 - day));
+    return d.toISOString().split('T')[0];
+  };
+}
 
 window.Tracker = Tracker;
 console.log('✅ Tracker v3.0 chargé');
