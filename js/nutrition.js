@@ -186,6 +186,30 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
+  // CHARTS REGISTRY — ✅ FIX duplication
+  // ════════════════════════════════════════════════════════
+  _charts: {},
+
+  _detruireCharts() {
+    ['chart-nutri-cal','chart-nutri-prot'].forEach(id => {
+      if (Nutrition._charts[id]) {
+        try { Nutrition._charts[id].destroy(); } catch(e) {}
+        delete Nutrition._charts[id];
+      }
+    });
+  },
+
+  // ✅ Debounce pour éviter les re-renders multiples rapides
+  _renderTimeout: null,
+
+  renderDebounced(container, delai = 150) {
+    clearTimeout(this._renderTimeout);
+    this._renderTimeout = setTimeout(() => {
+      this.render(container);
+    }, delai);
+  },
+
+  // ════════════════════════════════════════════════════════
   // RENDER
   // ════════════════════════════════════════════════════════
   render(container) {
@@ -325,6 +349,19 @@ const Nutrition = {
             </button>`).join('')}
         </div>
       </div>
+      <!-- ═══ RAPPEL EAU ═══ -->
+      ${(jour.eau||0) < (besoins.eau * 1000 * 0.5) ? `
+        <div class="eau-rappel-banner mb-md">
+          <span class="eau-rappel-icon">💧</span>
+          <span class="eau-rappel-text">
+            Tu n'as bu que ${((jour.eau||0)/1000).toFixed(1)}L aujourd'hui.
+            Objectif : ${besoins.eau}L
+          </span>
+          <button class="eau-rappel-btn"
+                  onclick="Nutrition._ajouterEauUI(250)">
+            +250ml
+          </button>
+        </div>` : ''}
 
       <!-- ═══ AJOUTER ALIMENT ═══ -->
       <div class="card mb-md">
@@ -479,11 +516,14 @@ const Nutrition = {
     `;
 
     // Charts
+// ✅ Charts — Fix duplication
     requestAnimationFrame(() => {
+      Nutrition._detruireCharts();
+
       if (hist.length > 1) {
         const cc = document.getElementById('chart-nutri-cal');
         if (cc && typeof Chart !== 'undefined') {
-          new Chart(cc, {
+          Nutrition._charts['chart-nutri-cal'] = new Chart(cc, {
             type: 'bar',
             data: {
               labels:   hist.map(h => h.label),
@@ -501,12 +541,31 @@ const Nutrition = {
             },
             options: {
               responsive: true,
-              plugins:  { legend:{ display:false } },
+              maintainAspectRatio: true,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: '#09092d',
+                  titleColor:      '#ffffff',
+                  bodyColor:       '#f9ef77',
+                  callbacks: {
+                    label: ctx => `${ctx.parsed.y} kcal`,
+                    afterLabel: ctx => {
+                      const pct = Math.round((ctx.parsed.y / besoins.calories) * 100);
+                      return `${pct}% de l'objectif`;
+                    }
+                  }
+                }
+              },
               scales: {
-                x: { ticks:{ color:'#888', font:{ size:10 } },
-                     grid:{ color:'rgba(255,255,255,0.05)' } },
-                y: { ticks:{ color:'#888', font:{ size:10 } },
-                     grid:{ color:'rgba(255,255,255,0.05)' } }
+                x: {
+                  ticks: { color:'#888', font:{ size:10 } },
+                  grid:  { color:'rgba(255,255,255,0.05)' }
+                },
+                y: {
+                  ticks: { color:'#888', font:{ size:10 } },
+                  grid:  { color:'rgba(255,255,255,0.05)' }
+                }
               }
             }
           });
@@ -514,7 +573,7 @@ const Nutrition = {
 
         const cp = document.getElementById('chart-nutri-prot');
         if (cp && typeof Chart !== 'undefined') {
-          new Chart(cp, {
+          Nutrition._charts['chart-nutri-prot'] = new Chart(cp, {
             type: 'line',
             data: {
               labels:   hist.map(h => h.label),
@@ -531,12 +590,31 @@ const Nutrition = {
             },
             options: {
               responsive: true,
-              plugins:  { legend:{ display:false } },
+              maintainAspectRatio: true,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: '#09092d',
+                  titleColor:      '#ffffff',
+                  bodyColor:       '#ff8d96',
+                  callbacks: {
+                    label: ctx => `${ctx.parsed.y}g protéines`,
+                    afterLabel: ctx => {
+                      const pct = Math.round((ctx.parsed.y / besoins.proteines) * 100);
+                      return `${pct}% de l'objectif`;
+                    }
+                  }
+                }
+              },
               scales: {
-                x: { ticks:{ color:'#888', font:{ size:10 } },
-                     grid:{ color:'rgba(255,255,255,0.05)' } },
-                y: { ticks:{ color:'#888', font:{ size:10 } },
-                     grid:{ color:'rgba(255,255,255,0.05)' } }
+                x: {
+                  ticks: { color:'#888', font:{ size:10 } },
+                  grid:  { color:'rgba(255,255,255,0.05)' }
+                },
+                y: {
+                  ticks: { color:'#888', font:{ size:10 } },
+                  grid:  { color:'rgba(255,255,255,0.05)' }
+                }
               }
             }
           });
@@ -629,11 +707,31 @@ const Nutrition = {
     Utils.toast('✅ Aliment ajouté !', 'success', 1500);
     Utils.vibrerSuccess();
 
-    // Re-render
+    // ✅ Debounce — évite double render
     const container = document.getElementById('page-nutrition')
       || document.getElementById('stats-content');
-    if (container) this.render(container);
+    if (container) this.renderDebounced(container);
   },
+
+  _supprimerAlimentUI(id) {
+    this.supprimerAliment(id);
+    const container = document.getElementById('page-nutrition')
+      || document.getElementById('stats-content');
+    // ✅ Debounce
+    if (container) this.renderDebounced(container);
+  },
+
+  _ajouterEauUI(ml) {
+    const total = this.ajouterEau(ml);
+    Utils.toast(
+      `💧 +${ml}ml · Total: ${(total/1000).toFixed(1)}L`,
+      'success', 1500
+    );
+    const container = document.getElementById('page-nutrition')
+      || document.getElementById('stats-content');
+    // ✅ Debounce
+    if (container) this.renderDebounced(container);
+  }
 
   _supprimerAlimentUI(id) {
     this.supprimerAliment(id);
