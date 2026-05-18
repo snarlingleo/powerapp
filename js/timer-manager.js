@@ -1,6 +1,6 @@
 /* ============================================================
-   PowerApp — TimerManager v1.0
-   Timer reps + Timer repos + Alarme rappel
+   PowerApp — TimerManager v1.1 CORRIGÉ
+   Timer reps + Timer repos + Alarme forte répétée
    ============================================================ */
 
 'use strict';
@@ -10,16 +10,19 @@ const TimerManager = {
   // ════════════════════════════════════════════════════════
   // STATE
   // ════════════════════════════════════════════════════════
-  _timerInterval: null,
+  _timerInterval:     null,
   _secondesRestantes: 0,
-  _phase: null, // 'reps' | 'repos'
-  _enPause: false,
+  _dureeInitiale:     0,
+  _phase:             null,
+  _enPause:           false,
+  _alarmeInterval:    null,
+
+  CLE_ALARME: 'ft_alarme_rappel',
 
   // ════════════════════════════════════════════════════════
   // TIMER REPS — Manuel
   // ════════════════════════════════════════════════════════
   lancerTimerReps(exoIdx, serieIdx) {
-    // Lire la durée depuis l'input si existe, sinon 40s par défaut
     const duree = 40;
     this._afficherOverlay('reps', duree, exoIdx, serieIdx);
     this._demarrer(duree, 'reps');
@@ -29,7 +32,6 @@ const TimerManager = {
   // TIMER REPOS — Auto après validation série
   // ════════════════════════════════════════════════════════
   demarrerRepos(secondes = 75) {
-    // Fermer overlay reps si ouvert
     this._fermerOverlay();
     this._afficherOverlay('repos', secondes);
     this._demarrer(secondes, 'repos');
@@ -41,9 +43,11 @@ const TimerManager = {
   _demarrer(secondes, phase) {
     this._arreter();
     this._secondesRestantes = secondes;
-    this._phase = phase;
-    this._enPause = false;
+    this._dureeInitiale     = secondes;
+    this._phase             = phase;
+    this._enPause           = false;
     this._mettreAJourDisplay();
+    this._mettreAJourCercle();
 
     this._timerInterval = setInterval(() => {
       if (this._enPause) return;
@@ -52,10 +56,9 @@ const TimerManager = {
       this._mettreAJourDisplay();
       this._mettreAJourCercle();
 
-      // Sons d'alerte
-      if (this._secondesRestantes === 3
-          || this._secondesRestantes === 2
-          || this._secondesRestantes === 1) {
+      // ✅ Sons d'alerte 3 dernières secondes
+      if (this._secondesRestantes <= 3
+          && this._secondesRestantes > 0) {
         try { timerRepos.jouerSon('bip'); } catch(e) {}
         Utils.vibrer([50]);
       }
@@ -89,39 +92,34 @@ const TimerManager = {
       Utils.toast('⏹ Timer terminé !', 'info', 1500);
     }
 
-    // Fermer overlay après 1.5s
     setTimeout(() => this._fermerOverlay(), 1500);
   },
 
   // ════════════════════════════════════════════════════════
   // OVERLAY TIMER
   // ════════════════════════════════════════════════════════
-  _dureeInitiale: 0,
-
   _afficherOverlay(phase, duree, exoIdx = null, serieIdx = null) {
     this._dureeInitiale = duree;
-
-    // Supprimer overlay existant
     document.getElementById('timer-overlay-full')?.remove();
 
     const couleur = phase === 'reps'
       ? 'var(--fd-indigo)'
       : 'var(--fd-mint)';
-    const label   = phase === 'reps' ? '⚡ EFFORT' : '😴 REPOS';
-    const emoji   = phase === 'reps' ? '⚡' : '😴';
+    const label = phase === 'reps' ? '⚡ EFFORT' : '😴 REPOS';
+    const circ  = 2 * Math.PI * 60;
 
     const overlay = document.createElement('div');
     overlay.id    = 'timer-overlay-full';
     overlay.style.cssText = `
       position:fixed;
-      bottom:calc(var(--nav-height, 60px) + 8px);
+      bottom:calc(var(--nav-height,60px) + 8px);
       left:50%;
       transform:translateX(-50%);
       width:calc(100% - 32px);
       max-width:380px;
       background:var(--bg-card);
       border:2px solid ${couleur};
-      border-radius:var(--radius-xl, 20px);
+      border-radius:20px;
       padding:16px;
       z-index:800;
       box-shadow:0 8px 32px rgba(0,0,0,0.4);
@@ -129,6 +127,7 @@ const TimerManager = {
     `;
 
     overlay.innerHTML = `
+      <!-- Header -->
       <div style="display:flex;align-items:center;
                   justify-content:space-between;
                   margin-bottom:12px">
@@ -140,9 +139,7 @@ const TimerManager = {
         <button onclick="TimerManager._fermerOverlay()"
                 style="background:none;border:none;
                        color:var(--text-muted);font-size:1rem;
-                       cursor:pointer;padding:4px">
-          ✕
-        </button>
+                       cursor:pointer;padding:4px">✕</button>
       </div>
 
       <!-- Cercle SVG -->
@@ -159,7 +156,7 @@ const TimerManager = {
                   stroke="${couleur}"
                   stroke-width="8"
                   stroke-linecap="round"
-                  stroke-dasharray="${2 * Math.PI * 60}"
+                  stroke-dasharray="${circ}"
                   stroke-dashoffset="0"
                   id="timer-circle-arc"
                   style="transition:stroke-dashoffset .9s linear"/>
@@ -182,13 +179,13 @@ const TimerManager = {
 
       <!-- Contrôles -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
-                  gap:8px">
+                  gap:8px;margin-bottom:10px">
         <button onclick="TimerManager._togglePause()"
                 id="timer-btn-pause"
                 style="padding:10px 4px;
                        background:rgba(75,75,249,0.15);
                        border:1px solid var(--fd-indigo);
-                       border-radius:var(--radius-full, 99px);
+                       border-radius:99px;
                        color:var(--fd-indigo);
                        font-size:.75rem;font-weight:700;
                        cursor:pointer">
@@ -198,7 +195,7 @@ const TimerManager = {
                 style="padding:10px 4px;
                        background:var(--bg-input);
                        border:1px solid var(--border-color);
-                       border-radius:var(--radius-full, 99px);
+                       border-radius:99px;
                        color:var(--text-primary);
                        font-size:.75rem;font-weight:700;
                        cursor:pointer">
@@ -208,7 +205,7 @@ const TimerManager = {
                 style="padding:10px 4px;
                        background:rgba(255,141,150,0.15);
                        border:1px solid var(--fd-coral);
-                       border-radius:var(--radius-full, 99px);
+                       border-radius:99px;
                        color:var(--fd-coral);
                        font-size:.75rem;font-weight:700;
                        cursor:pointer">
@@ -218,22 +215,19 @@ const TimerManager = {
 
       ${phase === 'repos' ? `
         <!-- Presets repos -->
-        <div style="display:flex;gap:6px;margin-top:10px">
+        <div style="display:flex;gap:6px">
           ${[45, 60, 90, 120].map(s => `
             <button onclick="TimerManager._resetAvec(${s})"
+                    data-preset="${s}"
                     style="flex:1;padding:6px 2px;
                            font-size:.68rem;font-weight:700;
                            background:${s === duree
-                             ? couleur
-                             : 'var(--bg-input)'};
+                             ? couleur : 'var(--bg-input)'};
                            color:${s === duree
-                             ? 'var(--fd-midnight, #09092d)'
-                             : 'var(--text-muted)'};
+                             ? '#09092d' : 'var(--text-muted)'};
                            border:1px solid ${s === duree
-                             ? couleur
-                             : 'var(--border-color)'};
-                           border-radius:var(--radius-full, 99px);
-                           cursor:pointer">
+                             ? couleur : 'var(--border-color)'};
+                           border-radius:99px;cursor:pointer">
               ${s}s
             </button>`).join('')}
         </div>` : ''}
@@ -259,19 +253,18 @@ const TimerManager = {
     this._enPause = !this._enPause;
     const btn = document.getElementById('timer-btn-pause');
     if (btn) {
-      btn.textContent = this._enPause ? '▶ Go' : '⏸ Pause';
+      btn.textContent   = this._enPause ? '▶ Go'    : '⏸ Pause';
+      btn.style.color   = this._enPause
+        ? 'var(--fd-coral)'   : 'var(--fd-indigo)';
       btn.style.borderColor = this._enPause
-        ? 'var(--fd-coral)' : 'var(--fd-indigo)';
-      btn.style.color = this._enPause
-        ? 'var(--fd-coral)' : 'var(--fd-indigo)';
+        ? 'var(--fd-coral)'   : 'var(--fd-indigo)';
     }
     Utils.vibrer([30]);
   },
 
   _ajouter(secondes) {
     this._secondesRestantes = Math.min(
-      this._secondesRestantes + secondes,
-      600
+      this._secondesRestantes + secondes, 600
     );
     this._dureeInitiale = Math.max(
       this._dureeInitiale, this._secondesRestantes
@@ -284,20 +277,18 @@ const TimerManager = {
   _resetAvec(secondes) {
     this._arreter();
     this._dureeInitiale = secondes;
+
+    // ✅ Mettre à jour visuellement les presets
+    document.querySelectorAll('[data-preset]').forEach(btn => {
+      const val     = parseInt(btn.dataset.preset);
+      const couleur = 'var(--fd-mint)';
+      const actif   = val === secondes;
+      btn.style.background  = actif ? couleur    : 'var(--bg-input)';
+      btn.style.color       = actif ? '#09092d'  : 'var(--text-muted)';
+      btn.style.borderColor = actif ? couleur    : 'var(--border-color)';
+    });
+
     this._demarrer(secondes, this._phase || 'repos');
-    // Mettre à jour les boutons preset
-    document.querySelectorAll('[onclick^="TimerManager._resetAvec"]')
-      .forEach(btn => {
-        const val = parseInt(
-          btn.getAttribute('onclick').replace(/\D/g,'')
-        );
-        const couleur = 'var(--fd-mint)';
-        btn.style.background = val === secondes ? couleur : 'var(--bg-input)';
-        btn.style.color      = val === secondes
-          ? 'var(--fd-midnight, #09092d)' : 'var(--text-muted)';
-        btn.style.borderColor = val === secondes
-          ? couleur : 'var(--border-color)';
-      });
   },
 
   // ════════════════════════════════════════════════════════
@@ -315,12 +306,9 @@ const TimerManager = {
   _mettreAJourCercle() {
     const arc = document.getElementById('timer-circle-arc');
     if (!arc) return;
-
-    const total = this._dureeInitiale || 1;
-    const pct   = Math.max(0,
-      this._secondesRestantes / total
-    );
-    const circ  = 2 * Math.PI * 60;
+    const total  = this._dureeInitiale || 1;
+    const pct    = Math.max(0, this._secondesRestantes / total);
+    const circ   = 2 * Math.PI * 60;
     arc.style.strokeDashoffset = circ * (1 - pct);
   },
 
@@ -328,22 +316,19 @@ const TimerManager = {
     const s = Math.max(0, Math.round(secondes));
     const m = Math.floor(s / 60);
     const r = s % 60;
-    if (m > 0) {
-      return `${m}:${String(r).padStart(2,'0')}`;
-    }
+    if (m > 0) return `${m}:${String(r).padStart(2, '0')}`;
     return String(s);
   },
 
   // ════════════════════════════════════════════════════════
   // ALARME RAPPEL SPORT
   // ════════════════════════════════════════════════════════
-  CLE_ALARME: 'ft_alarme_rappel',
-
   getAlarme() {
     return Utils.storage.get(this.CLE_ALARME, {
-      active: false,
-      heure:  '18:00',
-      message:'⚡ C\'est l\'heure de t\'entraîner !'
+      active:      false,
+      heure:       '18:00',
+      message:     '⚡ C\'est l\'heure de t\'entraîner !',
+      repetitions: 3
     });
   },
 
@@ -356,48 +341,29 @@ const TimerManager = {
     }
   },
 
-  _alarmeInterval: null,
-
+  // ════════════════════════════════════════════════════════
+  // PLANIFICATION — vérifie toutes les 5s
+  // ════════════════════════════════════════════════════════
   _planifierAlarme(heure) {
-    // Nettoyer l'ancien interval
     this._annulerAlarme();
 
     this._alarmeInterval = setInterval(() => {
-      const now     = new Date();
-      const [h, m]  = heure.split(':').map(Number);
-      const alarme  = this.getAlarme();
-
+      const now    = new Date();
+      const [h, m] = heure.split(':').map(Number);
+      const alarme = this.getAlarme();
       if (!alarme.active) return;
 
       if (now.getHours()   === h
           && now.getMinutes() === m
-          && now.getSeconds() <= 5) {
+          && now.getSeconds() <= 10) {
 
-        const cleAujourdhui = `ft_alarme_done_${Utils.aujourd_hui()}`;
-        if (Utils.storage.get(cleAujourdhui)) return;
-        Utils.storage.set(cleAujourdhui, true);
+        const cle = `ft_alarme_done_${Utils.aujourd_hui()}`;
+        if (Utils.storage.get(cle)) return;
+        Utils.storage.set(cle, true);
 
-        // Notification
-        try {
-          if (Notification.permission === 'granted') {
-            new Notification('⚡ PowerApp', {
-              body:  alarme.message || 'C\'est l\'heure de t\'entraîner !',
-              icon:  './assets/icons/icon-192.png',
-              badge: './assets/icons/icon-72.png',
-              vibrate: [200, 100, 200]
-            });
-          }
-        } catch(e) {}
-
-        // Toast dans l'app
-        Utils.toast(
-          `⏰ ${alarme.message || 'C\'est l\'heure de t\'entraîner !'}`,
-          'success', 8000
-        );
-        Utils.vibrer([200, 100, 200, 100, 400]);
-        try { timerRepos.jouerSon('go'); } catch(e) {}
+        this._declencherAlarme(alarme);
       }
-    }, 5000); // Vérifier toutes les 5 secondes
+    }, 5000);
   },
 
   _annulerAlarme() {
@@ -407,7 +373,92 @@ const TimerManager = {
     }
   },
 
-  // ✅ Initialiser l'alarme au démarrage de l'app
+  // ════════════════════════════════════════════════════════
+  // DÉCLENCHEMENT — Fort + Répété
+  // ════════════════════════════════════════════════════════
+  _declencherAlarme(alarme) {
+    const msg         = alarme.message
+      || '⚡ C\'est l\'heure de t\'entraîner !';
+    const repetitions = alarme.repetitions || 3;
+
+    // ✅ Répéter toutes les 2 minutes
+    Array.from({ length: repetitions }, (_, i) => i * 120000)
+      .forEach(delai => {
+        setTimeout(() => {
+          const check = this.getAlarme();
+          if (!check.active) return;
+
+          // ✅ Notification persistante avec requireInteraction
+          try {
+            if (Notification.permission === 'granted') {
+              new Notification('⚡ PowerApp — Go t\'entraîner !', {
+                body:               msg,
+                icon:               './assets/icons/icon-192.png',
+                badge:              './assets/icons/icon-72.png',
+                // ✅ Vibrations longues et répétées
+                vibrate: [
+                  500, 200, 500, 200, 500,
+                  500, 200, 500, 200, 500,
+                  500, 200, 500
+                ],
+                requireInteraction: true,  // ✅ Reste affichée
+                renotify:           true,
+                tag:                'powerapp-alarme',
+                silent:             false
+              });
+            }
+          } catch(e) {}
+
+          // ✅ Toast persistant dans l'app
+          Utils.toast(`⏰ ${msg}`, 'success', 15000);
+
+          // ✅ Vibrations longues
+          Utils.vibrer([
+            500, 200, 500, 200, 500,
+            200, 500, 200, 500, 200, 500
+          ]);
+
+          // ✅ Son fort répété 3×
+          this._jouerSonAlarme();
+
+        }, delai);
+      });
+  },
+
+  // ✅ Son alarme — 3 bips forts successifs
+  _jouerSonAlarme() {
+    [0, 800, 1600].forEach(delai => {
+      setTimeout(() => {
+        try {
+          const ctx  = new (window.AudioContext
+            || window.webkitAudioContext)();
+          const osc  = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          // ✅ Son perçant type alarme
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(880,  ctx.currentTime);
+          osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.15);
+          osc.frequency.setValueAtTime(880,  ctx.currentTime + 0.30);
+
+          gain.gain.setValueAtTime(1.0, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(
+            0.001, ctx.currentTime + 0.6
+          );
+
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.6);
+        } catch(e) {}
+      }, delai);
+    });
+  },
+
+  // ════════════════════════════════════════════════════════
+  // INIT — Au démarrage de l'app
+  // ════════════════════════════════════════════════════════
   initAlarme() {
     const alarme = this.getAlarme();
     if (alarme.active) {
@@ -423,7 +474,7 @@ const TimerManager = {
   },
 
   // ════════════════════════════════════════════════════════
-  // RENDER ALARME — Pour les Settings
+  // RENDER ALARME — Settings
   // ════════════════════════════════════════════════════════
   renderAlarme(container) {
     if (!container) return;
@@ -433,9 +484,9 @@ const TimerManager = {
     container.innerHTML = `
       <div class="card mb-md"
            style="border-color:${alarme.active
-             ? 'var(--fd-lemon)'
-             : 'var(--border-color)'}">
+             ? 'var(--fd-lemon)' : 'var(--border-color)'}">
 
+        <!-- Header toggle -->
         <div class="flex justify-between items-center mb-md">
           <div>
             <div class="card-label" style="margin:0">
@@ -447,39 +498,33 @@ const TimerManager = {
             </div>
           </div>
 
-          <!-- Toggle ON/OFF -->
-          <label style="position:relative;display:inline-block;
-                        width:48px;height:26px;cursor:pointer">
-            <input type="checkbox"
-                   id="alarme-toggle"
-                   ${alarme.active ? 'checked' : ''}
-                   onchange="TimerManager._toggleAlarme(this.checked)"
-                   style="opacity:0;width:0;height:0" />
-            <span style="position:absolute;inset:0;
-                         background:${alarme.active
-                           ? 'var(--fd-lemon)'
-                           : 'var(--bg-input)'};
-                         border:2px solid ${alarme.active
-                           ? 'var(--fd-lemon)'
-                           : 'var(--border-color)'};
-                         border-radius:99px;
-                         transition:all .3s;cursor:pointer">
-              <span style="position:absolute;
-                           left:${alarme.active ? '24px' : '2px'};
-                           top:50%;transform:translateY(-50%);
-                           width:18px;height:18px;
-                           background:${alarme.active
-                             ? 'var(--fd-midnight, #09092d)'
-                             : 'var(--text-muted)'};
-                           border-radius:50%;
-                           transition:left .3s">
-              </span>
-            </span>
-          </label>
+          <!-- ✅ Toggle inline — pas de dépendance CSS -->
+          <div onclick="TimerManager._toggleAlarme(${!alarme.active})"
+               style="position:relative;width:48px;height:26px;
+                      cursor:pointer;flex-shrink:0">
+            <div style="position:absolute;inset:0;
+                        background:${alarme.active
+                          ? 'var(--fd-lemon)' : 'rgba(255,255,255,0.1)'};
+                        border:2px solid ${alarme.active
+                          ? 'var(--fd-lemon)' : 'rgba(255,255,255,0.2)'};
+                        border-radius:99px;transition:all .25s">
+            </div>
+            <div style="position:absolute;
+                        top:50%;
+                        left:${alarme.active ? '24px' : '2px'};
+                        transform:translateY(-50%);
+                        width:18px;height:18px;
+                        background:${alarme.active
+                          ? '#09092d' : 'rgba(255,255,255,0.4)'};
+                        border-radius:50%;
+                        transition:left .25s;
+                        pointer-events:none">
+            </div>
+          </div>
         </div>
 
         <!-- Heure -->
-        <div class="input-label">Heure du rappel</div>
+        <div class="input-label">⏰ Heure du rappel</div>
         <input type="time"
                id="alarme-heure"
                class="input mt-sm mb-md"
@@ -489,57 +534,78 @@ const TimerManager = {
                       color:var(--fd-lemon)" />
 
         <!-- Message -->
-        <div class="input-label">Message (optionnel)</div>
+        <div class="input-label">💬 Message</div>
         <input type="text"
                id="alarme-message"
                class="input mt-sm mb-md"
                value="${alarme.message || ''}"
                placeholder="⚡ C'est l'heure de t'entraîner !" />
 
-        <!-- Bouton sauvegarder -->
+        <!-- ✅ Répétitions -->
+        <div class="input-label">🔁 Répéter l'alarme</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                    gap:6px;margin-top:8px;margin-bottom:var(--space-md)">
+          ${[1, 3, 5].map(r => `
+            <button onclick="TimerManager._setRepetitions(${r})"
+                    style="padding:8px 4px;
+                           font-size:.72rem;font-weight:700;
+                           background:${(alarme.repetitions||3) === r
+                             ? 'var(--fd-lemon)' : 'var(--bg-input)'};
+                           color:${(alarme.repetitions||3) === r
+                             ? '#09092d' : 'var(--text-muted)'};
+                           border:1px solid ${(alarme.repetitions||3) === r
+                             ? 'var(--fd-lemon)' : 'var(--border-color)'};
+                           border-radius:99px;cursor:pointer">
+              ${r === 1 ? '1× seulement' : r === 3 ? '3× (recommandé)' : '5× (max)'}
+            </button>`).join('')}
+        </div>
+
+        <!-- Sauvegarder -->
         <button onclick="TimerManager._sauvegarderAlarme()"
                 class="btn-primary"
                 style="width:100%">
-          💾 Sauvegarder l'alarme
+          💾 Sauvegarder
         </button>
 
         ${alarme.active ? `
-          <div style="margin-top:var(--space-sm);
-                      text-align:center;
-                      font-size:.75rem;
-                      color:var(--fd-lemon)">
-            ⏰ Alarme active à ${alarme.heure} chaque jour
+          <div style="margin-top:var(--space-sm);text-align:center;
+                      font-size:.75rem;color:var(--fd-lemon)">
+            ⏰ Alarme active à ${alarme.heure}
+            · ${alarme.repetitions||3}× toutes les 2 min
           </div>` : ''}
       </div>
 
-      <!-- Info permissions -->
+      <!-- Info + Test -->
       <div class="card"
            style="background:rgba(75,75,249,0.05);
                   border-color:rgba(75,75,249,0.2)">
         <div style="font-size:.75rem;color:var(--text-muted);
                     line-height:1.6">
           💡 <strong style="color:var(--fd-indigo)">
-            Pour que l'alarme fonctionne :
+            Pour maximiser l'alarme :
           </strong><br>
-          • Autorise les notifications quand demandé<br>
-          • L'app doit être ouverte en arrière-plan<br>
-          • Fonctionne même en mode veille sur iOS/Android
+          • Active les notifications dans les réglages<br>
+          • Garde l'app ouverte en arrière-plan<br>
+          • Son fort + vibrations longues + notification persistante<br>
+          • Se répète toutes les 2 minutes
         </div>
         <button onclick="TimerManager._testerAlarme()"
                 class="btn-secondary mt-md"
                 style="width:100%;font-size:.78rem">
-          🔔 Tester maintenant
+          🔔 Tester l'alarme maintenant
         </button>
       </div>
     `;
   },
 
+  // ════════════════════════════════════════════════════════
+  // ACTIONS UI
+  // ════════════════════════════════════════════════════════
   _toggleAlarme(active) {
-    const alarme = this.getAlarme();
+    const alarme  = this.getAlarme();
     alarme.active = active;
     this.sauvegarderAlarme(alarme);
 
-    // Re-render
     const el = document.getElementById('alarme-section');
     if (el) this.renderAlarme(el);
 
@@ -552,43 +618,63 @@ const TimerManager = {
 
   _sauvegarderAlarme() {
     const heure   = document.getElementById('alarme-heure')?.value;
-    const message = document.getElementById('alarme-message')?.value?.trim()
-      || '⚡ C\'est l\'heure de t\'entraîner !';
-    const active  = document.getElementById('alarme-toggle')?.checked || false;
+    const message = document.getElementById('alarme-message')
+      ?.value?.trim() || '⚡ C\'est l\'heure de t\'entraîner !';
+    const active  = document.getElementById('alarme-toggle')
+      ?.checked ?? this.getAlarme().active;
+    const alarme  = this.getAlarme();
 
     if (!heure) {
       Utils.toast('Choisis une heure !', 'error');
       return;
     }
 
-    this.sauvegarderAlarme({ active, heure, message });
+    this.sauvegarderAlarme({
+      ...alarme,
+      active, heure, message
+    });
+
     Utils.toast(`✅ Alarme sauvegardée à ${heure} !`, 'success');
     Utils.vibrerSuccess();
 
-    // Re-render
     const el = document.getElementById('alarme-section');
     if (el) this.renderAlarme(el);
   },
 
+  _setRepetitions(n) {
+    const alarme       = this.getAlarme();
+    alarme.repetitions = n;
+    Utils.storage.set(this.CLE_ALARME, alarme);
+
+    const el = document.getElementById('alarme-section');
+    if (el) this.renderAlarme(el);
+
+    Utils.toast(
+      `🔁 Alarme répétée ${n} fois (toutes les 2 min)`,
+      'success', 2000
+    );
+  },
+
+  // ✅ Test avec le vrai système d'alarme fort
   _testerAlarme() {
     const alarme = this.getAlarme();
-    Utils.toast(
-      alarme.message || '⚡ C\'est l\'heure de t\'entraîner !',
-      'success', 5000
-    );
-    Utils.vibrer([200, 100, 200, 100, 400]);
-    try { timerRepos.jouerSon('go'); } catch(e) {}
+    this._declencherAlarme({
+      ...alarme,
+      repetitions: 1  // 1 seule fois pour le test
+    });
+    Utils.toast('🔔 Test alarme lancé !', 'info', 2000);
 
+    // Demander permission si pas encore accordée
     try {
-      if (Notification.permission === 'granted') {
-        new Notification('⚡ PowerApp — Test', {
-          body:  alarme.message || 'C\'est l\'heure de t\'entraîner !',
-          icon:  './assets/icons/icon-192.png'
-        });
-      } else if (Notification.permission === 'default') {
+      if (Notification.permission === 'default') {
         Notification.requestPermission().then(perm => {
           if (perm === 'granted') {
             Utils.toast('✅ Notifications activées !', 'success');
+          } else {
+            Utils.toast(
+              '⚠️ Active les notifications dans les réglages !',
+              'warning', 5000
+            );
           }
         });
       }
@@ -597,4 +683,4 @@ const TimerManager = {
 };
 
 window.TimerManager = TimerManager;
-console.log('✅ TimerManager v1.0 chargé');
+console.log('✅ TimerManager v1.1 chargé');
