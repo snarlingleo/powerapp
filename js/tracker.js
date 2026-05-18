@@ -729,11 +729,10 @@ const Tracker = {
   getHeatmapData(nbJours = 84) {
     const data = {};
 
-    // ✅ Date de début du programme — rien avant n'est "manqué"
+    // ✅ Récupérer la date de début — rien avant n'est "manqué"
     const dateDebut = (() => {
-      try {
-        return Utils.storage.get('ft_date_debut', null);
-      } catch(e) { return null; }
+      try { return Utils.storage.get('ft_date_debut', null); }
+      catch(e) { return null; }
     })();
 
     for (let i = 0; i < nbJours; i++) {
@@ -742,21 +741,21 @@ const Tracker = {
         ?.[Utils.indexJourSemaine(date)];
       const seance   = this.getSeanceDuJour(date);
 
-      // ✅ Avant la date de début → neutre (jamais manqué)
+      // ✅ Avant la date de début → neutre, jamais manqué
       if (dateDebut && date < dateDebut) {
         data[date] = 'none';
         continue;
       }
 
       if (!planning?.seanceId) {
-        // Jour de repos planifié
+        // Jour de repos planifié ou pas de séance ce jour
         data[date] = 'rest';
       } else if (seance?.complete) {
         // Séance faite ✅
         data[date] = 'done';
       } else if (date < Utils.aujourd_hui()) {
-        // ✅ Manquée seulement si APRÈS la date de début
-        // ET seulement si ce n'est pas aujourd'hui
+        // ✅ Manquée seulement si après la date de début
+        // ET seulement si c'est dans le passé (pas aujourd'hui)
         data[date] = 'missed';
       } else {
         // Aujourd'hui ou futur → neutre
