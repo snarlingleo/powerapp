@@ -95,7 +95,8 @@ function _updateHeader(page) {
     journal:      { emoji:'📔', titre:'Journal'         },
     objectifs:    { emoji:'🎯', titre:'Objectifs'       },
     circuit:      { emoji:'🔄', titre:'Circuit Training' },
-    adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif'},   
+    adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif'},
+    galerie:      { emoji:'💪', titre:'Galerie exercices' }, 
     blessures:    { emoji:'🩹', titre:'Blessures'       }
   };
 
@@ -166,6 +167,10 @@ case 'adaptatif':
   try { ProgrammeAdaptatif.render(container); }
   catch(e) { _rendrePlaceholder(container, '🧠', 'Programme Adaptatif', 'Analyse ta progression'); }
   break;
+ case 'galerie':
+  try { GalerieExercices.render(container); }
+  catch(e) { _rendrePlaceholder(container, '💪', 'Galerie', 'Tous les exercices'); }
+  break;     
       case 'mon_profil':   _renderMonProfil(container);                   break;
 
       case 'journal':
@@ -745,14 +750,17 @@ function _renderLiveHeader(seance) {
 
   // ✅ Démarrer le chrono automatiquement
   setTimeout(() => {
-    const chronoContainer =
-      document.getElementById('chrono-container');
-    if (chronoContainer && !Chrono._actif) {
-      Chrono.reset();
-      Chrono.renderWidget(chronoContainer);
-      Chrono.demarrer();
-    }
-  }, 100);
+  const chronoContainer = document.getElementById('chrono-container');
+  if (chronoContainer && !Chrono._actif) {
+    Chrono.reset();
+    Chrono.renderWidget(chronoContainer);
+    Chrono.demarrer();
+  }
+  // ✅ NOUVEAU — Afficher le chrono sticky
+  const nom = document.querySelector('#live-content .card div')
+    ?.textContent?.trim() || 'Séance';
+  ChronoSticky.afficher(nom);
+}, 100);
 
   return `
     <div class="card mb-md"
@@ -1090,9 +1098,10 @@ function _rendreProfil(container) {
       {page:'gamification', emoji:'⭐', label:'XP & Niveaux'     },
       {page:'history',      emoji:'📅', label:'Historique'       },
       {page:'photos',       emoji:'📸', label:'Photos'           },
-      {page:'circuit',   emoji:'🔄', label:'Circuit Training'    },
-      {page:'adaptatif', emoji:'🧠', label:'Programme Adaptatif' },
-      {page:'nutrition', emoji:'🥗', label:'Nutrition'           }, 
+      {page:'circuit',      emoji:'🔄', label:'Circuit Training'    },
+      {page:'adaptatif',    emoji:'🧠', label:'Programme Adaptatif' },
+      {page:'nutrition',    emoji:'🥗', label:'Nutrition'           },
+      {page:'galerie',      emoji:'💪', label:'Galerie exercices' }, 
       {page:'settings',     emoji:'⚙️', label:'Paramètres'       }
     ].map(s => `
       <div class="card mb-md"
@@ -1526,6 +1535,14 @@ const App = {
       const nom    = seance?.nom || 'Séance';
 
       try { Tracker.terminerSeance(seanceId); } catch(e) {}
+      // ✅ Arrêter le chrono sticky
+      try { ChronoSticky.masquer(); Chrono.reset?.(); } catch(e) {}
+
+      // ✅ Sauvegarder la durée réelle
+      try {
+        const secondes = TempsSalle.getDureeChronoSecondes();
+        TempsSalle.sauvegarder(seanceId, secondes);
+      } catch(e) {} 
 
       try {
         Gamification.recompenser('SEANCE_COMPLETE');
@@ -1568,6 +1585,7 @@ const App = {
     );
     if (!ok) return;
     try { Tracker.terminerSeance?.(seanceId); } catch(e) {}
+    try { ChronoSticky.masquer(); Chrono.reset?.(); } catch(e) {} 
     Utils.toast('Séance arrêtée.', 'info');
     naviguer('home');
   },
@@ -1617,8 +1635,17 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
         ${[
           {label:'Volume', val:Utils.formatVolume(volume),
            color:'var(--fd-mint)'  },
-          {label:'Durée',  val:Utils.formatDuree(duree),
-           color:'var(--fd-indigo)'},
+          {
+           label: 'Durée',
+           val: (() => {
+             try {
+               const sec = TempsSalle.recuperer(seanceId);
+               if (sec > 60) return TempsSalle.formaterDuree(sec);
+             } catch(e) {}
+             return Utils.formatDuree(duree);
+           })(),
+           color: 'var(--fd-indigo)'
+         },
           {label:'Records',val:prs,
            color:'var(--fd-lemon)' }
         ].map(s => `
@@ -1629,6 +1656,12 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
             <span class="stat-label">${s.label}</span>
           </div>`).join('')}
       </div>
+       ${(() => {
+        try {
+          const sec = TempsSalle.getDureeChronoSecondes() || duree;
+          return TempsSalle.renderCorrectionWidget(seanceId, sec);
+        } catch(e) { return ''; }
+         })()}
       <div style="display:grid;grid-template-columns:1fr 1fr;
                   gap:var(--space-sm)">
         <button onclick="
@@ -1685,6 +1718,603 @@ const UI = {
 window.UI = UI;
 
 // ════════════════════════════════════════════════════════════
+// DARK / LIGHT MODE
+// ════════════════════════════════════════════════════════════
+const ThemeManager = {
+
+  CLE: 'ft_theme',
+
+  getTheme() {
+    return Utils.storage.get(this.CLE, 'dark');
+  },
+
+  setTheme(theme) {
+    Utils.storage.set(this.CLE, theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    this._updateBtn();
+  },
+
+  toggle() {
+    const actuel = this.getTheme();
+    const nouveau = actuel === 'dark' ? 'light' : 'dark';
+    this.setTheme(nouveau);
+    Utils.toast(
+      nouveau === 'light' ? '☀️ Mode clair activé' : '🌙 Mode sombre activé',
+      'success', 1500
+    );
+  },
+
+  init() {
+    const theme = this.getTheme();
+    document.documentElement.setAttribute('data-theme', theme);
+    this._injecterBtn();
+  },
+
+  _injecterBtn() {
+    // Attendre que le header soit prêt
+    const headerRight = document.querySelector('.header-right');
+    if (!headerRight) return;
+
+    // Éviter les doublons
+    if (document.getElementById('theme-toggle')) return;
+
+    const btn = document.createElement('button');
+    btn.id        = 'theme-toggle';
+    btn.className = 'theme-toggle-btn';
+    btn.setAttribute('aria-label', 'Changer de thème');
+    btn.innerHTML = `
+      <span class="icon-dark">🌙</span>
+      <span class="icon-light">☀️</span>
+    `;
+    btn.onclick = () => ThemeManager.toggle();
+
+    // Insérer avant le dernier élément (XP badge)
+    const xp = document.getElementById('header-xp');
+    if (xp) {
+      headerRight.insertBefore(btn, xp);
+    } else {
+      headerRight.appendChild(btn);
+    }
+  },
+
+  _updateBtn() {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    // Les classes CSS gèrent l'affichage icône
+  }
+};
+
+window.ThemeManager = ThemeManager;
+
+// ════════════════════════════════════════════════════════════
+// CHRONO STICKY — Bas d'écran pendant séance
+// ════════════════════════════════════════════════════════════
+const ChronoSticky = {
+
+  _visible:  false,
+  _seanceNom: '',
+  _interval: null,
+
+  afficher(seanceNom = '') {
+    this._seanceNom = seanceNom;
+    this._visible   = true;
+
+    // Créer le widget s'il n'existe pas
+    let el = document.getElementById('chrono-sticky');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'chrono-sticky';
+      document.body.appendChild(el);
+    }
+
+    el.classList.remove('hidden');
+    this._render();
+    this._lancerUpdate();
+  },
+
+  masquer() {
+    this._visible = false;
+    clearInterval(this._interval);
+    const el = document.getElementById('chrono-sticky');
+    if (el) el.classList.add('hidden');
+  },
+
+  _render() {
+    const el = document.getElementById('chrono-sticky');
+    if (!el) return;
+
+    const temps   = this._getTemps();
+    const enPause = Chrono?._enPause || false;
+
+    el.innerHTML = `
+      <div class="chrono-sticky-time">
+        <span class="chrono-sticky-icon ${enPause ? 'paused' : ''}">
+          ${enPause ? '⏸' : '⏱️'}
+        </span>
+        <div>
+          <div class="chrono-sticky-display ${enPause ? 'paused' : ''}">
+            ${temps}
+          </div>
+          ${this._seanceNom ? `
+            <div class="chrono-sticky-label">
+              ${this._seanceNom}
+            </div>` : ''}
+        </div>
+      </div>
+      <div class="chrono-sticky-controls">
+        <button class="chrono-sticky-btn ${enPause ? 'resume' : 'pause'}"
+                onclick="ChronoSticky._togglePause()">
+          ${enPause ? '▶ Reprendre' : '⏸ Pause'}
+        </button>
+      </div>
+    `;
+  },
+
+  _getTemps() {
+    try {
+      if (typeof Chrono !== 'undefined') {
+        return Chrono.getFormate?.() || '00:00:00';
+      }
+    } catch(e) {}
+    return '00:00:00';
+  },
+
+  _togglePause() {
+    try {
+      if (Chrono?._enPause) {
+        Chrono.reprendre?.();
+      } else {
+        Chrono.pause?.();
+      }
+      this._render();
+    } catch(e) {}
+  },
+
+  _lancerUpdate() {
+    clearInterval(this._interval);
+    this._interval = setInterval(() => {
+      if (!this._visible) {
+        clearInterval(this._interval);
+        return;
+      }
+      // Update uniquement le display et l'icône
+      const disp   = document.querySelector('.chrono-sticky-display');
+      const icon   = document.querySelector('.chrono-sticky-icon');
+      const btn    = document.querySelector('.chrono-sticky-btn');
+      const enPause = Chrono?._enPause || false;
+
+      if (disp) {
+        disp.textContent = this._getTemps();
+        disp.className   = `chrono-sticky-display ${enPause ? 'paused' : ''}`;
+      }
+      if (icon) {
+        icon.textContent = enPause ? '⏸' : '⏱️';
+        icon.className   = `chrono-sticky-icon ${enPause ? 'paused' : ''}`;
+      }
+      if (btn) {
+        btn.textContent = enPause ? '▶ Reprendre' : '⏸ Pause';
+        btn.className   = `chrono-sticky-btn ${enPause ? 'resume' : 'pause'}`;
+      }
+    }, 1000);
+  }
+};
+
+window.ChronoSticky = ChronoSticky;
+
+// ════════════════════════════════════════════════════════════
+// SWIPE NAVIGATION — Gauche/Droite entre onglets
+// ════════════════════════════════════════════════════════════
+const SwipeNav = {
+
+  _startX:    0,
+  _startY:    0,
+  _active:    false,
+  _pages:     ['home','training','live','stats','profil'],
+
+  init() {
+    const main = document.querySelector('.app-main');
+    if (!main) return;
+
+    main.addEventListener('touchstart', e => {
+      this._startX  = e.touches[0].clientX;
+      this._startY  = e.touches[0].clientY;
+      this._active  = true;
+    }, { passive:true });
+
+    main.addEventListener('touchend', e => {
+      if (!this._active) return;
+      this._active = false;
+
+      const dx = e.changedTouches[0].clientX - this._startX;
+      const dy = e.changedTouches[0].clientY - this._startY;
+
+      // Ignorer si scroll vertical dominant
+      if (Math.abs(dy) > Math.abs(dx)) return;
+      // Seuil minimum 60px
+      if (Math.abs(dx) < 60) return;
+
+      const current = this._pages.indexOf(window._pageActive);
+      if (current === -1) return;
+
+      if (dx < 0 && current < this._pages.length - 1) {
+        // Swipe gauche → page suivante
+        naviguer(this._pages[current + 1]);
+      } else if (dx > 0 && current > 0) {
+        // Swipe droite → page précédente
+        naviguer(this._pages[current - 1]);
+      }
+    }, { passive:true });
+  }
+};
+
+window.SwipeNav = SwipeNav;
+
+// ════════════════════════════════════════════════════════════
+// TEMPS À LA SALLE — Durée réelle + correction manuelle
+// ════════════════════════════════════════════════════════════
+const TempsSalle = {
+
+  // Récupérer la durée depuis le chrono
+  getDureeChronoSecondes() {
+    try {
+      return Chrono?._secondes || 0;
+    } catch(e) { return 0; }
+  },
+
+  // Formater en hh:mm ou mm:ss
+  formaterDuree(secondes) {
+    const h  = Math.floor(secondes / 3600);
+    const m  = Math.floor((secondes % 3600) / 60);
+    const s  = secondes % 60;
+
+    if (h > 0) {
+      return `${h}h ${String(m).padStart(2,'0')}min`;
+    }
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  },
+
+  // Formater court pour affichage badge
+  formaterCourt(secondes) {
+    const h = Math.floor(secondes / 3600);
+    const m = Math.floor((secondes % 3600) / 60);
+    if (h > 0) return `${h}h${String(m).padStart(2,'0')}`;
+    return `${m}min`;
+  },
+
+  // Sauvegarder la durée avec la séance
+  sauvegarder(seanceId, secondes) {
+    Utils.storage.set(`ft_duree_${seanceId}_${Utils.aujourd_hui()}`, secondes);
+  },
+
+  // Récupérer la durée sauvegardée
+  recuperer(seanceId, date = null) {
+    const d = date || Utils.aujourd_hui();
+    return Utils.storage.get(`ft_duree_${seanceId}_${d}`, 0);
+  },
+
+  // Render widget correction dans résumé
+  renderCorrectionWidget(seanceId, secondesAuto) {
+    const minutesAuto = Math.round(secondesAuto / 60);
+    return `
+      <div class="duration-edit-row">
+        <span class="duration-edit-label">
+          ✏️ Corriger la durée
+        </span>
+        <input type="number"
+               class="input duration-edit-input"
+               id="duree-correction"
+               value="${minutesAuto}"
+               min="1" max="300"
+               placeholder="min" />
+        <span style="font-size:.72rem;color:var(--text-muted)">
+          min
+        </span>
+      </div>
+    `;
+  }
+};
+
+window.TempsSalle = TempsSalle;
+
+// ════════════════════════════════════════════════════════════
+// GALERIE EXERCICES — Page dédiée
+// ════════════════════════════════════════════════════════════
+const GalerieExercices = {
+
+  _filtreGroupe:  'tous',
+  _filtreSearch:  '',
+
+  render(container) {
+    if (!container) return;
+
+    const groupes = [
+      { val:'tous',     label:'Tous',       emoji:'💪' },
+      { val:'push',     label:'Push',       emoji:'⬆️' },
+      { val:'pull',     label:'Pull',       emoji:'⬇️' },
+      { val:'jambes',   label:'Jambes',     emoji:'🦵' },
+      { val:'abdos',    label:'Abdos',      emoji:'🔥' },
+      { val:'cardio',   label:'Cardio',     emoji:'❤️' },
+      { val:'fullbody', label:'Full Body',  emoji:'🏋️' }
+    ];
+
+    const exos = this._getExosFiltres();
+
+    container.innerHTML = `
+
+      <!-- ═══ HEADER ═══ -->
+      <div class="card mb-md"
+           style="background:linear-gradient(135deg,
+                  rgba(75,75,249,0.15),
+                  rgba(139,240,187,0.05))">
+        <div style="font-size:1.1rem;font-weight:800;
+                    margin-bottom:4px">
+          💪 Galerie des exercices
+        </div>
+        <div style="font-size:.75rem;color:var(--text-muted)">
+          ${Object.keys(window.EXERCICES||{}).length} exercices disponibles
+        </div>
+      </div>
+
+      <!-- ═══ RECHERCHE ═══ -->
+      <div class="search-container mb-md">
+        <span class="search-icon">🔍</span>
+        <input class="input search-input"
+               id="galerie-search"
+               placeholder="Rechercher un exercice..."
+               oninput="GalerieExercices._filtrerSearch(this.value)" />
+        ${this._filtreSearch ? `
+          <button class="search-clear"
+                  onclick="GalerieExercices._filtrerSearch('')">
+            ✕
+          </button>` : ''}
+      </div>
+
+      <!-- ═══ FILTRES GROUPE ═══ -->
+      <div class="muscle-filter-row mb-md">
+        ${groupes.map(g => `
+          <button class="muscle-filter-btn
+                         ${this._filtreGroupe === g.val ? 'active' : ''}"
+                  onclick="GalerieExercices._filtrerGroupe('${g.val}')">
+            ${g.emoji} ${g.label}
+          </button>`).join('')}
+      </div>
+
+      <!-- ═══ COMPTEUR ═══ -->
+      <div style="font-size:.72rem;color:var(--text-muted);
+                  margin-bottom:var(--space-sm)">
+        ${exos.length} exercice${exos.length > 1 ? 's' : ''}
+        ${this._filtreGroupe !== 'tous' ? ` · ${this._filtreGroupe}` : ''}
+        ${this._filtreSearch ? ` · "${this._filtreSearch}"` : ''}
+      </div>
+
+      <!-- ═══ GRILLE ═══ -->
+      ${exos.length === 0 ? `
+        <div class="card"
+             style="text-align:center;padding:var(--space-xl)">
+          <div style="font-size:2rem;margin-bottom:8px">🔍</div>
+          <div style="color:var(--text-muted);font-size:.85rem">
+            Aucun exercice trouvé
+          </div>
+        </div>` : `
+        <div class="exercice-galerie-grid">
+          ${exos.map(([ref, ex]) => `
+            <div class="exercice-galerie-card"
+                 onclick="GalerieExercices._voirDetail('${ref}')">
+              <div class="exercice-galerie-emoji">
+                ${ex.emoji||'💪'}
+              </div>
+              <div class="exercice-galerie-nom">
+                ${ex.nom}
+              </div>
+              <div class="exercice-galerie-muscle">
+                ${ex.muscle||''}
+              </div>
+              <div class="exercice-galerie-difficulte">
+                ${[1,2,3,4,5].map(d => `
+                  <div class="difficulte-dot
+                              ${d <= (ex.difficulte||1) ? 'active' : ''}">
+                  </div>`).join('')}
+              </div>
+              ${ex.youtube ? `
+                <div style="margin-top:var(--space-xs)">
+                  <span style="font-size:.6rem;
+                               color:rgba(255,0,0,0.7);
+                               font-weight:600">
+                    ▶ Démo dispo
+                  </span>
+                </div>` : ''}
+            </div>`).join('')}
+        </div>`}
+    `;
+
+    // Restaurer la valeur de recherche
+    const searchInput = document.getElementById('galerie-search');
+    if (searchInput && this._filtreSearch) {
+      searchInput.value = this._filtreSearch;
+    }
+  },
+
+  _getExosFiltres() {
+    return Object.entries(window.EXERCICES || {}).filter(([ref, ex]) => {
+      const matchGroupe = this._filtreGroupe === 'tous'
+        || ex.groupe === this._filtreGroupe;
+      const matchSearch = !this._filtreSearch
+        || ex.nom.toLowerCase().includes(this._filtreSearch.toLowerCase())
+        || (ex.muscle||'').toLowerCase().includes(this._filtreSearch.toLowerCase());
+      return matchGroupe && matchSearch;
+    });
+  },
+
+  _filtrerGroupe(groupe) {
+    this._filtreGroupe = groupe;
+    const container = document.getElementById('page-galerie')
+      || document.getElementById('stats-content');
+    if (container) this.render(container);
+  },
+
+  _filtrerSearch(val) {
+    this._filtreSearch = val;
+    const container = document.getElementById('page-galerie')
+      || document.getElementById('stats-content');
+    if (container) this.render(container);
+  },
+
+  _voirDetail(ref) {
+    const ex    = window.EXERCICES?.[ref];
+    const modal = document.getElementById('modal-info');
+    const content = document.getElementById('modal-info-content');
+    if (!modal || !content || !ex) return;
+
+    const pr = (() => {
+      try { return Tracker.getPR(ref); } catch(e) { return null; }
+    })();
+
+    content.innerHTML = `
+      <div style="padding:var(--space-md)">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;
+                    gap:var(--space-md);
+                    margin-bottom:var(--space-md)">
+          <span style="font-size:3rem">${ex.emoji||'💪'}</span>
+          <div>
+            <div style="font-size:1.1rem;font-weight:800">
+              ${ex.nom}
+            </div>
+            <div style="font-size:.75rem;color:var(--fd-mint);
+                        font-weight:600">
+              ${ex.muscle||''}
+            </div>
+            ${ex.groupe ? `
+              <span class="chip chip-indigo"
+                    style="font-size:.6rem;margin-top:4px">
+                ${ex.groupe}
+              </span>` : ''}
+          </div>
+        </div>
+
+        <!-- Difficulté -->
+        <div style="display:flex;align-items:center;
+                    gap:var(--space-sm);
+                    margin-bottom:var(--space-md)">
+          <span style="font-size:.72rem;color:var(--text-muted)">
+            Difficulté :
+          </span>
+          <div style="display:flex;gap:4px">
+            ${[1,2,3,4,5].map(d => `
+              <div style="width:10px;height:10px;
+                          border-radius:50%;
+                          background:${d <= (ex.difficulte||1)
+                            ? 'var(--fd-lemon)'
+                            : 'var(--bg-input)'}">
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <!-- PR si disponible -->
+        ${pr?.rm1 ? `
+          <div style="padding:var(--space-sm) var(--space-md);
+                      background:rgba(249,239,119,0.08);
+                      border:1px solid rgba(249,239,119,0.2);
+                      border-radius:var(--radius-md);
+                      margin-bottom:var(--space-md);
+                      display:flex;justify-content:space-between;
+                      align-items:center">
+            <span style="font-size:.78rem;color:var(--fd-lemon)">
+              🏆 Ton PR
+            </span>
+            <span style="font-size:.88rem;font-weight:800;
+                         color:var(--fd-lemon)">
+              ${pr.poids}kg × ${pr.reps} reps
+            </span>
+          </div>` : ''}
+
+        <!-- Description -->
+        <div style="font-size:.85rem;color:var(--text-secondary);
+                    line-height:1.6;margin-bottom:var(--space-md)">
+          ${ex.description||''}
+        </div>
+
+        <!-- Équipement -->
+        <div style="display:flex;align-items:center;gap:8px;
+                    margin-bottom:var(--space-md)">
+          <span style="font-size:.72rem;color:var(--text-muted)">
+            🔧 Équipement :
+          </span>
+          <span style="font-size:.78rem;font-weight:600">
+            ${ex.equipement||'—'}
+          </span>
+        </div>
+
+        <!-- Muscles secondaires -->
+        ${ex.muscles_sec?.length ? `
+          <div style="margin-bottom:var(--space-md)">
+            <div style="font-size:.68rem;color:var(--text-muted);
+                        margin-bottom:6px">
+              Muscles secondaires
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              ${ex.muscles_sec.map(m => `
+                <span class="chip chip-lavender"
+                      style="font-size:.62rem">${m}</span>
+              `).join('')}
+            </div>
+          </div>` : ''}
+
+        <!-- Conseils -->
+        ${ex.conseils?.length ? `
+          <div style="margin-bottom:var(--space-md)">
+            <div style="font-size:.68rem;color:var(--text-muted);
+                        font-weight:700;text-transform:uppercase;
+                        margin-bottom:6px">
+              💡 Conseils
+            </div>
+            ${ex.conseils.map(c => `
+              <div style="display:flex;align-items:flex-start;
+                          gap:8px;padding:4px 0;font-size:.82rem;
+                          color:var(--text-secondary)">
+                <span style="color:var(--fd-indigo);flex-shrink:0">
+                  •
+                </span>
+                ${c}
+              </div>`).join('')}
+          </div>` : ''}
+
+        <!-- Boutons -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;
+                    gap:var(--space-sm);margin-top:var(--space-md)">
+          ${ex.youtube ? `
+            <button onclick="VideoDemo.ouvrir(
+                      '${ex.youtube}',
+                      '${ex.nom.replace(/'/g,"\\'")}',
+                      '${ex.muscle||''}')"
+                    style="padding:var(--space-md);
+                           background:rgba(255,0,0,0.1);
+                           border:1px solid rgba(255,0,0,0.2);
+                           border-radius:var(--radius-full);
+                           color:#ff4444;font-weight:700;
+                           font-size:.82rem;cursor:pointer">
+              ▶ Voir démo
+            </button>` : '<div></div>'}
+          <button onclick="document.getElementById(
+                    'modal-info').classList.add('hidden')"
+                  class="btn-primary"
+                  style="font-size:.82rem">
+            ✓ Fermer
+          </button>
+        </div>
+      </div>
+    `;
+
+    modal.classList.remove('hidden');
+    const closeBtn = document.getElementById('modal-info-close');
+    if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
+  }
+};
+
+window.GalerieExercices = GalerieExercices;
+
+// ════════════════════════════════════════════════════════════
 // INIT PRINCIPAL
 // ════════════════════════════════════════════════════════════
 async function init() {
@@ -1732,6 +2362,14 @@ async function init() {
 
     naviguer('home');
     _updateHeaderXP();
+    // ✅ NOUVEAUX modules
+      try { ThemeManager.init();  } catch(e) {}
+      try { SwipeNav.init();      } catch(e) {}
+
+   // ✅ Injecter bouton thème après rendu header
+      setTimeout(() => {
+        try { ThemeManager._injecterBtn(); } catch(e) {}
+      }, 200); 
 
     console.log('✅ PowerApp v3.0 — Prêt !');
 
