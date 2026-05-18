@@ -75,6 +75,10 @@ const Chrono = {
       (this._pauseOffset + Date.now() - this._debut) / 1000
     );
   },
+   // ✅ Alias pour compatibilité ChronoSticky
+  getFormate() {
+    return this.formaterDuree(this.getDureeSecondes());
+  },
 
   formaterDuree(secondes) {
     const h = Math.floor(secondes / 3600);
