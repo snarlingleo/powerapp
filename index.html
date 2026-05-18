@@ -5,20 +5,30 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0,
                  viewport-fit=cover" />
-  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#09092d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style"
         content="black-translucent" />
-  <meta name="theme-color" content="#09092d" />
+  <meta name="description"
+        content="PowerApp — Ton coach fitness personnel" />
+
   <title>PowerApp ⚡</title>
-  <link rel="stylesheet" href="./css/style.css" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="./manifest.json" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Chart.js — AVANT tous les scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
 
-  <!-- ═══════════════════════════════════════
+  <!-- ══════════════════════════════════════════
        SPLASH SCREEN
-  ════════════════════════════════════════ -->
+  ══════════════════════════════════════════ -->
   <div id="splash-screen">
     <div class="splash-content">
       <div class="splash-logo">⚡</div>
@@ -30,14 +40,14 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
+  <!-- ══════════════════════════════════════════
        ONBOARDING
-  ════════════════════════════════════════ -->
+  ══════════════════════════════════════════ -->
   <div id="onboarding-screen" class="onboarding hidden"></div>
 
-  <!-- ═══════════════════════════════════════
+  <!-- ══════════════════════════════════════════
        APP WRAPPER
-  ════════════════════════════════════════ -->
+  ══════════════════════════════════════════ -->
   <div id="app-wrapper" style="display:none">
 
     <!-- HEADER -->
@@ -46,19 +56,23 @@
         <span class="header-emoji" id="header-emoji">⚡</span>
         <span class="header-title" id="header-title">PowerApp</span>
       </div>
-      <div class="header-right">
+      <div class="header-right" id="header-right">
+        <!-- Bouton thème injecté par ThemeManager -->
         <div class="header-xp" id="header-xp"></div>
       </div>
     </header>
 
-    <!-- PAGES -->
-    <main class="app-main">
-      <div id="page-home"     class="page active"></div>
+    <!-- MAIN CONTENT -->
+    <main class="app-main" id="app-main">
+
+      <!-- Pages principales -->
+      <div id="page-home"     class="page"></div>
       <div id="page-training" class="page"></div>
       <div id="page-live"     class="page"></div>
       <div id="page-stats"    class="page"></div>
       <div id="page-profil"   class="page"></div>
 
+      <!-- Pages secondaires -->
       <div id="page-coach"        class="page"></div>
       <div id="page-defis"        class="page"></div>
       <div id="page-predict"      class="page"></div>
@@ -75,11 +89,15 @@
       <div id="page-journal"      class="page"></div>
       <div id="page-objectifs"    class="page"></div>
       <div id="page-blessures"    class="page"></div>
+
+      <!-- ✅ NOUVELLES PAGES -->
       <div id="page-circuit"      class="page"></div>
       <div id="page-adaptatif"    class="page"></div>
+      <div id="page-galerie"      class="page"></div>
+
     </main>
 
-    <!-- NAV BAS -->
+    <!-- NAVIGATION BAS -->
     <nav class="app-nav">
       <button class="nav-btn active" id="nav-home"
               onclick="naviguer('home')">
@@ -108,129 +126,137 @@
       </button>
     </nav>
 
-  </div><!-- fin #app-wrapper -->
+  </div><!-- /app-wrapper -->
 
+  <!-- ══════════════════════════════════════════
+       CHRONO STICKY — Injecté par ChronoSticky.afficher()
+  ══════════════════════════════════════════ -->
+  <!-- Créé dynamiquement dans app.js -->
 
-  <!-- ═══════════════════════════════════════
-       MODALS
-  ════════════════════════════════════════ -->
-
-  <!-- Modal Info / Résumé séance -->
+  <!-- ══════════════════════════════════════════
+       MODAL INFO (résumé séance, détail exercice)
+  ══════════════════════════════════════════ -->
   <div id="modal-info" class="modal hidden">
     <div class="modal-overlay"
          onclick="document.getElementById('modal-info')
                     .classList.add('hidden')">
     </div>
-    <div class="modal-inner modal-sm">
+    <div class="modal-inner">
       <button class="modal-close" id="modal-info-close">✕</button>
       <div class="modal-content" id="modal-info-content"></div>
     </div>
   </div>
 
-  <!-- Modal Confirmation -->
+  <!-- ══════════════════════════════════════════
+       MODAL CONFIRMATION
+  ══════════════════════════════════════════ -->
   <div id="modal-confirm" class="modal hidden">
     <div class="modal-overlay"></div>
     <div class="modal-inner modal-sm">
-      <div class="modal-content">
-        <div style="font-size:1.1rem;font-weight:700;
-                    margin-bottom:var(--space-sm)"
-             id="modal-confirm-titre">
-          Confirmer
-        </div>
-        <p style="font-size:.85rem;color:var(--text-muted);
-                  margin-bottom:var(--space-lg)"
-           id="modal-confirm-msg"></p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;
-                    gap:var(--space-sm)">
-          <button id="modal-confirm-non"
-                  class="btn-secondary">
-            Annuler
-          </button>
-          <button id="modal-confirm-oui"
-                  class="btn-primary">
+      <div class="modal-content" id="modal-confirm-content">
+        <div style="text-align:center;padding:var(--space-md)">
+          <div style="font-size:1.1rem;font-weight:700;
+                      margin-bottom:var(--space-sm)"
+               id="modal-confirm-title">
             Confirmer
-          </button>
+          </div>
+          <p style="font-size:.85rem;color:var(--text-muted);
+                    margin-bottom:var(--space-lg)"
+             id="modal-confirm-msg"></p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;
+                      gap:var(--space-sm)">
+            <button id="modal-confirm-cancel"
+                    class="btn-secondary">
+              Annuler
+            </button>
+            <button id="modal-confirm-ok"
+                    class="btn-primary">
+              Confirmer
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       OVERLAYS GLOBAUX
-  ════════════════════════════════════════ -->
-
-  <!-- Confetti canvas -->
-  <canvas id="confetti-canvas"></canvas>
-
-  <!-- Toast container -->
+  <!-- ══════════════════════════════════════════
+       TOAST CONTAINER
+  ══════════════════════════════════════════ -->
   <div id="toast-container"></div>
 
-  <!-- Timer repos overlay -->
-  <div id="timer-repos-overlay" class="hidden"></div>
+  <!-- ══════════════════════════════════════════
+       CONFETTI CANVAS
+  ══════════════════════════════════════════ -->
+  <canvas id="confetti-canvas"></canvas>
 
-  <!-- Offline banner -->
-  <div id="offline-banner" class="hidden"
-       style="position:fixed;bottom:calc(var(--nav-height) + 8px);
-              left:var(--space-md);right:var(--space-md);
-              z-index:300;background:#333;color:white;
-              border-radius:var(--radius-md);
-              padding:var(--space-sm) var(--space-md);
-              font-size:.78rem;font-weight:600;
-              display:none;align-items:center;gap:var(--space-sm)">
+  <!-- ══════════════════════════════════════════
+       TIMER REPOS OVERLAY
+  ══════════════════════════════════════════ -->
+  <div id="timer-repos-overlay"></div>
+
+  <!-- ══════════════════════════════════════════
+       BANNIÈRES SYSTÈME
+  ══════════════════════════════════════════ -->
+
+  <!-- Offline -->
+  <div id="offline-banner"
+       style="display:none;
+              position:fixed;top:0;left:50%;
+              transform:translateX(-50%);
+              width:100%;max-width:480px;
+              background:var(--fd-coral);
+              color:white;text-align:center;
+              padding:6px;font-size:.75rem;
+              font-weight:700;z-index:9999">
     📵 Mode hors-ligne
   </div>
 
-  <!-- Sync indicator -->
-  <div id="sync-indicator" class="hidden"
-       style="position:fixed;top:calc(var(--header-height) + 8px);
-              right:var(--space-md);z-index:300;
-              background:var(--fd-indigo);color:white;
-              border-radius:var(--radius-full);
-              padding:4px 12px;font-size:.72rem;font-weight:600;
-              display:none;align-items:center;gap:4px">
+  <!-- Sync -->
+  <div id="sync-indicator"
+       style="display:none;
+              position:fixed;top:0;left:50%;
+              transform:translateX(-50%);
+              width:100%;max-width:480px;
+              background:var(--fd-indigo);
+              color:white;text-align:center;
+              padding:6px;font-size:.75rem;
+              font-weight:700;z-index:9999">
     🔄 Synchronisation...
   </div>
 
-  <!-- PWA Install button -->
-  <div id="pwa-install-btn" class="hidden"></div>
+  <!-- PWA Install -->
+  <div id="pwa-install-btn" style="display:none"></div>
 
-  <!-- Update banner -->
+  <!-- Update Banner -->
   <div id="update-banner"
        style="display:none;
-              position:fixed;
-              bottom:calc(var(--nav-height) + 16px);
-              left:var(--space-md);
-              right:var(--space-md);
-              z-index:300;
-              background:var(--fd-indigo);
-              color:white;
-              border-radius:var(--radius-lg);
+              position:fixed;bottom:calc(var(--nav-height) + 8px);
+              left:50%;transform:translateX(-50%);
+              width:calc(100% - 32px);max-width:448px;
+              background:var(--bg-card);
+              border:1px solid var(--fd-lemon);
+              border-radius:var(--radius-xl);
               padding:var(--space-md);
-              align-items:center;
+              display:flex;align-items:center;
               justify-content:space-between;
+              gap:var(--space-sm);
               box-shadow:var(--shadow-lg);
-              gap:var(--space-sm)">
+              z-index:200">
     <span style="font-size:.82rem;font-weight:600">
       🆕 Nouvelle version disponible !
     </span>
-    <button id="update-btn"
-            style="padding:6px 14px;
-                   background:white;
-                   color:var(--fd-indigo);
-                   border:none;
-                   border-radius:var(--radius-full);
-                   font-size:.78rem;font-weight:700;
-                   cursor:pointer">
+    <button onclick="window._swReg?.waiting
+                       ?.postMessage({type:'SKIP_WAITING'})"
+            class="btn-primary btn-sm">
       Mettre à jour
     </button>
   </div>
 
+  <!-- ══════════════════════════════════════════
+       SCRIPTS — Ordre critique respecté
+  ══════════════════════════════════════════ -->
 
-  <!-- ═══════════════════════════════════════
-       SCRIPTS
-  ════════════════════════════════════════ -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  
+  <!-- Utils en premier -->
   <script src="js/sounds.js"        defer></script>
   <script src="js/utils.js"         defer></script>
   <script src="js/tracker.js"       defer></script>
@@ -248,40 +274,46 @@
   <script src="js/offline.js"       defer></script>
   <script src="js/social.js"        defer></script>
   <script src="js/i18n.js"          defer></script>
+
+  <!-- Modules v4 -->
   <script src="js/calculateur.js"   defer></script>
   <script src="js/chrono.js"        defer></script>
   <script src="js/video.js"         defer></script>
   <script src="js/nutrition.js"     defer></script>
   <script src="js/circuit.js"       defer></script>
+
+  <!-- App en dernier -->
   <script src="js/app.js"           defer></script>
 
-  <!-- Service Worker -->
+  <!-- ══════════════════════════════════════════
+       SERVICE WORKER
+  ══════════════════════════════════════════ -->
   <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      // ✅ ./ au lieu de / 
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => {
-          reg.addEventListener('updatefound', () => {
-            const newSW = reg.installing;
-            newSW.addEventListener('statechange', () => {
-              if (newSW.state === 'installed'
-                  && navigator.serviceWorker.controller) {
-                const banner =
-                  document.getElementById('update-banner');
-                if (banner) banner.style.display = 'flex';
-              }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => {
+            window._swReg = reg;
+            reg.addEventListener('updatefound', () => {
+              const newSW = reg.installing;
+              newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'installed'
+                    && navigator.serviceWorker.controller) {
+                  const banner =
+                    document.getElementById('update-banner');
+                  if (banner) banner.style.display = 'flex';
+                }
+              });
             });
-          });
-        })
-        .catch(err => console.warn('[SW]', err));
+          })
+          .catch(err => console.warn('[SW]', err));
 
-      navigator.serviceWorker.addEventListener(
-        'controllerchange', () => window.location.reload()
-      );
-    });
-  }
-</script>
+        navigator.serviceWorker.addEventListener(
+          'controllerchange', () => window.location.reload()
+        );
+      });
+    }
+  </script>
 
 </body>
 </html>
