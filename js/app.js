@@ -473,6 +473,12 @@ function _rendreHome(container) {
 
     ${_renderHumeurFatigue()}
   `;
+
+  // ✅ FIX — Attacher les events APRÈS que le HTML soit dans le DOM
+  // Les emojis dans onclick="" cassent le HTML → on utilise addEventListener
+  requestAnimationFrame(() => {
+    _attacherHumeurFatigueEvents();
+  });
 }
 
 function _renderHumeurFatigue() {
@@ -482,37 +488,45 @@ function _renderHumeurFatigue() {
 
   if (humeur && fatigue) return '';
 
+  // ✅ FIX — ID unique pour attacher les events après render
   return `
-    <div class="card mb-md">
+    <div class="card mb-md" id="card-humeur-fatigue">
       <div class="card-label">😊 Comment tu te sens ?</div>
+
       ${!humeur ? `
         <div style="margin-top:var(--space-sm)">
           <div style="font-size:.72rem;color:var(--text-muted);
-                      margin-bottom:6px">Humeur du jour</div>
-          <div style="display:flex;gap:8px">
-            ${['😒','😐','🙂','😊','🔥'].map(h => `
-              <button onclick="App.setHumeur('${h}')"
+                      margin-bottom:6px">
+            Humeur du jour
+          </div>
+          <div style="display:flex;gap:8px" id="humeur-btns">
+            ${['😒','😐','🙂','😊','🔥'].map((h, i) => `
+              <button data-humeur="${i}"
                       style="flex:1;padding:8px;font-size:1.2rem;
                              background:var(--bg-input);
                              border:1px solid var(--border-color);
                              border-radius:var(--radius-sm);
-                             cursor:pointer">
+                             cursor:pointer;
+                             transition:all .2s">
                 ${h}
               </button>`).join('')}
           </div>
         </div>` : ''}
+
       ${!fatigue ? `
         <div style="margin-top:var(--space-sm)">
           <div style="font-size:.72rem;color:var(--text-muted);
-                      margin-bottom:6px">Niveau de fatigue</div>
-          <div style="display:flex;gap:6px">
+                      margin-bottom:6px">
+            Niveau de fatigue
+          </div>
+          <div style="display:flex;gap:6px" id="fatigue-btns">
             ${[
-              {val:0, label:'Frais',  color:'var(--fd-mint)'  },
-              {val:1, label:'OK',     color:'var(--fd-lemon)' },
-              {val:2, label:'Mod.',   color:'#ffa500'         },
-              {val:3, label:'Épuisé', color:'var(--fd-coral)' }
+              { val:0, label:'Frais',  color:'var(--fd-mint)'  },
+              { val:1, label:'OK',     color:'var(--fd-lemon)' },
+              { val:2, label:'Mod.',   color:'#ffa500'         },
+              { val:3, label:'Épuisé', color:'var(--fd-coral)' }
             ].map(f => `
-              <button onclick="App.setFatigue(${f.val})"
+              <button data-fatigue="${f.val}"
                       style="flex:1;padding:6px 2px;
                              font-size:.68rem;font-weight:600;
                              background:${f.color}22;
@@ -525,6 +539,85 @@ function _renderHumeurFatigue() {
           </div>
         </div>` : ''}
     </div>`;
+}
+function _attacherHumeurFatigueEvents() {
+  const humeurs = ['😒', '😐', '🙂', '😊', '🔥'];
+
+  // ✅ Boutons humeur — via data-humeur index
+  document.querySelectorAll('[data-humeur]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx    = parseInt(btn.dataset.humeur);
+      const humeur = humeurs[idx];
+      if (!humeur) return;
+
+      // Feedback visuel
+      document.querySelectorAll('[data-humeur]').forEach(b => {
+        b.style.transform  = '';
+        b.style.background = 'var(--bg-input)';
+        b.style.border     = '1px solid var(--border-color)';
+      });
+      btn.style.transform  = 'scale(1.2)';
+      btn.style.background = 'rgba(75,75,249,0.2)';
+      btn.style.border     = '2px solid var(--fd-indigo)';
+
+      setTimeout(() => {
+        try {
+          Tracker.sauvegarderHumeur(humeur);
+          try { Gamification.recompenser('HUMEUR'); } catch(e) {}
+          Utils.toast(`Humeur : ${humeur}`, 'success', 1500);
+          Utils.vibrerSuccess();
+
+          // ✅ Re-render uniquement le bloc humeur/fatigue
+          const card = document.getElementById('card-humeur-fatigue');
+          if (card) {
+            const fatigue = Tracker.getFatigue();
+            if (!fatigue) {
+              // Garder seulement la section fatigue
+              card.querySelector('#humeur-btns')
+                ?.closest('div')?.remove();
+            } else {
+              card.remove();
+            }
+          }
+        } catch(e) {}
+      }, 300);
+    });
+  });
+
+  // ✅ Boutons fatigue — via data-fatigue
+  document.querySelectorAll('[data-fatigue]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = parseInt(btn.dataset.fatigue);
+
+      // Feedback visuel
+      document.querySelectorAll('[data-fatigue]').forEach(b => {
+        b.style.opacity   = '0.5';
+        b.style.transform = '';
+      });
+      btn.style.opacity   = '1';
+      btn.style.transform = 'scale(1.05)';
+
+      setTimeout(() => {
+        try {
+          Tracker.sauvegarderFatigue(val);
+          Utils.toast('Fatigue enregistrée ✅', 'success', 1500);
+          Utils.vibrerSuccess();
+
+          // ✅ Re-render uniquement le bloc humeur/fatigue
+          const card = document.getElementById('card-humeur-fatigue');
+          if (card) {
+            const humeur = Tracker.getHumeur();
+            if (!humeur) {
+              card.querySelector('#fatigue-btns')
+                ?.closest('div')?.remove();
+            } else {
+              card.remove();
+            }
+          }
+        } catch(e) {}
+      }, 300);
+    });
+  });
 }
 
 // ════════════════════════════════════════════════════════════
