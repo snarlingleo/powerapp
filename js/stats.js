@@ -1352,11 +1352,16 @@ const Stats = {
     const premierJour = new Date(an,mo,1);
     const offsetDebut = (premierJour.getDay()+6)%7;
     const nbJours     = new Date(an,mo+1,0).getDate();
+    // ✅ Date de début du programme — rien avant n'est "manqué"
+    const dateDebut = Utils.storage.get('ft_date_debut', null);
+
     let seancesMois=0, manqueesMois=0;
     for (let j=1;j<=nbJours;j++) {
       const d=`${an}-${String(mo+1).padStart(2,'0')}-${String(j).padStart(2,'0')}`;
       if (heatmap[d]==='done')   seancesMois++;
-      if (heatmap[d]==='missed') manqueesMois++;
+      // ✅ Compter manquée seulement après date de début
+      if (heatmap[d]==='missed'
+          && (!dateDebut || d >= dateDebut)) manqueesMois++;
     }
     let cellules='';
     for (let i=0;i<offsetDebut;i++) cellules+=`<div style="min-height:48px"></div>`;
@@ -1365,15 +1370,36 @@ const Stats = {
       const etat = heatmap[d]||'none';
       const estAuj = d===Utils.aujourd_hui();
       const estFut = d>Utils.aujourd_hui();
-      const bg = etat==='done'?'var(--fd-indigo)':etat==='missed'?'rgba(255,141,150,0.3)':etat==='rest'?'rgba(139,240,187,0.15)':estFut?'transparent':'var(--bg-input)';
+      // ✅ Ne pas afficher ❌ avant la date de début du programme
+      const estAvantDebut = dateDebut && d < dateDebut;
+      const etatAffiche   = estAvantDebut ? 'none' : etat;
+
+      const bg = etatAffiche==='done'   ? 'var(--fd-indigo)'            :
+                 etatAffiche==='missed' ? 'rgba(255,141,150,0.3)'        :
+                 etatAffiche==='rest'   ? 'rgba(139,240,187,0.15)'       :
+                 estFut                 ? 'transparent'                   :
+                                          'var(--bg-input)';
+
       cellules+=`
         <div onclick="${estFut?'':'Stats._afficherJour(\''+d+'\')'}"
-             style="background:${bg};border:${estAuj?'2px solid var(--fd-lemon)':'1px solid var(--border-color)'};border-radius:var(--radius-sm);min-height:48px;padding:4px;cursor:${estFut?'default':'pointer'}">
-          <div style="font-size:.72rem;font-weight:${estAuj?'800':'500'};color:${estAuj?'var(--fd-lemon)':etat==='done'?'white':'var(--text-muted)'}">
+             style="background:${bg};
+                    border:${estAuj
+                      ? '2px solid var(--fd-lemon)'
+                      : '1px solid var(--border-color)'};
+                    border-radius:var(--radius-sm);
+                    min-height:48px;padding:4px;
+                    cursor:${estFut?'default':'pointer'}">
+          <div style="font-size:.72rem;
+                      font-weight:${estAuj?'800':'500'};
+                      color:${estAuj
+                        ? 'var(--fd-lemon)'
+                        : etatAffiche==='done'?'white':'var(--text-muted)'}">
             ${j}
           </div>
           <div style="font-size:.8rem;text-align:center;margin-top:2px">
-            ${etat==='done'?'✅':etat==='missed'?'❌':etat==='rest'?'😴':''}
+            ${etatAffiche==='done'   ? '✅' :
+              etatAffiche==='missed' ? '❌' :
+              etatAffiche==='rest'   ? '😴' : ''}
           </div>
         </div>`;
     }
