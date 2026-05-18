@@ -8,9 +8,14 @@
 // BIBLIOTHÈQUE EXERCICES (identique — aucun bug trouvé)
 // ════════════════════════════════════════════════════════════
 const EXERCICES = {
+
+  // ══════════════════════════════════════════
+  // PECTORAUX (9 exercices)
+  // ══════════════════════════════════════════
   bench_press: {
     nom:'Développé couché', muscle:'Pectoraux',
     muscles_sec:['Triceps','Épaules'],
+    groupe:'push',
     equipement:'Barre olympique + Banc plat',
     emoji:'💪', difficulte:2,
     youtube:'rT7DgCr-3pg',
@@ -20,6 +25,7 @@ const EXERCICES = {
   incline_halteres: {
     nom:'Développé incliné haltères', muscle:'Pectoraux Hauts',
     muscles_sec:['Épaules','Triceps'],
+    groupe:'push',
     equipement:'Haltères + Banc incliné 30-45°',
     emoji:'💪', difficulte:2,
     youtube:'DbFgADa2PL8',
@@ -29,6 +35,7 @@ const EXERCICES = {
   chest_press_machine: {
     nom:'Chest Press Machine', muscle:'Pectoraux',
     muscles_sec:['Triceps'],
+    groupe:'push',
     equipement:'Machine Chest Press',
     emoji:'🤖', difficulte:1,
     youtube:'taI4XduLpTk',
@@ -38,6 +45,7 @@ const EXERCICES = {
   ecarte_poulie: {
     nom:'Écarté poulie haute', muscle:'Pectoraux',
     muscles_sec:[],
+    groupe:'push',
     equipement:'Câble crossover',
     emoji:'🔄', difficulte:2,
     youtube:'eozdVDA78K0',
@@ -47,6 +55,7 @@ const EXERCICES = {
   dips: {
     nom:'Dips', muscle:'Pectoraux / Triceps',
     muscles_sec:['Épaules'],
+    groupe:'push',
     equipement:'Barres parallèles',
     emoji:'⬇️', difficulte:3,
     youtube:'yN6Q1UI_xkE',
@@ -56,15 +65,52 @@ const EXERCICES = {
   pompes: {
     nom:'Pompes', muscle:'Pectoraux',
     muscles_sec:['Triceps','Épaules','Core'],
+    groupe:'push',
     equipement:'Poids du corps',
     emoji:'⬆️', difficulte:1,
     youtube:'IODxDxX7oi4',
     description:'Mains légèrement plus larges que les épaules.',
     conseils:['Corps rigide','Coudes à 45°','Amplitude complète']
   },
+  // ── NOUVEAUX PECTORAUX ───────────────────
+  decline_bench: {
+    nom:'Développé décliné', muscle:'Pectoraux Bas',
+    muscles_sec:['Triceps'],
+    groupe:'push',
+    equipement:'Barre + Banc décliné',
+    emoji:'📉', difficulte:2,
+    youtube:'LfyQTdaGQiY',
+    description:'Banc décliné, ciblage des pectoraux inférieurs.',
+    conseils:['Angle 15-30° maximum','Pieds bien calés','Contrôle en descente','Ne pas rebondir']
+  },
+  cable_fly: {
+    nom:'Cable Fly bas', muscle:'Pectoraux',
+    muscles_sec:[],
+    groupe:'push',
+    equipement:'Câble poulie basse',
+    emoji:'🦋', difficulte:2,
+    youtube:'taI4XduLpTk',
+    description:'Câbles en position basse, mouvement vers le haut.',
+    conseils:['Légère flexion du coude fixe','Expirer en remontant','Amplitude maximale']
+  },
+  pompes_declined: {
+    nom:'Pompes pieds surélevés', muscle:'Pectoraux Hauts',
+    muscles_sec:['Épaules','Triceps'],
+    groupe:'push',
+    equipement:'Banc ou chaise',
+    emoji:'🔼', difficulte:2,
+    youtube:'IODxDxX7oi4',
+    description:'Pieds surélevés pour cibler les pectoraux supérieurs.',
+    conseils:['Pieds sur une surface stable','Corps bien droit','Amplitude complète']
+  },
+
+  // ══════════════════════════════════════════
+  // DOS (10 exercices)
+  // ══════════════════════════════════════════
   tractions: {
     nom:'Tractions', muscle:'Grand Dorsal',
     muscles_sec:['Biceps','Rhomboïdes'],
+    groupe:'pull',
     equipement:'Barre de traction',
     emoji:'🔗', difficulte:3,
     youtube:'eGo4IYlbE5g',
@@ -74,6 +120,7 @@ const EXERCICES = {
   rowing_barre: {
     nom:'Rowing barre', muscle:'Dos Moyen',
     muscles_sec:['Biceps','Trapèzes'],
+    groupe:'pull',
     equipement:'Barre olympique',
     emoji:'🔗', difficulte:3,
     youtube:'6FZHhZMqDgg',
@@ -83,6 +130,7 @@ const EXERCICES = {
   lat_pulldown: {
     nom:'Tirage poulie haute', muscle:'Grand Dorsal',
     muscles_sec:['Biceps'],
+    groupe:'pull',
     equipement:'Lat Pulldown',
     emoji:'⬇️', difficulte:1,
     youtube:'CAwf7n6Luuc',
@@ -92,6 +140,7 @@ const EXERCICES = {
   rowing_machine: {
     nom:'Rowing machine assise', muscle:'Dos Moyen',
     muscles_sec:['Biceps','Rhomboïdes'],
+    groupe:'pull',
     equipement:'Machine Rowing',
     emoji:'🤖', difficulte:1,
     youtube:'GZbfZ033f74',
@@ -101,6 +150,7 @@ const EXERCICES = {
   'soulevé_terre': {
     nom:'Soulevé de terre', muscle:'Chaîne postérieure',
     muscles_sec:['Fessiers','Ischio-jambiers','Dos','Trapèzes'],
+    groupe:'pull',
     equipement:'Barre olympique',
     emoji:'🏋️', difficulte:4,
     youtube:'op9kVnSso6Q',
@@ -110,15 +160,62 @@ const EXERCICES = {
   pullover: {
     nom:'Pull-over haltère', muscle:'Grand Dorsal',
     muscles_sec:['Pectoraux'],
+    groupe:'pull',
     equipement:'Haltère + Banc plat',
     emoji:'🔄', difficulte:2,
     youtube:'FK2SqQxNRmA',
     description:'Allongé, haltère tenu à deux mains.',
     conseils:['Légère flexion du coude','Ne pas descendre trop bas','Amplitude progressive']
   },
+  // ── NOUVEAUX DOS ─────────────────────────
+  rack_pull: {
+    nom:'Rack Pull', muscle:'Dos / Trapèzes',
+    muscles_sec:['Fessiers','Ischio-jambiers'],
+    groupe:'pull',
+    equipement:'Rack + Barre olympique',
+    emoji:'🏗️', difficulte:3,
+    youtube:'op9kVnSso6Q',
+    description:'Soulevé de terre partiel depuis un rack, focus dos et trapèzes.',
+    conseils:['Barre au niveau des genoux','Dos parfaitement neutre','Mouvement contrôlé','Charges plus lourdes qu\'un deadlift']
+  },
+  pendlay_row: {
+    nom:'Pendlay Row', muscle:'Dos Moyen',
+    muscles_sec:['Biceps','Trapèzes'],
+    groupe:'pull',
+    equipement:'Barre olympique',
+    emoji:'⚡', difficulte:3,
+    youtube:'6FZHhZMqDgg',
+    description:'Rowing explosif depuis le sol, dos horizontal.',
+    conseils:['Barre revient au sol à chaque rep','Tirage explosif','Dos strictement horizontal','Coudes à 45°']
+  },
+  tbar_row: {
+    nom:'T-Bar Row', muscle:'Dos Moyen / Épaisseur',
+    muscles_sec:['Biceps','Rhomboïdes'],
+    groupe:'pull',
+    equipement:'T-Bar ou Landmine',
+    emoji:'🔱', difficulte:3,
+    youtube:'j3G1dQbnABQ',
+    description:'Rowing avec barre fixée à une extrémité.',
+    conseils:['Poitrine sur le support','Amplitude complète','Serrer les omoplates','Dos neutre']
+  },
+  chin_up: {
+    nom:'Chin-up (supination)', muscle:'Grand Dorsal / Biceps',
+    muscles_sec:['Biceps','Rhomboïdes'],
+    groupe:'pull',
+    equipement:'Barre de traction',
+    emoji:'🔝', difficulte:3,
+    youtube:'brhRXlOhsAM',
+    description:'Tractions prise supination (paumes vers soi).',
+    conseils:['Prise supination légèrement moins large que les épaules','Biceps fortement sollicités','Descente complète','Pas d\'à-coup']
+  },
+
+  // ══════════════════════════════════════════
+  // ÉPAULES (8 exercices)
+  // ══════════════════════════════════════════
   dev_militaire: {
     nom:'Développé militaire', muscle:'Épaules',
     muscles_sec:['Triceps','Trapèzes'],
+    groupe:'push',
     equipement:'Haltères ou Barre',
     emoji:'💪', difficulte:3,
     youtube:'CnBmiBqp-AI',
@@ -128,6 +225,7 @@ const EXERCICES = {
   elev_laterales: {
     nom:'Élévations latérales', muscle:'Deltoïdes Latéraux',
     muscles_sec:[],
+    groupe:'push',
     equipement:'Haltères',
     emoji:'🦅', difficulte:1,
     youtube:'kDqklk1ZESo',
@@ -137,6 +235,7 @@ const EXERCICES = {
   shoulder_press_machine: {
     nom:'Shoulder Press Machine', muscle:'Épaules',
     muscles_sec:['Triceps'],
+    groupe:'push',
     equipement:'Machine Épaules',
     emoji:'🤖', difficulte:1,
     youtube:'6Z15_WdXmVw',
@@ -146,6 +245,7 @@ const EXERCICES = {
   face_pull: {
     nom:'Face Pull', muscle:'Deltoïdes Postérieurs',
     muscles_sec:['Trapèzes','Rhomboïdes'],
+    groupe:'pull',
     equipement:'Câble poulie haute + corde',
     emoji:'🔄', difficulte:2,
     youtube:'HSoHeSt2VWo',
@@ -155,15 +255,52 @@ const EXERCICES = {
   oiseau: {
     nom:'Oiseau', muscle:'Deltoïdes Postérieurs',
     muscles_sec:['Rhomboïdes'],
+    groupe:'pull',
     equipement:'Haltères',
     emoji:'🦢', difficulte:2,
     youtube:'sOiBHj9MEFQ',
     description:'Penché en avant dos plat.',
     conseils:['Dos plat et horizontal','Mouvement lent','Coudes légèrement fléchis']
   },
+  // ── NOUVEAUX ÉPAULES ─────────────────────
+  arnold_press: {
+    nom:'Arnold Press', muscle:'Épaules (3 faisceaux)',
+    muscles_sec:['Triceps'],
+    groupe:'push',
+    equipement:'Haltères',
+    emoji:'🌀', difficulte:2,
+    youtube:'vj2w851ZHRM',
+    description:'Rotation des paumes de dedans vers dehors pendant le press.',
+    conseils:['Rotation fluide et contrôlée','Pas de compensation du dos','Amplitude maximale','Amplitude plus complète qu\'un press classique']
+  },
+  upright_row: {
+    nom:'Rowing vertical', muscle:'Trapèzes / Épaules',
+    muscles_sec:['Deltoïdes Latéraux'],
+    groupe:'pull',
+    equipement:'Barre ou Haltères',
+    emoji:'⬆️', difficulte:2,
+    youtube:'UcrJ2WBIXeg',
+    description:'Tirer la barre vers le menton, coudes vers le haut.',
+    conseils:['Prise légèrement plus étroite que les épaules','Coudes au-dessus des poignets','Ne pas monter trop haut','Mouvement contrôlé']
+  },
+  shrug: {
+    nom:'Shrug / Haussement épaules', muscle:'Trapèzes',
+    muscles_sec:[],
+    groupe:'pull',
+    equipement:'Haltères ou Barre',
+    emoji:'🤷', difficulte:1,
+    youtube:'vj2w851ZHRM',
+    description:'Hausser les épaules vers les oreilles avec charge.',
+    conseils:['Mouvement vertical uniquement','Tenir 1s en position haute','Ne pas faire de rotation','Descente lente']
+  },
+
+  // ══════════════════════════════════════════
+  // BICEPS (6 exercices)
+  // ══════════════════════════════════════════
   curl_halteres: {
     nom:'Curl haltères', muscle:'Biceps',
     muscles_sec:['Avant-bras'],
+    groupe:'pull',
     equipement:'Haltères',
     emoji:'💪', difficulte:1,
     youtube:'sAq_ocpS3zY',
@@ -173,6 +310,7 @@ const EXERCICES = {
   curl_barre: {
     nom:'Curl barre EZ', muscle:'Biceps',
     muscles_sec:['Avant-bras'],
+    groupe:'pull',
     equipement:'Barre EZ',
     emoji:'💪', difficulte:1,
     youtube:'kwG2ipFRgfo',
@@ -182,6 +320,7 @@ const EXERCICES = {
   curl_marteau: {
     nom:'Curl marteau', muscle:'Brachial',
     muscles_sec:['Biceps','Avant-bras'],
+    groupe:'pull',
     equipement:'Haltères',
     emoji:'🔨', difficulte:1,
     youtube:'zC3nLlEvin4',
@@ -191,15 +330,42 @@ const EXERCICES = {
   curl_machine: {
     nom:'Curl machine', muscle:'Biceps',
     muscles_sec:[],
+    groupe:'pull',
     equipement:'Machine Curl',
     emoji:'🤖', difficulte:1,
     youtube:'fIWP-FRFNU0',
     description:'Machine guidée, isolation parfaite.',
     conseils:['Bras bien collés au pupitre','Amplitude complète','Squeeze fort en haut']
   },
+  // ── NOUVEAUX BICEPS ──────────────────────
+  spider_curl: {
+    nom:'Spider Curl', muscle:'Biceps (pic)',
+    muscles_sec:['Avant-bras'],
+    groupe:'pull',
+    equipement:'Banc incliné + Haltères ou Barre EZ',
+    emoji:'🕷️', difficulte:2,
+    youtube:'kwG2ipFRgfo',
+    description:'Allongé face contre banc incliné, curl strict sans balancement.',
+    conseils:['Poitrine collée au banc','Isolation maximale','Contrôle total','Squeeze fort en haut']
+  },
+  incline_curl: {
+    nom:'Curl incliné', muscle:'Biceps (longue portion)',
+    muscles_sec:['Avant-bras'],
+    groupe:'pull',
+    equipement:'Banc incliné + Haltères',
+    emoji:'📐', difficulte:2,
+    youtube:'sAq_ocpS3zY',
+    description:'Assis sur banc incliné 45°, amplitude maximale.',
+    conseils:['Dos contre le banc','Bras tombent librement','Amplitude maximale','Mouvement lent']
+  },
+
+  // ══════════════════════════════════════════
+  // TRICEPS (5 exercices)
+  // ══════════════════════════════════════════
   ext_triceps_poulie: {
     nom:'Extension triceps poulie', muscle:'Triceps',
     muscles_sec:[],
+    groupe:'push',
     equipement:'Câble poulie haute + corde',
     emoji:'⬇️', difficulte:1,
     youtube:'vB5OHsJ3EME',
@@ -209,6 +375,7 @@ const EXERCICES = {
   barre_front: {
     nom:'Barre au front', muscle:'Triceps',
     muscles_sec:[],
+    groupe:'push',
     equipement:'Barre EZ + Banc plat',
     emoji:'💥', difficulte:2,
     youtube:'NIKnG_8szOQ',
@@ -218,15 +385,42 @@ const EXERCICES = {
   dips_triceps: {
     nom:'Dips triceps (banc)', muscle:'Triceps',
     muscles_sec:['Épaules'],
+    groupe:'push',
     equipement:'Banc',
     emoji:'⬇️', difficulte:1,
     youtube:'wjUmnZH528Y',
     description:'Mains sur le banc, corps proche.',
     conseils:['Corps proche du banc','Coudes vers l\'arrière','Amplitude complète']
   },
+  // ── NOUVEAUX TRICEPS ─────────────────────
+  overhead_triceps_cable: {
+    nom:'Extension overhead câble', muscle:'Triceps (longue portion)',
+    muscles_sec:[],
+    groupe:'push',
+    equipement:'Câble poulie basse + corde',
+    emoji:'🔼', difficulte:2,
+    youtube:'YbX7Wd8jQ-Q',
+    description:'Face à la poulie, extension au-dessus de la tête.',
+    conseils:['Coudes près des oreilles','Amplitude maximale','Core gainé','Mouvement lent']
+  },
+  close_grip_bench: {
+    nom:'Développé serré', muscle:'Triceps',
+    muscles_sec:['Pectoraux'],
+    groupe:'push',
+    equipement:'Barre olympique + Banc plat',
+    emoji:'🤏', difficulte:2,
+    youtube:'nEF0bv2FW94',
+    description:'Développé couché prise serrée, focus triceps.',
+    conseils:['Prise légèrement plus étroite que les épaules','Coudes proches du corps','Contrôle en descente','Lockout complet']
+  },
+
+  // ══════════════════════════════════════════
+  // JAMBES (11 exercices)
+  // ══════════════════════════════════════════
   squat: {
     nom:'Squat', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Ischio-jambiers','Core'],
+    groupe:'jambes',
     equipement:'Rack à squat + Barre',
     emoji:'🦵', difficulte:3,
     youtube:'ultWZbUMPL8',
@@ -236,6 +430,7 @@ const EXERCICES = {
   presse_cuisses: {
     nom:'Presse à cuisses', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Ischio-jambiers'],
+    groupe:'jambes',
     equipement:'Machine Presse inclinée',
     emoji:'🤖', difficulte:1,
     youtube:'IZxyjW7SKSA',
@@ -245,6 +440,7 @@ const EXERCICES = {
   fentes: {
     nom:'Fentes marchées', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Ischio-jambiers'],
+    groupe:'jambes',
     equipement:'Haltères',
     emoji:'🚶', difficulte:2,
     youtube:'QOVaHwm-Q6U',
@@ -254,6 +450,7 @@ const EXERCICES = {
   leg_curl: {
     nom:'Leg Curl couché', muscle:'Ischio-jambiers',
     muscles_sec:[],
+    groupe:'jambes',
     equipement:'Machine Leg Curl',
     emoji:'🦵', difficulte:1,
     youtube:'ELOCsoDSmrg',
@@ -263,6 +460,7 @@ const EXERCICES = {
   leg_extension: {
     nom:'Leg Extension', muscle:'Quadriceps',
     muscles_sec:[],
+    groupe:'jambes',
     equipement:'Machine Leg Extension',
     emoji:'🦵', difficulte:1,
     youtube:'ljO4jkNWCKk',
@@ -272,6 +470,7 @@ const EXERCICES = {
   mollets: {
     nom:'Mollets debout', muscle:'Mollets',
     muscles_sec:[],
+    groupe:'jambes',
     equipement:'Machine Mollets / Smith Machine',
     emoji:'⬆️', difficulte:1,
     youtube:'gwLzBJYoWlA',
@@ -281,15 +480,72 @@ const EXERCICES = {
   hip_thrust: {
     nom:'Hip Thrust', muscle:'Fessiers',
     muscles_sec:['Ischio-jambiers'],
+    groupe:'jambes',
     equipement:'Barre + Banc',
     emoji:'🍑', difficulte:2,
     youtube:'SEdqd1n0cvg',
     description:'Dos contre le banc, barre sur les hanches.',
     conseils:['Squeeze fort en haut','Menton rentré','Pieds à plat']
   },
+  // ── NOUVEAUX JAMBES ──────────────────────
+  hack_squat: {
+    nom:'Hack Squat', muscle:'Quadriceps',
+    muscles_sec:['Fessiers'],
+    groupe:'jambes',
+    equipement:'Machine Hack Squat',
+    emoji:'🦿', difficulte:2,
+    youtube:'uYumuL_G_V0',
+    description:'Machine guidée inclinée, excellente isolation quadriceps.',
+    conseils:['Pieds légèrement en avant','Dos plaqué contre le dossier','Profondeur maximale','Genoux dans l\'axe des pieds']
+  },
+  goblet_squat: {
+    nom:'Goblet Squat', muscle:'Quadriceps / Core',
+    muscles_sec:['Fessiers','Core'],
+    groupe:'jambes',
+    equipement:'Haltère ou Kettlebell',
+    emoji:'🏆', difficulte:1,
+    youtube:'MxsFDJCGFqU',
+    description:'Squat avec haltère tenu contre la poitrine.',
+    conseils:['Haltère contre la poitrine','Coudes entre les genoux en bas','Idéal pour débutants','Talon au sol']
+  },
+  sumo_squat: {
+    nom:'Sumo Squat / Deadlift', muscle:'Ischio-jambiers / Adducteurs',
+    muscles_sec:['Fessiers','Quadriceps'],
+    groupe:'jambes',
+    equipement:'Barre ou Haltère',
+    emoji:'🥋', difficulte:2,
+    youtube:'67oNKBXSBh0',
+    description:'Pieds très écartés, orteils vers l\'extérieur.',
+    conseils:['Pieds à 45° vers l\'extérieur','Genoux dans l\'axe des pieds','Dos neutre','Hanches descendent directement vers le bas']
+  },
+  nordic_curl: {
+    nom:'Nordic Curl', muscle:'Ischio-jambiers',
+    muscles_sec:[],
+    groupe:'jambes',
+    equipement:'Partenaire ou fixation aux pieds',
+    emoji:'🎿', difficulte:4,
+    youtube:'ELOCsoDSmrg',
+    description:'Pieds fixés, descendre le corps en avant en contrôlant.',
+    conseils:['Un des meilleurs exercices pour les ischio','Descente très lente','Utiliser les bras en fin de mouvement','Progresser doucement']
+  },
+  glute_kickback: {
+    nom:'Glute Kickback câble', muscle:'Fessiers',
+    muscles_sec:['Ischio-jambiers'],
+    groupe:'jambes',
+    equipement:'Câble + Cheville',
+    emoji:'🦶', difficulte:1,
+    youtube:'SEdqd1n0cvg',
+    description:'Debout face au câble, extension de la jambe vers l\'arrière.',
+    conseils:['Core gainé','Jambe portante légèrement fléchie','Squeeze fessier en haut','Ne pas compenser avec le dos']
+  },
+
+  // ══════════════════════════════════════════
+  // ABDOMINAUX (6 exercices)
+  // ══════════════════════════════════════════
   planche: {
     nom:'Planche', muscle:'Core',
     muscles_sec:['Épaules','Fessiers'],
+    groupe:'abdos',
     equipement:'Tapis / Sol',
     emoji:'━', difficulte:1,
     youtube:'pSHjTRCQxIw',
@@ -299,6 +555,7 @@ const EXERCICES = {
   crunch_machine: {
     nom:'Crunch machine', muscle:'Abdominaux',
     muscles_sec:[],
+    groupe:'abdos',
     equipement:'Machine Abdos',
     emoji:'🤖', difficulte:1,
     youtube:'Xyd_fa5zoEU',
@@ -308,6 +565,7 @@ const EXERCICES = {
   releve_jambes: {
     nom:'Relevé de jambes suspendu', muscle:'Abdominaux Bas',
     muscles_sec:['Hip Flexors'],
+    groupe:'abdos',
     equipement:'Barre de traction',
     emoji:'⬆️', difficulte:3,
     youtube:'JB2oyawG9KQ',
@@ -317,15 +575,52 @@ const EXERCICES = {
   russian_twist: {
     nom:'Russian Twist', muscle:'Obliques',
     muscles_sec:['Abdominaux'],
+    groupe:'abdos',
     equipement:'Haltère / Médecine ball',
     emoji:'🔄', difficulte:2,
     youtube:'wkD8rjkodUI',
     description:'Assis, tourner le tronc alternativement.',
     conseils:['Talons au sol ou légèrement levés','Rotation depuis le tronc','Contrôle']
   },
+  // ── NOUVEAUX ABDOS ───────────────────────
+  dragon_flag: {
+    nom:'Dragon Flag', muscle:'Core Complet',
+    muscles_sec:['Hip Flexors','Épaules'],
+    groupe:'abdos',
+    equipement:'Banc ou barre fixe',
+    emoji:'🐉', difficulte:5,
+    youtube:'pSHjTRCQxIw',
+    description:'Allongé, maintenir le corps rigide et descendre lentement.',
+    conseils:['Un des exercices les plus difficiles','Corps parfaitement rigide','Descente très lente','Progression obligatoire']
+  },
+  hollow_body: {
+    nom:'Hollow Body Hold', muscle:'Core Complet',
+    muscles_sec:['Hip Flexors'],
+    groupe:'abdos',
+    equipement:'Tapis',
+    emoji:'🍌', difficulte:2,
+    youtube:'pSHjTRCQxIw',
+    description:'Position creuse maintenue au sol, bras et jambes tendus.',
+    conseils:['Bas du dos collé au sol','Bras tendus derrière la tête','Respirer normalement','Position de base de la gymnastique']
+  },
+  side_plank: {
+    nom:'Planche latérale', muscle:'Obliques',
+    muscles_sec:['Core','Épaules'],
+    groupe:'abdos',
+    equipement:'Tapis',
+    emoji:'📏', difficulte:2,
+    youtube:'pSHjTRCQxIw',
+    description:'Appui sur un avant-bras, corps latéralement en ligne droite.',
+    conseils:['Hanches bien alignées','Ne pas laisser tomber les hanches','Respirer normalement','Maintenir la position']
+  },
+
+  // ══════════════════════════════════════════
+  // CARDIO (5 exercices)
+  // ══════════════════════════════════════════
   rameur: {
     nom:'Rameur', muscle:'Full Body Cardio',
     muscles_sec:['Dos','Jambes','Bras'],
+    groupe:'cardio',
     equipement:'Rameur',
     emoji:'🚣', difficulte:2,
     youtube:'j3G1dQbnABQ',
@@ -335,11 +630,87 @@ const EXERCICES = {
   velo: {
     nom:'Vélo stationnaire', muscle:'Cardio / Jambes',
     muscles_sec:['Quadriceps','Mollets'],
+    groupe:'cardio',
     equipement:'Vélo',
     emoji:'🚴', difficulte:1,
     youtube:'',
     description:'Cardio low-impact.',
     conseils:['Selle à hauteur de hanche','Résistance progressive','Cadence régulière']
+  },
+  // ── NOUVEAUX CARDIO ──────────────────────
+  corde_a_sauter: {
+    nom:'Corde à sauter', muscle:'Cardio / Mollets',
+    muscles_sec:['Mollets','Épaules','Core'],
+    groupe:'cardio',
+    equipement:'Corde à sauter',
+    emoji:'🪢', difficulte:2,
+    youtube:'gwLzBJYoWlA',
+    description:'Sauts rythmés à la corde, cardio intense.',
+    conseils:['Sur les pointes des pieds','Rotation des poignets uniquement','Commencer lentement','Maintenir un rythme régulier']
+  },
+  burpees: {
+    nom:'Burpees', muscle:'Full Body Cardio',
+    muscles_sec:['Pectoraux','Quadriceps','Core'],
+    groupe:'cardio',
+    equipement:'Poids du corps',
+    emoji:'💦', difficulte:3,
+    youtube:'IODxDxX7oi4',
+    description:'Squat → planche → pompe → saut vertical.',
+    conseils:['Enchaîner les mouvements sans pause','Atterrissage doux','Corps rigide en planche','Sauter haut en finissant']
+  },
+  mountain_climbers: {
+    nom:'Mountain Climbers', muscle:'Core / Cardio',
+    muscles_sec:['Épaules','Hip Flexors'],
+    groupe:'cardio',
+    equipement:'Tapis',
+    emoji:'🧗', difficulte:2,
+    youtube:'pSHjTRCQxIw',
+    description:'En position de pompes, ramener les genoux alternativement vers la poitrine.',
+    conseils:['Hanches basses','Corps rigide','Rythme rapide','Respirer régulièrement']
+  },
+
+  // ══════════════════════════════════════════
+  // FULL BODY (4 exercices)
+  // ══════════════════════════════════════════
+  clean_press: {
+    nom:'Clean & Press', muscle:'Full Body',
+    muscles_sec:['Épaules','Quadriceps','Dos'],
+    groupe:'fullbody',
+    equipement:'Barre ou Haltères',
+    emoji:'🏅', difficulte:4,
+    youtube:'CnBmiBqp-AI',
+    description:'Soulever la barre de sol à l\'épaule puis au-dessus de la tête.',
+    conseils:['Apprentissage technique obligatoire','Explosivité dans le tirage','Core gainé pendant tout le mouvement','Commencer léger']
+  },
+  thruster: {
+    nom:'Thruster', muscle:'Full Body',
+    muscles_sec:['Quadriceps','Épaules','Triceps'],
+    groupe:'fullbody',
+    equipement:'Barre ou Haltères',
+    emoji:'🚀', difficulte:3,
+    youtube:'CnBmiBqp-AI',
+    description:'Front squat enchaîné avec un développé en un seul mouvement.',
+    conseils:['Utiliser l\'élan du squat','Transition fluide','Core gainé','Excellent pour le HIIT']
+  },
+  kettlebell_swing: {
+    nom:'Kettlebell Swing', muscle:'Chaîne postérieure',
+    muscles_sec:['Fessiers','Ischio-jambiers','Core'],
+    groupe:'fullbody',
+    equipement:'Kettlebell',
+    emoji:'⚫', difficulte:2,
+    youtube:'op9kVnSso6Q',
+    description:'Balancement du kettlebell avec extension explosive des hanches.',
+    conseils:['Mouvement des hanches (pas des bras)','Extension explosive','Dos neutre','Le poids doit monter jusqu\'à la hauteur des épaules']
+  },
+  turkish_getup: {
+    nom:'Turkish Get-up', muscle:'Full Body / Core',
+    muscles_sec:['Épaules','Core','Fessiers'],
+    groupe:'fullbody',
+    equipement:'Kettlebell ou Haltère',
+    emoji:'🧘', difficulte:4,
+    youtube:'CnBmiBqp-AI',
+    description:'Se lever du sol à debout avec une charge tenue bras tendu.',
+    conseils:['Apprendre sans charge d\'abord','Regard sur la charge','Mouvement très lent','Chaque étape distincte']
   }
 };
 
