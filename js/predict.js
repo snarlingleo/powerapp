@@ -744,7 +744,11 @@ const Predict = {
 
   _renderCharge(ref) {
     const el = document.getElementById('detail-charge');
-    if (!el || !ref) return;
+    if (!el) return;
+    if (!ref) {
+      el.innerHTML = '';
+      return;
+    }
 
     const reco = this.recommanderCharge(ref);
     if (!reco) {
