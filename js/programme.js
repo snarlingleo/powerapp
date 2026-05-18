@@ -989,7 +989,7 @@ const Programme = {
 
       return {
         ...Utils.clone(seance),
-        dateStr,
+        dateStr: dateStr || Utils.aujourd_hui(),
         phase:   this.getPhaseActuelle(),
         semaine: this.getSemaineActuelle(),
         cycle:   this.getCycleActuel()
@@ -1280,7 +1280,7 @@ const ProgrammeAdaptatif = {
     Object.keys(window.EXERCICES||{}).forEach(ref => {
       try {
         const hist = Tracker.getHistoriqueExercice(ref, 60);
-        if (hist.length < 3) return;
+        if (hist.length < 2) return; // ✅ 2 au lieu de 3 — plus inclusif
 
         const recents  = hist.slice(0, 6);
         const anciens  = hist.slice(6, 12);
@@ -1396,7 +1396,7 @@ const ProgrammeAdaptatif = {
       curl_halteres:  ['curl_barre','curl_marteau','curl_machine'],
       rowing_barre:   ['rowing_machine','lat_pulldown','tractions'],
       ext_triceps_poulie: ['barre_front','dips_triceps'],
-      soulevé_terre:  ['squat','hip_thrust','romanian_deadlift']
+      soulevé_terre:  ['squat','hip_thrust','hip_thrust'],
     };
     return (variations[ref] || []).map(r => ({
       ref:   r,
