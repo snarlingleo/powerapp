@@ -1588,15 +1588,34 @@ const ProgrammeAdaptatif = {
           <div class="score-row">
             <span class="score-row-label"
                   style="font-size:.82rem">${p.label}</span>
-            <label style="position:relative;display:inline-block;
-                          width:44px;height:24px">
-              <input type="checkbox"
-                     ${config[p.cle] ? 'checked':''}
-                     onchange="ProgrammeAdaptatif
-                       ._toggleConfig('${p.cle}', this.checked)"
-                     style="opacity:0;width:0;height:0" />
-              <span class="toggle-slider"></span>
-            </label>
+
+            <!-- ✅ Toggle custom inline — pas de dépendance CSS externe -->
+            <div onclick="ProgrammeAdaptatif._toggleConfig('${p.cle}', ${!config[p.cle]})"
+                 style="position:relative;width:48px;height:26px;
+                        cursor:pointer;flex-shrink:0">
+              <div style="position:absolute;inset:0;
+                          background:${config[p.cle]
+                            ? 'var(--fd-indigo)'
+                            : 'rgba(255,255,255,0.1)'};
+                          border:2px solid ${config[p.cle]
+                            ? 'var(--fd-indigo)'
+                            : 'rgba(255,255,255,0.2)'};
+                          border-radius:99px;
+                          transition:all .25s">
+              </div>
+              <div style="position:absolute;
+                          top:50%;
+                          left:${config[p.cle] ? '24px' : '2px'};
+                          transform:translateY(-50%);
+                          width:18px;height:18px;
+                          background:${config[p.cle]
+                            ? 'white'
+                            : 'rgba(255,255,255,0.4)'};
+                          border-radius:50%;
+                          transition:left .25s;
+                          pointer-events:none">
+              </div>
+            </div>
           </div>`).join('')}
       </div>
 
@@ -1655,12 +1674,17 @@ const ProgrammeAdaptatif = {
   },
 
   _toggleConfig(cle, val) {
-    this.getConfig();
     const config = Utils.storage.get(this.CLE, {});
     config[cle]  = val;
     Utils.storage.set(this.CLE, config);
+
+    // ✅ Re-render la page pour mettre à jour l'état visuel
+    const container = document.getElementById('page-adaptatif')
+      || document.getElementById('stats-content');
+    if (container) this.render(container);
+
     Utils.toast(
-      `${val ? '✅' : '❌'} ${cle} ${val ? 'activé' : 'désactivé'}`,
+      `${val ? '✅' : '❌'} ${cle.replace(/([A-Z])/g, ' $1').toLowerCase()} ${val ? 'activé' : 'désactivé'}`,
       'success', 1500
     );
   }
