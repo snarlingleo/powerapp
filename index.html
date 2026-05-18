@@ -227,30 +227,33 @@
   <!-- PWA Install -->
   <div id="pwa-install-btn" style="display:none"></div>
 
-  <!-- Update Banner -->
-  <div id="update-banner"
-       style="display:none;
-              position:fixed;bottom:calc(var(--nav-height) + 8px);
-              left:50%;transform:translateX(-50%);
-              width:calc(100% - 32px);max-width:448px;
-              background:var(--bg-card);
-              border:1px solid var(--fd-lemon);
-              border-radius:var(--radius-xl);
-              padding:var(--space-md);
-              display:flex;align-items:center;
-              justify-content:space-between;
-              gap:var(--space-sm);
-              box-shadow:var(--shadow-lg);
-              z-index:200">
-    <span style="font-size:.82rem;font-weight:600">
-      🆕 Nouvelle version disponible !
-    </span>
-    <button onclick="window._swReg?.waiting
-                       ?.postMessage({type:'SKIP_WAITING'})"
-            class="btn-primary btn-sm">
-      Mettre à jour
-    </button>
-  </div>
+<!-- Update Banner -->
+<div id="update-banner"
+     style="display:none;
+            position:fixed;
+            bottom:calc(var(--nav-height) + 8px);
+            left:50%;
+            transform:translateX(-50%);
+            width:calc(100% - 32px);
+            max-width:448px;
+            background:var(--bg-card);
+            border:1px solid var(--fd-lemon);
+            border-radius:var(--radius-xl);
+            padding:var(--space-md);
+            align-items:center;
+            justify-content:space-between;
+            gap:var(--space-sm);
+            box-shadow:var(--shadow-lg);
+            z-index:200">
+  <span style="font-size:.82rem;font-weight:600">
+    🆕 Nouvelle version disponible !
+  </span>
+  <button onclick="window._swReg?.waiting
+                     ?.postMessage({type:'SKIP_WAITING'})"
+          class="btn-primary btn-sm">
+    Mettre à jour
+  </button>
+</div>
 
   <!-- ══════════════════════════════════════════
        SCRIPTS — Ordre critique respecté
