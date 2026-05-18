@@ -746,24 +746,6 @@ function _renderLiveHeader(seance) {
   let charge = null;
   try { charge = Predict.analyserFatigue(); } catch(e) {}
 
-  // ✅ Démarrer le chrono automatiquement
-  setTimeout(() => {
-    try {
-      const chronoContainer = document.getElementById('chrono-container');
-      if (chronoContainer && typeof Chrono !== 'undefined') {
-        Chrono.reset?.();
-        Chrono.renderWidget?.(chronoContainer);
-        Chrono.demarrer?.();
-      }
-    } catch(e) {}
-
-    // ✅ Chrono sticky avec nom de séance
-    try {
-      const nom = seance?.nom || 'Séance en cours';
-      ChronoSticky.afficher(nom);
-    } catch(e) {}
-  }, 150);
-
   return `
     <div class="card mb-md"
          style="background:linear-gradient(135deg,
@@ -950,6 +932,18 @@ function _renderExercicesLive(seance, seanceId) {
                        placeholder="RPE" min="1" max="10"
                        style="padding:6px;font-size:.78rem;
                               text-align:center" />
+                <button onclick="TimerManager.lancerTimerReps(${idx}, ${s})"
+                        id="btn-timer-${idx}-${s}"
+                        title="Démarrer timer"
+                        style="width:32px;height:32px;
+                               border-radius:50%;
+                               background:rgba(75,75,249,0.15);
+                               border:2px solid var(--fd-indigo);
+                               font-size:.8rem;cursor:pointer;
+                               display:flex;align-items:center;
+                               justify-content:center">
+                  ⏱
+                </button>
                 <button onclick="App.validerSerie(
                           '${seanceId}','${ex.ref}',
                           ${idx},${s})"
@@ -1488,6 +1482,17 @@ const App = {
       );
     } catch(e) {}
 
+    // ✅ Démarrer le chrono sticky à la 1ère série validée
+    try {
+      if (!ChronoSticky._visible) {
+        const nomSeance = (window.SEANCES_BASE||{})[seanceId]?.nom
+          || 'Séance en cours';
+        Chrono.reset?.();
+        Chrono.demarrer?.();
+        ChronoSticky.afficher(nomSeance);
+      }
+    } catch(e) {}
+
     const btn =
       document.getElementById(`btn-serie-${exoIdx}-${serieIdx}`);
     if (btn) {
@@ -1496,11 +1501,12 @@ const App = {
       btn.style.borderColor = 'var(--fd-mint)';
     }
 
+    // ✅ Timer repos automatique après validation
     try {
       const seanceInfo = (window.SEANCES_BASE||{})[seanceId];
       const exo        = seanceInfo?.exercices?.[exoIdx];
       const reposDuree = exo?.repos || 75;
-      timerRepos.demarrer(reposDuree);
+      TimerManager.demarrerRepos(reposDuree);
     } catch(e) {}
 
     if (result.isPR) {
