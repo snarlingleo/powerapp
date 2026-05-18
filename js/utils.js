@@ -268,11 +268,12 @@ const Utils = {
       }
 
       const colors = {
-        success: { bg:'var(--fd-mint)',   text:'#09092d' },
-        error:   { bg:'var(--fd-coral)',  text:'#09092d' },
-        warning: { bg:'#ffa500',          text:'#09092d' },
-        info:    { bg:'var(--fd-indigo)', text:'white'   },
-        pr:      { bg:'var(--fd-lemon)',  text:'#09092d' }
+        success: { bg:'var(--fd-mint)',     text:'#09092d' },
+        error:   { bg:'var(--fd-coral)',    text:'#09092d' },
+        warning: { bg:'#ffa500',            text:'#09092d' },
+        info:    { bg:'var(--fd-indigo)',   text:'white'   },
+        pr:      { bg:'var(--fd-lemon)',    text:'#09092d' },
+        dark:    { bg:'var(--fd-midnight)', text:'white'   }  // ✅ Extra
       };
 
       const c = colors[type] || colors.info;
@@ -1161,7 +1162,9 @@ jouerSon(type = 'beep') {
     const sons = {
       beep: './assets/sounds/beep.mp3',
       pr:   './assets/sounds/pr.mp3',
-      rest: './assets/sounds/rest.mp3'
+      rest: './assets/sounds/rest.mp3',
+      go:   './assets/sounds/beep.mp3',  // ✅ Alias — Circuit.js appelle 'go'
+      bip:  './assets/sounds/beep.mp3'   // ✅ Alias — Circuit.js appelle 'bip'
     };
 
     const audio  = new Audio(sons[type] || sons.beep);
@@ -1182,9 +1185,11 @@ _jouerSonSynth(type) {
     gain.connect(ctx.destination);
 
     const configs = {
-      beep: { freq:880, dur:.12, type:'sine'     },
-      pr:   { freq:523, dur:.4,  type:'square'   },
-      rest: { freq:440, dur:.2,  type:'sine'     }
+      beep: { freq:880, dur:.12, type:'sine'   },
+      pr:   { freq:523, dur:.4,  type:'square' },
+      rest: { freq:440, dur:.2,  type:'sine'   },
+      go:   { freq:660, dur:.15, type:'sine'   }, // ✅ Circuit go
+      bip:  { freq:880, dur:.08, type:'sine'   }  // ✅ Circuit bip
     };
 
     const cfg     = configs[type] || configs.beep;
