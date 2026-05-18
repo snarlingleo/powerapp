@@ -729,21 +729,37 @@ const Tracker = {
   getHeatmapData(nbJours = 84) {
     const data = {};
 
+    // ✅ Date de début du programme — rien avant n'est "manqué"
+    const dateDebut = (() => {
+      try {
+        return Utils.storage.get('ft_date_debut', null);
+      } catch(e) { return null; }
+    })();
+
     for (let i = 0; i < nbJours; i++) {
       const date     = Utils.ajouterJours(Utils.aujourd_hui(), -i);
-      // ✅ FIX — Fallback si PLANNING_SEMAINE non défini
-      const planning = (window.PLANNING_SEMAINE || window.SEANCES_BASE)
-        ? window.PLANNING_SEMAINE?.[Utils.indexJourSemaine(date)]
-        : null;
+      const planning = window.PLANNING_SEMAINE
+        ?.[Utils.indexJourSemaine(date)];
       const seance   = this.getSeanceDuJour(date);
 
-      if (planning && !planning.seanceId) {
+      // ✅ Avant la date de début → neutre (jamais manqué)
+      if (dateDebut && date < dateDebut) {
+        data[date] = 'none';
+        continue;
+      }
+
+      if (!planning?.seanceId) {
+        // Jour de repos planifié
         data[date] = 'rest';
       } else if (seance?.complete) {
+        // Séance faite ✅
         data[date] = 'done';
-      } else if (date < Utils.aujourd_hui() && planning?.seanceId) {
+      } else if (date < Utils.aujourd_hui()) {
+        // ✅ Manquée seulement si APRÈS la date de début
+        // ET seulement si ce n'est pas aujourd'hui
         data[date] = 'missed';
       } else {
+        // Aujourd'hui ou futur → neutre
         data[date] = 'none';
       }
     }
