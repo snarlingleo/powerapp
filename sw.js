@@ -5,7 +5,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'powerapp-v3';
+const CACHE_VERSION = 'powerapp-v4'; // ✅ Incrémenter à chaque déploiement
 const CACHE_STATIC  = `${CACHE_VERSION}-static`;
 const CACHE_DYNAMIC = `${CACHE_VERSION}-dynamic`;
 const CACHE_IMAGES  = `${CACHE_VERSION}-images`;
