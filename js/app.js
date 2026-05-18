@@ -1868,8 +1868,9 @@ const ChronoSticky = {
 
   _getTemps() {
     try {
-      if (typeof Chrono !== 'undefined') {
-        return Chrono.getFormate?.() || '00:00:00';
+      if (typeof Chrono !== 'undefined' && Chrono._actif) {
+        const sec = Chrono.getDureeSecondes();
+        return Chrono.formaterDuree(sec);
       }
     } catch(e) {}
     return '00:00:00';
