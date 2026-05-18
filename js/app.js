@@ -775,7 +775,7 @@ function _renderLiveHeader(seance) {
                 ${charge.recommandation?.emoji||'💪'} Forme
               </div>
             </div>` : ''}
-          <!-- ✅ Chronomètre -->
+          <!-- Chrono affiché après 1ère série -->
           <div id="chrono-container"></div>
         </div>
       </div>
@@ -1487,6 +1487,17 @@ const App = {
       );
     } catch(e) {}
 
+    // ✅ Démarrer chrono à la 1ère série validée seulement
+    try {
+      if (!Chrono._actif) {
+        Chrono.reset();
+        Chrono.demarrer();
+        const nomSeance = (window.SEANCES_BASE||{})[seanceId]?.nom
+          || 'Séance en cours';
+        ChronoSticky.afficher(nomSeance);
+      }
+    } catch(e) {}
+
     // ✅ Démarrer le chrono sticky à la 1ère série validée
     try {
       if (!ChronoSticky._visible) {
@@ -1900,8 +1911,13 @@ const ChronoSticky = {
       const btn    = document.querySelector('.chrono-sticky-btn');
       const enPause = Chrono?._enPause || false;
 
+      // ✅ Vérifier que Chrono tourne encore
+      if (!Chrono?._actif) return;
+
       if (disp) {
-        disp.textContent = this._getTemps();
+        // ✅ Utiliser les bonnes méthodes de Chrono
+        const sec = Chrono.getDureeSecondes?.() || 0;
+        disp.textContent = Chrono.formaterDuree?.(sec) || '00:00';
         disp.className   = `chrono-sticky-display ${enPause ? 'paused' : ''}`;
       }
       if (icon) {
