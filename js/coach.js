@@ -817,7 +817,10 @@ const Coach = {
         'coude':   ['curl_halteres','curl_barre','ext_triceps_poulie'],
         'poignet': ['bench_press','curl_barre'],
         'cheville':['squat','fentes','mollets'],
-        'cou':     ['dev_militaire','rowing_barre']
+        'cou':     ['dev_militaire','rowing_barre'],
+        'épaule':  ['dev_militaire','bench_press','elev_laterales','dips'],
+        'genoux':  ['squat','presse_cuisses','fentes','leg_extension'],
+        'hanche':  ['squat','fentes','hip_thrust'] 
       };
 
       blessures.forEach(b => {
