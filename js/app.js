@@ -2378,6 +2378,13 @@ async function init() {
       try { _updateHeaderXP();           } catch(e) {}
     }, 300);; 
 
+    // ✅ Écouter les messages du Service Worker
+    navigator.serviceWorker?.addEventListener('message', event => {
+      const { type, page } = event.data || {};
+      if (type === 'NAVIGATE' && page) {
+        try { naviguer(page); } catch(e) {}
+      }
+    }); 
     console.log('✅ PowerApp v3.0 — Prêt !');
 
   } catch(e) {
