@@ -1310,6 +1310,7 @@ function _rendreSettings(container) {
       </div>
     </div>
 
+   <div id="alarme-section"></div>
     <div id="offline-content"></div>
 
     <div style="text-align:center;font-size:.65rem;
@@ -1322,6 +1323,10 @@ function _rendreSettings(container) {
   try {
     i18n.renderSelecteur(
       document.getElementById('settings-langue')
+    );
+    // ✅ Alarme rappel
+    TimerManager.renderAlarme(
+      document.getElementById('alarme-section')
     );
     Offline.render(
       document.getElementById('offline-content')
@@ -2377,6 +2382,7 @@ async function init() {
     // ✅ Modules UI — dans le bon ordre
     try { ThemeManager.init(); } catch(e) {}
     try { SwipeNav.init();     } catch(e) {}
+    try { TimerManager.initAlarme(); } catch(e) {} 
 
     // ✅ Bouton thème après que le DOM soit rendu
     setTimeout(() => {
