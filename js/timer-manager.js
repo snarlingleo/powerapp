@@ -334,6 +334,27 @@ const TimerManager = {
 
   sauvegarderAlarme(data) {
     Utils.storage.set(this.CLE_ALARME, data);
+
+    // ✅ Envoyer au Service Worker pour alarme téléphone verrouillé
+    try {
+      if ('serviceWorker' in navigator
+          && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage(
+          data.active
+            ? {
+                type:    'PLANIFIER_ALARME',
+                payload: {
+                  heure:       data.heure,
+                  message:     data.message,
+                  repetitions: data.repetitions || 3
+                }
+              }
+            : { type: 'ANNULER_ALARME' }
+        );
+      }
+    } catch(e) {}
+
+    // Aussi planifier en JS pour quand l'app est ouverte
     if (data.active) {
       this._planifierAlarme(data.heure);
     } else {
@@ -461,11 +482,26 @@ const TimerManager = {
   // ════════════════════════════════════════════════════════
   initAlarme() {
     const alarme = this.getAlarme();
+
     if (alarme.active) {
       this._planifierAlarme(alarme.heure);
+
+      // ✅ Aussi envoyer au SW
+      try {
+        navigator.serviceWorker?.ready.then(reg => {
+          reg.active?.postMessage({
+            type:    'PLANIFIER_ALARME',
+            payload: {
+              heure:       alarme.heure,
+              message:     alarme.message,
+              repetitions: alarme.repetitions || 3
+            }
+          });
+        });
+      } catch(e) {}
     }
 
-    // Demander permission notifications
+    // Permission notifications
     try {
       if (Notification.permission === 'default') {
         Notification.requestPermission();
