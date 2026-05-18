@@ -189,7 +189,8 @@ const Gamification = {
           );
         }, 300);
 
-      } else if (raison && montant >= 50) {
+      } else if (raison && montant >= 100) {
+        // ✅ Seuil 100 — évite le spam pour les séries (+5 XP)
         Utils.toast(`+${montant} XP — ${raison}`, 'info', 2000);
       }
 
@@ -233,7 +234,11 @@ const Gamification = {
       try { phasesTerminees = Utils.storage.get('ft_phases_terminees', 0);   } catch(e) {}
       try { cyclesTermines  = Utils.storage.get('ft_cycles_termines', 0);    } catch(e) {}
       try { semaineParf     = Utils.storage.get('ft_semaines_parf', 0);      } catch(e) {}
-      try { totalPhotos     = Tracker.getPhotos?.()?.length || 0;            } catch(e) {}
+      try {
+        totalPhotos = typeof Tracker.getPhotos === 'function'
+          ? (Tracker.getPhotos() || []).length
+          : 0;
+      } catch(e) {}
 
       try {
         const seancesHist = Tracker.getHistoriqueSeances(9999);
@@ -290,11 +295,12 @@ const Gamification = {
   // ════════════════════════════════════════════════════════
   XP_ACTIONS: {
     SEANCE_COMPLETE:   100,
-    SERIE_COMPLETE:      5,  // ✅ NOUVEAU — par série validée
+    SERIE_COMPLETE:      5,
+    CIRCUIT_COMPLETE:   150, // ✅ Circuit.js appelle cette action
+    JOURNAL:             25,,  // ✅ NOUVEAU — par série validée
     PR_BATTU:           50,
     STREAK_7:          150,
     DEFI_SEMAINE:      200,
-    JOURNAL:            25,
     HUMEUR:             10,
     SEMAINE_PARF:      300,
     PREMIERE_SEANCE:   200,
