@@ -151,26 +151,24 @@ function _rendreContenu(page, container, options = {}) {
       case 'offline':      Offline.render(container);                     break;
       case 'settings':     _rendreSettings(container);                    break;
       case 'nutrition':
-  // ✅ NOUVEAU — Nutrition module complet
-  try { Nutrition.render(container); }
-  catch(e) { _rendreNutrition(container); }
-  break;
+        try { Nutrition.render(container); }
+        catch(e) { _rendreNutrition(container); }
+        break;
 
-// ✅ NOUVEAU — Circuit Training
-case 'circuit':
-  try { Circuit.render(container); }
-  catch(e) { _rendrePlaceholder(container, '🔄', 'Circuit', 'Module circuit'); }
-  break;
+      case 'circuit':
+        try { Circuit.render(container); }
+        catch(e) { _rendrePlaceholder(container, '🔄', 'Circuit Training', 'Module circuit non disponible.'); }
+        break;
 
-// ✅ NOUVEAU — Programme Adaptatif
-case 'adaptatif':
-  try { ProgrammeAdaptatif.render(container); }
-  catch(e) { _rendrePlaceholder(container, '🧠', 'Programme Adaptatif', 'Analyse ta progression'); }
-  break;
- case 'galerie':
-  try { GalerieExercices.render(container); }
-  catch(e) { _rendrePlaceholder(container, '💪', 'Galerie', 'Tous les exercices'); }
-  break;     
+      case 'adaptatif':
+        try { ProgrammeAdaptatif.render(container); }
+        catch(e) { _rendrePlaceholder(container, '🧠', 'Programme Adaptatif', 'Analyse ta progression et adapte ton programme.'); }
+        break;
+
+      case 'galerie':
+        try { GalerieExercices.render(container); }
+        catch(e) { _rendrePlaceholder(container, '💪', 'Galerie exercices', 'Tous les exercices disponibles.'); }
+        break;     
       case 'mon_profil':   _renderMonProfil(container);                   break;
 
       case 'journal':
@@ -750,17 +748,21 @@ function _renderLiveHeader(seance) {
 
   // ✅ Démarrer le chrono automatiquement
   setTimeout(() => {
-  const chronoContainer = document.getElementById('chrono-container');
-  if (chronoContainer && !Chrono._actif) {
-    Chrono.reset();
-    Chrono.renderWidget(chronoContainer);
-    Chrono.demarrer();
-  }
-  // ✅ NOUVEAU — Afficher le chrono sticky
-  const nom = document.querySelector('#live-content .card div')
-    ?.textContent?.trim() || 'Séance';
-  ChronoSticky.afficher(nom);
-}, 100);
+    try {
+      const chronoContainer = document.getElementById('chrono-container');
+      if (chronoContainer && typeof Chrono !== 'undefined') {
+        Chrono.reset?.();
+        Chrono.renderWidget?.(chronoContainer);
+        Chrono.demarrer?.();
+      }
+    } catch(e) {}
+
+    // ✅ Chrono sticky avec nom de séance
+    try {
+      const nom = seance?.nom || 'Séance en cours';
+      ChronoSticky.afficher(nom);
+    } catch(e) {}
+  }, 150);
 
   return `
     <div class="card mb-md"
@@ -1530,7 +1532,10 @@ const App = {
     try {
       const duree  = Tracker.getDureeSeance?.(seanceId) || 0;
       const volume = Tracker.getVolumeSemaine?.()       || 0;
-      const prs    = Tracker.getPRsSeance?.(seanceId)   || 0;
+      const prs = (() => {
+        try { return (Tracker.getPRsSeance?.(seanceId) || []).length; }
+        catch(e) { return 0; }
+      })();
       const seance = (window.SEANCES_BASE||{})[seanceId];
       const nom    = seance?.nom || 'Séance';
 
@@ -1631,7 +1636,7 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
                   margin-bottom:var(--space-lg)">
         ${seance.emoji} ${seance.nom}
       </div>
-      <div class="stats-grid mb-md">
+      <div class="stats-grid mb-md" style="grid-template-columns:repeat(3,1fr)">
         ${[
           {label:'Volume', val:Utils.formatVolume(volume),
            color:'var(--fd-mint)'  },
@@ -2362,14 +2367,16 @@ async function init() {
 
     naviguer('home');
     _updateHeaderXP();
-    // ✅ NOUVEAUX modules
-      try { ThemeManager.init();  } catch(e) {}
-      try { SwipeNav.init();      } catch(e) {}
 
-   // ✅ Injecter bouton thème après rendu header
-      setTimeout(() => {
-        try { ThemeManager._injecterBtn(); } catch(e) {}
-      }, 200); 
+    // ✅ Modules UI — dans le bon ordre
+    try { ThemeManager.init(); } catch(e) {}
+    try { SwipeNav.init();     } catch(e) {}
+
+    // ✅ Bouton thème après que le DOM soit rendu
+    setTimeout(() => {
+      try { ThemeManager._injecterBtn(); } catch(e) {}
+      try { _updateHeaderXP();           } catch(e) {}
+    }, 300);; 
 
     console.log('✅ PowerApp v3.0 — Prêt !');
 
