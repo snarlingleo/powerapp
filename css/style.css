@@ -1888,3 +1888,1058 @@ button:focus-visible,
     --border-color: rgba(9,9,45,0.1);
   }
 }
+/* ════════════════════════════════════════════════════════════
+   NUTRITION v2.0 — Dark Premium + Glassmorphisme
+   Extension du design system PowerApp
+════════════════════════════════════════════════════════════ */
+
+/* ── Variables nutrition ── */
+:root {
+  --bg-glass:        rgba(255,255,255,0.04);
+  --bg-glass-hover:  rgba(255,255,255,0.07);
+  --border-glass:    rgba(255,255,255,0.08);
+  --border-indigo:   rgba(75,75,249,0.35);
+  --border-mint:     rgba(139,240,187,0.25);
+  --border-lemon:    rgba(249,239,119,0.25);
+  --border-coral:    rgba(255,141,150,0.25);
+  --glow-indigo:     0 4px 24px rgba(75,75,249,0.25);
+  --glow-mint:       0 4px 24px rgba(139,240,187,0.15);
+}
+
+/* ════════════════════════════════════
+   HERO SÉANCE — Carte principale
+════════════════════════════════════ */
+.nutri-hero {
+  border-radius:  var(--radius-xl);
+  padding:        22px 20px;
+  margin-bottom:  var(--space-md);
+  position:       relative;
+  overflow:       hidden;
+  background:     linear-gradient(
+    135deg,
+    rgba(75,75,249,0.22) 0%,
+    rgba(75,75,249,0.07) 55%,
+    rgba(191,161,255,0.05) 100%
+  );
+  border:         1px solid var(--border-indigo);
+  box-shadow:     var(--glow-indigo);
+}
+
+/* Glow ambiant derrière */
+.nutri-hero::before {
+  content:         '';
+  position:        absolute;
+  top:     -60px;
+  right:   -40px;
+  width:    200px;
+  height:   200px;
+  background: radial-gradient(
+    circle,
+    rgba(75,75,249,0.22) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.nutri-hero-eyebrow {
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+  margin-bottom: 10px;
+}
+
+.nutri-hero-dot {
+  width:         7px;
+  height:        7px;
+  border-radius: 50%;
+  background:    var(--fd-indigo);
+  box-shadow:    0 0 8px var(--fd-indigo);
+  animation:     pulse 2s infinite;
+}
+
+.nutri-hero-label {
+  font-size:      .6rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color:          var(--fd-indigo);
+}
+
+.nutri-hero-title {
+  font-size:     1.45rem;
+  font-weight:   800;
+  letter-spacing: -.02em;
+  margin-bottom:  4px;
+  position:       relative;
+  z-index:        1;
+}
+
+.nutri-hero-meta {
+  font-size:    .75rem;
+  color:        var(--text-muted);
+  margin-bottom: 16px;
+  position:      relative;
+  z-index:       1;
+}
+
+/* ════════════════════════════════════
+   GLASS CARD — Carte glassmorphisme
+════════════════════════════════════ */
+.glass-card {
+  background:     var(--bg-glass);
+  border:         1px solid var(--border-glass);
+  border-radius:  var(--radius-lg);
+  padding:        var(--space-md);
+  margin-bottom:  var(--space-md);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position:       relative;
+  overflow:       hidden;
+  transition:
+    border-color var(--transition-fast),
+    background   var(--transition-fast);
+}
+
+.glass-card:hover {
+  background:   var(--bg-glass-hover);
+  border-color: var(--border-indigo);
+}
+
+[data-theme="light"] .glass-card {
+  background:  rgba(255,255,255,0.85);
+  border-color: rgba(9,9,45,0.08);
+  box-shadow:   0 2px 16px rgba(9,9,45,0.06);
+}
+
+/* Variantes colorées */
+.glass-card-indigo {
+  border-color: var(--border-indigo);
+  background:   rgba(75,75,249,0.06);
+}
+
+.glass-card-mint {
+  border-color: var(--border-mint);
+  background:   rgba(139,240,187,0.04);
+}
+
+.glass-card-lemon {
+  border-color: var(--border-lemon);
+  background:   rgba(249,239,119,0.04);
+}
+
+.glass-card-coral {
+  border-color: var(--border-coral);
+  background:   rgba(255,141,150,0.04);
+}
+
+/* ════════════════════════════════════
+   CARD HEADER — Titre + lien
+════════════════════════════════════ */
+.card-header-row {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-bottom:   var(--space-md);
+}
+
+.card-title-bar {
+  display:     flex;
+  align-items: center;
+  gap:         7px;
+}
+
+.card-title-accent {
+  width:         3px;
+  height:        14px;
+  border-radius: 99px;
+  flex-shrink:   0;
+}
+
+.card-title-text {
+  font-size:      .6rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color:          var(--text-muted);
+}
+
+.card-link-btn {
+  font-size:   .7rem;
+  color:       var(--fd-indigo);
+  font-weight: 600;
+  cursor:      pointer;
+  background:  none;
+  border:      none;
+  transition:  color var(--transition-fast);
+}
+
+.card-link-btn:hover { color: var(--fd-lavender); }
+
+/* ════════════════════════════════════
+   MACROS GRID — 3 ou 4 colonnes
+════════════════════════════════════ */
+.macros-grid {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   var(--space-sm);
+  margin-bottom:         var(--space-md);
+}
+
+.macros-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.macro-item {
+  text-align:    center;
+  padding:       10px 6px;
+  background:    var(--bg-input);
+  border-radius: var(--radius-sm);
+  border:        1px solid var(--border-color);
+  transition:    border-color var(--transition-fast);
+}
+
+.macro-item:hover { border-color: var(--border-indigo); }
+
+.macro-val {
+  font-size:   .95rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.macro-label {
+  font-size:      .55rem;
+  color:          var(--text-muted);
+  margin-top:     3px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.macro-sub {
+  font-size:  .6rem;
+  color:      var(--text-muted);
+  margin-top: 1px;
+}
+
+/* Barres de progression macro */
+.macro-progress {
+  height:        3px;
+  background:    rgba(255,255,255,0.08);
+  border-radius: 99px;
+  margin-top:    6px;
+  overflow:      hidden;
+}
+
+.macro-progress-fill {
+  height:        100%;
+  border-radius: 99px;
+  transition:    width .8s ease;
+}
+
+/* ════════════════════════════════════
+   REPAS ITEMS — Liste repas du jour
+════════════════════════════════════ */
+.repas-item {
+  display:       flex;
+  align-items:   center;
+  gap:           10px;
+  padding:       10px 12px;
+  background:    var(--bg-input);
+  border-radius: var(--radius-sm);
+  border:        1px solid var(--border-color);
+  cursor:        pointer;
+  transition:    all var(--transition-fast);
+}
+
+.repas-item:hover {
+  border-color: var(--border-indigo);
+  background:   rgba(75,75,249,0.06);
+}
+
+.repas-emoji-box {
+  width:           40px;
+  height:          40px;
+  border-radius:   12px;
+  background:      rgba(75,75,249,0.1);
+  border:          1px solid rgba(75,75,249,0.2);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       1.15rem;
+  flex-shrink:     0;
+  transition:      background var(--transition-fast);
+}
+
+.repas-item:hover .repas-emoji-box {
+  background: rgba(75,75,249,0.18);
+}
+
+.repas-info { flex: 1; min-width: 0; }
+
+.repas-name {
+  font-size:     .82rem;
+  font-weight:   700;
+  white-space:   nowrap;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+}
+
+.repas-detail {
+  font-size:  .62rem;
+  color:      var(--text-muted);
+  margin-top: 1px;
+}
+
+.repas-right { text-align: right; flex-shrink: 0; }
+
+.repas-cal {
+  font-size:   .78rem;
+  font-weight: 700;
+  color:       var(--fd-lemon);
+}
+
+.repas-prot {
+  font-size:  .62rem;
+  color:      var(--fd-coral);
+  margin-top: 1px;
+}
+
+.repas-time-badge {
+  font-size:     .6rem;
+  font-weight:   700;
+  color:         var(--fd-mint);
+  width:         44px;
+  flex-shrink:   0;
+  text-align:    center;
+  padding:       3px 0;
+  background:    rgba(139,240,187,0.08);
+  border-radius: 6px;
+}
+
+/* ════════════════════════════════════
+   TIMERS RAPIDES — 4 boutons
+════════════════════════════════════ */
+.timers-row {
+  display:       grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:           7px;
+  margin-bottom: var(--space-md);
+}
+
+.timer-quick-btn {
+  background:    var(--bg-glass);
+  border:        1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding:       12px 6px;
+  text-align:    center;
+  cursor:        pointer;
+  transition:    all var(--transition-fast);
+}
+
+.timer-quick-btn:hover,
+.timer-quick-btn:active {
+  transform:    scale(.94);
+  border-color: var(--border-indigo);
+  background:   rgba(75,75,249,0.1);
+  box-shadow:   var(--glow-indigo);
+}
+
+.timer-quick-icon  { font-size: 1.2rem; margin-bottom: 4px; }
+.timer-quick-val   { font-size: .78rem; font-weight: 800; color: var(--fd-indigo); }
+.timer-quick-label { font-size: .55rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-top: 1px; }
+
+/* ════════════════════════════════════
+   PLANNING SEMAINE — Jours
+════════════════════════════════════ */
+.week-days-row {
+  display:               grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap:                   5px;
+  margin-top:            var(--space-sm);
+}
+
+.week-day-item {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            4px;
+}
+
+.week-day-dot {
+  width:           32px;
+  height:          32px;
+  border-radius:   10px;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       .7rem;
+  font-weight:     700;
+  transition:      all var(--transition-fast);
+}
+
+.week-day-dot.done {
+  background: rgba(75,75,249,0.3);
+  border:     1px solid var(--fd-indigo);
+  color:      var(--fd-lavender);
+  box-shadow: 0 0 8px rgba(75,75,249,0.2);
+}
+
+.week-day-dot.today {
+  background: var(--fd-indigo);
+  border:     1px solid var(--fd-indigo);
+  color:      white;
+  box-shadow: 0 0 14px rgba(75,75,249,0.5);
+}
+
+.week-day-dot.rest {
+  background: rgba(139,240,187,0.08);
+  border:     1px solid rgba(139,240,187,0.2);
+  color:      var(--fd-mint);
+}
+
+.week-day-dot.empty {
+  background: var(--bg-input);
+  border:     1px solid var(--border-color);
+  color:      var(--text-muted);
+}
+
+.week-day-label {
+  font-size:      .52rem;
+  color:          var(--text-muted);
+  text-transform: uppercase;
+  font-weight:    600;
+}
+
+/* ════════════════════════════════════
+   COURSES E.LECLERC — Checklist
+════════════════════════════════════ */
+.course-item {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  padding:     10px 0;
+  border-bottom: 1px solid var(--border-color);
+  cursor:      pointer;
+  transition:  opacity var(--transition-fast);
+}
+
+.course-item:last-child { border-bottom: none; }
+
+.course-item.checked { opacity: .4; }
+
+.course-checkbox {
+  width:           22px;
+  height:          22px;
+  border-radius:   6px;
+  flex-shrink:     0;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       .75rem;
+  font-weight:     700;
+  transition:      all var(--transition-normal);
+  border:          2px solid;
+}
+
+.course-checkbox.unchecked {
+  background:   var(--bg-input);
+  border-color: var(--border-color);
+  color:        transparent;
+}
+
+.course-checkbox.checked-box {
+  background:   var(--fd-mint);
+  border-color: var(--fd-mint);
+  color:        var(--fd-midnight);
+  box-shadow:   0 0 8px rgba(139,240,187,0.3);
+}
+
+.course-emoji {
+  font-size:   .9rem;
+  flex-shrink: 0;
+}
+
+.course-name {
+  flex:      1;
+  font-size: .82rem;
+  font-weight: 600;
+  transition: text-decoration var(--transition-fast);
+}
+
+.course-item.checked .course-name {
+  text-decoration: line-through;
+  color:           var(--text-muted);
+}
+
+.course-qty {
+  font-size:   .75rem;
+  font-weight: 700;
+  color:       var(--fd-indigo);
+  flex-shrink: 0;
+  text-align:  right;
+}
+
+/* Rayon header */
+.rayon-header {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.rayon-emoji { font-size: 1.1rem; flex-shrink: 0; }
+
+.rayon-title {
+  font-size:      .6rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color:          var(--text-muted);
+  flex:           1;
+}
+
+.rayon-count {
+  font-size:   .65rem;
+  color:       var(--text-muted);
+  font-weight: 600;
+}
+
+/* Barre progression courses */
+.courses-progress-bar {
+  height:        6px;
+  background:    var(--bg-input);
+  border-radius: 99px;
+  overflow:      hidden;
+  margin-bottom: var(--space-sm);
+}
+
+.courses-progress-fill {
+  height:        100%;
+  background:    var(--fd-mint);
+  border-radius: 99px;
+  transition:    width .6s ease;
+}
+
+/* Budget badge */
+.budget-badge {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         var(--space-sm) var(--space-md);
+  background:      rgba(249,239,119,0.06);
+  border:          1px solid var(--border-lemon);
+  border-radius:   var(--radius-md);
+  margin-bottom:   var(--space-md);
+}
+
+.budget-label { font-size: .75rem; color: var(--text-muted); }
+.budget-val   { font-size: 1.1rem; font-weight: 800; color: var(--fd-lemon); }
+
+/* Boutons action courses */
+.courses-actions {
+  display:       grid;
+  grid-template-columns: 1fr 1fr;
+  gap:           var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.courses-action-btn {
+  padding:       10px;
+  border-radius: var(--radius-md);
+  font-size:     .72rem;
+  font-weight:   700;
+  cursor:        pointer;
+  text-align:    center;
+  border:        1px solid;
+  transition:    all var(--transition-fast);
+}
+
+.courses-action-btn.copy {
+  background:   rgba(75,75,249,0.1);
+  border-color: var(--border-indigo);
+  color:        var(--fd-indigo);
+}
+
+.courses-action-btn.copy:hover {
+  background: rgba(75,75,249,0.18);
+  transform:  translateY(-1px);
+}
+
+.courses-action-btn.reset {
+  background:   var(--bg-input);
+  border-color: var(--border-color);
+  color:        var(--text-muted);
+}
+
+.courses-action-btn.reset:hover {
+  border-color: var(--border-coral);
+  color:        var(--fd-coral);
+}
+
+/* ════════════════════════════════════
+   RECETTE CARD — Liste recettes
+════════════════════════════════════ */
+.recette-card {
+  display:       flex;
+  gap:           12px;
+  align-items:   flex-start;
+  padding:       var(--space-md);
+  background:    var(--bg-glass);
+  border:        1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-sm);
+  cursor:        pointer;
+  transition:    all var(--transition-fast);
+}
+
+.recette-card:hover {
+  border-color: var(--border-indigo);
+  background:   rgba(75,75,249,0.06);
+  transform:    translateY(-2px);
+  box-shadow:   var(--glow-indigo);
+}
+
+.recette-emoji-box {
+  width:           54px;
+  height:          54px;
+  border-radius:   14px;
+  background:      rgba(75,75,249,0.1);
+  border:          1px solid rgba(75,75,249,0.2);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       1.6rem;
+  flex-shrink:     0;
+  transition:      background var(--transition-fast);
+}
+
+.recette-card:hover .recette-emoji-box {
+  background: rgba(75,75,249,0.18);
+}
+
+.recette-info { flex: 1; min-width: 0; }
+
+.recette-nom {
+  font-weight:   700;
+  font-size:     .92rem;
+  white-space:   nowrap;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+}
+
+.recette-meta {
+  font-size:  .68rem;
+  color:      var(--text-muted);
+  margin-top: 2px;
+}
+
+.recette-macros-row {
+  display:     flex;
+  gap:         var(--space-sm);
+  margin-top:  6px;
+  flex-wrap:   wrap;
+}
+
+.recette-macro-badge {
+  font-size:   .65rem;
+  font-weight: 700;
+}
+
+.recette-ing-count {
+  flex-shrink: 0;
+  font-size:   .7rem;
+  color:       var(--text-muted);
+  align-self:  flex-start;
+  margin-top:  2px;
+}
+
+/* ════════════════════════════════════
+   SWAP INGREDIENT — Détail recette
+════════════════════════════════════ */
+.ingredient-row {
+  margin-bottom: var(--space-sm);
+}
+
+.ingredient-item {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         10px 12px;
+  background:      var(--bg-input);
+  border-radius:   var(--radius-sm);
+  border:          1px solid var(--border-color);
+  transition:      border-color var(--transition-fast);
+}
+
+.ingredient-item:hover { border-color: var(--border-indigo); }
+
+.ingredient-left {
+  display:     flex;
+  align-items: center;
+  gap:         var(--space-sm);
+}
+
+.ingredient-emoji { font-size: 1.05rem; }
+
+.ingredient-name {
+  font-size:   .82rem;
+  font-weight: 600;
+}
+
+.ingredient-qty {
+  font-size: .62rem;
+  color:     var(--text-muted);
+  margin-top: 1px;
+}
+
+.swap-btn {
+  padding:       4px 10px;
+  font-size:     .65rem;
+  font-weight:   700;
+  background:    rgba(75,75,249,0.1);
+  border:        1px solid rgba(75,75,249,0.25);
+  border-radius: var(--radius-full);
+  color:         var(--fd-indigo);
+  cursor:        pointer;
+  transition:    all var(--transition-fast);
+  white-space:   nowrap;
+  flex-shrink:   0;
+}
+
+.swap-btn:hover { background: rgba(75,75,249,0.2); }
+
+.swaps-panel {
+  padding:       8px 12px;
+  background:    rgba(75,75,249,0.04);
+  border:        1px solid rgba(75,75,249,0.15);
+  border-top:    none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+
+.swaps-panel-title {
+  font-size:   .62rem;
+  color:       var(--fd-indigo);
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.swaps-list {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       4px;
+}
+
+.swap-option {
+  padding:       3px 9px;
+  background:    rgba(75,75,249,0.1);
+  border:        1px solid rgba(75,75,249,0.2);
+  border-radius: var(--radius-full);
+  font-size:     .68rem;
+  color:         var(--fd-lavender);
+  cursor:        pointer;
+  transition:    all var(--transition-fast);
+}
+
+.swap-option:hover {
+  background: rgba(75,75,249,0.2);
+  color:      var(--fd-indigo);
+}
+
+/* ════════════════════════════════════
+   ÉTAPES RECETTE — Numérotées
+════════════════════════════════════ */
+.etape-row {
+  display:     flex;
+  gap:         10px;
+  align-items: flex-start;
+  padding:     var(--space-sm) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.etape-row:last-child { border-bottom: none; }
+
+.etape-num {
+  width:           24px;
+  height:          24px;
+  border-radius:   7px;
+  flex-shrink:     0;
+  background:      var(--fd-indigo);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       .7rem;
+  font-weight:     800;
+  color:           white;
+  margin-top:      1px;
+}
+
+.etape-text {
+  font-size:   .82rem;
+  color:       var(--text-secondary);
+  line-height: 1.55;
+  padding-top: 2px;
+}
+
+/* ════════════════════════════════════
+   EAU — Boutons ajout rapide
+════════════════════════════════════ */
+.eau-btns-row {
+  display: flex;
+  gap:     6px;
+}
+
+.eau-quick-btn {
+  flex:          1;
+  padding:       8px 4px;
+  font-size:     .72rem;
+  font-weight:   700;
+  background:    rgba(75,75,249,0.1);
+  border:        1px solid rgba(75,75,249,0.2);
+  border-radius: var(--radius-full);
+  color:         var(--fd-indigo);
+  cursor:        pointer;
+  text-align:    center;
+  transition:    all var(--transition-fast);
+}
+
+.eau-quick-btn:hover,
+.eau-quick-btn:active {
+  background: rgba(75,75,249,0.2);
+  transform:  scale(.97);
+}
+
+/* ════════════════════════════════════
+   CONSEIL — Carte conseil du jour
+════════════════════════════════════ */
+.conseil-card {
+  border-radius: var(--radius-md);
+  padding:       var(--space-md);
+  margin-bottom: var(--space-md);
+  border-left:   3px solid;
+  background:    rgba(75,75,249,0.03);
+}
+
+.conseil-label {
+  font-size:      .62rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom:  var(--space-xs);
+}
+
+.conseil-text {
+  font-size:   .82rem;
+  color:       var(--text-secondary);
+  line-height: 1.6;
+  margin:      0;
+}
+
+/* ════════════════════════════════════
+   EXCLUSION TAGS — Objectifs
+════════════════════════════════════ */
+.exclusion-tag {
+  display:     inline-flex;
+  align-items: center;
+  gap:         4px;
+  padding:     4px 10px;
+  background:  rgba(255,141,150,0.1);
+  border:      1px solid rgba(255,141,150,0.25);
+  border-radius: var(--radius-full);
+  font-size:   .72rem;
+  color:       var(--fd-coral);
+  transition:  all var(--transition-fast);
+}
+
+.exclusion-tag-remove {
+  background:  none;
+  border:      none;
+  color:       var(--fd-coral);
+  cursor:      pointer;
+  font-size:   .8rem;
+  line-height: 1;
+  padding:     0;
+  transition:  opacity var(--transition-fast);
+}
+
+.exclusion-tag-remove:hover { opacity: .7; }
+
+/* ════════════════════════════════════
+   SCORE NUTRITIONNEL — Cercle
+════════════════════════════════════ */
+.nutri-score-circle {
+  width:     80px;
+  height:    80px;
+  position:  relative;
+  flex-shrink: 0;
+}
+
+.nutri-score-circle svg { transform: rotate(-90deg); }
+.nutri-score-track { fill: none; stroke: var(--bg-input); stroke-width: 7; }
+
+.nutri-score-fill {
+  fill:           none;
+  stroke-width:   7;
+  stroke-linecap: round;
+  stroke-dasharray:  220;
+  transition:     stroke-dashoffset 1.2s ease,
+                  stroke var(--transition-normal);
+}
+
+.nutri-score-fill.excellent { stroke: var(--fd-mint);    }
+.nutri-score-fill.good      { stroke: var(--fd-indigo);  }
+.nutri-score-fill.moderate  { stroke: var(--fd-lemon);   }
+.nutri-score-fill.poor      { stroke: var(--fd-coral);   }
+
+.nutri-score-number {
+  position:        absolute;
+  inset:           0;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       1rem;
+  font-weight:     800;
+}
+
+/* ════════════════════════════════════
+   SECTION SEPARATOR — Titre section
+════════════════════════════════════ */
+.nutri-section-title {
+  font-size:      .58rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color:          var(--text-muted);
+  margin:         var(--space-md) 0 var(--space-sm);
+  display:        flex;
+  align-items:    center;
+  gap:            var(--space-sm);
+}
+
+.nutri-section-title::after {
+  content:    '';
+  flex:       1;
+  height:     1px;
+  background: var(--border-color);
+}
+
+/* ════════════════════════════════════
+   FILTRE RECETTES — Pills scroll
+════════════════════════════════════ */
+.recette-filters {
+  display:         flex;
+  gap:             5px;
+  overflow-x:      auto;
+  scrollbar-width: none;
+  padding-bottom:  var(--space-sm);
+  margin-bottom:   var(--space-md);
+}
+
+.recette-filters::-webkit-scrollbar { display: none; }
+
+.recette-filter-btn {
+  flex-shrink:   0;
+  padding:       6px 14px;
+  font-size:     .7rem;
+  font-weight:   700;
+  border-radius: var(--radius-full);
+  cursor:        pointer;
+  border:        1px solid;
+  transition:    all var(--transition-fast);
+  white-space:   nowrap;
+}
+
+.recette-filter-btn.inactive {
+  background:   var(--bg-input);
+  color:        var(--text-muted);
+  border-color: var(--border-color);
+}
+
+.recette-filter-btn.active {
+  background:   var(--fd-indigo);
+  color:        white;
+  border-color: var(--fd-indigo);
+  box-shadow:   var(--shadow-indigo);
+}
+
+/* ════════════════════════════════════
+   JOUR BADGE — Entraînement / Repos
+════════════════════════════════════ */
+.jour-badge {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           4px;
+  padding:       3px 9px;
+  border-radius: var(--radius-full);
+  font-size:     .65rem;
+  font-weight:   700;
+}
+
+.jour-badge.entrainement {
+  background:   rgba(75,75,249,0.12);
+  border:       1px solid rgba(75,75,249,0.25);
+  color:        var(--fd-indigo);
+}
+
+.jour-badge.repos {
+  background:   rgba(139,240,187,0.08);
+  border:       1px solid rgba(139,240,187,0.2);
+  color:        var(--fd-mint);
+}
+
+/* ════════════════════════════════════
+   RESPONSIVE NUTRITION
+════════════════════════════════════ */
+@media (max-width: 360px) {
+  .macros-grid   { grid-template-columns: repeat(2, 1fr); }
+  .macros-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .timers-row    { grid-template-columns: repeat(2, 1fr); }
+  .recette-emoji-box { width: 44px; height: 44px; font-size: 1.3rem; }
+}
+
+@media (max-width: 320px) {
+  .week-days-row { grid-template-columns: repeat(4, 1fr); }
+  .courses-actions { grid-template-columns: 1fr; }
+}
+
+/* ════════════════════════════════════
+   LIGHT THEME OVERRIDES NUTRITION
+════════════════════════════════════ */
+[data-theme="light"] .nutri-hero {
+  background: linear-gradient(135deg,
+    rgba(75,75,249,0.08) 0%,
+    rgba(75,75,249,0.03) 100%
+  );
+  box-shadow: 0 4px 24px rgba(75,75,249,0.1);
+}
+
+[data-theme="light"] .recette-card {
+  background:  white;
+  border-color: rgba(9,9,45,0.08);
+  box-shadow:   0 2px 12px rgba(9,9,45,0.05);
+}
+
+[data-theme="light"] .recette-card:hover {
+  box-shadow: 0 4px 20px rgba(75,75,249,0.12);
+}
+
+[data-theme="light"] .repas-item {
+  background:  white;
+  border-color: rgba(9,9,45,0.08);
+}
+
+[data-theme="light"] .macro-item {
+  background:  var(--fd-light-grey);
+  border-color: rgba(9,9,45,0.06);
+}
+
+[data-theme="light"] .timer-quick-btn {
+  background:  white;
+  border-color: rgba(9,9,45,0.08);
+  box-shadow:  0 1px 6px rgba(9,9,45,0.05);
+}
+
+[data-theme="light"] .ingredient-item {
+  background:  white;
+  border-color: rgba(9,9,45,0.08);
+}
+
+[data-theme="light"] .course-item { border-color: rgba(9,9,45,0.08); }
