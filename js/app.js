@@ -311,6 +311,32 @@ function _rendreHome(container) {
       </div>
     </div>
 
+    <!-- ══ RECHERCHE RAPIDE ══ -->
+<div style="
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--bg-input);
+  border:1px solid var(--border-color);
+  border-radius:var(--radius-md);
+  padding:10px 12px;
+  margin-bottom:14px">
+
+  <img src="assets/icons/icon-search.svg"
+       style="width:18px;height:18px;opacity:.6" />
+
+  <input type="text"
+         placeholder="Rechercher une séance, un exercice…"
+         style="
+           flex:1;
+           background:none;
+           border:none;
+           color:var(--text-primary);
+           font-size:.8rem;
+           outline:none"
+         oninput="window._homeSearch=this.value" />
+</div>
+
     <!-- ══ STREAK + XP RINGS ══ -->
     <div style="display:grid;grid-template-columns:1fr 1fr;
                 gap:10px;margin-bottom:14px">
@@ -489,6 +515,48 @@ function _rendreHome(container) {
           </div>` : ''}
       </div>`}
 
+     <!-- ══ TEMPS À LA SALLE ══ -->
+<div style="margin-bottom:14px">
+
+  <div style="font-size:.6rem;font-weight:700;
+              text-transform:uppercase;
+              letter-spacing:.1em;
+              color:var(--text-muted);
+              margin-bottom:8px">
+    ⏱ Temps à la salle
+  </div>
+
+  <div style="display:grid;
+              grid-template-columns:repeat(4,1fr);
+              gap:8px">
+
+    ${[
+      { min:30,  label:'30 min', type:'Express' },
+      { min:60,  label:'1 h',    type:'Full body' },
+      { min:90,  label:'1h30',   type:'Split' },
+      { min:120, label:'2 h',    type:'Complet' }
+    ].map(t => `
+      <button onclick="_choisirTempsSalle(${t.min})"
+              style="padding:10px 6px;
+                     background:rgba(75,75,249,0.12);
+                     border:1px solid rgba(75,75,249,0.25);
+                     border-radius:var(--radius-md);
+                     font-size:.7rem;
+                     font-weight:700;
+                     cursor:pointer">
+        ${t.label}
+      </button>
+    `).join('')}
+  </div>
+
+  <div id="temps-salle-result"
+       style="margin-top:10px;
+              font-size:.75rem;
+              color:var(--text-muted)">
+    Choisis ton temps disponible
+  </div>
+</div> 
+
     <!-- ══ EXERCICES DU JOUR ══ -->
     ${seance ? `
       <div style="background:rgba(255,255,255,0.04);
@@ -610,159 +678,7 @@ function _rendreHome(container) {
           </div>
         </div>`).join('')}
     </div>
-
-    <!-- ══ NUTRITION ══ -->
-    <div style="font-size:.58rem;font-weight:700;
-                text-transform:uppercase;letter-spacing:.1em;
-                color:var(--text-muted);
-                margin:14px 0 8px;
-                display:flex;align-items:center;gap:8px">
-      🥗 Nutrition du jour
-      <div style="flex:1;height:1px;
-                  background:var(--border-color)"></div>
-    </div>
-
-    <div style="background:rgba(255,255,255,0.04);
-                border:1px solid rgba(139,240,187,0.2);
-                border-radius:var(--radius-lg);
-                padding:16px;margin-bottom:12px;
-                position:relative;overflow:hidden">
-      <div style="position:absolute;bottom:-30px;right:-30px;
-                  width:100px;height:100px;
-                  background:radial-gradient(circle,
-                    rgba(139,240,187,0.08) 0%,transparent 70%);
-                  pointer-events:none"></div>
-
-      <!-- Macros objectifs -->
-      <div style="display:flex;justify-content:space-between;
-                  align-items:center;margin-bottom:12px">
-        <div style="display:flex;align-items:center;gap:7px">
-          <div style="width:3px;height:14px;border-radius:99px;
-                      background:var(--fd-mint)"></div>
-          <span style="font-size:.6rem;font-weight:700;
-                       text-transform:uppercase;
-                       letter-spacing:.1em;
-                       color:var(--text-muted)">
-            Objectifs du jour
-          </span>
-        </div>
-        <button onclick="naviguer('nutrition')"
-                style="font-size:.7rem;color:var(--fd-mint);
-                       font-weight:600;background:none;
-                       border:none;cursor:pointer">
-          Détails →
-        </button>
-      </div>
-
-      <div style="display:grid;
-                  grid-template-columns:repeat(3,1fr);
-                  gap:8px;margin-bottom:14px">
-        ${(() => {
-          let obj = { proteines:176, calories:3100, eau:2.8 };
-          try {
-            const p = Tracker.getProfil();
-            obj.proteines = Math.round((p.poids||80) * 2.2);
-            obj.calories  = Math.round((p.poids||80) * 38);
-            obj.eau       = Math.round((p.poids||80) * 0.035 * 10) / 10;
-          } catch(e) {}
-          return [
-            { label:'Protéines', val:obj.proteines+'g',
-              color:'var(--fd-coral)' },
-            { label:'Calories',  val:obj.calories,
-              color:'var(--fd-lemon)' },
-            { label:'Eau',       val:obj.eau+'L',
-              color:'var(--fd-indigo)' }
-          ].map(m => `
-            <div style="text-align:center;padding:10px 6px;
-                        background:var(--bg-input);
-                        border-radius:var(--radius-sm);
-                        border:1px solid var(--border-color)">
-              <div style="font-size:.95rem;font-weight:800;
-                          color:${m.color};line-height:1">
-                ${m.val}
-              </div>
-              <div style="font-size:.55rem;color:var(--text-muted);
-                          margin-top:3px;text-transform:uppercase;
-                          letter-spacing:.04em">
-                ${m.label}
-              </div>
-            </div>`).join('');
-        })()}
-      </div>
-
-      <!-- Repas du jour -->
-      <div style="font-size:.6rem;font-weight:700;
-                  text-transform:uppercase;letter-spacing:.08em;
-                  color:var(--text-muted);margin-bottom:8px">
-        Repas conseillés
-      </div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        ${[
-          { t:'07:30', n:'Oatmeal Protéiné',
-            m:'P:42g · G:65g', cal:520, e:'🥣' },
-          { t:'10:30', n:'Pré-séance Banane + Oats',
-            m:'P:22g · G:65g', cal:380, e:'⚡' },
-          { t:'13:30', n:'Bowl Poulet · Riz · Brocoli',
-            m:'P:58g · G:80g', cal:680, e:'🥗' },
-          { t:'16:30', n:'Fromage blanc & Fruits',
-            m:'P:28g · G:30g', cal:280, e:'🍓' },
-          { t:'19:30', n:'Saumon · Patate douce',
-            m:'P:48g · G:60g', cal:620, e:'🐟' }
-        ].map(r => `
-          <div onclick="naviguer('nutrition')"
-               style="display:flex;align-items:center;
-                      gap:10px;padding:9px 12px;
-                      background:var(--bg-input);
-                      border-radius:var(--radius-sm);
-                      border:1px solid var(--border-color);
-                      cursor:pointer">
-            <div style="font-size:.6rem;font-weight:700;
-                        color:var(--fd-mint);width:40px;
-                        flex-shrink:0;text-align:center;
-                        padding:2px 0;
-                        background:rgba(139,240,187,0.08);
-                        border-radius:5px">
-              ${r.t}
-            </div>
-            <div style="font-size:.88rem;flex-shrink:0">${r.e}</div>
-            <div style="flex:1">
-              <div style="font-size:.78rem;font-weight:600">
-                ${r.n}
-              </div>
-              <div style="font-size:.6rem;color:var(--text-muted)">
-                ${r.m}
-              </div>
-            </div>
-            <div style="font-size:.72rem;font-weight:700;
-                        color:var(--fd-lemon);flex-shrink:0">
-              ${r.cal}kcal
-            </div>
-          </div>`).join('')}
-      </div>
-
-      <!-- Eau rapide -->
-      <div style="display:flex;align-items:center;gap:8px;
-                  margin-top:12px;padding-top:12px;
-                  border-top:1px solid var(--border-color)">
-        <div style="font-size:.72rem;color:var(--text-muted);flex:1">
-          💧 Ajouter de l'eau
-        </div>
-        <div style="display:flex;gap:5px">
-          ${[250,500,750].map(ml => `
-            <button onclick="event.stopPropagation();
-                            _ajouterEauHome(${ml})"
-                    style="padding:5px 9px;font-size:.65rem;
-                           font-weight:700;
-                           background:rgba(75,75,249,0.1);
-                           border:1px solid rgba(75,75,249,0.2);
-                           border-radius:99px;
-                           color:var(--fd-indigo);cursor:pointer">
-              +${ml}ml
-            </button>`).join('')}
-        </div>
-      </div>
-    </div>
-
+         
     <!-- ══ PLANNING SEMAINE ══ -->
     <div style="font-size:.58rem;font-weight:700;
                 text-transform:uppercase;letter-spacing:.1em;
@@ -950,6 +866,20 @@ function _rendreHome(container) {
   requestAnimationFrame(() => {
     _attacherHumeurFatigueEvents();
   });
+}
+
+function _choisirTempsSalle(min) {
+  const map = {
+    30: 'Séance express · Cardio + gainage',
+    60: 'Full body équilibré',
+    90: 'Haut / Bas du corps',
+    120:'Séance complète + étirements'
+  };
+
+  const el = document.getElementById('temps-salle-result');
+  if (!el || !map[min]) return;
+
+  el.innerHTML = `💡 Recommandation : <strong>${map[min]}</strong>`;
 }
 
 // Fonction helper eau depuis accueil
