@@ -28,12 +28,12 @@
   --fd-coral-dim:    rgba(255,141,150,0.15);
   --fd-lavender-dim: rgba(191,161,255,0.15);
 
-  /* ── Dark Theme (défaut) ── */
-  --bg-app:         #09092d;
-  --bg-card:        #0f0f3a;
-  --bg-card-hover:  #141450;
-  --bg-input:       rgba(255,255,255,0.06);
-  --bg-input-focus: rgba(75,75,249,0.15);
+ /* ── Dark Theme (défaut) ── */
+--bg-app:         #07073d;
+--bg-card:        rgba(255,255,255,0.05);
+--bg-card-hover:  rgba(255,255,255,0.08);
+--bg-input:       rgba(255,255,255,0.05);
+--bg-input-focus: rgba(75,75,249,0.15);
 
   --text-primary:   #ffffff;
   --text-secondary: rgba(255,255,255,0.85);
@@ -118,7 +118,13 @@ body {
   font-family:
     -apple-system, BlinkMacSystemFont,
     'Segoe UI', system-ui, sans-serif;
-  background:   var(--bg-app);
+  background: linear-gradient(
+    180deg,
+    #06063d 0%,
+    #08082e 40%,
+    #050520 100%
+  ) no-repeat center center fixed;
+  background-size: cover;
   color:        var(--text-primary);
   min-height:   100vh;
   min-height:   100dvh;
@@ -2943,3 +2949,302 @@ button:focus-visible,
 }
 
 [data-theme="light"] .course-item { border-color: rgba(9,9,45,0.08); }
+/* ════════════════════════════════════════════════════════════
+   DESIGN E — SOFT PREMIUM
+   Fond indigo profond · Cards douces · Radius arrondis
+════════════════════════════════════════════════════════════ */
+
+/* ── Header Soft ── */
+.app-header {
+  background: rgba(6,6,61,0.94) !important;
+  border-bottom: 1px solid rgba(75,75,249,0.15) !important;
+}
+
+/* ── Nav Soft ── */
+.app-nav {
+  background: rgba(6,6,45,0.97) !important;
+  border-top: 1px solid rgba(75,75,249,0.1) !important;
+}
+
+/* ── Cards principales ── */
+.card {
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: var(--radius-xl) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── Cards accent indigo ── */
+.card[style*="border-color:var(--fd-indigo)"],
+.card[style*="rgba(75,75,249,0.06)"] {
+  background: rgba(75,75,249,0.1) !important;
+  border-color: rgba(75,75,249,0.3) !important;
+}
+
+/* ── Inputs ── */
+.input {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.input:focus {
+  background: rgba(75,75,249,0.08) !important;
+  border-color: rgba(75,75,249,0.4) !important;
+}
+
+/* ── Progress bars ── */
+.progress-fill {
+  background: linear-gradient(
+    90deg,
+    var(--fd-indigo),
+    var(--fd-lavender)
+  ) !important;
+}
+
+/* ── Chips ── */
+.chip-indigo {
+  background: rgba(75,75,249,0.12) !important;
+  border: 1px solid rgba(75,75,249,0.22) !important;
+}
+
+/* ── Tabs ── */
+.tab-btn {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.tab-btn.active {
+  background: rgba(75,75,249,0.2) !important;
+  border-color: rgba(75,75,249,0.4) !important;
+  color: var(--fd-lavender) !important;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 4px 20px rgba(75,75,249,0.3) !important;
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.btn-secondary:hover {
+  background: rgba(75,75,249,0.1) !important;
+  border-color: rgba(75,75,249,0.3) !important;
+}
+
+/* ── Stat cards ── */
+.stat-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+/* ── Nav live button ── */
+.nav-btn-live .nav-icon {
+  background: rgba(75,75,249,0.8) !important;
+  border: 1px solid rgba(75,75,249,0.5) !important;
+  box-shadow:
+    0 4px 16px rgba(75,75,249,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.1) !important;
+  border-radius: 14px !important;
+}
+
+/* ── Hero home séance ── */
+.card[style*="linear-gradient(135deg,\n                rgba(75,75,249"] {
+  border-radius: var(--radius-xl) !important;
+}
+
+/* ── Modal ── */
+.modal-inner {
+  background: #08082e !important;
+  border-top: 1px solid rgba(75,75,249,0.2) !important;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+}
+
+/* ── Chrono sticky ── */
+#chrono-sticky {
+  background: rgba(6,6,45,0.97) !important;
+  border: 1px solid rgba(75,75,249,0.25) !important;
+  border-radius: var(--radius-xl) !important;
+}
+
+/* ── Section titles ── */
+.section-title {
+  color: rgba(191,161,255,0.5) !important;
+  font-size: .6rem !important;
+  letter-spacing: .12em !important;
+}
+
+/* ── Heatmap ── */
+.heatmap-cell.done {
+  background: rgba(75,75,249,0.3) !important;
+  border: 1px solid rgba(75,75,249,0.4) !important;
+  box-shadow: 0 0 8px rgba(75,75,249,0.2) !important;
+}
+
+/* ── Galerie exercices ── */
+.exercice-galerie-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.exercice-galerie-card:hover {
+  background: rgba(75,75,249,0.08) !important;
+  border-color: rgba(75,75,249,0.25) !important;
+}
+
+.exercice-galerie-card::before {
+  background: rgba(75,75,249,0.5) !important;
+}
+
+/* ── Trophy cards ── */
+.trophy-card.unlocked {
+  background: rgba(249,239,119,0.06) !important;
+  border: 1px solid rgba(249,239,119,0.18) !important;
+}
+
+/* ── Menu dropdown ── */
+.app-menu-inner {
+  background: #08082e !important;
+  border: 1px solid rgba(75,75,249,0.15) !important;
+}
+
+/* ── Onboarding ── */
+.onboarding {
+  background: linear-gradient(
+    180deg,
+    #06063d 0%,
+    #050520 100%
+  ) !important;
+}
+
+/* ── Splash screen ── */
+#splash-screen {
+  background: linear-gradient(
+    180deg,
+    #06063d 0%,
+    #050520 100%
+  ) !important;
+}
+
+/* ── XP Bar ── */
+.xp-bar-container {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(75,75,249,0.15) !important;
+}
+
+.xp-fill {
+  background: linear-gradient(
+    90deg,
+    var(--fd-indigo),
+    var(--fd-lavender)
+  ) !important;
+}
+
+/* ── Nutrition cards ── */
+.nutri-hero {
+  background: rgba(75,75,249,0.15) !important;
+  border: 1px solid rgba(75,75,249,0.25) !important;
+}
+
+.glass-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+}
+
+.glass-card-mint {
+  border-color: rgba(139,240,187,0.15) !important;
+  background: rgba(139,240,187,0.03) !important;
+}
+
+/* ── Suggestion séance ── */
+.suggestion-seance-card {
+  background: rgba(139,240,187,0.05) !important;
+  border: 1px solid rgba(139,240,187,0.15) !important;
+}
+
+/* ── PR Prediction ── */
+.pr-prediction-card {
+  background: rgba(249,239,119,0.05) !important;
+  border: 1px solid rgba(249,239,119,0.15) !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar-thumb {
+  background: rgba(75,75,249,0.3) !important;
+}
+
+/* ── Focus visible ── */
+:focus-visible {
+  outline: 2px solid rgba(75,75,249,0.5) !important;
+}
+
+/* ── Skeleton ── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.07) 50%,
+    rgba(255,255,255,0.04) 75%
+  ) !important;
+  background-size: 200% 100% !important;
+}
+
+/* ── Live séance card ── */
+.live-exo-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.live-exo-card:hover {
+  border-color: rgba(75,75,249,0.25) !important;
+}
+
+/* ── Chart container ── */
+.chart-container {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+}
+
+/* ── IMC Widget ── */
+.imc-widget {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+}
+
+/* ── Score recovery ── */
+.recovery-fill.excellent { stroke: var(--fd-mint) !important; }
+.recovery-fill.good      { stroke: var(--fd-lavender) !important; }
+
+/* ── Light theme override ── */
+[data-theme="light"] body {
+  background: linear-gradient(
+    180deg,
+    #f0f0ff 0%,
+    #f3f3f7 100%
+  ) fixed !important;
+}
+
+[data-theme="light"] .card {
+  background: rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(75,75,249,0.1) !important;
+}
+
+[data-theme="light"] .app-header {
+  background: rgba(240,240,255,0.95) !important;
+  border-bottom: 1px solid rgba(75,75,249,0.1) !important;
+}
+
+[data-theme="light"] .app-nav {
+  background: rgba(255,255,255,0.97) !important;
+  border-top: 1px solid rgba(75,75,249,0.08) !important;
+}
