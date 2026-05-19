@@ -2572,42 +2572,107 @@ const SwipeNav = {
   _startX:    0,
   _startY:    0,
   _active:    false,
-  _pages:     ['home','training','live','stats','profil'],
+  _pages:     ['home','training','live','stats','nutrition'],
 
   init() {
-    const main = document.querySelector('.app-main');
-    if (!main) return;
+  const main = document.querySelector('.app-main');
+  if (!main) return;
 
-    main.addEventListener('touchstart', e => {
-      this._startX  = e.touches[0].clientX;
-      this._startY  = e.touches[0].clientY;
-      this._active  = true;
-    }, { passive:true });
+  main.addEventListener('touchstart', e => {
+  this._startX  = e.touches[0].clientX;
+  this._startY  = e.touches[0].clientY;
+  this._active  = true;
+  this._blocked = false;
 
-    main.addEventListener('touchend', e => {
-      if (!this._active) return;
-      this._active = false;
+  // ✅ Bloquer dès le début si on est dans un élément scrollable
+  const target = e.target;
+  const scrollable = target.closest(
+    '.muscle-filter-row, ' +
+    '.stats-tabs, ' +
+    '.tab-scroll, ' +
+    '.tabs-container, ' +
+    '.filter-row, ' +
+    '.chips-row'
+  );
 
-      const dx = e.changedTouches[0].clientX - this._startX;
-      const dy = e.changedTouches[0].clientY - this._startY;
-
-      // Ignorer si scroll vertical dominant
-      if (Math.abs(dy) > Math.abs(dx)) return;
-      // Seuil minimum 60px
-      if (Math.abs(dx) < 60) return;
-
-      const current = this._pages.indexOf(window._pageActive);
-      if (current === -1) return;
-
-      if (dx < 0 && current < this._pages.length - 1) {
-        // Swipe gauche → page suivante
-        naviguer(this._pages[current + 1]);
-      } else if (dx > 0 && current > 0) {
-        // Swipe droite → page précédente
-        naviguer(this._pages[current - 1]);
-      }
-    }, { passive:true });
+  // ✅ Bloquer aussi si l'élément parent scroll horizontalement
+  let el = target;
+  while (el && el !== main) {
+    const style      = window.getComputedStyle(el);
+    const overflowX  = style.overflowX;
+    const scrollable2 = (overflowX === 'auto' || overflowX === 'scroll')
+                        && el.scrollWidth > el.clientWidth;
+    if (scrollable2) {
+      this._blocked = true;
+      break;
+    }
+    el = el.parentElement;
   }
+
+  if (scrollable) {
+    this._blocked = true;
+  }
+
+}, { passive:true });
+
+  main.addEventListener('touchmove', e => {
+    if (!this._active) return;
+
+    const dx = e.touches[0].clientX - this._startX;
+    const dy = e.touches[0].clientY - this._startY;
+
+    // ✅ Vérifier si le touch vient d'un élément scrollable horizontalement
+    const target = e.target;
+    const scrollable = target.closest(
+      '.tabs-container, ' +
+      '.muscle-filter-row, ' +
+      '.recette-filters, ' +
+      '[style*="overflow-x"], ' +
+      '[style*="overflow: auto"], ' +
+      '.stats-tabs, ' +
+      '.tab-scroll'
+    );
+
+    if (scrollable) {
+      this._blocked = true;
+      return;
+    }
+
+    // ✅ Si scroll vertical dominant → bloquer swipe page
+    if (Math.abs(dy) > Math.abs(dx)) {
+      this._blocked = true;
+    }
+
+  }, { passive:true });
+
+  main.addEventListener('touchend', e => {
+    if (!this._active || this._blocked) {
+      this._active  = false;
+      this._blocked = false;
+      return;
+    }
+
+    this._active = false;
+
+    const dx = e.changedTouches[0].clientX - this._startX;
+    const dy = e.changedTouches[0].clientY - this._startY;
+
+    // Ignorer si scroll vertical dominant
+    if (Math.abs(dy) > Math.abs(dx)) return;
+
+    // Seuil minimum 80px (plus strict qu'avant)
+    if (Math.abs(dx) < 80) return;
+
+    const current = this._pages.indexOf(window._pageActive);
+    if (current === -1) return;
+
+    if (dx < 0 && current < this._pages.length - 1) {
+      naviguer(this._pages[current + 1]);
+    } else if (dx > 0 && current > 0) {
+      naviguer(this._pages[current - 1]);
+    }
+  }, { passive:true });
+},
 };
 
 window.SwipeNav = SwipeNav;
