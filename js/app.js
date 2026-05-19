@@ -24,7 +24,7 @@ function naviguer(page, options = {}) {
       btn.classList.remove('active');
     });
 
-    const navPages = ['home','training','live','stats','profil'];
+    const navPages = ['home','training','live','stats','nutrition'];
     if (navPages.includes(page)) {
       document.getElementById(`nav-${page}`)?.classList.add('active');
     }
