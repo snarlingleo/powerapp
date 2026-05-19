@@ -314,36 +314,104 @@ const Utils = {
   // MODAL CONFIRM
   // ════════════════════════════════════════════════════════
   confirmer(titre, message) {
-    return new Promise((resolve) => {
-      try {
-        const modal = document.getElementById('modal-confirm');
-        if (!modal) { resolve(window.confirm(message)); return; }
+  return new Promise(resolve => {
 
-        const titleEl = document.getElementById('modal-confirm-title');
-        const msgEl   = document.getElementById('modal-confirm-msg');
-        const btnOui  = document.getElementById('modal-confirm-oui');
-        const btnNon  = document.getElementById('modal-confirm-non');
+    // Supprimer ancienne modal si existe
+    const old = document.getElementById('modal-confirmer');
+    if (old) old.remove();
 
-        if (titleEl) titleEl.textContent = titre;
-        if (msgEl)   msgEl.textContent   = message;
+    const modal = document.createElement('div');
+    modal.id    = 'modal-confirmer';
+    modal.style.cssText = `
+      position:fixed;inset:0;z-index:99999;
+      display:flex;align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,0.75);
+      backdrop-filter:blur(4px);
+      padding:20px;
+    `;
 
-        modal.classList.remove('hidden');
+    modal.innerHTML = `
+      <div style="background:var(--bg-card);
+                  border:1px solid var(--border-color);
+                  border-radius:var(--radius-xl);
+                  padding:28px 24px;
+                  width:100%;max-width:340px;
+                  text-align:center;
+                  box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+        <div style="font-size:1.2rem;font-weight:800;
+                    margin-bottom:8px">
+          ${titre}
+        </div>
+        <div style="font-size:.85rem;
+                    color:var(--text-muted);
+                    margin-bottom:24px;
+                    line-height:1.5">
+          ${message}
+        </div>
+        <div style="display:grid;
+                    grid-template-columns:1fr 1fr;
+                    gap:10px">
+          <button id="confirmer-non"
+                  style="padding:14px;
+                         background:var(--bg-input);
+                         border:1px solid var(--border-color);
+                         border-radius:var(--radius-lg);
+                         color:var(--text-primary);
+                         font-size:.9rem;font-weight:700;
+                         cursor:pointer">
+            Annuler
+          </button>
+          <button id="confirmer-oui"
+                  style="padding:14px;
+                         background:var(--fd-indigo);
+                         border:none;
+                         border-radius:var(--radius-lg);
+                         color:white;
+                         font-size:.9rem;font-weight:700;
+                         cursor:pointer;
+                         box-shadow:0 4px 16px
+                           rgba(75,75,249,0.4)">
+            Confirmer
+          </button>
+        </div>
+      </div>
+    `;
 
-        const cleanup = (val) => {
-          modal.classList.add('hidden');
-          if (btnOui) btnOui.onclick = null;
-          if (btnNon) btnNon.onclick = null;
-          resolve(val);
-        };
+    document.body.appendChild(modal);
 
-        if (btnOui) btnOui.onclick = () => cleanup(true);
-        if (btnNon) btnNon.onclick = () => cleanup(false);
+    // ✅ Event listeners directs — pas de délégation
+    document.getElementById('confirmer-oui')
+      .addEventListener('click', () => {
+        modal.remove();
+        resolve(true);
+      });
 
-      } catch(e) {
-        resolve(window.confirm(message));
+    document.getElementById('confirmer-non')
+      .addEventListener('click', () => {
+        modal.remove();
+        resolve(false);
+      });
+
+    // ✅ Clic en dehors = annuler
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.remove();
+        resolve(false);
       }
     });
-  },
+
+    // ✅ Échap = annuler
+    const onEscape = (e) => {
+      if (e.key === 'Escape') {
+        modal.remove();
+        resolve(false);
+        document.removeEventListener('keydown', onEscape);
+      }
+    };
+    document.addEventListener('keydown', onEscape);
+  });
+},
 
   // ════════════════════════════════════════════════════════
   // VIBRATION
