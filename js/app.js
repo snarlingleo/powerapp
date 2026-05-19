@@ -1713,7 +1713,6 @@ function _rendreProfil(container) {
     </div>
 
     ${[
-      {page:'mon_profil',   emoji:'👤', label:'Mon profil'       },
       {page:'journal',      emoji:'📔', label:'Journal'          },
       {page:'objectifs',    emoji:'🎯', label:'Objectifs'        },
       {page:'blessures',    emoji:'🩹', label:'Blessures'        },
@@ -3432,7 +3431,6 @@ const MenuGlobal = {
     } catch(e) {}
 
     const items = [
-      {page:'profil',       emoji:'👤', label:'Mon profil'          },
       {page:'mon_profil',   emoji:'✏️', label:'Modifier profil'     },
       {page:'journal',      emoji:'📔', label:'Journal'             },
       {page:'objectifs',    emoji:'🎯', label:'Objectifs'           },
@@ -3466,7 +3464,7 @@ const MenuGlobal = {
                   display:flex;
                   align-items:center;
                   gap:14px"
-           onclick="MenuGlobal.naviguerEt('profil')">
+           onclick="MenuGlobal.naviguerEt('mon_profil')"
         <div style="width:50px;height:50px;
                     background:rgba(75,75,249,0.2);
                     border:2px solid rgba(75,75,249,0.4);
