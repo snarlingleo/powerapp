@@ -270,215 +270,701 @@ function _rendreHome(container) {
   const salut = heure < 12 ? 'Bonjour' :
                 heure < 18 ? 'Bon après-midi' : 'Bonsoir';
 
+  // Jour de la semaine pour nutrition
+  const jours  = ['dimanche','lundi','mardi','mercredi',
+                  'jeudi','vendredi','samedi'];
+  const today  = jours[new Date().getDay()];
+  const dateLabel = new Date().toLocaleDateString('fr-FR',{
+    weekday:'long', day:'numeric', month:'short'
+  });
+
   container.innerHTML = `
-    <div style="padding:var(--space-md) 0 var(--space-sm)">
-      <div style="font-size:1.4rem;font-weight:800;
-                  color:var(--text-primary)">
-        ${salut} ${profil.nom} ${profil.avatar||'💪'}
+
+    <!-- ══ GREETING ══ -->
+    <div style="padding:8px 0 16px">
+      <div style="font-size:.7rem;color:var(--text-muted);
+                  font-weight:600;margin-bottom:3px;
+                  display:flex;align-items:center;gap:6px">
+        <div style="width:5px;height:5px;border-radius:50%;
+                    background:var(--fd-mint);
+                    box-shadow:0 0 6px var(--fd-mint)"></div>
+        ${dateLabel} · ${infos.label} · Cycle ${infos.cycle}
       </div>
-      <div style="font-size:.82rem;color:var(--text-muted);
-                  margin-top:2px">
-        ${infos.label} · Cycle ${infos.cycle}
-        · ${infos.phase.emoji} ${infos.phase.nom}
+      <div style="font-size:1.6rem;font-weight:800;
+                  letter-spacing:-.03em;line-height:1.1">
+        ${salut},
+        <span style="background:linear-gradient(135deg,
+                     #ffffff 0%,var(--fd-lavender) 100%);
+                     -webkit-background-clip:text;
+                     -webkit-text-fill-color:transparent;
+                     background-clip:text">
+          ${profil.nom}
+        </span>
+        ${profil.avatar||'💪'}
+      </div>
+      <div style="font-size:.72rem;color:var(--text-muted);
+                  margin-top:4px;display:flex;
+                  align-items:center;gap:5px">
+        <div style="width:4px;height:4px;border-radius:50%;
+                    background:var(--fd-indigo)"></div>
+        ${infos.phase.emoji} ${infos.phase.nom} · Prise de masse
       </div>
     </div>
 
+    <!-- ══ STREAK + XP RINGS ══ -->
     <div style="display:grid;grid-template-columns:1fr 1fr;
-                gap:var(--space-sm);margin-bottom:var(--space-md)">
-      <div class="card" style="text-align:center;cursor:pointer"
+                gap:10px;margin-bottom:14px">
+
+      <!-- Streak -->
+      <div style="background:rgba(255,255,255,0.04);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-lg);
+                  padding:14px;display:flex;
+                  align-items:center;gap:12px;
+                  position:relative;overflow:hidden;
+                  cursor:pointer"
            onclick="naviguer('stats')">
-        <div style="font-size:1.4rem">🔥</div>
-        <div style="font-size:1.5rem;font-weight:800;
-                    color:var(--fd-lemon)">${streak.count}</div>
-        <div style="font-size:.65rem;color:var(--text-muted)">
-          Streak actuel
+        <div style="position:absolute;top:-15px;right:-15px;
+                    width:60px;height:60px;border-radius:50%;
+                    background:rgba(249,239,119,0.06)"></div>
+        <svg width="48" height="48" viewBox="0 0 48 48" style="flex-shrink:0">
+          <circle cx="24" cy="24" r="20" fill="none"
+                  stroke="rgba(249,239,119,0.12)" stroke-width="4"/>
+          <circle cx="24" cy="24" r="20" fill="none"
+                  stroke="var(--fd-lemon)" stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-dasharray="126"
+                  stroke-dashoffset="${126 - Math.min(126, streak.count * 4)}"
+                  transform="rotate(-90 24 24)"
+                  style="filter:drop-shadow(0 0 3px var(--fd-lemon))"/>
+          <text x="24" y="29" text-anchor="middle"
+                fill="var(--fd-lemon)" font-size="13"
+                font-weight="800">🔥</text>
+        </svg>
+        <div>
+          <div style="font-size:1.3rem;font-weight:800;
+                      color:var(--fd-lemon);line-height:1">
+            ${streak.count}
+          </div>
+          <div style="font-size:.6rem;color:var(--text-muted);
+                      text-transform:uppercase;
+                      letter-spacing:.06em;margin-top:2px">
+            Streak
+          </div>
+          <div style="font-size:.58rem;color:var(--text-muted);
+                      margin-top:1px">
+            jours consec.
+          </div>
         </div>
       </div>
-      <div class="card" style="text-align:center;cursor:pointer"
+
+      <!-- XP -->
+      <div style="background:rgba(255,255,255,0.04);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-lg);
+                  padding:14px;display:flex;
+                  align-items:center;gap:12px;
+                  position:relative;overflow:hidden;
+                  cursor:pointer"
            onclick="naviguer('gamification')">
-        <div style="font-size:1.4rem">${xp.niveau.emoji}</div>
-        <div style="font-size:1.2rem;font-weight:800;
-                    color:var(--fd-indigo)">
-          Niv.${xp.niveau.numero}
-        </div>
-        <div style="font-size:.65rem;color:var(--text-muted)">
-          ${xp.total} XP
+        <div style="position:absolute;top:-15px;right:-15px;
+                    width:60px;height:60px;border-radius:50%;
+                    background:rgba(75,75,249,0.08)"></div>
+        <svg width="48" height="48" viewBox="0 0 48 48" style="flex-shrink:0">
+          <circle cx="24" cy="24" r="20" fill="none"
+                  stroke="rgba(75,75,249,0.15)" stroke-width="4"/>
+          <circle cx="24" cy="24" r="20" fill="none"
+                  stroke="var(--fd-indigo)" stroke-width="4"
+                  stroke-linecap="round"
+                  stroke-dasharray="126"
+                  stroke-dashoffset="${126 - Math.min(126,
+                    (xp.pourcentage / 100) * 126)}"
+                  transform="rotate(-90 24 24)"
+                  style="filter:drop-shadow(0 0 3px var(--fd-indigo))"/>
+          <text x="24" y="29" text-anchor="middle"
+                fill="var(--fd-lavender)" font-size="10"
+                font-weight="800">
+            N${xp.niveau.numero}
+          </text>
+        </svg>
+        <div>
+          <div style="font-size:1.2rem;font-weight:800;
+                      color:var(--fd-lavender);line-height:1">
+            ${xp.total}
+          </div>
+          <div style="font-size:.6rem;color:var(--text-muted);
+                      text-transform:uppercase;
+                      letter-spacing:.06em;margin-top:2px">
+            XP total
+          </div>
+          <div style="font-size:.58rem;color:var(--text-muted);
+                      margin-top:1px">
+            ${xp.niveau.nom}
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- ══ HERO SÉANCE ══ -->
     ${seance ? `
-      <div class="card mb-md"
-           style="border-color:var(--fd-indigo);
-                  background:rgba(75,75,249,0.06)">
-        <div class="flex justify-between items-center">
-          <div>
-            <div class="card-label" style="color:var(--fd-indigo)">
-              📅 Séance du jour
-            </div>
-            <div style="font-size:1.1rem;font-weight:700;
-                        margin-top:4px">
-              ${seance.emoji} ${seance.nom}
-            </div>
-            <div style="font-size:.75rem;color:var(--text-muted);
-                        margin-top:2px">
-              ~${seance.duree_estimee}min
-              · ${seance.exercices?.length||0} exercices
-            </div>
+      <div style="border-radius:var(--radius-xl);
+                  padding:20px;margin-bottom:14px;
+                  position:relative;overflow:hidden;
+                  background:linear-gradient(135deg,
+                    rgba(75,75,249,0.22) 0%,
+                    rgba(75,75,249,0.07) 55%,
+                    rgba(191,161,255,0.05) 100%);
+                  border:1px solid rgba(75,75,249,0.4);
+                  box-shadow:0 4px 24px rgba(75,75,249,0.2)">
+        <div style="position:absolute;top:-50px;right:-30px;
+                    width:180px;height:180px;
+                    background:radial-gradient(circle,
+                      rgba(75,75,249,0.2) 0%,transparent 70%);
+                    pointer-events:none"></div>
+        <div style="display:flex;align-items:center;gap:6px;
+                    margin-bottom:10px;position:relative;z-index:1">
+          <div style="width:7px;height:7px;border-radius:50%;
+                      background:var(--fd-indigo);
+                      box-shadow:0 0 8px var(--fd-indigo);
+                      animation:pulse 2s infinite"></div>
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;
+                      letter-spacing:.12em;
+                      color:var(--fd-indigo)">
+            Séance du jour
+          </div>
+        </div>
+        <div style="font-size:1.4rem;font-weight:800;
+                    letter-spacing:-.02em;margin-bottom:4px;
+                    position:relative;z-index:1">
+          ${seance.emoji} ${seance.nom}
+        </div>
+        <div style="font-size:.75rem;color:var(--text-muted);
+                    margin-bottom:16px;position:relative;z-index:1">
+          ~${seance.duree_estimee}min
+          · ${seance.exercices?.length||0} exercices
+        </div>
+        <div style="display:flex;align-items:center;
+                    justify-content:space-between;
+                    position:relative;z-index:1">
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            ${(seance.muscles||[]).map(m => `
+              <span style="padding:4px 10px;border-radius:99px;
+                           font-size:.6rem;font-weight:700;
+                           text-transform:uppercase;
+                           letter-spacing:.04em;
+                           background:rgba(75,75,249,0.2);
+                           color:var(--fd-lavender);
+                           border:1px solid rgba(75,75,249,0.3)">
+                ${m}
+              </span>`).join('')}
           </div>
           <button onclick="naviguer('live')"
-                  class="btn-primary"
-                  style="font-size:.82rem;
-                         padding:var(--space-sm) var(--space-md)">
+                  style="display:flex;align-items:center;
+                         gap:8px;padding:12px 20px;
+                         background:var(--fd-indigo);color:white;
+                         border:none;border-radius:99px;
+                         font-size:.82rem;font-weight:700;
+                         cursor:pointer;white-space:nowrap;
+                         box-shadow:0 4px 20px rgba(75,75,249,0.5)">
             ▶ Démarrer
           </button>
         </div>
-        <div style="display:flex;flex-wrap:wrap;
-                    gap:4px;margin-top:var(--space-sm)">
-          ${(seance.muscles||[]).map(m => `
-            <span class="chip chip-indigo"
-                  style="font-size:.62rem">${m}</span>
-          `).join('')}
-        </div>
       </div>` : `
-      <div class="card mb-md"
-           style="text-align:center;border-color:var(--fd-mint)">
-        <div style="font-size:1.5rem;margin-bottom:4px">😴</div>
-        <div style="font-weight:700">Jour de repos</div>
+      <div style="border-radius:var(--radius-xl);
+                  padding:20px;margin-bottom:14px;
+                  background:rgba(139,240,187,0.06);
+                  border:1px solid rgba(139,240,187,0.2);
+                  text-align:center">
+        <div style="font-size:2rem;margin-bottom:6px">😴</div>
+        <div style="font-weight:700;font-size:1rem">
+          Jour de repos
+        </div>
         ${prochaine ? `
-          <div style="font-size:.75rem;color:var(--text-muted);
+          <div style="font-size:.72rem;color:var(--text-muted);
                       margin-top:4px">
-            Prochaine séance :
-            ${prochaine.emoji} ${prochaine.nom}
+            Prochaine : ${prochaine.emoji} ${prochaine.nom}
             ${prochaine.dansJours > 0
               ? `dans ${prochaine.dansJours}j` : 'demain'}
           </div>` : ''}
       </div>`}
 
-    <div class="card mb-md"
-         onclick="naviguer('coach')"
-         style="cursor:pointer;
-                border-left:3px solid var(--fd-lavender)">
-      <div style="font-size:.65rem;font-weight:700;
-                  text-transform:uppercase;letter-spacing:.08em;
-                  color:var(--fd-lavender);
-                  margin-bottom:var(--space-xs)">
-        ${msg.emoji} Coach du jour
-      </div>
-      <p style="font-size:.85rem;color:var(--text-secondary);
-                line-height:1.5;margin:0">
-        ${msg.message}
-      </p>
+    <!-- ══ EXERCICES DU JOUR ══ -->
+    ${seance ? `
+      <div style="background:rgba(255,255,255,0.04);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-lg);
+                  padding:16px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="width:3px;height:14px;border-radius:99px;
+                        background:var(--fd-indigo)"></div>
+            <span style="font-size:.6rem;font-weight:700;
+                         text-transform:uppercase;
+                         letter-spacing:.1em;
+                         color:var(--text-muted)">
+              Programme du jour
+            </span>
+          </div>
+          <button onclick="naviguer('live')"
+                  style="font-size:.7rem;color:var(--fd-indigo);
+                         font-weight:600;background:none;
+                         border:none;cursor:pointer">
+            Tout voir →
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${(seance.exercices||[]).slice(0,5).map((ex,i) => {
+            const exoData = (window.EXERCICES||{})[ex.ref]||{};
+            const pr = (() => {
+              try { return Tracker.getPR(ex.ref); } catch(e) { return null; }
+            })();
+            return `
+              <div onclick="naviguer('live')"
+                   style="display:flex;align-items:center;
+                          gap:10px;padding:10px 12px;
+                          background:var(--bg-input);
+                          border-radius:var(--radius-sm);
+                          border:1px solid var(--border-color);
+                          cursor:pointer">
+                <div style="width:36px;height:36px;
+                            border-radius:10px;flex-shrink:0;
+                            background:rgba(75,75,249,0.12);
+                            border:1px solid rgba(75,75,249,0.2);
+                            display:flex;align-items:center;
+                            justify-content:center;font-size:1rem">
+                  ${exoData.emoji||'💪'}
+                </div>
+                <div style="flex:1">
+                  <div style="font-size:.82rem;font-weight:700">
+                    ${exoData.nom||ex.ref}
+                  </div>
+                  <div style="font-size:.62rem;
+                              color:var(--text-muted);margin-top:1px">
+                    ${exoData.muscle||''}
+                    ${pr ? `· <span style="color:var(--fd-lemon)">
+                      PR ${pr.poids}kg</span>` : ''}
+                  </div>
+                </div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:.78rem;font-weight:700;
+                              color:var(--fd-indigo)">
+                    ${ex.series}×${ex.reps}
+                  </div>
+                  <div style="font-size:.6rem;color:var(--text-muted)">
+                    ⏱ ${ex.repos||75}s
+                  </div>
+                </div>
+              </div>`;
+          }).join('')}
+          ${(seance.exercices||[]).length > 5 ? `
+            <div style="text-align:center;font-size:.7rem;
+                        color:var(--text-muted);padding:4px">
+              +${(seance.exercices||[]).length - 5} exercices
+            </div>` : ''}
+        </div>
+      </div>` : ''}
+
+    <!-- ══ TIMERS REPOS ══ -->
+    <div style="font-size:.58rem;font-weight:700;
+                text-transform:uppercase;letter-spacing:.1em;
+                color:var(--text-muted);
+                margin:14px 0 8px;
+                display:flex;align-items:center;gap:8px">
+      ⏱ Timers repos
+      <div style="flex:1;height:1px;
+                  background:var(--border-color)"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);
+                gap:7px;margin-bottom:14px">
+      ${[
+        {icon:'⚡', val:'45s',  label:'Express', sec:45  },
+        {icon:'💪', val:'60s',  label:'Normal',  sec:60  },
+        {icon:'🏋️', val:'90s',  label:'Force',   sec:90  },
+        {icon:'🔥', val:'2min', label:'Lourd',   sec:120 }
+      ].map(t => `
+        <div onclick="TimerManager.demarrerRepos(${t.sec})"
+             style="background:rgba(255,255,255,0.04);
+                    border:1px solid rgba(255,255,255,0.08);
+                    border-radius:var(--radius-md);
+                    padding:12px 6px;text-align:center;
+                    cursor:pointer;transition:all .2s"
+             onmousedown="this.style.transform='scale(.94)';
+                          this.style.borderColor=
+                          'rgba(75,75,249,0.4)'"
+             onmouseup="this.style.transform='';
+                        this.style.borderColor=
+                        'rgba(255,255,255,0.08)'">
+          <div style="font-size:1.2rem;margin-bottom:4px">
+            ${t.icon}
+          </div>
+          <div style="font-size:.78rem;font-weight:800;
+                      color:var(--fd-indigo)">
+            ${t.val}
+          </div>
+          <div style="font-size:.55rem;color:var(--text-muted);
+                      text-transform:uppercase;
+                      letter-spacing:.04em;margin-top:1px">
+            ${t.label}
+          </div>
+        </div>`).join('')}
     </div>
 
-    <div class="card mb-md">
-      <div class="flex justify-between items-center mb-sm">
-        <div class="card-label">📊 Cette semaine</div>
-        <button onclick="naviguer('stats')"
-                style="background:none;border:none;
-                       font-size:.72rem;color:var(--fd-indigo);
-                       cursor:pointer;font-weight:600">
-          Voir tout →
+    <!-- ══ NUTRITION ══ -->
+    <div style="font-size:.58rem;font-weight:700;
+                text-transform:uppercase;letter-spacing:.1em;
+                color:var(--text-muted);
+                margin:14px 0 8px;
+                display:flex;align-items:center;gap:8px">
+      🥗 Nutrition du jour
+      <div style="flex:1;height:1px;
+                  background:var(--border-color)"></div>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.04);
+                border:1px solid rgba(139,240,187,0.2);
+                border-radius:var(--radius-lg);
+                padding:16px;margin-bottom:12px;
+                position:relative;overflow:hidden">
+      <div style="position:absolute;bottom:-30px;right:-30px;
+                  width:100px;height:100px;
+                  background:radial-gradient(circle,
+                    rgba(139,240,187,0.08) 0%,transparent 70%);
+                  pointer-events:none"></div>
+
+      <!-- Macros objectifs -->
+      <div style="display:flex;justify-content:space-between;
+                  align-items:center;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:3px;height:14px;border-radius:99px;
+                      background:var(--fd-mint)"></div>
+          <span style="font-size:.6rem;font-weight:700;
+                       text-transform:uppercase;
+                       letter-spacing:.1em;
+                       color:var(--text-muted)">
+            Objectifs du jour
+          </span>
+        </div>
+        <button onclick="naviguer('nutrition')"
+                style="font-size:.7rem;color:var(--fd-mint);
+                       font-weight:600;background:none;
+                       border:none;cursor:pointer">
+          Détails →
         </button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);
-                  gap:var(--space-sm)">
+
+      <div style="display:grid;
+                  grid-template-columns:repeat(3,1fr);
+                  gap:8px;margin-bottom:14px">
+        ${(() => {
+          let obj = { proteines:176, calories:3100, eau:2.8 };
+          try {
+            const p = Tracker.getProfil();
+            obj.proteines = Math.round((p.poids||80) * 2.2);
+            obj.calories  = Math.round((p.poids||80) * 38);
+            obj.eau       = Math.round((p.poids||80) * 0.035 * 10) / 10;
+          } catch(e) {}
+          return [
+            { label:'Protéines', val:obj.proteines+'g',
+              color:'var(--fd-coral)' },
+            { label:'Calories',  val:obj.calories,
+              color:'var(--fd-lemon)' },
+            { label:'Eau',       val:obj.eau+'L',
+              color:'var(--fd-indigo)' }
+          ].map(m => `
+            <div style="text-align:center;padding:10px 6px;
+                        background:var(--bg-input);
+                        border-radius:var(--radius-sm);
+                        border:1px solid var(--border-color)">
+              <div style="font-size:.95rem;font-weight:800;
+                          color:${m.color};line-height:1">
+                ${m.val}
+              </div>
+              <div style="font-size:.55rem;color:var(--text-muted);
+                          margin-top:3px;text-transform:uppercase;
+                          letter-spacing:.04em">
+                ${m.label}
+              </div>
+            </div>`).join('');
+        })()}
+      </div>
+
+      <!-- Repas du jour -->
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.08em;
+                  color:var(--text-muted);margin-bottom:8px">
+        Repas conseillés
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
         ${[
-          { label:'Séances',  val:`${analyse.seances}/${analyse.objectif}`,
-            color:'var(--fd-indigo)' },
-          { label:'Volume',   val:Utils.formatVolume(analyse.volume),
-            color:'var(--fd-mint)'  },
-          { label:'RPE moy.', val:analyse.rpe > 0
-              ? `${analyse.rpe}/10` : '—',
-            color:'var(--fd-lemon)' }
-        ].map(s => `
-          <div style="text-align:center;padding:var(--space-sm);
+          { t:'07:30', n:'Oatmeal Protéiné',
+            m:'P:42g · G:65g', cal:520, e:'🥣' },
+          { t:'10:30', n:'Pré-séance Banane + Oats',
+            m:'P:22g · G:65g', cal:380, e:'⚡' },
+          { t:'13:30', n:'Bowl Poulet · Riz · Brocoli',
+            m:'P:58g · G:80g', cal:680, e:'🥗' },
+          { t:'16:30', n:'Fromage blanc & Fruits',
+            m:'P:28g · G:30g', cal:280, e:'🍓' },
+          { t:'19:30', n:'Saumon · Patate douce',
+            m:'P:48g · G:60g', cal:620, e:'🐟' }
+        ].map(r => `
+          <div onclick="naviguer('nutrition')"
+               style="display:flex;align-items:center;
+                      gap:10px;padding:9px 12px;
                       background:var(--bg-input);
-                      border-radius:var(--radius-sm)">
-            <div style="font-size:.92rem;font-weight:800;
-                        color:${s.color}">${s.val}</div>
-            <div style="font-size:.62rem;color:var(--text-muted)">
-              ${s.label}
+                      border-radius:var(--radius-sm);
+                      border:1px solid var(--border-color);
+                      cursor:pointer">
+            <div style="font-size:.6rem;font-weight:700;
+                        color:var(--fd-mint);width:40px;
+                        flex-shrink:0;text-align:center;
+                        padding:2px 0;
+                        background:rgba(139,240,187,0.08);
+                        border-radius:5px">
+              ${r.t}
+            </div>
+            <div style="font-size:.88rem;flex-shrink:0">${r.e}</div>
+            <div style="flex:1">
+              <div style="font-size:.78rem;font-weight:600">
+                ${r.n}
+              </div>
+              <div style="font-size:.6rem;color:var(--text-muted)">
+                ${r.m}
+              </div>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;
+                        color:var(--fd-lemon);flex-shrink:0">
+              ${r.cal}kcal
             </div>
           </div>`).join('')}
+      </div>
+
+      <!-- Eau rapide -->
+      <div style="display:flex;align-items:center;gap:8px;
+                  margin-top:12px;padding-top:12px;
+                  border-top:1px solid var(--border-color)">
+        <div style="font-size:.72rem;color:var(--text-muted);flex:1">
+          💧 Ajouter de l'eau
+        </div>
+        <div style="display:flex;gap:5px">
+          ${[250,500,750].map(ml => `
+            <button onclick="event.stopPropagation();
+                            _ajouterEauHome(${ml})"
+                    style="padding:5px 9px;font-size:.65rem;
+                           font-weight:700;
+                           background:rgba(75,75,249,0.1);
+                           border:1px solid rgba(75,75,249,0.2);
+                           border-radius:99px;
+                           color:var(--fd-indigo);cursor:pointer">
+              +${ml}ml
+            </button>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PLANNING SEMAINE ══ -->
+    <div style="font-size:.58rem;font-weight:700;
+                text-transform:uppercase;letter-spacing:.1em;
+                color:var(--text-muted);
+                margin:14px 0 8px;
+                display:flex;align-items:center;gap:8px">
+      📅 Planning semaine
+      <div style="flex:1;height:1px;
+                  background:var(--border-color)"></div>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.04);
+                border:1px solid rgba(255,255,255,0.08);
+                border-radius:var(--radius-lg);
+                padding:14px 16px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;
+                  align-items:center;margin-bottom:10px">
+        <div style="font-size:.72rem;font-weight:700;
+                    color:var(--text-muted)">
+          ${analyse.seances}/${analyse.objectif} séances
+        </div>
+        <div style="font-size:.72rem;font-weight:700;
+                    color:var(--fd-mint)">
+          ${Math.round((analyse.seances/Math.max(analyse.objectif,1))*100)}%
+        </div>
+      </div>
+      <div style="display:grid;
+                  grid-template-columns:repeat(6,1fr);
+                  gap:5px">
+        ${(()=>{
+          const planning = (() => {
+            try { return Programme.getSeancesSemaine(); } catch(e) { return []; }
+          })();
+          if (planning.length) {
+            return planning.slice(0,6).map(jour => `
+              <div style="display:flex;flex-direction:column;
+                          align-items:center;gap:4px">
+                <div style="width:32px;height:32px;
+                            border-radius:10px;
+                            display:flex;align-items:center;
+                            justify-content:center;
+                            font-size:.7rem;font-weight:700;
+                            ${jour.estAujourdhui
+                              ? 'background:var(--fd-indigo);color:white;box-shadow:0 0 12px rgba(75,75,249,0.5)'
+                              : jour.seance
+                                ? 'background:rgba(75,75,249,0.25);border:1px solid var(--fd-indigo);color:var(--fd-lavender)'
+                                : 'background:var(--bg-input);border:1px solid var(--border-color);color:var(--text-muted)'}">
+                  ${jour.estAujourdhui ? '▶' : jour.seance ? jour.seance.emoji : '·'}
+                </div>
+                <div style="font-size:.52rem;color:var(--text-muted);
+                            text-transform:uppercase;font-weight:600">
+                  ${jour.label}
+                </div>
+              </div>`).join('');
+          }
+          const jrsLabels = ['Lun','Mar','Mer','Jeu','Ven','Sam'];
+          const todayIdx  = new Date().getDay() === 0 ? 6
+                          : new Date().getDay() - 1;
+          return jrsLabels.map((l,i) => `
+            <div style="display:flex;flex-direction:column;
+                        align-items:center;gap:4px">
+              <div style="width:32px;height:32px;
+                          border-radius:10px;
+                          display:flex;align-items:center;
+                          justify-content:center;
+                          font-size:.7rem;font-weight:700;
+                          ${i === todayIdx
+                            ? 'background:var(--fd-indigo);color:white;box-shadow:0 0 12px rgba(75,75,249,0.5)'
+                            : i < todayIdx
+                              ? 'background:rgba(75,75,249,0.25);border:1px solid var(--fd-indigo);color:var(--fd-lavender)'
+                              : 'background:var(--bg-input);border:1px solid var(--border-color);color:var(--text-muted)'}">
+                ${i === todayIdx ? '▶' : i < todayIdx ? '✓' : '·'}
+              </div>
+              <div style="font-size:.52rem;color:var(--text-muted);
+                          text-transform:uppercase;font-weight:600">
+                ${l}
+              </div>
+            </div>`).join('');
+        })()}
       </div>
       <div class="progress-bar mt-sm">
         <div class="progress-fill"
              style="width:${Math.min(100,
-               Math.round(
-                 (analyse.seances / Math.max(analyse.objectif,1)) * 100
-               )
-             )}%">
+               Math.round((analyse.seances/
+                 Math.max(analyse.objectif,1))*100))}%">
         </div>
       </div>
     </div>
 
+    <!-- ══ STATS SEMAINE ══ -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                gap:8px;margin-bottom:14px">
+      ${[
+        { label:'Séances',  val:`${analyse.seances}/${analyse.objectif}`,
+          color:'var(--fd-indigo)' },
+        { label:'Volume',   val:Utils.formatVolume(analyse.volume),
+          color:'var(--fd-mint)'  },
+        { label:'RPE moy.', val:analyse.rpe > 0
+            ? `${analyse.rpe}/10` : '—',
+          color:'var(--fd-lemon)' }
+      ].map(s => `
+        <div style="background:rgba(255,255,255,0.04);
+                    border:1px solid rgba(255,255,255,0.08);
+                    border-radius:var(--radius-md);
+                    padding:12px 8px;text-align:center">
+          <div style="font-size:1rem;font-weight:800;
+                      color:${s.color};line-height:1">
+            ${s.val}
+          </div>
+          <div style="font-size:.55rem;color:var(--text-muted);
+                      margin-top:4px;text-transform:uppercase;
+                      letter-spacing:.04em">
+            ${s.label}
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- ══ COACH DU JOUR ══ -->
+    <div onclick="naviguer('coach')"
+         style="background:rgba(255,255,255,0.04);
+                border:1px solid rgba(255,255,255,0.08);
+                border-left:3px solid var(--fd-lavender);
+                border-radius:var(--radius-lg);
+                padding:14px 16px;margin-bottom:14px;
+                cursor:pointer">
+      <div style="font-size:.62rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.1em;
+                  color:var(--fd-lavender);margin-bottom:5px">
+        ${msg.emoji} Coach du jour
+      </div>
+      <p style="font-size:.82rem;color:var(--text-secondary);
+                line-height:1.55;margin:0">
+        ${msg.message}
+      </p>
+    </div>
+
+    <!-- ══ DÉFIS ══ -->
     ${defisSem.length > 0 ? `
-      <div class="card mb-md"
-           onclick="naviguer('defis')"
-           style="cursor:pointer">
-        <div class="flex justify-between items-center mb-sm">
-          <div class="card-label">🏆 Défis en cours</div>
-          <span style="font-size:.72rem;color:var(--fd-indigo)">
-            Voir tout →
-          </span>
-        </div>
+      <div style="font-size:.58rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.1em;
+                  color:var(--text-muted);
+                  margin:0 0 8px;
+                  display:flex;align-items:center;gap:8px">
+        🏆 Défis en cours
+        <div style="flex:1;height:1px;
+                    background:var(--border-color)"></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-lg);
+                  padding:16px;margin-bottom:12px;
+                  cursor:pointer"
+           onclick="naviguer('defis')">
         ${defisSem.map(d => {
           const pct = Math.round(
             (d.progression / Math.max(d.cible,1)) * 100
           );
           return `
-            <div style="margin-bottom:var(--space-sm)">
-              <div class="flex justify-between"
-                   style="font-size:.78rem;margin-bottom:4px">
+            <div style="margin-bottom:10px">
+              <div style="display:flex;justify-content:space-between;
+                          font-size:.78rem;margin-bottom:5px">
                 <span>${d.emoji} ${d.titre}</span>
                 <span style="color:var(--fd-lemon);font-weight:700">
                   ${d.progression}/${d.cible}
                 </span>
               </div>
-              <div class="progress-bar">
-                <div class="progress-fill"
-                     style="width:${pct}%;
-                            background:var(--fd-lemon)">
+              <div style="height:4px;background:var(--bg-input);
+                          border-radius:99px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;
+                            background:linear-gradient(90deg,
+                              var(--fd-lemon),var(--fd-mint));
+                            border-radius:99px">
                 </div>
               </div>
             </div>`;
         }).join('')}
       </div>` : ''}
 
-    <div class="section-title">⚡ Actions rapides</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);
-                gap:var(--space-sm);margin-bottom:var(--space-md)">
-      ${[
-        { emoji:'📈', label:'Predict',    page:'predict'   },
-        { emoji:'🤖', label:'Coach',      page:'coach'     },
-        { emoji:'🏆', label:'Défis',      page:'defis'     },
-        { emoji:'🔄', label:'Circuit',    page:'circuit'   },
-        { emoji:'🥗', label:'Nutrition',  page:'nutrition' },
-        { emoji:'🧠', label:'Adaptatif',  page:'adaptatif' }
-      ].map(a => ` 
-        <button onclick="naviguer('${a.page}')"
-                class="card"
-                style="text-align:center;cursor:pointer;
-                       border:none;
-                       padding:var(--space-md) var(--space-sm)">
-          <div style="font-size:1.5rem">${a.emoji}</div>
-          <div style="font-size:.68rem;font-weight:600;
-                      margin-top:4px;
-                      color:var(--text-secondary)">
-            ${a.label}
-          </div>
-        </button>`).join('')}
-    </div>
-
+    <!-- ══ HUMEUR / FATIGUE ══ -->
     ${_renderHumeurFatigue()}
+
+    <div style="height:8px"></div>
   `;
 
-  // ✅ FIX — Attacher les events APRÈS que le HTML soit dans le DOM
-  // Les emojis dans onclick="" cassent le HTML → on utilise addEventListener
   requestAnimationFrame(() => {
     _attacherHumeurFatigueEvents();
   });
+}
+
+// Fonction helper eau depuis accueil
+function _ajouterEauHome(ml) {
+  try {
+    const clé = `ft_nutrition_eau_${Utils.aujourd_hui()}`;
+    const actuel = Utils.storage.get(clé, 0);
+    const nouveau = Math.min(actuel + ml, 5000);
+    Utils.storage.set(clé, nouveau);
+    Utils.toast(`💧 +${ml}ml · Total ${(nouveau/1000).toFixed(1)}L`,
+      'success', 1500);
+    Utils.vibrerSuccess();
+  } catch(e) {
+    Utils.toast(`💧 +${ml}ml ajouté !`, 'success', 1500);
+  }
 }
 
 function _renderHumeurFatigue() {
