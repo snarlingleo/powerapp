@@ -3309,4 +3309,220 @@ window.retourArriere = retourArriere;
 window.App           = App;
 window.UI            = UI;
 
+// ════════════════════════════════════════════════════════════
+// MENU GLOBAL — Panneau déroulant depuis le header
+// ════════════════════════════════════════════════════════════
+const MenuGlobal = {
+
+  _ouvert: false,
+
+  toggle() {
+    this._ouvert ? this.fermer() : this.ouvrir();
+  },
+
+  ouvrir() {
+    this._ouvert = true;
+
+    // Supprimer ancien panel si existe
+    const old = document.getElementById('menu-global-panel');
+    if (old) old.remove();
+
+    // Changer icône bouton
+    const btn = document.getElementById('btn-menu-global');
+    if (btn) btn.textContent = '✕';
+
+    const panel = document.createElement('div');
+    panel.id    = 'menu-global-panel';
+    panel.style.cssText = `
+      position:fixed;
+      top:var(--header-height);
+      left:50%;
+      transform:translateX(-50%);
+      width:100%;
+      max-width:480px;
+      max-height:calc(100vh - var(--header-height) - var(--nav-height));
+      overflow-y:auto;
+      z-index:300;
+      background:var(--bg-app);
+      border-bottom:1px solid var(--border-color);
+      animation:slideDown .25s ease;
+      padding:12px;
+      scrollbar-width:none;
+    `;
+
+    // Récupérer infos profil
+    let profil = { nom:'Athlète', avatar:'💪' };
+    let xp     = { total:0, niveau:{ emoji:'💪', numero:1, nom:'Débutant' }};
+    let streak = { count:0 };
+    let total  = 0;
+    let trophees = 0;
+
+    try { profil   = Tracker.getProfil();    } catch(e) {}
+    try { xp       = Gamification.getXP();   } catch(e) {}
+    try { streak   = Tracker.getStreak();    } catch(e) {}
+    try { total    = Tracker.getTotalSeances(); } catch(e) {}
+    try {
+      trophees = Gamification.getTrophees()
+        .filter(t => t.debloquee).length;
+    } catch(e) {}
+
+    const items = [
+      {page:'profil',       emoji:'👤', label:'Mon profil'          },
+      {page:'mon_profil',   emoji:'✏️', label:'Modifier profil'     },
+      {page:'journal',      emoji:'📔', label:'Journal'             },
+      {page:'objectifs',    emoji:'🎯', label:'Objectifs'           },
+      {page:'blessures',    emoji:'🩹', label:'Blessures'           },
+      {page:'coach',        emoji:'🤖', label:'Coach IA'            },
+      {page:'defis',        emoji:'🏆', label:'Défis'               },
+      {page:'predict',      emoji:'📈', label:'Prédictions'         },
+      {page:'gamification', emoji:'⭐', label:'XP & Niveaux'        },
+      {page:'history',      emoji:'📅', label:'Historique'          },
+      {page:'photos',       emoji:'📸', label:'Photos'              },
+      {page:'share',        emoji:'📤', label:'Partage'             },
+      {page:'social',       emoji:'📱', label:'Réseaux sociaux'     },
+      {page:'supersets',    emoji:'⚡', label:'Supersets'           },
+      {page:'circuit',      emoji:'🔄', label:'Circuit Training'    },
+      {page:'adaptatif',    emoji:'🧠', label:'Programme Adaptatif' },
+      {page:'galerie',      emoji:'💪', label:'Galerie exercices'   },
+      {page:'offline',      emoji:'📵', label:'Hors-ligne'          },
+      {page:'settings',     emoji:'⚙️', label:'Paramètres'         }
+    ];
+
+    panel.innerHTML = `
+
+      <!-- Mini profil en haut du menu -->
+      <div style="background:linear-gradient(135deg,
+                  rgba(75,75,249,0.2),
+                  rgba(75,75,249,0.05));
+                  border:1px solid rgba(75,75,249,0.3);
+                  border-radius:var(--radius-lg);
+                  padding:16px;
+                  margin-bottom:12px;
+                  display:flex;
+                  align-items:center;
+                  gap:14px"
+           onclick="MenuGlobal.naviguerEt('profil')">
+        <div style="width:50px;height:50px;
+                    background:rgba(75,75,249,0.2);
+                    border:2px solid rgba(75,75,249,0.4);
+                    border-radius:50%;
+                    display:flex;align-items:center;
+                    justify-content:center;
+                    font-size:1.6rem;flex-shrink:0">
+          ${profil.avatar||'💪'}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:1rem;font-weight:800;color:white">
+            ${profil.nom}
+          </div>
+          <div style="font-size:.72rem;color:var(--fd-lavender);
+                      margin-top:2px">
+            ${xp.niveau.emoji} ${xp.niveau.nom} · ${xp.total} XP
+          </div>
+        </div>
+        <div style="display:grid;
+                    grid-template-columns:repeat(3,1fr);
+                    gap:6px;text-align:center">
+          ${[
+            [total,        'Séances'],
+            [streak.count, 'Streak' ],
+            [trophees,     'Trophées']
+          ].map(([v,l]) => `
+            <div>
+              <div style="font-size:.9rem;font-weight:800;
+                          color:var(--fd-indigo)">${v}</div>
+              <div style="font-size:.5rem;
+                          color:var(--text-muted);
+                          text-transform:uppercase">${l}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Liste des items -->
+      <div style="display:flex;flex-direction:column;gap:4px">
+        ${items.map(item => `
+          <div onclick="MenuGlobal.naviguerEt('${item.page}')"
+               style="display:flex;align-items:center;
+                      gap:14px;padding:13px 16px;
+                      background:var(--bg-card);
+                      border:1px solid var(--border-color);
+                      border-radius:var(--radius-md);
+                      cursor:pointer;
+                      transition:all .15s"
+               onmouseenter="this.style.borderColor='rgba(75,75,249,0.3)';
+                             this.style.background='rgba(75,75,249,0.06)'"
+               onmouseleave="this.style.borderColor='var(--border-color)';
+                             this.style.background='var(--bg-card)'">
+            <span style="font-size:1.2rem;flex-shrink:0">
+              ${item.emoji}
+            </span>
+            <span style="font-size:.9rem;font-weight:600;
+                         color:var(--text-primary);flex:1">
+              ${item.label}
+            </span>
+            <span style="color:var(--text-muted);font-size:.85rem">
+              ›
+            </span>
+          </div>`).join('')}
+      </div>
+
+      <!-- Reset données -->
+      <div style="margin-top:8px;padding:4px">
+        <button onclick="UI.confirmerReset()"
+                style="width:100%;padding:12px;
+                       background:rgba(255,141,150,0.08);
+                       border:1px solid rgba(255,141,150,0.2);
+                       border-radius:var(--radius-md);
+                       color:var(--fd-coral);
+                       font-size:.82rem;font-weight:600;
+                       cursor:pointer">
+          🗑️ Réinitialiser les données
+        </button>
+      </div>
+
+      <div style="height:12px"></div>
+    `;
+
+    document.body.appendChild(panel);
+
+    // Fermer en cliquant en dehors
+    setTimeout(() => {
+      document.addEventListener('click', this._fermerSidehors.bind(this));
+    }, 100);
+  },
+
+  fermer() {
+    this._ouvert = false;
+
+    const panel = document.getElementById('menu-global-panel');
+    if (panel) {
+      panel.style.animation = 'slideUp .2s ease forwards';
+      setTimeout(() => panel.remove(), 200);
+    }
+
+    // Restaurer icône
+    const btn = document.getElementById('btn-menu-global');
+    if (btn) btn.textContent = '☰';
+
+    document.removeEventListener('click',
+      this._fermerSidehors.bind(this));
+  },
+
+  naviguerEt(page) {
+    this.fermer();
+    setTimeout(() => naviguer(page), 150);
+  },
+
+  _fermerSidehors(e) {
+    const panel = document.getElementById('menu-global-panel');
+    const btn   = document.getElementById('btn-menu-global');
+    if (!panel) return;
+    if (!panel.contains(e.target) && !btn?.contains(e.target)) {
+      this.fermer();
+    }
+  }
+};
+
+window.MenuGlobal = MenuGlobal;
+
 console.log('✅ App.js v3.0 chargé');
