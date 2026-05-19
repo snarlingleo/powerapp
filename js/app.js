@@ -1481,8 +1481,27 @@ function _renderExercicesLive(seance, seanceId) {
               </button>
             </div>
 
-            <!-- Séries -->
-            ${Array.from({length:ex.series}, (_,s) => `
+            <!-- Info aide -->
+${idx === 0 ? `
+  <div style="display:flex;align-items:center;gap:8px;
+              padding:8px 10px;margin-bottom:8px;
+              background:rgba(191,161,255,0.08);
+              border:1px solid rgba(191,161,255,0.15);
+              border-radius:var(--radius-sm)">
+    <span style="font-size:1rem;flex-shrink:0">💡</span>
+    <div style="font-size:.68rem;color:rgba(191,161,255,0.8);
+                line-height:1.5">
+      <strong>KG</strong> = poids soulevé ·
+      <strong>REPS</strong> = nombre de répétitions ·
+      <strong>RPE</strong> = effort /10
+      <span style="opacity:.7">
+        (7 = difficile, 9 = presque max)
+      </span>
+    </div>
+  </div>` : ''}
+
+<!-- Séries -->
+${Array.from({length:ex.series}, (_,s) => ``
               <div class="serie-row"
                    id="serie-${idx}-${s}"
                    style="display:grid;
@@ -1494,9 +1513,99 @@ function _renderExercicesLive(seance, seanceId) {
                             color:var(--text-muted);text-align:center">
                   S${s+1}
                 </div>
-                <input type="number" class="input"
-                       id="poids-${idx}-${s}"
-                       placeholder="${chargeReco?.charge||pr?.poids||0}"
+                <div class="serie-row"
+     id="serie-${idx}-${s}"
+     style="display:grid;
+            grid-template-columns:40px 1fr 1fr 50px auto;
+            gap:var(--space-xs);
+            align-items:center;
+            margin-bottom:4px">
+
+  <!-- Numéro série -->
+  <div style="font-size:.75rem;font-weight:700;
+              color:var(--text-muted);text-align:center">
+    S${s+1}
+  </div>
+
+  <!-- Poids -->
+  <div style="position:relative">
+    <input type="number" class="input"
+           id="poids-${idx}-${s}"
+           placeholder="${chargeReco?.charge||pr?.poids||'kg'}"
+           value="${chargeReco?.charge||pr?.poids||''}"
+           step="2.5"
+           style="padding:6px;font-size:.82rem;
+                  text-align:center" />
+    <div style="position:absolute;bottom:-14px;left:0;right:0;
+                text-align:center;font-size:.52rem;
+                color:var(--text-muted);font-weight:600;
+                pointer-events:none">
+      KG
+    </div>
+  </div>
+
+  <!-- Reps -->
+  <div style="position:relative">
+    <input type="number" class="input"
+           id="reps-${idx}-${s}"
+           placeholder="${ex.reps?.split('-')||10}"
+           style="padding:6px;font-size:.82rem;
+                  text-align:center" />
+    <div style="position:absolute;bottom:-14px;left:0;right:0;
+                text-align:center;font-size:.52rem;
+                color:var(--text-muted);font-weight:600;
+                pointer-events:none">
+      REPS
+    </div>
+  </div>
+
+  <!-- RPE -->
+  <div style="position:relative">
+    <input type="number" class="input"
+           id="rpe-${idx}-${s}"
+           placeholder="7" min="1" max="10"
+           style="padding:6px;font-size:.78rem;
+                  text-align:center" />
+    <div style="position:absolute;bottom:-14px;left:0;right:0;
+                text-align:center;font-size:.52rem;
+                color:var(--text-muted);font-weight:600;
+                pointer-events:none">
+      RPE
+    </div>
+  </div>
+
+  <!-- Timer + Valider -->
+  <div style="display:flex;flex-direction:column;gap:3px">
+    <button onclick="TimerManager.lancerTimerReps(${idx}, ${s})"
+            id="btn-timer-${idx}-${s}"
+            title="Timer repos"
+            style="width:32px;height:32px;
+                   border-radius:50%;
+                   background:rgba(75,75,249,0.15);
+                   border:2px solid var(--fd-indigo);
+                   font-size:.8rem;cursor:pointer;
+                   display:flex;align-items:center;
+                   justify-content:center">
+      ⏱
+    </button>
+    <button onclick="App.validerSerie(
+                '${seanceId}','${ex.ref}',
+                ${idx},${s})"
+            id="btn-serie-${idx}-${s}"
+            style="width:32px;height:32px;
+                   border-radius:50%;
+                   background:var(--bg-card);
+                   border:2px solid var(--border-color);
+                   font-size:.9rem;cursor:pointer;
+                   display:flex;align-items:center;
+                   justify-content:center">
+      ○
+    </button>
+  </div>
+</div>
+
+<!-- Espacement pour les labels -->
+<div style="height:18px"></div>
                        value="${chargeReco?.charge||pr?.poids||''}"
                        step="2.5"
                        style="padding:6px;font-size:.82rem;
