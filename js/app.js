@@ -1917,8 +1917,7 @@ function _rendreSettings(container) {
   try { config = Notifications.getConfig(); } catch(e) {}
 
   container.innerHTML = `
-    <div id="settings-langue"></div>
-
+    
     <div class="card mb-md">
       <div class="card-label">🔔 Notifications</div>
       ${[
@@ -2009,9 +2008,7 @@ function _rendreSettings(container) {
   `;
 
   try {
-    i18n.renderSelecteur(
-      document.getElementById('settings-langue')
-    );
+    // i18n.renderSelecteur désactivé
     // ✅ Alarme rappel
     TimerManager.renderAlarme(
       document.getElementById('alarme-section')
