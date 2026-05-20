@@ -961,79 +961,225 @@ function _rendreHome(container) {
         </div>`;
 
       // ── SÉANCE HERO ───────────────────────────────────
-      case 'seance_hero': return seance ? `
-        <div style="border-radius:var(--radius-xl);padding:20px;
-                    margin-bottom:14px;position:relative;overflow:hidden;
-                    background:linear-gradient(135deg,
-                      rgba(75,75,249,0.22) 0%,
-                      rgba(75,75,249,0.07) 55%,
-                      rgba(191,161,255,0.05) 100%);
-                    border:1px solid rgba(75,75,249,0.4);
-                    box-shadow:0 4px 24px rgba(75,75,249,0.2)">
-          <div style="position:absolute;top:-50px;right:-30px;
-                      width:180px;height:180px;
-                      background:radial-gradient(circle,
-                        rgba(75,75,249,0.2) 0%,transparent 70%);
-                      pointer-events:none"></div>
-          <div style="display:flex;align-items:center;gap:6px;
-                      margin-bottom:10px;position:relative;z-index:1">
-            <div style="width:7px;height:7px;border-radius:50%;
-                        background:var(--fd-indigo);
-                        box-shadow:0 0 8px var(--fd-indigo);
-                        animation:pulse 2s infinite"></div>
-            <div style="font-size:.6rem;font-weight:700;
-                        text-transform:uppercase;letter-spacing:.12em;
-                        color:var(--fd-indigo)">Séance du jour</div>
-          </div>
-          <div style="font-size:1.4rem;font-weight:800;
-                      letter-spacing:-.02em;margin-bottom:4px;
-                      position:relative;z-index:1">
-            ${seance.emoji} ${seance.nom}
-          </div>
-          <div style="font-size:.75rem;color:var(--text-muted);
-                      margin-bottom:16px;position:relative;z-index:1">
-            ~${seance.duree_estimee}min
-            · ${seance.exercices?.length || 0} exercices
+     case 'seance_hero': return (() => {
+
+  // ✅ Vérifier si séance du jour déjà faite
+  let seanceFaite = false;
+  let statsSeance = { volume:0, duree:0, prs:0, series:0 };
+
+  try {
+    const seanceDuJour = Tracker.getSeanceDuJour();
+    if (seanceDuJour?.terminee || seanceDuJour?.series?.length > 0) {
+      seanceFaite = true;
+      statsSeance = {
+        volume:  seanceDuJour.volumeTotal || 0,
+        duree:   seanceDuJour.duree       || 0,
+        prs:    (seanceDuJour.prs || []).length,
+        series:  seanceDuJour.series?.length || 0
+      };
+    }
+  } catch(e) {}
+
+  // ✅ SÉANCE FAITE — Carte verte
+  if (seanceFaite && seance) return `
+    <div style="border-radius:var(--radius-xl);
+                padding:20px;margin-bottom:14px;
+                position:relative;overflow:hidden;
+                background:linear-gradient(135deg,
+                  rgba(139,240,187,0.2) 0%,
+                  rgba(139,240,187,0.06) 60%,
+                  rgba(75,75,249,0.05) 100%);
+                border:1px solid rgba(139,240,187,0.4);
+                box-shadow:0 4px 24px rgba(139,240,187,0.15)">
+
+      <!-- Glow -->
+      <div style="position:absolute;top:-40px;right:-30px;
+                  width:160px;height:160px;
+                  background:radial-gradient(circle,
+                    rgba(139,240,187,0.2) 0%,transparent 70%);
+                  pointer-events:none"></div>
+
+      <!-- Badge fait -->
+      <div style="display:flex;align-items:center;gap:6px;
+                  margin-bottom:10px;position:relative;z-index:1">
+        <div style="width:7px;height:7px;border-radius:50%;
+                    background:var(--fd-mint);
+                    box-shadow:0 0 8px var(--fd-mint)"></div>
+        <div style="font-size:.6rem;font-weight:700;
+                    text-transform:uppercase;letter-spacing:.12em;
+                    color:var(--fd-mint)">
+          ✅ Séance du jour complétée !
+        </div>
+      </div>
+
+      <!-- Nom séance -->
+      <div style="font-size:1.4rem;font-weight:800;
+                  letter-spacing:-.02em;margin-bottom:4px;
+                  position:relative;z-index:1">
+        ${seance.emoji} ${seance.nom}
+      </div>
+
+      <!-- Stats séance -->
+      <div style="display:grid;
+                  grid-template-columns:repeat(3,1fr);
+                  gap:8px;margin:14px 0;
+                  position:relative;z-index:1">
+        ${[
+          { emoji:'📦', val:Utils.formatVolume(statsSeance.volume),
+            label:'Volume',   color:'var(--fd-mint)'    },
+          { emoji:'💪', val:statsSeance.series,
+            label:'Séries',   color:'var(--fd-indigo)'  },
+          { emoji:'🏆', val:statsSeance.prs || '—',
+            label:'Records',  color:'var(--fd-lemon)'   }
+        ].map(s => `
+          <div style="background:rgba(255,255,255,0.05);
+                      border:1px solid rgba(139,240,187,0.15);
+                      border-radius:var(--radius-md);
+                      padding:10px 6px;text-align:center">
+            <div style="font-size:.85rem;margin-bottom:2px">
+              ${s.emoji}
+            </div>
+            <div style="font-size:.95rem;font-weight:800;
+                        color:${s.color};line-height:1">
+              ${s.val}
+            </div>
+            <div style="font-size:.52rem;color:var(--text-muted);
+                        margin-top:3px;text-transform:uppercase;
+                        letter-spacing:.04em">
+              ${s.label}
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Boutons -->
+      <div style="display:flex;gap:8px;
+                  position:relative;z-index:1">
+        <button onclick="naviguer('live')"
+                style="flex:1;padding:10px;
+                       background:rgba(139,240,187,0.15);
+                       border:1px solid rgba(139,240,187,0.3);
+                       border-radius:var(--radius-full);
+                       font-size:.75rem;font-weight:700;
+                       color:var(--fd-mint);cursor:pointer">
+          📊 Voir le résumé
+        </button>
+        <button onclick="naviguer('stats')"
+                style="flex:1;padding:10px;
+                       background:rgba(75,75,249,0.12);
+                       border:1px solid rgba(75,75,249,0.25);
+                       border-radius:var(--radius-full);
+                       font-size:.75rem;font-weight:700;
+                       color:var(--fd-indigo);cursor:pointer">
+          📈 Mes stats
+        </button>
+      </div>
+
+      <!-- Prochaine séance -->
+      ${prochaine ? `
+        <div style="margin-top:14px;padding-top:14px;
+                    border-top:1px solid rgba(139,240,187,0.15);
+                    position:relative;z-index:1">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--text-muted);margin-bottom:6px">
+            📅 Prochaine séance
           </div>
           <div style="display:flex;align-items:center;
-                      justify-content:space-between;
-                      position:relative;z-index:1">
-            <div style="display:flex;gap:5px;flex-wrap:wrap">
-              ${(seance.muscles || []).map(m => `
-                <span style="padding:4px 10px;border-radius:99px;
-                             font-size:.6rem;font-weight:700;
-                             text-transform:uppercase;letter-spacing:.04em;
-                             background:rgba(75,75,249,0.2);
-                             color:var(--fd-lavender);
-                             border:1px solid rgba(75,75,249,0.3)">
-                  ${m}
-                </span>`).join('')}
+                      justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:1.2rem">${prochaine.emoji}</span>
+              <div>
+                <div style="font-size:.82rem;font-weight:700">
+                  ${prochaine.nom}
+                </div>
+                <div style="font-size:.62rem;color:var(--text-muted)">
+                  ${prochaine.dansJours === 1
+                    ? 'Demain'
+                    : `Dans ${prochaine.dansJours} jours`}
+                  · ~${prochaine.duree_estimee || 60}min
+                </div>
+              </div>
             </div>
-            <button onclick="naviguer('live')"
-                    style="display:flex;align-items:center;gap:8px;
-                           padding:12px 20px;background:var(--fd-indigo);
-                           color:white;border:none;border-radius:99px;
-                           font-size:.82rem;font-weight:700;cursor:pointer;
-                           white-space:nowrap;
-                           box-shadow:0 4px 20px rgba(75,75,249,0.5)">
-              ▶ Démarrer
-            </button>
+            <span style="font-size:.7rem;color:var(--text-muted)">›</span>
           </div>
-        </div>` : `
-        <div style="border-radius:var(--radius-xl);padding:20px;
-                    margin-bottom:14px;
-                    background:rgba(139,240,187,0.06);
-                    border:1px solid rgba(139,240,187,0.2);
-                    text-align:center">
-          <div style="font-size:2rem;margin-bottom:6px">😴</div>
-          <div style="font-weight:700;font-size:1rem">Jour de repos</div>
-          ${prochaine ? `
-            <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">
-              Prochaine : ${prochaine.emoji} ${prochaine.nom}
-              ${prochaine.dansJours > 0
-                ? `dans ${prochaine.dansJours}j` : 'demain'}
-            </div>` : ''}
-        </div>`;
+        </div>` : ''}
+    </div>`;
+
+  // ✅ SÉANCE PAS ENCORE FAITE — Carte normale
+  return seance ? `
+    <div style="border-radius:var(--radius-xl);padding:20px;
+                margin-bottom:14px;position:relative;overflow:hidden;
+                background:linear-gradient(135deg,
+                  rgba(75,75,249,0.22) 0%,
+                  rgba(75,75,249,0.07) 55%,
+                  rgba(191,161,255,0.05) 100%);
+                border:1px solid rgba(75,75,249,0.4);
+                box-shadow:0 4px 24px rgba(75,75,249,0.2)">
+      <div style="position:absolute;top:-50px;right:-30px;
+                  width:180px;height:180px;
+                  background:radial-gradient(circle,
+                    rgba(75,75,249,0.2) 0%,transparent 70%);
+                  pointer-events:none"></div>
+      <div style="display:flex;align-items:center;gap:6px;
+                  margin-bottom:10px;position:relative;z-index:1">
+        <div style="width:7px;height:7px;border-radius:50%;
+                    background:var(--fd-indigo);
+                    box-shadow:0 0 8px var(--fd-indigo);
+                    animation:pulse 2s infinite"></div>
+        <div style="font-size:.6rem;font-weight:700;
+                    text-transform:uppercase;letter-spacing:.12em;
+                    color:var(--fd-indigo)">Séance du jour</div>
+      </div>
+      <div style="font-size:1.4rem;font-weight:800;
+                  letter-spacing:-.02em;margin-bottom:4px;
+                  position:relative;z-index:1">
+        ${seance.emoji} ${seance.nom}
+      </div>
+      <div style="font-size:.75rem;color:var(--text-muted);
+                  margin-bottom:16px;position:relative;z-index:1">
+        ~${seance.duree_estimee}min
+        · ${seance.exercices?.length || 0} exercices
+      </div>
+      <div style="display:flex;align-items:center;
+                  justify-content:space-between;
+                  position:relative;z-index:1">
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${(seance.muscles || []).map(m => `
+            <span style="padding:4px 10px;border-radius:99px;
+                         font-size:.6rem;font-weight:700;
+                         text-transform:uppercase;letter-spacing:.04em;
+                         background:rgba(75,75,249,0.2);
+                         color:var(--fd-lavender);
+                         border:1px solid rgba(75,75,249,0.3)">
+              ${m}
+            </span>`).join('')}
+        </div>
+        <button onclick="naviguer('live')"
+                style="display:flex;align-items:center;gap:8px;
+                       padding:12px 20px;background:var(--fd-indigo);
+                       color:white;border:none;border-radius:99px;
+                       font-size:.82rem;font-weight:700;cursor:pointer;
+                       white-space:nowrap;
+                       box-shadow:0 4px 20px rgba(75,75,249,0.5)">
+          ▶ Démarrer
+        </button>
+      </div>
+    </div>` : `
+    <div style="border-radius:var(--radius-xl);padding:20px;
+                margin-bottom:14px;
+                background:rgba(139,240,187,0.06);
+                border:1px solid rgba(139,240,187,0.2);
+                text-align:center">
+      <div style="font-size:2rem;margin-bottom:6px">😴</div>
+      <div style="font-weight:700;font-size:1rem">Jour de repos</div>
+      ${prochaine ? `
+        <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">
+          Prochaine : ${prochaine.emoji} ${prochaine.nom}
+          ${prochaine.dansJours > 0
+            ? `dans ${prochaine.dansJours}j` : 'demain'}
+        </div>` : ''}
+    </div>`;
+})();
 
       // ── TEMPS À LA SALLE ──────────────────────────────
       case 'temps_salle': return `
