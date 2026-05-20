@@ -316,6 +316,7 @@ self.addEventListener('sync', (event) => {
   if (event.tag === 'powerapp-sync') {
     event.waitUntil(
       _notifierClients({ type:'SYNC_REQUESTED' })
+        .then(() => _sauvegarderDonneesEssentielles())
     );
   }
 
@@ -324,7 +325,35 @@ self.addEventListener('sync', (event) => {
       _notifierClients({ type:'SYNC_SEANCE' })
     );
   }
+
+  // ✅ NOUVEAU — Sync séance en arrière-plan
+  if (event.tag === 'powerapp-sync-offline') {
+    event.waitUntil(
+      _notifierClients({ type:'SYNC_OFFLINE_QUEUE' })
+    );
+  }
 });
+
+// ✅ NOUVEAU — Sauvegarder données essentielles en cache SW
+async function _sauvegarderDonneesEssentielles() {
+  try {
+    // Mettre en cache les pages principales
+    const cache = await caches.open(CACHE_DYNAMIC);
+    const essentiels = [
+      './index.html',
+      './js/app.js',
+      './css/style.css'
+    ];
+    await Promise.allSettled(
+      essentiels.map(url =>
+        fetch(url, { cache:'no-store' })
+          .then(r => { if (r.ok) cache.put(url, r); })
+          .catch(() => {})
+      )
+    );
+    console.log('[SW] Données essentielles mises en cache');
+  } catch(e) {}
+}
 
 // ════════════════════════════════════════════════════════════
 // PUSH NOTIFICATIONS
