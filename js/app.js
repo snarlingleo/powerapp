@@ -2626,6 +2626,111 @@ modifierReps(exoIdx, delta) {
       </button>
     </div>
 
+    <!-- ✅ CONFIRMATION CHARGE PROCHAINE SÉRIE -->
+${!derniereSerie ? `
+  <div id="charge-confirmation"
+       style="width:100%;max-width:320px;
+              margin-top:16px;
+              background:rgba(255,255,255,0.04);
+              border:1px solid rgba(255,255,255,0.08);
+              border-radius:var(--radius-lg);
+              padding:14px 16px">
+
+    <!-- Titre -->
+    <div style="font-size:.6rem;font-weight:700;
+                text-transform:uppercase;
+                letter-spacing:.12em;
+                color:var(--text-muted);
+                margin-bottom:10px;
+                text-align:center">
+      💪 Série ${serieIdx + 2} — Même charge ?
+    </div>
+
+    <!-- Poids actuel -->
+    <div style="text-align:center;margin-bottom:12px">
+      <div id="charge-display"
+           style="font-size:1.8rem;font-weight:800;
+                  color:var(--fd-indigo);
+                  line-height:1">
+        ${(() => {
+          const p = document.getElementById(
+            `lr-poids-${exoIdx}-${serieIdx}`
+          )?.value || '—';
+          const r = document.getElementById(
+            `lr-reps-${exoIdx}-${serieIdx}`
+          )?.value || '—';
+          return `${p}kg × ${r}`;
+        })()}
+      </div>
+      <div id="charge-feedback"
+           style="font-size:.72rem;margin-top:4px;
+                  color:var(--fd-mint);font-weight:600">
+        🟢 Même charge
+      </div>
+    </div>
+
+    <!-- RPE auto-suggéré -->
+    <div id="rpe-suggestion"
+         style="padding:8px 12px;
+                background:rgba(75,75,249,0.08);
+                border:1px solid rgba(75,75,249,0.15);
+                border-radius:var(--radius-md);
+                margin-bottom:12px;
+                font-size:.72rem;
+                color:var(--text-muted);
+                text-align:center">
+      ${(() => {
+        const repsTarget = parseInt(
+          '${ex.reps}'.split('-')[0]
+        ) || 10;
+        const repsFaites = parseInt(
+          document.getElementById(
+            `lr-reps-${exoIdx}-${serieIdx}`
+          )?.value || '0'
+        );
+        const ratio = repsFaites / repsTarget;
+        if (ratio >= 1.1) return '🔥 Tu gères — essaie +2.5kg !';
+        if (ratio >= 0.9) return '💪 Bonne série — garde la charge';
+        if (ratio >= 0.7) return '😤 C\'était dur — garde ou baisse';
+        return '⚠️ Difficile — baisse de 2.5kg conseillé';
+      })()}
+    </div>
+
+    <!-- Boutons charge -->
+    <div style="display:flex;gap:8px">
+      <button onclick="LiveRapide._changerCharge(
+                ${exoIdx}, ${serieIdx}, -2.5)"
+              style="flex:1;padding:10px 6px;
+                     background:rgba(255,141,150,0.12);
+                     border:1px solid rgba(255,141,150,0.25);
+                     border-radius:var(--radius-md);
+                     font-size:.78rem;font-weight:700;
+                     color:var(--fd-coral);cursor:pointer">
+        📉 −2.5kg
+      </button>
+      <button onclick="LiveRapide._garderCharge(
+                ${exoIdx}, ${serieIdx})"
+              style="flex:2;padding:10px 6px;
+                     background:rgba(75,75,249,0.15);
+                     border:1px solid rgba(75,75,249,0.3);
+                     border-radius:var(--radius-md);
+                     font-size:.78rem;font-weight:700;
+                     color:var(--fd-indigo);cursor:pointer">
+        ✅ Même charge
+      </button>
+      <button onclick="LiveRapide._changerCharge(
+                ${exoIdx}, ${serieIdx}, 2.5)"
+              style="flex:1;padding:10px 6px;
+                     background:rgba(139,240,187,0.12);
+                     border:1px solid rgba(139,240,187,0.25);
+                     border-radius:var(--radius-md);
+                     font-size:.78rem;font-weight:700;
+                     color:var(--fd-mint);cursor:pointer">
+        📈 +2.5kg
+      </button>
+    </div>
+  </div>` : ''}
+  
     <!-- ✅ Message retour arrière-plan -->
     <div id="repos-bg-msg"
          style="display:none;margin-top:16px;
@@ -2809,13 +2914,109 @@ modifierReps(exoIdx, delta) {
     }, 300);
   },
 
+ // ✅ Garder la même charge pour la prochaine série
+  _garderCharge(exoIdx, serieIdx) {
+    const poids = document.getElementById(
+      `lr-poids-${exoIdx}-${serieIdx}`
+    )?.value;
+    const reps = document.getElementById(
+      `lr-reps-${exoIdx}-${serieIdx}`
+    )?.value;
+
+    const nextPoids = document.getElementById(
+      `lr-poids-${exoIdx}-${serieIdx + 1}`
+    );
+    const nextReps = document.getElementById(
+      `lr-reps-${exoIdx}-${serieIdx + 1}`
+    );
+    if (nextPoids) nextPoids.value = poids;
+    if (nextReps)  nextReps.value  = reps;
+
+    const display  = document.getElementById('charge-display');
+    const feedback = document.getElementById('charge-feedback');
+    if (display)  display.style.color = 'var(--fd-mint)';
+    if (feedback) {
+      feedback.textContent = '✅ Confirmé !';
+      feedback.style.color = 'var(--fd-mint)';
+    }
+
+    this._desactiverBoutonsCharge();
+    Utils.vibrer([30]);
+    Utils.toast(`✅ ${poids}kg gardé pour S${serieIdx + 2}`,
+      'success', 1200);
+  },
+
+  // ✅ Changer la charge (+/- 2.5kg)
+  _changerCharge(exoIdx, serieIdx, delta) {
+    const poidsActuel = parseFloat(
+      document.getElementById(
+        `lr-poids-${exoIdx}-${serieIdx}`
+      )?.value || '0'
+    );
+    const reps = document.getElementById(
+      `lr-reps-${exoIdx}-${serieIdx}`
+    )?.value;
+
+    const nouveauPoids = Math.max(0,
+      Math.round((poidsActuel + delta) * 4) / 4
+    );
+
+    const nextPoids = document.getElementById(
+      `lr-poids-${exoIdx}-${serieIdx + 1}`
+    );
+    const nextReps  = document.getElementById(
+      `lr-reps-${exoIdx}-${serieIdx + 1}`
+    );
+    if (nextPoids) nextPoids.value = nouveauPoids;
+    if (nextReps)  nextReps.value  = reps;
+
+    const display  = document.getElementById('charge-display');
+    const feedback = document.getElementById('charge-feedback');
+
+    if (display) {
+      display.textContent = `${nouveauPoids}kg × ${reps}`;
+      display.style.color = delta > 0
+        ? 'var(--fd-lemon)'
+        : 'var(--fd-coral)';
+    }
+
+    if (feedback) {
+      if (delta > 0) {
+        feedback.textContent = '📈 +2.5kg — On monte ! 🏆';
+        feedback.style.color = 'var(--fd-lemon)';
+      } else {
+        feedback.textContent = '📉 −2.5kg — Sage décision 👍';
+        feedback.style.color = 'var(--fd-coral)';
+      }
+    }
+
+    this._desactiverBoutonsCharge();
+    Utils.vibrer([30]);
+    Utils.toast(
+      `${delta > 0 ? '📈' : '📉'} ${nouveauPoids}kg pour S${serieIdx + 2}`,
+      delta > 0 ? 'success' : 'info',
+      1500
+    );
+  },
+
+  // ✅ Désactiver les boutons après confirmation
+  _desactiverBoutonsCharge() {
+    const zone = document.getElementById('charge-confirmation');
+    if (!zone) return;
+    zone.querySelectorAll('button').forEach(btn => {
+      btn.disabled      = true;
+      btn.style.opacity = '0.4';
+      btn.style.cursor  = 'default';
+    });
+  },
+
   _formaterTemps(sec) {
     const s = Math.max(0, Math.round(sec));
     const m = Math.floor(s / 60);
     const r = s % 60;
     if (m > 0) return `${m}:${String(r).padStart(2,'0')}`;
     return String(s);
-  },
+  },,
    // ✅ FIX BACKGROUND — Vérifier si timer fini pendant l'absence
 _verifierTimerAuRetour() {
   const actif = localStorage.getItem('ft_timer_actif');
@@ -3351,6 +3552,21 @@ function _rendreLive(container, options = {}) {
     </div>`;
 }
 
+// ✅ Toggle mode guidé
+function _toggleModeGuide(seanceId, exercicesJson) {
+  try {
+    if (SeanceGuidee._actif) {
+      SeanceGuidee.arreter();
+    } else {
+      const exercices = JSON.parse(exercicesJson);
+      SeanceGuidee.demarrer(seanceId, exercices);
+    }
+  } catch(e) {
+    console.error('[App] Erreur mode guidé:', e);
+    Utils.toast('❌ Erreur mode guidé', 'error');
+  }
+}
+
 function _renderLiveHeader(seance) {
   let charge = null;
   try { charge = Predict.analyserFatigue(); } catch(e) {}
@@ -3396,12 +3612,12 @@ function _renderLiveHeader(seance) {
   ▶ Démarrer le chrono
 </button>
 <button id="btn-mode-guide"
-        onclick="SeanceGuidee._actif 
-          ? SeanceGuidee.arreter() 
-          : SeanceGuidee.demarrer(
-              '${seance.id}',
-              ${JSON.stringify(seance.exercices||[]).replace(/'/g,'"')}
-            )"
+        onclick="_toggleModeGuide(
+          '${seance.id}',
+          '${JSON.stringify(seance.exercices||[])
+            .replace(/'/g,"\\'")
+            .replace(/\n/g,'')}'
+        )"
         style="display:flex;align-items:center;gap:4px;
                padding:5px 10px;
                background:rgba(75,75,249,0.12);
@@ -4377,7 +4593,41 @@ try {
   } else {
     Utils.vibrerSuccess();
   }
+   // ✅ RPE auto-suggéré selon reps faites vs cibles
+try {
+  const repsTarget = parseInt(
+    document.getElementById(`lr-reps-${exoIdx}-0`)
+      ?.getAttribute('placeholder') || '0'
+  ) || 10;
+  const ratio = reps / repsTarget;
 
+  // Auto-sélectionner RPE selon performance
+  let rpeAuto = 7;
+  if (ratio >= 1.2)       rpeAuto = 6;  // Trop facile
+  else if (ratio >= 1.0)  rpeAuto = 7;  // Parfait
+  else if (ratio >= 0.8)  rpeAuto = 8;  // Difficile
+  else if (ratio >= 0.6)  rpeAuto = 9;  // Très difficile
+  else                    rpeAuto = 10; // Max
+
+  // Mettre à jour le hidden input RPE si pas déjà saisi
+  const rpeInput = document.getElementById(
+    `lr-rpe-${exoIdx}-${serieIdx}`
+  );
+  if (rpeInput && parseInt(rpeInput.value) === 7) {
+    rpeInput.value = rpeAuto;
+
+    // ✅ Highlight le bouton RPE correspondant
+    const rpeBtns = document.querySelectorAll(
+      `#lr-bloc-${exoIdx}-${serieIdx} button`
+    );
+    rpeBtns.forEach(btn => {
+      if (btn.textContent.trim() === String(rpeAuto)) {
+        btn.style.background = 'rgba(75,75,249,0.3)';
+      }
+    });
+  }
+} catch(e) {}
+   
   try { Gamification.recompenser('SERIE_COMPLETE'); } catch(e) {}
   try { SeanceGuidee.serieValidee(
     exoIdx, serieIdx, poids, reps, result.isPR
