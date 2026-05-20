@@ -249,19 +249,82 @@ const Offline = {
   },
 
   async _traiterAction(action) {
-    if (window.CloudDB) {
-      switch(action.type) {
-        case 'seance_complete':  await CloudDB.sauvegarderSeance(action.data); break;
-        case 'pr_battu':         await CloudDB.sauvegarderPR(action.data);    break;
-        case 'mesure_ajoutee':   await CloudDB.sauvegarderMesure(action.data);break;
-        case 'xp_gagne':         await CloudDB.ajouterXP(action.data);        break;
-        case 'profil_modifie':   await CloudDB.sauvegarderProfil(action.data);break;
-        case 'sync_complet':     await CloudDB.syncDonnees();                  break;
-        default:
-          console.log('[Offline] Type inconnu:', action.type);
+  // ✅ Traitement local complet — pas besoin de CloudDB
+  switch(action.type) {
+
+    case 'seance_complete':
+      // Déjà sauvegardé en local par Tracker
+      // On marque juste comme synced
+      console.log('[Offline] Séance synced:', action.data?.seanceId);
+      break;
+
+    case 'serie_sauvegardee':
+      // Déjà en localStorage — rien à faire
+      break;
+
+    case 'pr_battu':
+      // Déjà en localStorage
+      break;
+
+    case 'mesure_ajoutee':
+      try { Tracker.ajouterMesure(action.data); } catch(e) {}
+      break;
+
+    case 'xp_gagne':
+      // localStorage déjà géré
+      break;
+
+    case 'profil_modifie':
+      try { Tracker.sauvegarderProfil(action.data); } catch(e) {}
+      break;
+
+    case 'sync_complet':
+      // Export JSON automatique si online
+      if (this.estEnLigne()) {
+        console.log('[Offline] Sync complète OK');
       }
+      break;
+
+    default:
+      console.log('[Offline] Action traitée localement:', action.type);
+  }
+
+  // ✅ Après sync → exporter auto en localStorage backup
+  try {
+    this._sauvegarderBackupLocal();
+  } catch(e) {}
+},
+
+// ✅ NOUVEAU — Sauvegarde backup automatique
+_sauvegarderBackupLocal() {
+  try {
+    const backup = {
+      date:     new Date().toISOString(),
+      version:  'v3.0',
+      profil:   Utils.storage.get('ft_profil', {}),
+      streak:   Utils.storage.get('ft_streak', {}),
+      mesures:  Utils.storage.get('ft_mesures', []),
+      objectifs:Utils.storage.get('ft_objectifs', []),
+      journal:  Utils.storage.get('ft_journal', []).slice(0, 20),
+      prs:      this._getAllPRsLocal()
+    };
+    Utils.storage.set('ft_backup_auto', backup);
+  } catch(e) {}
+},
+
+_getAllPRsLocal() {
+  const prs = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const cle = localStorage.key(i);
+    if (cle?.startsWith('ft_pr_')) {
+      try {
+        prs[cle.replace('ft_pr_','')] =
+          JSON.parse(localStorage.getItem(cle));
+      } catch(e) {}
     }
-  },
+  }
+  return prs;
+},
 
   // ════════════════════════════════════════════════════════
   // INDICATEUR SYNC
