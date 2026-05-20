@@ -1207,6 +1207,202 @@ function _renderCarteSeanceTraining(seance) {
 }
 
 // ════════════════════════════════════════════════════════════
+// SÉANCE GUIDÉE — Mode automatique avec voix française
+// ════════════════════════════════════════════════════════════
+const SeanceGuidee = {
+
+  _actif:        false,
+  _exoIdx:       0,
+  _serieIdx:     0,
+  _seanceId:     null,
+  _exercices:    [],
+  _phase:        'repos',   // 'effort' | 'repos' | 'transition'
+  _voix:         null,
+  _synth:        window.speechSynthesis || null,
+
+  // ✅ Initialiser la voix française féminine
+  _initVoix() {
+    if (!this._synth) return;
+    const voix = this._synth.getVoices();
+    // Chercher voix française féminine
+    this._voix = voix.find(v =>
+      v.lang.startsWith('fr') &&
+      (v.name.toLowerCase().includes('female') ||
+       v.name.toLowerCase().includes('femme') ||
+       v.name.toLowerCase().includes('amélie') ||
+       v.name.toLowerCase().includes('thomas') === false)
+    ) || voix.find(v => v.lang.startsWith('fr'))
+      || voix[0]
+      || null;
+  },
+
+  parler(texte, urgent = false) {
+    if (!this._synth) return;
+    if (!this._voix) this._initVoix();
+
+    // Annuler si urgent
+    if (urgent) this._synth.cancel();
+
+    const utterance      = new SpeechSynthesisUtterance(texte);
+    utterance.voice      = this._voix;
+    utterance.lang       = 'fr-FR';
+    utterance.rate       = 0.95;
+    utterance.pitch      = 1.1;   // Légèrement plus aigu = féminin
+    utterance.volume     = 0.9;
+    this._synth.speak(utterance);
+  },
+
+  demarrer(seanceId, exercices) {
+    if (this._actif) this.arreter();
+
+    this._actif     = true;
+    this._seanceId  = seanceId;
+    this._exercices = exercices || [];
+    this._exoIdx    = 0;
+    this._serieIdx  = 0;
+    this._phase     = 'effort';
+
+    // Sauvegarder l'état
+    Utils.storage.set('ft_guidee_actif', true);
+    Utils.storage.set('ft_guidee_seance', seanceId);
+
+    this._initVoix();
+
+    // Annonce de début
+    const premierExo = this._exercices[0];
+    if (premierExo) {
+      const exoData = (window.EXERCICES || {})[premierExo.ref] || {};
+      setTimeout(() => {
+        this.parler(
+          `Séance démarrée ! Premier exercice : ${exoData.nom || premierExo.ref}. 
+           ${premierExo.series} séries de ${premierExo.reps} répétitions. 
+           Bonne séance !`,
+          true
+        );
+      }, 500);
+    }
+
+    this._mettreAJourUI();
+    console.log('[SeanceGuidee] Démarré:', seanceId);
+  },
+
+  arreter() {
+    this._actif    = false;
+    this._synth?.cancel();
+    Utils.storage.set('ft_guidee_actif', false);
+    this._mettreAJourUI();
+    console.log('[SeanceGuidee] Arrêté');
+  },
+
+  // ✅ Appelé après chaque série validée
+  serieValidee(exoIdx, serieIdx, poids, reps, isPR) {
+    if (!this._actif) return;
+
+    this._exoIdx   = exoIdx;
+    this._serieIdx = serieIdx;
+
+    const exo     = this._exercices[exoIdx];
+    if (!exo) return;
+
+    const exoData   = (window.EXERCICES || {})[exo.ref] || {};
+    const seriesRest = exo.series - (serieIdx + 1);
+    const reposSec  = exo.repos || 75;
+
+    // ✅ Message vocal après série
+    let message = '';
+
+    if (isPR) {
+      message = `Nouveau record ! ${poids} kilos, ${reps} répétitions. Fantastique ! `;
+    } else {
+      message = `Série ${serieIdx + 1} validée. ${poids} kilos, ${reps} répétitions. `;
+    }
+
+    if (seriesRest > 0) {
+      message += `Encore ${seriesRest} série${seriesRest > 1 ? 's' : ''}. `;
+      message += `Repos de ${reposSec} secondes. `;
+    } else {
+      // Dernière série de cet exercice
+      const prochaineExo = this._exercices[exoIdx + 1];
+      if (prochaineExo) {
+        const prochaineData = (window.EXERCICES || {})[prochaineExo.ref] || {};
+        message += `Exercice terminé. Prochain exercice : ${prochaineData.nom || prochaineExo.ref}. `;
+        message += `${prochaineExo.series} séries de ${prochaineExo.reps} répétitions. `;
+      } else {
+        message += `Dernier exercice terminé. Plus qu'un peu ! `;
+      }
+    }
+
+    this.parler(message, true);
+    this._mettreAJourUI();
+  },
+
+  // ✅ Annonce fin de repos
+  annoncerFinRepos() {
+    if (!this._actif) return;
+    const exo     = this._exercices[this._exoIdx];
+    const exoData = (window.EXERCICES || {})[exo?.ref || ''] || {};
+    const serie   = (this._serieIdx + 2);
+    this.parler(
+      `Repos terminé ! Série ${serie} sur ${exo?.series || '?'}. 
+       Allez, on y va !`,
+      true
+    );
+  },
+
+  // ✅ Annonce début d'un nouvel exercice
+  annoncerNouvelExercice(exoIdx) {
+    if (!this._actif) return;
+    const exo     = this._exercices[exoIdx];
+    const exoData = (window.EXERCICES || {})[exo?.ref || ''] || {};
+
+    this.parler(
+      `Nouvel exercice : ${exoData.nom || exo?.ref || ''}. 
+       ${exo?.series} séries de ${exo?.reps} répétitions. 
+       Repos de ${exo?.repos || 75} secondes entre les séries. `,
+      true
+    );
+  },
+
+  // ✅ Annonce fin de séance
+  annoncerFinSeance(volume, prs) {
+    if (!this._synth) {
+      this._initVoix();
+    }
+    const msg = prs > 0
+      ? `Bravo ! Séance terminée avec ${prs} nouveau${prs > 1 ? 'x' : ''} record${prs > 1 ? 's' : ''} ! Volume total : ${Math.round(volume / 1000)} tonnes. Tu es incroyable !`
+      : `Séance terminée ! Volume total : ${Math.round(volume / 1000)} tonnes. Excellent travail, récupère bien !`;
+    this.parler(msg, true);
+  },
+
+  _mettreAJourUI() {
+    const btn = document.getElementById('btn-mode-guide');
+    if (!btn) return;
+    btn.textContent   = this._actif ? '🔇 Désactiver voix' : '🎙️ Mode guidé';
+    btn.style.background = this._actif
+      ? 'rgba(139,240,187,0.2)' : 'rgba(75,75,249,0.12)';
+    btn.style.borderColor = this._actif
+      ? 'var(--fd-mint)' : 'rgba(75,75,249,0.25)';
+    btn.style.color = this._actif
+      ? 'var(--fd-mint)' : 'var(--fd-indigo)';
+  },
+
+  // ✅ Charger les voix (async sur certains navigateurs)
+  prechargerVoix() {
+    if (!window.speechSynthesis) return;
+    // Les voix se chargent de manière asynchrone
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.addEventListener('voiceschanged', () => {
+        this._initVoix();
+      }, { once: true });
+    } else {
+      this._initVoix();
+    }
+  }
+};
+
+window.SeanceGuidee = SeanceGuidee;
+
+// ════════════════════════════════════════════════════════════
 // PAGE LIVE
 // ════════════════════════════════════════════════════════════
 function _rendreLive(container, options = {}) {
@@ -1297,6 +1493,23 @@ function _renderLiveHeader(seance) {
               </div>
             </div>` : ''}
           <div id="chrono-container"></div>
+<button id="btn-mode-guide"
+        onclick="SeanceGuidee._actif 
+          ? SeanceGuidee.arreter() 
+          : SeanceGuidee.demarrer(
+              '${seance.id}',
+              ${JSON.stringify(seance.exercices||[]).replace(/'/g,'"')}
+            )"
+        style="display:flex;align-items:center;gap:4px;
+               padding:5px 10px;
+               background:rgba(75,75,249,0.12);
+               border:1px solid rgba(75,75,249,0.25);
+               border-radius:var(--radius-full);
+               font-size:.68rem;font-weight:600;
+               color:var(--fd-indigo);cursor:pointer;
+               margin-top:4px">
+  🎙️ Mode guidé
+</button>
         </div>
       </div>
     </div>`;
@@ -1901,7 +2114,10 @@ const App = {
     }
 
     try { Gamification.recompenser('SERIE_COMPLETE'); } catch(e) {}
-
+    // ✅ Séance guidée — annonce vocale
+      try {
+        SeanceGuidee.serieValidee(exoIdx, serieIdx, poids, reps, result.isPR);
+      } catch(e) {}  
     try {
       if (!Offline.estEnLigne()) {
         Offline.ajouterAction('serie_sauvegardee', {
@@ -1950,6 +2166,9 @@ const App = {
       Utils.confetti(3000);
       try { timerRepos.jouerSon('pr'); } catch(e) {}
       Utils.vibrer([200,100,200,100,400]);
+      // ✅ Annonce vocale fin de séance
+try { SeanceGuidee.annoncerFinSeance(volume, prs); } catch(e) {}
+try { SeanceGuidee.arreter(); } catch(e) {} 
       _afficherResumSeance(seanceId, duree, volume, prs);
 
     } catch(e) {
