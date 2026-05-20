@@ -155,9 +155,16 @@ function _rendreContenu(page, container, options = {}) {
         catch(e) { _rendrePlaceholder(container,'🔄','Circuit Training','Module circuit non disponible.'); }
         break;
       case 'adaptatif':
-        try { ProgrammeAdaptatif.render(container); }
-        catch(e) { _rendrePlaceholder(container,'🧠','Programme Adaptatif','Analyse ta progression.'); }
-        break;
+  // ✅ Programme IA en priorité
+  try { Coach.ProgrammeIA.render(container); }
+  catch(e) {
+    try { ProgrammeAdaptatif.render(container); }
+    catch(e2) { _rendrePlaceholder(
+      container,'🧠','Programme Adaptatif',
+      'Analyse ta progression.'
+    ); }
+  }
+  break;
       case 'galerie':
         try { GalerieExercices.render(container); }
         catch(e) { _rendrePlaceholder(container,'💪','Galerie exercices','Tous les exercices disponibles.'); }
