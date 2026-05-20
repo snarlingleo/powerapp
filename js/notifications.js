@@ -701,6 +701,7 @@ const Notifications = {
       this.planifierRappels();
       setTimeout(() => this.verifierAuLancement(), 4000);
       setTimeout(() => this._analyserRoutine(), 8000);
+      setTimeout(() => this._verifierSeanceEnCours(), 12000); 
       console.log('✅ Notifications v3.0 + Smart initialisées');
     } else {
       console.log('[Notifs] Permissions non accordées');
