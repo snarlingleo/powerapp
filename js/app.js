@@ -2293,66 +2293,893 @@ try { SeanceGuidee.arreter(); } catch(e) {}
 // ════════════════════════════════════════════════════════════
 // RÉSUMÉ FIN DE SÉANCE
 // ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// RÉSUMÉ FIN DE SÉANCE v2.0
+// Donut muscles + Score + PR animés + Image PNG
+// ════════════════════════════════════════════════════════════
 function _afficherResumSeance(seanceId, duree, volume, prs) {
   const modal   = document.getElementById('modal-info');
   const content = document.getElementById('modal-info-content');
   if (!modal || !content) { naviguer('home'); return; }
 
-  const seance = (window.SEANCES_BASE || {})[seanceId] || { nom:'Séance', emoji:'💪' };
+  const seance  = (window.SEANCES_BASE || {})[seanceId]
+    || { nom:'Séance', emoji:'💪' };
+
+  // ✅ Récupérer données complètes
+  let seriesDetails = [], scoreSeance = 0, msgMotiv = '';
+  let rpesMoyen = 0, comparaison = null;
+
+  try {
+    const seanceData = Tracker.getSeanceDuJour();
+    seriesDetails    = seanceData?.series || [];
+    rpesMoyen        = seanceData?.rpesMoyen || 0;
+  } catch(e) {}
+
+  try {
+    const forme  = Tracker.calculerScoreForme();
+    scoreSeance  = forme.score || 0;
+  } catch(e) {}
+
+  try {
+    const comp   = Tracker.getComparaisonSemaines();
+    comparaison  = comp;
+  } catch(e) {}
+
+  try {
+    const msg = Coach.getMessageDuJour();
+    msgMotiv  = msg?.message || 'Belle séance !';
+  } catch(e) { msgMotiv = 'Excellent travail ! Continue comme ça 💪'; }
+
+  // ✅ Calculer répartition muscles depuis les séries
+  const musclesData = {};
+  seriesDetails.forEach(s => {
+    const ex     = (window.EXERCICES || {})[s.exerciceRef] || {};
+    const muscle = ex.muscle || 'Autre';
+    const vol    = (s.poids || 0) * (s.reps || 0);
+    musclesData[muscle] = (musclesData[muscle] || 0) + vol;
+  });
+
+  const musclesArr = Object.entries(musclesData)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0, 5);
+
+  const totalMusc = musclesArr.reduce((a,[,v]) => a + v, 0) || 1;
+
+  // ✅ Couleurs pour le donut
+  const COULEURS = [
+    '#4b4bf9', '#8bf0bb', '#f9ef77',
+    '#bfa1ff', '#ff8d96'
+  ];
+
+  // ✅ Générer le SVG donut
+  function genererDonut(data, total, rayon = 60) {
+    const cx = 80, cy = 80;
+    const strokeW = 18;
+    const circ    = 2 * Math.PI * rayon;
+
+    let offset = 0;
+    let segments = '';
+
+    data.forEach(([muscle, vol], i) => {
+      const pct    = vol / total;
+      const dash   = circ * pct;
+      const gap    = circ - dash;
+      const rotate = (offset / total) * 360 - 90;
+
+      segments += `
+        <circle
+          cx="${cx}" cy="${cy}" r="${rayon}"
+          fill="none"
+          stroke="${COULEURS[i]}"
+          stroke-width="${strokeW}"
+          stroke-dasharray="${dash} ${gap}"
+          stroke-dashoffset="0"
+          transform="rotate(${rotate} ${cx} ${cy})"
+          style="transition:stroke-dashoffset 1s ease ${i*0.15}s"
+        />`;
+
+      offset += vol;
+    });
+
+    return `
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <!-- Track -->
+        <circle cx="${cx}" cy="${cy}" r="${rayon}"
+                fill="none" stroke="rgba(255,255,255,0.05)"
+                stroke-width="${strokeW}"/>
+        ${segments}
+        <!-- Centre -->
+        <text x="${cx}" y="${cy - 8}"
+              text-anchor="middle"
+              fill="white" font-size="11"
+              font-weight="800">
+          ${musclesArr.length}
+        </text>
+        <text x="${cx}" y="${cy + 6}"
+              text-anchor="middle"
+              fill="rgba(255,255,255,0.5)"
+              font-size="8">
+          muscles
+        </text>
+        <text x="${cx}" y="${cy + 18}"
+              text-anchor="middle"
+              fill="var(--fd-mint)" font-size="8"
+              font-weight="700">
+          travaillés
+        </text>
+      </svg>`;
+  }
+
+  // ✅ Score couleur
+  const scoreCouleur = scoreSeance >= 80
+    ? 'var(--fd-mint)'
+    : scoreSeance >= 60
+      ? 'var(--fd-indigo)'
+      : scoreSeance >= 40
+        ? 'var(--fd-lemon)'
+        : 'var(--fd-coral)';
+
+  const scoreEmoji = scoreSeance >= 80 ? '🔥'
+    : scoreSeance >= 60 ? '💪'
+    : scoreSeance >= 40 ? '👍'
+    : '😤';
+
+  // ✅ Durée formatée
+  const dureeAffichee = (() => {
+    try {
+      const sec = TempsSalle.recuperer(seanceId);
+      if (sec > 60) return TempsSalle.formaterDuree(sec);
+    } catch(e) {}
+    return Utils.formatDuree(duree);
+  })();
+
+  // ✅ PRs de la séance
+  let prsDetails = [];
+  try {
+    prsDetails = Tracker.getPRsSeance(seanceId) || [];
+  } catch(e) {}
 
   content.innerHTML = `
-    <div style="text-align:center;padding:var(--space-md)">
-      <div style="font-size:3rem;margin-bottom:4px">🏁</div>
-      <div style="font-size:1.3rem;font-weight:800;color:var(--fd-mint);
-                  margin-bottom:var(--space-sm)">Séance terminée !</div>
-      <div style="font-size:.88rem;color:var(--text-muted);margin-bottom:var(--space-lg)">
-        ${seance.emoji} ${seance.nom}
+    <div style="padding:0;overflow:hidden">
+
+      <!-- ═══ HERO ═══ -->
+      <div style="background:linear-gradient(135deg,
+                  rgba(75,75,249,0.3) 0%,
+                  rgba(139,240,187,0.1) 100%);
+                  padding:24px 20px 20px;
+                  text-align:center;
+                  position:relative;overflow:hidden">
+
+        <!-- Glow -->
+        <div style="position:absolute;top:-40px;left:50%;
+                    transform:translateX(-50%);
+                    width:200px;height:200px;
+                    background:radial-gradient(circle,
+                      rgba(75,75,249,0.3) 0%,transparent 70%);
+                    pointer-events:none">
+        </div>
+
+        <div style="font-size:2.5rem;margin-bottom:6px;
+                    position:relative;z-index:1">
+          🏁
+        </div>
+        <div style="font-size:1.3rem;font-weight:800;
+                    color:var(--fd-mint);
+                    margin-bottom:4px;position:relative;z-index:1">
+          Séance terminée !
+        </div>
+        <div style="font-size:.88rem;color:rgba(255,255,255,0.6);
+                    position:relative;z-index:1">
+          ${seance.emoji} ${seance.nom}
+        </div>
       </div>
-      <div class="stats-grid mb-md" style="grid-template-columns:repeat(3,1fr)">
-        ${[
-          { label:'Volume',  val:Utils.formatVolume(volume), color:'var(--fd-mint)'   },
-          { label:'Durée',   val:(() => {
-            try {
-              const sec = TempsSalle.recuperer(seanceId);
-              if (sec > 60) return TempsSalle.formaterDuree(sec);
-            } catch(e) {}
-            return Utils.formatDuree(duree);
-          })(), color:'var(--fd-indigo)' },
-          { label:'Records', val:prs,                        color:'var(--fd-lemon)'  }
-        ].map(s => `
-          <div class="stat-card">
-            <span class="stat-value" style="color:${s.color}">${s.val}</span>
-            <span class="stat-label">${s.label}</span>
-          </div>`).join('')}
-      </div>
-      ${(() => {
-        try {
-          const sec = TempsSalle.getDureeChronoSecondes() || duree;
-          return TempsSalle.renderCorrectionWidget(seanceId, sec);
-        } catch(e) { return ''; }
-      })()}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-sm)">
-        <button onclick="document.getElementById('modal-info').classList.add('hidden');
-                         Social._ouvrirTemplate?.('semaine_story')"
-                class="btn-secondary" style="font-size:.78rem">
-          📱 Partager
-        </button>
-        <button onclick="document.getElementById('modal-info').classList.add('hidden');
-                         naviguer('home')"
-                class="btn-primary" style="font-size:.78rem">
-          🏠 Accueil
-        </button>
+
+      <div style="padding:16px 16px 0">
+
+        <!-- ═══ STATS PRINCIPALES ═══ -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                    gap:8px;margin-bottom:16px">
+          ${[
+            { label:'Volume',   val:Utils.formatVolume(volume),
+              color:'var(--fd-mint)',    emoji:'📦' },
+            { label:'Durée',    val:dureeAffichee,
+              color:'var(--fd-indigo)', emoji:'⏱️'  },
+            { label:'Records',  val:`${prs} 🏆`,
+              color:'var(--fd-lemon)',  emoji:'⭐'  }
+          ].map(s => `
+            <div style="background:rgba(255,255,255,0.04);
+                        border:1px solid rgba(255,255,255,0.08);
+                        border-radius:var(--radius-lg);
+                        padding:12px 8px;text-align:center">
+              <div style="font-size:.85rem;margin-bottom:3px">
+                ${s.emoji}
+              </div>
+              <div style="font-size:.95rem;font-weight:800;
+                          color:${s.color};line-height:1">
+                ${s.val}
+              </div>
+              <div style="font-size:.55rem;color:var(--text-muted);
+                          margin-top:3px;text-transform:uppercase;
+                          letter-spacing:.04em">
+                ${s.label}
+              </div>
+            </div>`).join('')}
+        </div>
+
+        <!-- ═══ DONUT MUSCLES ═══ -->
+        ${musclesArr.length > 0 ? `
+          <div style="background:rgba(255,255,255,0.04);
+                      border:1px solid rgba(255,255,255,0.08);
+                      border-radius:var(--radius-lg);
+                      padding:16px;margin-bottom:16px">
+            <div style="font-size:.6rem;font-weight:700;
+                        text-transform:uppercase;letter-spacing:.1em;
+                        color:var(--text-muted);margin-bottom:12px">
+              🎯 Répartition musculaire
+            </div>
+            <div style="display:flex;align-items:center;gap:16px">
+
+              <!-- Donut SVG -->
+              <div style="flex-shrink:0" id="donut-wrapper">
+                ${genererDonut(musclesArr, totalMusc)}
+              </div>
+
+              <!-- Légende -->
+              <div style="flex:1;display:flex;
+                          flex-direction:column;gap:6px">
+                ${musclesArr.map(([muscle, vol], i) => {
+                  const pct = Math.round((vol / totalMusc) * 100);
+                  return `
+                    <div>
+                      <div style="display:flex;justify-content:space-between;
+                                  align-items:center;margin-bottom:2px">
+                        <span style="font-size:.72rem;font-weight:600;
+                                     color:${COULEURS[i]}">
+                          ${muscle}
+                        </span>
+                        <span style="font-size:.65rem;
+                                     color:var(--text-muted)">
+                          ${pct}%
+                        </span>
+                      </div>
+                      <div style="height:4px;
+                                  background:rgba(255,255,255,0.05);
+                                  border-radius:99px;overflow:hidden">
+                        <div style="height:100%;width:0%;
+                                    background:${COULEURS[i]};
+                                    border-radius:99px;
+                                    transition:width 1s ease ${i*0.15}s"
+                             data-width="${pct}">
+                        </div>
+                      </div>
+                    </div>`;
+                }).join('')}
+              </div>
+            </div>
+          </div>` : ''}
+
+        <!-- ═══ SCORE DE SÉANCE ═══ -->
+        <div style="background:rgba(255,255,255,0.04);
+                    border:1px solid rgba(255,255,255,0.08);
+                    border-radius:var(--radius-lg);
+                    padding:14px 16px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;
+                      justify-content:space-between">
+            <div>
+              <div style="font-size:.6rem;font-weight:700;
+                          text-transform:uppercase;letter-spacing:.1em;
+                          color:var(--text-muted);margin-bottom:4px">
+                ${scoreEmoji} Score de forme
+              </div>
+              <div style="font-size:2rem;font-weight:800;
+                          color:${scoreCouleur};line-height:1">
+                ${scoreSeance}
+                <span style="font-size:.9rem;
+                             color:var(--text-muted);
+                             font-weight:400">/100</span>
+              </div>
+            </div>
+
+            <!-- Arc score -->
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="32"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.05)"
+                      stroke-width="8"
+                      stroke-dasharray="150 51"
+                      transform="rotate(135 40 40)"/>
+              <circle cx="40" cy="40" r="32"
+                      fill="none"
+                      stroke="${scoreCouleur}"
+                      stroke-width="8"
+                      stroke-linecap="round"
+                      stroke-dasharray="${Math.round(150*(scoreSeance/100))} 201"
+                      transform="rotate(135 40 40)"
+                      style="transition:stroke-dasharray 1.5s ease;
+                             filter:drop-shadow(0 0 4px ${scoreCouleur})"/>
+              <text x="40" y="44"
+                    text-anchor="middle"
+                    fill="${scoreCouleur}"
+                    font-size="14"
+                    font-weight="800">
+                ${scoreEmoji}
+              </text>
+            </svg>
+          </div>
+
+          <!-- Barres détail score -->
+          <div style="margin-top:10px;display:grid;
+                      grid-template-columns:1fr 1fr 1fr;
+                      gap:8px">
+            ${(() => {
+              let recup = 0, assiduite = 0, progression = 0;
+              try {
+                const f  = Tracker.calculerScoreForme();
+                recup      = f.recup       || 0;
+                assiduite  = f.assiduite   || 0;
+                progression= f.progression || 0;
+              } catch(e) {}
+              return [
+                {label:'Récup',  val:recup,      color:'var(--fd-mint)'    },
+                {label:'Assiduité',val:assiduite, color:'var(--fd-indigo)'  },
+                {label:'Prog.',  val:progression, color:'var(--fd-lavender)'}
+              ].map(s => `
+                <div style="text-align:center">
+                  <div style="font-size:.65rem;font-weight:700;
+                              color:${s.color}">${s.val}%</div>
+                  <div style="height:3px;background:rgba(255,255,255,0.05);
+                              border-radius:99px;overflow:hidden;
+                              margin:3px 0">
+                    <div style="height:100%;width:${s.val}%;
+                                background:${s.color};border-radius:99px;
+                                transition:width 1.2s ease">
+                    </div>
+                  </div>
+                  <div style="font-size:.55rem;color:var(--text-muted)">
+                    ${s.label}
+                  </div>
+                </div>`).join('');
+            })()}
+          </div>
+        </div>
+
+        <!-- ═══ COMPARAISON SEMAINE ═══ -->
+        ${comparaison ? `
+          <div style="background:rgba(255,255,255,0.04);
+                      border:1px solid rgba(255,255,255,0.08);
+                      border-radius:var(--radius-lg);
+                      padding:14px 16px;margin-bottom:16px">
+            <div style="font-size:.6rem;font-weight:700;
+                        text-transform:uppercase;letter-spacing:.1em;
+                        color:var(--text-muted);margin-bottom:10px">
+              📊 Cette semaine vs précédente
+            </div>
+            <div style="display:flex;align-items:center;
+                        justify-content:space-between">
+              <div style="text-align:center">
+                <div style="font-size:.72rem;color:var(--text-muted)">
+                  Semaine préc.
+                </div>
+                <div style="font-size:1rem;font-weight:700;
+                            color:var(--text-secondary);margin-top:2px">
+                  ${Utils.formatVolume(comparaison.prec)}
+                </div>
+              </div>
+              <div style="text-align:center;
+                          padding:8px 16px;
+                          background:${comparaison.delta >= 0
+                            ? 'rgba(139,240,187,0.1)'
+                            : 'rgba(255,141,150,0.1)'};
+                          border-radius:var(--radius-md);
+                          border:1px solid ${comparaison.delta >= 0
+                            ? 'rgba(139,240,187,0.2)'
+                            : 'rgba(255,141,150,0.2)'}">
+                <div style="font-size:1.3rem;font-weight:800;
+                            color:${comparaison.delta >= 0
+                              ? 'var(--fd-mint)'
+                              : 'var(--fd-coral)'}">
+                  ${comparaison.delta >= 0 ? '+' : ''}${comparaison.delta}%
+                </div>
+                <div style="font-size:.6rem;color:var(--text-muted)">
+                  ${comparaison.delta >= 0 ? '📈 En hausse' : '📉 En baisse'}
+                </div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:.72rem;color:var(--text-muted)">
+                  Cette semaine
+                </div>
+                <div style="font-size:1rem;font-weight:700;
+                            color:var(--fd-mint);margin-top:2px">
+                  ${Utils.formatVolume(comparaison.cette)}
+                </div>
+              </div>
+            </div>
+          </div>` : ''}
+
+        <!-- ═══ PRs ANIMÉS ═══ -->
+        ${prsDetails.length > 0 ? `
+          <div style="background:linear-gradient(135deg,
+                      rgba(249,239,119,0.12),
+                      rgba(249,239,119,0.03));
+                      border:1px solid rgba(249,239,119,0.3);
+                      border-radius:var(--radius-lg);
+                      padding:14px 16px;margin-bottom:16px">
+            <div style="font-size:.6rem;font-weight:700;
+                        text-transform:uppercase;letter-spacing:.1em;
+                        color:var(--fd-lemon);margin-bottom:10px;
+                        display:flex;align-items:center;gap:6px">
+              <span style="animation:pulse 1s infinite">🏆</span>
+              Nouveaux records personnels !
+            </div>
+            ${prsDetails.slice(0, 3).map(pr => {
+              const ex = (window.EXERCICES || {})[pr.exerciceRef] || {};
+              return `
+                <div style="display:flex;align-items:center;gap:10px;
+                            padding:8px 0;
+                            border-bottom:1px solid rgba(249,239,119,0.1)">
+                  <span style="font-size:1.2rem">${ex.emoji || '💪'}</span>
+                  <div style="flex:1">
+                    <div style="font-size:.8rem;font-weight:700">
+                      ${ex.nom || pr.exerciceRef}
+                    </div>
+                    <div style="font-size:.65rem;color:var(--fd-mint)">
+                      ${ex.muscle || ''}
+                    </div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-size:.88rem;font-weight:800;
+                                color:var(--fd-lemon)">
+                      ${pr.poids}kg × ${pr.reps}
+                    </div>
+                    <div style="font-size:.6rem;color:var(--text-muted)">
+                      1RM: ~${pr.rm1 || Math.round(pr.poids * (1 + pr.reps/30))}kg
+                    </div>
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>` : ''}
+
+        <!-- ═══ RPE + SÉRIES ═══ -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;
+                    gap:8px;margin-bottom:16px">
+          <div style="background:rgba(255,255,255,0.04);
+                      border:1px solid rgba(255,255,255,0.08);
+                      border-radius:var(--radius-md);
+                      padding:12px;text-align:center">
+            <div style="font-size:.62rem;color:var(--text-muted);
+                        margin-bottom:4px">😤 RPE moyen</div>
+            <div style="font-size:1.3rem;font-weight:800;
+                        color:${rpesMoyen >= 8
+                          ? 'var(--fd-coral)'
+                          : rpesMoyen >= 6
+                            ? 'var(--fd-lemon)'
+                            : 'var(--fd-mint)'}">
+              ${rpesMoyen || '—'}<span style="font-size:.7rem;
+                                               color:var(--text-muted);
+                                               font-weight:400">/10</span>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.04);
+                      border:1px solid rgba(255,255,255,0.08);
+                      border-radius:var(--radius-md);
+                      padding:12px;text-align:center">
+            <div style="font-size:.62rem;color:var(--text-muted);
+                        margin-bottom:4px">💪 Séries validées</div>
+            <div style="font-size:1.3rem;font-weight:800;
+                        color:var(--fd-indigo)">
+              ${seriesDetails.length}
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ MESSAGE COACH ═══ -->
+        <div style="background:rgba(191,161,255,0.08);
+                    border:1px solid rgba(191,161,255,0.15);
+                    border-left:3px solid var(--fd-lavender);
+                    border-radius:var(--radius-md);
+                    padding:12px 14px;margin-bottom:16px">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.08em;
+                      color:var(--fd-lavender);margin-bottom:4px">
+            🤖 Coach IA
+          </div>
+          <p style="font-size:.8rem;color:var(--text-secondary);
+                    line-height:1.55;margin:0">
+            ${msgMotiv}
+          </p>
+        </div>
+
+        <!-- ═══ CORRECTION DURÉE ═══ -->
+        ${(() => {
+          try {
+            const sec = TempsSalle.getDureeChronoSecondes() || duree;
+            return TempsSalle.renderCorrectionWidget(seanceId, sec);
+          } catch(e) { return ''; }
+        })()}
+
+        <!-- ═══ ACTIONS ═══ -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;
+                    gap:8px;margin-top:16px;padding-bottom:16px">
+          <button onclick="ResumSeance.genererImagePNG('${seanceId}')"
+                  style="display:flex;align-items:center;
+                         justify-content:center;gap:6px;
+                         padding:12px;
+                         background:rgba(75,75,249,0.15);
+                         border:1px solid rgba(75,75,249,0.3);
+                         border-radius:var(--radius-md);
+                         color:var(--fd-indigo);font-size:.78rem;
+                         font-weight:700;cursor:pointer">
+            📸 Story Instagram
+          </button>
+          <button onclick="document.getElementById('modal-info')
+                            .classList.add('hidden');
+                           naviguer('home')"
+                  class="btn-primary"
+                  style="font-size:.82rem;border-radius:var(--radius-md)">
+            🏠 Accueil
+          </button>
+        </div>
       </div>
     </div>
   `;
 
   modal.classList.remove('hidden');
+
+  // ✅ Animer les barres après rendu
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      // Barres de légende donut
+      document.querySelectorAll('[data-width]').forEach(bar => {
+        bar.style.width = bar.dataset.width + '%';
+      });
+    }, 100);
+  });
+
+  // ✅ Bouton fermer
   const closeBtn = document.getElementById('modal-info-close');
   if (closeBtn) closeBtn.onclick = () => {
     modal.classList.add('hidden');
     naviguer('home');
   };
 }
+
+// ════════════════════════════════════════════════════════════
+// RÉSUMÉ SÉANCE — Génération image PNG (Story Instagram)
+// ════════════════════════════════════════════════════════════
+const ResumSeance = {
+
+  async genererImagePNG(seanceId) {
+    try {
+      Utils.toast('⏳ Génération en cours...', 'info', 2000);
+
+      const canvas  = document.createElement('canvas');
+      canvas.width  = 1080;
+      canvas.height = 1920;
+      const ctx     = canvas.getContext('2d');
+
+      // ✅ Récupérer données
+      const seance     = (window.SEANCES_BASE || {})[seanceId]
+        || { nom:'Séance', emoji:'💪' };
+
+      let profil    = { nom:'Athlète', avatar:'💪' };
+      let xp        = { total:0, niveau:{ numero:1, nom:'Débutant' } };
+      let streak    = { count:0 };
+      let volume    = 0;
+      let prs       = 0;
+      let scoreForm = 0;
+      let dureeAff  = '—';
+
+      try { profil    = Tracker.getProfil();         } catch(e) {}
+      try { xp        = Gamification.getXP();        } catch(e) {}
+      try { streak    = Tracker.getStreak();         } catch(e) {}
+      try { volume    = Tracker.getVolumeSemaine();  } catch(e) {}
+      try { scoreForm = Tracker.calculerScoreForme().score; } catch(e) {}
+      try {
+        const sec = TempsSalle.recuperer(seanceId);
+        dureeAff  = sec > 60
+          ? TempsSalle.formaterDuree(sec)
+          : '—';
+      } catch(e) {}
+      try {
+        prs = (Tracker.getPRsSeance(seanceId) || []).length;
+      } catch(e) {}
+
+      // ✅ FOND — gradient bleu profond Foundever
+      const gradFond = ctx.createLinearGradient(0, 0, 0, 1920);
+      gradFond.addColorStop(0,    '#06063d');
+      gradFond.addColorStop(0.5,  '#08082e');
+      gradFond.addColorStop(1,    '#050520');
+      ctx.fillStyle = gradFond;
+      ctx.fillRect(0, 0, 1080, 1920);
+
+      // ✅ Glow indigo en haut
+      const glowTop = ctx.createRadialGradient(540, 0, 0, 540, 0, 600);
+      glowTop.addColorStop(0,   'rgba(75,75,249,0.25)');
+      glowTop.addColorStop(1,   'transparent');
+      ctx.fillStyle = glowTop;
+      ctx.fillRect(0, 0, 1080, 600);
+
+      // ✅ Glow mint en bas
+      const glowBot = ctx.createRadialGradient(540, 1920, 0, 540, 1920, 500);
+      glowBot.addColorStop(0,   'rgba(139,240,187,0.12)');
+      glowBot.addColorStop(1,   'transparent');
+      ctx.fillStyle = glowBot;
+      ctx.fillRect(0, 1400, 1080, 520);
+
+      // ✅ LOGO PowerApp
+      ctx.fillStyle    = '#4b4bf9';
+      ctx.font         = 'bold 38px system-ui, sans-serif';
+      ctx.textAlign    = 'center';
+      ctx.fillText('⚡ PowerApp', 540, 120);
+
+      // Ligne décorative sous le logo
+      const ligne = ctx.createLinearGradient(200, 0, 880, 0);
+      ligne.addColorStop(0, 'transparent');
+      ligne.addColorStop(0.5, 'rgba(75,75,249,0.6)');
+      ligne.addColorStop(1, 'transparent');
+      ctx.strokeStyle = ligne;
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.moveTo(200, 140);
+      ctx.lineTo(880, 140);
+      ctx.stroke();
+
+      // ✅ EMOJI SÉANCE
+      ctx.font      = '120px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(seance.emoji, 540, 320);
+
+      // ✅ NOM SÉANCE
+      ctx.fillStyle = '#ffffff';
+      ctx.font      = 'bold 72px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      this._wrapText(ctx, seance.nom, 540, 420, 900, 85);
+
+      // ✅ Badge "Séance terminée"
+      this._roundRect(ctx, 290, 520, 500, 70, 35,
+        'rgba(139,240,187,0.15)', 'rgba(139,240,187,0.4)');
+      ctx.fillStyle = '#8bf0bb';
+      ctx.font      = 'bold 32px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('✅ SÉANCE TERMINÉE', 540, 563);
+
+      // ✅ STATS CARDS (3 cartes)
+      const cartes = [
+        { label:'VOLUME',  val:Utils.formatVolume(volume),  color:'#8bf0bb',  x:80  },
+        { label:'DURÉE',   val:dureeAff,                    color:'#4b4bf9',  x:390 },
+        { label:'RECORDS', val:`${prs} 🏆`,                 color:'#f9ef77',  x:700 }
+      ];
+
+      cartes.forEach(c => {
+        // Card background
+        this._roundRect(ctx, c.x, 640, 280, 180, 24,
+          'rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)');
+        // Valeur
+        ctx.fillStyle = c.color;
+        ctx.font      = 'bold 52px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(c.val, c.x + 140, 740);
+        // Label
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font      = '24px system-ui, sans-serif';
+        ctx.fillText(c.label, c.x + 140, 785);
+      });
+
+      // ✅ DONUT MUSCLES
+      const musclesData = {};
+      try {
+        const seanceData = Tracker.getSeanceDuJour();
+        (seanceData?.series || []).forEach(s => {
+          const ex     = (window.EXERCICES || {})[s.exerciceRef] || {};
+          const muscle = ex.muscle || 'Autre';
+          const vol    = (s.poids || 0) * (s.reps || 0);
+          musclesData[muscle] = (musclesData[muscle] || 0) + vol;
+        });
+      } catch(e) {}
+
+      const musclesArr  = Object.entries(musclesData)
+        .sort((a,b) => b[1] - a[1]).slice(0, 5);
+      const totalMusc   = musclesArr.reduce((a,[,v]) => a + v, 0) || 1;
+      const COULEURS    = ['#4b4bf9','#8bf0bb','#f9ef77','#bfa1ff','#ff8d96'];
+
+      if (musclesArr.length > 0) {
+        // Titre section
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font      = '28px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('RÉPARTITION MUSCULAIRE', 540, 900);
+
+        // Donut canvas
+        const cx = 540, cy = 1060, r = 140, sw = 30;
+        const circ = 2 * Math.PI * r;
+
+        // Track
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth   = sw;
+        ctx.stroke();
+
+        // Segments
+        let startAngle = -Math.PI / 2;
+        musclesArr.forEach(([muscle, vol], i) => {
+          const angle = (vol / totalMusc) * 2 * Math.PI;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, startAngle, startAngle + angle);
+          ctx.strokeStyle = COULEURS[i];
+          ctx.lineWidth   = sw;
+          ctx.lineCap     = 'round';
+          ctx.stroke();
+          startAngle += angle;
+        });
+
+        // Centre donut
+        ctx.fillStyle = '#ffffff';
+        ctx.font      = 'bold 48px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${musclesArr.length}`, cx, cy - 10);
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font      = '24px system-ui, sans-serif';
+        ctx.fillText('muscles', cx, cy + 30);
+
+        // Légende
+        const legendY = 1240;
+        musclesArr.forEach(([muscle, vol], i) => {
+          const pct  = Math.round((vol / totalMusc) * 100);
+          const col  = i % 2 === 0 ? 150 : 580;
+          const row  = Math.floor(i / 2) * 70;
+
+          // Point couleur
+          ctx.fillStyle = COULEURS[i];
+          ctx.beginPath();
+          ctx.arc(col, legendY + row + 10, 10, 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Nom muscle
+          ctx.fillStyle = '#ffffff';
+          ctx.font      = 'bold 26px system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(muscle, col + 25, legendY + row + 18);
+
+          // Pourcentage
+          ctx.fillStyle = COULEURS[i];
+          ctx.font      = 'bold 26px system-ui, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(`${pct}%`,
+            i % 2 === 0 ? 520 : 1000,
+            legendY + row + 18);
+        });
+      }
+
+      // ✅ SCORE + STREAK
+      const scoreY = musclesArr.length > 0 ? 1520 : 950;
+
+      this._roundRect(ctx, 80, scoreY, 900, 140, 24,
+        'rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)');
+
+      // Score
+      ctx.fillStyle = scoreForm >= 70
+        ? '#8bf0bb' : scoreForm >= 50
+          ? '#4b4bf9' : '#f9ef77';
+      ctx.font      = 'bold 64px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${scoreForm}/100`, 300, scoreY + 80);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font      = '26px system-ui, sans-serif';
+      ctx.fillText('SCORE DE FORME', 300, scoreY + 115);
+
+      // Streak
+      ctx.fillStyle = '#f9ef77';
+      ctx.font      = 'bold 64px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`🔥 ${streak.count}`, 780, scoreY + 80);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font      = '26px system-ui, sans-serif';
+      ctx.fillText('STREAK', 780, scoreY + 115);
+
+      // ✅ PROFIL
+      const profilY = musclesArr.length > 0 ? 1700 : 1120;
+
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font      = '30px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(
+        `${profil.avatar} ${profil.nom} · Niv.${xp.niveau.numero} · ${xp.total} XP`,
+        540, profilY
+      );
+
+      // Ligne décorative
+      const ligneBot = ctx.createLinearGradient(200, 0, 880, 0);
+      ligneBot.addColorStop(0, 'transparent');
+      ligneBot.addColorStop(0.5, 'rgba(75,75,249,0.4)');
+      ligneBot.addColorStop(1, 'transparent');
+      ctx.strokeStyle = ligneBot;
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.moveTo(200, profilY + 20);
+      ctx.lineTo(880, profilY + 20);
+      ctx.stroke();
+
+      // ✅ DATE
+      const dateStr = new Date().toLocaleDateString('fr-FR', {
+        weekday:'long', day:'numeric', month:'long', year:'numeric'
+      });
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font      = '26px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(dateStr, 540, profilY + 60);
+
+      // ✅ Watermark PowerApp
+      ctx.fillStyle = 'rgba(75,75,249,0.5)';
+      ctx.font      = 'bold 24px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('powerapp.fitness', 540, 1880);
+
+      // ✅ Télécharger
+      const link    = document.createElement('a');
+      link.download = `powerapp-seance-${Utils.aujourd_hui()}.png`;
+      link.href     = canvas.toDataURL('image/png', 0.95);
+      link.click();
+
+      Utils.toast('✅ Story téléchargée !', 'success', 3000);
+      Utils.vibrerSuccess();
+
+    } catch(e) {
+      console.error('[ResumSeance] Erreur PNG:', e);
+      Utils.toast('❌ Erreur génération image', 'error');
+    }
+  },
+
+  // ✅ Helper — texte multiligne
+  _wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(' ');
+    let line    = '';
+    let lines   = [];
+
+    words.forEach(word => {
+      const testLine  = line + word + ' ';
+      const metrics   = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && line !== '') {
+        lines.push(line.trim());
+        line = word + ' ';
+      } else {
+        line = testLine;
+      }
+    });
+    lines.push(line.trim());
+
+    lines.forEach((l, i) => {
+      ctx.fillText(l, x, y + i * lineHeight);
+    });
+  },
+
+  // ✅ Helper — rectangle arrondi
+  _roundRect(ctx, x, y, w, h, r, fill, stroke) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+
+    if (fill) {
+      ctx.fillStyle = fill;
+      ctx.fill();
+    }
+    if (stroke) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth   = 1;
+      ctx.stroke();
+    }
+  }
+};
+
+window.ResumSeance = ResumSeance;
 
 // ════════════════════════════════════════════════════════════
 // UI
