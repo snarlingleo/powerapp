@@ -2193,6 +2193,447 @@ const SeanceGuidee = {
 window.SeanceGuidee = SeanceGuidee;
 
 // ════════════════════════════════════════════════════════════
+// ✅ MODULE LIVE RAPIDE — Mains libres
+// ════════════════════════════════════════════════════════════
+const LiveRapide = {
+
+  // State par exercice : { poids, reps, rpe }
+  _valeurs: {},
+  _wakeLock: null,
+
+  // ✅ WakeLock — écran toujours allumé
+  async activerWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        this._wakeLock = await navigator.wakeLock.request('screen');
+        console.log('[LiveRapide] WakeLock actif');
+      }
+    } catch(e) {}
+  },
+
+  async relacherWakeLock() {
+    try {
+      await this._wakeLock?.release();
+      this._wakeLock = null;
+    } catch(e) {}
+  },
+
+  // ✅ Initialiser les valeurs d'un exercice
+  initExo(exoIdx, poidsDefaut = '', repsDefaut = '') {
+    if (!this._valeurs[exoIdx]) {
+      this._valeurs[exoIdx] = {
+        poids: poidsDefaut,
+        reps:  repsDefaut,
+        rpe:   7
+      };
+    }
+  },
+
+  // ✅ Obtenir valeurs actuelles
+  get(exoIdx) {
+    return this._valeurs[exoIdx] || { poids:'', reps:'', rpe:7 };
+  },
+
+  // ✅ Modifier poids avec +/-
+  modifierPoids(exoIdx, delta) {
+    const v     = this.get(exoIdx);
+    const actuel = parseFloat(v.poids) || 0;
+    const nouveau = Math.max(0, Math.round((actuel + delta) * 4) / 4);
+    this._valeurs[exoIdx] = { ...v, poids: nouveau };
+    this._updateAffichage(exoIdx);
+  },
+
+  // ✅ Modifier reps avec +/-
+  modifierReps(exoIdx, delta) {
+    const v      = this.get(exoIdx);
+    const actuel = parseInt(v.reps) || 0;
+    const nouveau = Math.max(1, actuel + delta);
+    this._valeurs[exoIdx] = { ...v, reps: nouveau };
+    this._updateAffichage(exoIdx);
+  },
+
+  // ✅ Saisie directe poids
+  setPoids(exoIdx, val) {
+    const v = this.get(exoIdx);
+    this._valeurs[exoIdx] = { ...v, poids: val };
+  },
+
+  // ✅ Saisie directe reps
+  setReps(exoIdx, val) {
+    const v = this.get(exoIdx);
+    this._valeurs[exoIdx] = { ...v, reps: val };
+  },
+
+  // ✅ Saisie RPE
+  setRPE(exoIdx, val) {
+    const v = this.get(exoIdx);
+    this._valeurs[exoIdx] = { ...v, rpe: val };
+  },
+
+  // ✅ Copier depuis série précédente
+  copierSeriePrecedente(exoIdx, serieIdx) {
+    if (serieIdx <= 0) return;
+    const poids = document.getElementById(
+      `lr-poids-${exoIdx}-${serieIdx - 1}`
+    )?.value;
+    const reps  = document.getElementById(
+      `lr-reps-${exoIdx}-${serieIdx - 1}`
+    )?.value;
+    if (poids) this._valeurs[exoIdx] = {
+      ...this.get(exoIdx), poids
+    };
+    if (reps) this._valeurs[exoIdx] = {
+      ...this.get(exoIdx), reps
+    };
+    this._updateAffichage(exoIdx);
+    Utils.toast('↩️ Valeurs copiées !', 'success', 800);
+  },
+
+  // ✅ Update affichage sans re-render
+  _updateAffichage(exoIdx) {
+    // Mettre à jour tous les inputs visibles de cet exercice
+    document.querySelectorAll(
+      `[id^="lr-poids-${exoIdx}-"]`
+    ).forEach(input => {
+      const serieIdx = parseInt(input.id.split('-')[3]);
+      // Ne mettre à jour que si la série n'est pas encore validée
+      const btn = document.getElementById(
+        `btn-serie-${exoIdx}-${serieIdx}`
+      );
+      if (btn?.textContent === '○') {
+        input.value = this._valeurs[exoIdx]?.poids || '';
+      }
+    });
+    document.querySelectorAll(
+      `[id^="lr-reps-${exoIdx}-"]`
+    ).forEach(input => {
+      const serieIdx = parseInt(input.id.split('-')[3]);
+      const btn = document.getElementById(
+        `btn-serie-${exoIdx}-${serieIdx}`
+      );
+      if (btn?.textContent === '○') {
+        input.value = this._valeurs[exoIdx]?.reps || '';
+      }
+    });
+
+    // Mettre à jour les affichages rapides
+    document.querySelectorAll(
+      `[data-lr-poids="${exoIdx}"]`
+    ).forEach(el => {
+      el.textContent = this._valeurs[exoIdx]?.poids
+        ? `${this._valeurs[exoIdx].poids} kg`
+        : '— kg';
+    });
+    document.querySelectorAll(
+      `[data-lr-reps="${exoIdx}"]`
+    ).forEach(el => {
+      el.textContent = this._valeurs[exoIdx]?.reps
+        ? `${this._valeurs[exoIdx].reps} reps`
+        : '— reps';
+    });
+  },
+
+  // ✅ Timer repos AUTO avec transition
+  lancerReposAuto(secondes, exoIdx, serieIdx,
+                  totalSeries, totalExos, seanceId) {
+
+    // Fermer overlay existant
+    TimerManager._fermerOverlay?.();
+
+    const overlay = document.createElement('div');
+    overlay.id    = 'repos-auto-overlay';
+    overlay.style.cssText = `
+      position:fixed;inset:0;z-index:900;
+      background:rgba(9,9,45,0.97);
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      padding:24px;text-align:center;
+      animation:fadeIn .3s ease`;
+
+    const derniereSerie = serieIdx + 1 >= totalSeries;
+    const dernierExo    = exoIdx + 1 >= totalExos;
+
+    overlay.innerHTML = `
+
+      <!-- Label repos -->
+      <div style="font-size:.65rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.15em;
+                  color:var(--fd-mint);margin-bottom:16px">
+        😴 REPOS
+      </div>
+
+      <!-- Cercle timer géant -->
+      <div style="position:relative;width:200px;height:200px;
+                  margin-bottom:24px" id="repos-cercle-wrap">
+        <svg width="200" height="200" style="transform:rotate(-90deg)">
+          <circle cx="100" cy="100" r="88"
+                  fill="none"
+                  stroke="rgba(139,240,187,0.1)"
+                  stroke-width="10"/>
+          <circle cx="100" cy="100" r="88"
+                  fill="none"
+                  stroke="var(--fd-mint)"
+                  stroke-width="10"
+                  stroke-linecap="round"
+                  stroke-dasharray="${2 * Math.PI * 88}"
+                  stroke-dashoffset="0"
+                  id="repos-arc"
+                  style="transition:stroke-dashoffset 1s linear"/>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;
+                    transform:translate(-50%,-50%)">
+          <div id="repos-display"
+               style="font-size:3.5rem;font-weight:800;
+                      color:var(--fd-mint);
+                      font-variant-numeric:tabular-nums;
+                      line-height:1">
+            ${this._formaterTemps(secondes)}
+          </div>
+          <div style="font-size:.65rem;color:var(--text-muted);
+                      margin-top:4px">secondes</div>
+        </div>
+      </div>
+
+      <!-- Prochaine série -->
+      <div style="font-size:.9rem;font-weight:700;
+                  color:var(--text-secondary);margin-bottom:20px">
+        ${derniereSerie
+          ? dernierExo
+            ? '🏁 Dernier exercice terminé !'
+            : `➡️ Prochain exercice`
+          : `Série ${serieIdx + 2} / ${totalSeries}`}
+      </div>
+
+      <!-- Même poids ? Copier -->
+      ${!derniereSerie ? `
+        <button onclick="LiveRapide._copierPourSuivante(
+                  ${exoIdx}, ${serieIdx})"
+                style="padding:10px 20px;margin-bottom:16px;
+                       background:rgba(75,75,249,0.15);
+                       border:1px solid rgba(75,75,249,0.3);
+                       border-radius:var(--radius-full);
+                       font-size:.78rem;font-weight:700;
+                       color:var(--fd-indigo);cursor:pointer">
+          ↩️ Même poids pour S${serieIdx + 2}
+        </button>` : ''}
+
+      <!-- Contrôles -->
+      <div style="display:flex;gap:10px;width:100%;max-width:300px">
+        <button onclick="LiveRapide._ajouterTemps(15)"
+                style="flex:1;padding:12px;
+                       background:rgba(255,255,255,0.06);
+                       border:1px solid rgba(255,255,255,0.1);
+                       border-radius:var(--radius-md);
+                       font-size:.82rem;font-weight:700;
+                       color:var(--text-secondary);cursor:pointer">
+          +15s
+        </button>
+        <button onclick="LiveRapide._passerRepos('${seanceId}')"
+                style="flex:2;padding:12px;
+                       background:var(--fd-indigo);
+                       border:none;border-radius:var(--radius-md);
+                       font-size:.85rem;font-weight:700;
+                       color:white;cursor:pointer">
+          ⚡ Passer
+        </button>
+      </div>
+
+      <!-- Countdown transition -->
+      <div id="repos-countdown"
+           style="display:none;margin-top:20px;font-size:.88rem;
+                  color:var(--text-muted)">
+        Prochaine série dans <span id="repos-countdown-val"
+        style="font-weight:800;color:var(--fd-indigo)">3</span>s
+        <button onclick="LiveRapide._annulerTransition()"
+                style="margin-left:8px;background:none;border:none;
+                       color:var(--text-muted);font-size:.78rem;
+                       cursor:pointer;text-decoration:underline">
+          Attendre
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // ✅ Lancer le timer
+    this._reposSecondes  = secondes;
+    this._reposTotal     = secondes;
+    this._reposActif     = true;
+    this._transitionActif = false;
+    this._prochainSeanceId = seanceId;
+
+    this._reposInterval = setInterval(() => {
+      if (!this._reposActif) return;
+
+      this._reposSecondes--;
+
+      // Mettre à jour display
+      const disp = document.getElementById('repos-display');
+      if (disp) disp.textContent = this._formaterTemps(
+        Math.max(0, this._reposSecondes)
+      );
+
+      // Mettre à jour arc
+      const arc  = document.getElementById('repos-arc');
+      if (arc) {
+        const circ = 2 * Math.PI * 88;
+        const pct  = Math.max(0,
+          this._reposSecondes / this._reposTotal
+        );
+        arc.style.strokeDashoffset = circ * (1 - pct);
+      }
+
+      // Sons 3 dernières secondes
+      if (this._reposSecondes <= 3
+          && this._reposSecondes > 0) {
+        Utils.vibrer([30]);
+        try { timerRepos?.jouerSon('bip'); } catch(e) {}
+      }
+
+      // ✅ Timer terminé → transition auto
+      if (this._reposSecondes <= 0) {
+        clearInterval(this._reposInterval);
+        Utils.vibrer([200, 100, 200]);
+        try { timerRepos?.jouerSon('rest'); } catch(e) {}
+        try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
+
+        // Q2 = B + C — vibration forte + retour auto en 3s
+        this._lancerCountdown(seanceId);
+      }
+    }, 1000);
+  },
+
+  // ✅ Countdown 3s avant retour auto
+  _lancerCountdown(seanceId) {
+    const cdEl  = document.getElementById('repos-countdown');
+    const cdVal = document.getElementById('repos-countdown-val');
+    if (cdEl) cdEl.style.display = 'block';
+
+    this._transitionActif = true;
+    let compte = 3;
+
+    this._countdownInterval = setInterval(() => {
+      if (!this._transitionActif) {
+        clearInterval(this._countdownInterval);
+        return;
+      }
+
+      compte--;
+      if (cdVal) cdVal.textContent = compte;
+
+      if (compte <= 0) {
+        clearInterval(this._countdownInterval);
+        this._fermerRepos();
+        // Scroll vers prochaine série
+        this._scrollVersProchaineSerie();
+      }
+    }, 1000);
+  },
+
+  _annulerTransition() {
+    this._transitionActif = false;
+    clearInterval(this._countdownInterval);
+    const cdEl = document.getElementById('repos-countdown');
+    if (cdEl) cdEl.style.display = 'none';
+    Utils.toast('⏸ Reprends quand tu veux !', 'info', 1500);
+  },
+
+  _passerRepos(seanceId) {
+    clearInterval(this._reposInterval);
+    clearInterval(this._countdownInterval);
+    this._reposActif = false;
+    this._fermerRepos();
+    this._scrollVersProchaineSerie();
+  },
+
+  _fermerRepos() {
+    this._reposActif = false;
+    const el = document.getElementById('repos-auto-overlay');
+    if (el) {
+      el.style.animation = 'fadeOut .3s ease forwards';
+      setTimeout(() => el.remove(), 300);
+    }
+  },
+
+  _ajouterTemps(secondes) {
+    this._reposSecondes  = (this._reposSecondes || 0) + secondes;
+    this._reposTotal     = Math.max(
+      this._reposTotal || 0, this._reposSecondes
+    );
+    Utils.vibrer([20]);
+  },
+
+  _copierPourSuivante(exoIdx, serieActuelleIdx) {
+    const poidsInput = document.getElementById(
+      `lr-poids-${exoIdx}-${serieActuelleIdx}`
+    );
+    const repsInput  = document.getElementById(
+      `lr-reps-${exoIdx}-${serieActuelleIdx}`
+    );
+    if (poidsInput?.value) {
+      this._valeurs[exoIdx] = {
+        ...this.get(exoIdx),
+        poids: poidsInput.value
+      };
+    }
+    if (repsInput?.value) {
+      this._valeurs[exoIdx] = {
+        ...this.get(exoIdx),
+        reps: repsInput.value
+      };
+    }
+    Utils.toast('✅ Valeurs copiées pour la prochaine série !',
+      'success', 1500);
+  },
+
+  _scrollVersProchaineSerie() {
+    // Trouver la prochaine série non validée
+    setTimeout(() => {
+      const btns = document.querySelectorAll('[id^="btn-serie-"]');
+      for (const btn of btns) {
+        if (btn.textContent.trim() === '○') {
+          btn.closest('.lr-serie-bloc')?.scrollIntoView({
+            behavior: 'smooth', block: 'center'
+          });
+          // ✅ Highlight visuel
+          const bloc = btn.closest('.lr-serie-bloc');
+          if (bloc) {
+            bloc.style.transition = 'all .3s';
+            bloc.style.borderColor = 'var(--fd-mint)';
+            bloc.style.background  =
+              'rgba(139,240,187,0.08)';
+            setTimeout(() => {
+              bloc.style.borderColor = '';
+              bloc.style.background  = '';
+            }, 2000);
+          }
+          break;
+        }
+      }
+    }, 300);
+  },
+
+  _formaterTemps(sec) {
+    const s = Math.max(0, Math.round(sec));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    if (m > 0) return `${m}:${String(r).padStart(2,'0')}`;
+    return String(s);
+  },
+
+  reset() {
+    this._valeurs = {};
+    clearInterval(this._reposInterval);
+    clearInterval(this._countdownInterval);
+    this._reposActif      = false;
+    this._transitionActif = false;
+    document.getElementById('repos-auto-overlay')?.remove();
+  }
+};
+
+window.LiveRapide = LiveRapide;
+
+// ════════════════════════════════════════════════════════════
 // PAGE LIVE
 // ════════════════════════════════════════════════════════════
 function _rendreLive(container, options = {}) {
@@ -2333,155 +2774,403 @@ function _renderWarmup(seance, seanceId) {
 
 function _renderExercicesLive(seance, seanceId) {
   const exos      = seance.exercicesDetails || [];
-  const supersets = seance.supersets || [];
+  const supersets = seance.supersets        || [];
+
+  // ✅ Init WakeLock au démarrage de la séance
+  setTimeout(() => {
+    try { LiveRapide.activerWakeLock(); } catch(e) {}
+    LiveRapide.reset();
+  }, 300);
 
   return `
     <div class="card mb-md">
       <div class="flex justify-between items-center mb-md">
-        <div class="card-label">🏋️ ${exos.length} exercices</div>
+        <div class="card-label">
+          🏋️ ${exos.length} exercices
+        </div>
         ${supersets.length > 0 ? `
           <span class="chip chip-lavender" style="font-size:.65rem">
             ⚡ ${supersets.length} superset${supersets.length > 1 ? 's' : ''}
           </span>` : ''}
       </div>
 
-      ${exos.map((ex, idx) => {
+      ${exos.map((ex, exoIdx) => {
         const exo        = ex.details || {};
         const pr         = _getPRExo(ex.ref);
         const chargeReco = _getChargeReco(ex.ref);
         const youtubeId  = exo.youtube || null;
 
+        // ✅ Valeurs par défaut intelligentes
+        const poidsDefaut = chargeReco?.charge
+          || pr?.poids
+          || '';
+        const repsDefaut = ex.reps?.split('-')[0]
+          || ex.reps
+          || '';
+
         return `
-          <div class="live-exo-card" id="live-exo-${idx}"
-               style="padding:var(--space-md);background:var(--bg-input);
-                      border-radius:var(--radius-md);margin-bottom:var(--space-sm);
+          <div class="live-exo-card"
+               id="live-exo-${exoIdx}"
+               style="padding:16px;
+                      background:var(--bg-input);
+                      border-radius:var(--radius-lg);
+                      margin-bottom:12px;
                       border:1px solid var(--border-color)">
 
-            <div class="flex justify-between items-center mb-sm">
+            <!-- ✅ HEADER EXERCICE -->
+            <div style="display:flex;justify-content:space-between;
+                        align-items:flex-start;margin-bottom:12px">
               <div style="flex:1">
-                <div style="font-weight:700;font-size:.95rem">
+                <div style="font-weight:700;font-size:1rem">
                   ${exo.emoji || '💪'} ${exo.nom || ex.ref}
                 </div>
-                <div style="font-size:.68rem;color:var(--fd-mint)">${exo.muscle || ''}</div>
+                <div style="font-size:.68rem;color:var(--fd-mint);
+                            margin-top:2px">
+                  ${exo.muscle || ''}
+                </div>
+                <div style="font-size:.65rem;color:var(--text-muted);
+                            margin-top:3px">
+                  ${ex.series} séries × ${ex.reps} reps
+                  · repos ${ex.repos || 75}s
+                </div>
               </div>
               <div style="text-align:right;flex-shrink:0">
                 ${pr ? `
-                  <div style="font-size:.72rem;color:var(--fd-lemon);font-weight:600">
-                    🏆 ${pr.poids}kg×${pr.reps}
+                  <div style="font-size:.72rem;
+                              color:var(--fd-lemon);
+                              font-weight:700">
+                    🏆 PR ${pr.poids}kg×${pr.reps}
                   </div>` : ''}
                 ${chargeReco ? `
-                  <div style="font-size:.68rem;color:var(--fd-indigo)">
-                    💡 ${chargeReco.charge}kg (${chargeReco.pourcentage}%)
+                  <div style="font-size:.65rem;
+                              color:var(--fd-indigo)">
+                    💡 Reco ${chargeReco.charge}kg
                   </div>` : ''}
               </div>
             </div>
 
-            <div style="display:flex;gap:6px;margin-bottom:var(--space-sm);flex-wrap:wrap">
+            <!-- ✅ BOUTONS DÉMO + CALCULATEUR -->
+            <div style="display:flex;gap:6px;margin-bottom:14px;
+                        flex-wrap:wrap">
               ${youtubeId ? `
-                <button onclick="VideoDemo.ouvrir('${youtubeId}',
-                          '${(exo.nom || ex.ref).replace(/'/g,"\\'")}',
-                          '${exo.muscle || ''}')"
-                        style="display:flex;align-items:center;gap:4px;padding:5px 10px;
+                <button onclick="VideoDemo.ouvrir(
+                          '${youtubeId}',
+                          '${(exo.nom||ex.ref).replace(/'/g,"\\'")}',
+                          '${exo.muscle||''}')"
+                        style="display:flex;align-items:center;
+                               gap:4px;padding:5px 10px;
                                background:rgba(255,0,0,0.12);
                                border:1px solid rgba(255,0,0,0.25);
                                border-radius:var(--radius-full);
-                               font-size:.68rem;font-weight:600;color:#ff4444;cursor:pointer">
-                  ▶ Voir démo
+                               font-size:.68rem;font-weight:600;
+                               color:#ff4444;cursor:pointer">
+                  ▶ Démo
                 </button>` : ''}
-              <button onclick="Calculateur.renderCalculateur('${ex.ref}',${idx})"
-                      style="display:flex;align-items:center;gap:4px;padding:5px 10px;
+              <button onclick="Calculateur.renderCalculateur(
+                        '${ex.ref}',${exoIdx})"
+                      style="display:flex;align-items:center;
+                             gap:4px;padding:5px 10px;
                              background:rgba(75,75,249,0.12);
                              border:1px solid rgba(75,75,249,0.25);
                              border-radius:var(--radius-full);
                              font-size:.68rem;font-weight:600;
                              color:var(--fd-indigo);cursor:pointer">
-                🧮 Calculateur
+                🧮 1RM
               </button>
             </div>
 
-            ${idx === 0 ? `
-              <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;
-                          margin-bottom:8px;background:rgba(191,161,255,0.08);
-                          border:1px solid rgba(191,161,255,0.15);
-                          border-radius:var(--radius-sm)">
-                <span style="font-size:1rem;flex-shrink:0">💡</span>
-                <div style="font-size:.68rem;color:rgba(191,161,255,0.8);line-height:1.5">
-                  <strong>KG</strong> = poids soulevé ·
-                  <strong>REPS</strong> = répétitions ·
-                  <strong>RPE</strong> = effort /10
-                  <span style="opacity:.7">(7 = difficile, 9 = presque max)</span>
-                </div>
-              </div>` : ''}
+            <!-- ✅ SÉRIES ULTRA-RAPIDES -->
+            ${Array.from({ length: ex.series }, (_, serieIdx) => `
 
-            ${Array.from({ length: ex.series }, (_, s) => `
-              <div class="serie-row" id="serie-${idx}-${s}"
-                   style="display:grid;grid-template-columns:40px 1fr 1fr 50px auto auto;
-                          gap:var(--space-xs);align-items:center;margin-bottom:18px">
-                <div style="font-size:.75rem;font-weight:700;
-                            color:var(--text-muted);text-align:center">S${s + 1}</div>
-                <div style="position:relative">
-                  <input type="number" class="input" id="poids-${idx}-${s}"
-                         placeholder="${chargeReco?.charge || pr?.poids || '0'}"
-                         value="${chargeReco?.charge || pr?.poids || ''}"
-                         step="2.5"
-                         style="padding:6px;font-size:.82rem;text-align:center"/>
-                  <div style="position:absolute;bottom:-14px;left:0;right:0;
-                              text-align:center;font-size:.52rem;
-                              color:var(--text-muted);font-weight:600;pointer-events:none">KG</div>
+              <div class="lr-serie-bloc"
+                   id="lr-bloc-${exoIdx}-${serieIdx}"
+                   style="margin-bottom:16px;padding:14px;
+                          background:rgba(255,255,255,0.03);
+                          border:1px solid rgba(255,255,255,0.07);
+                          border-radius:var(--radius-lg);
+                          transition:all .3s">
+
+                <!-- Label série + statut -->
+                <div style="display:flex;align-items:center;
+                            justify-content:space-between;
+                            margin-bottom:12px">
+                  <div style="font-size:.78rem;font-weight:800;
+                              color:var(--fd-indigo)">
+                    Série ${serieIdx + 1} / ${ex.series}
+                  </div>
+                  <div id="lr-statut-${exoIdx}-${serieIdx}"
+                       style="font-size:.65rem;
+                              color:var(--text-muted)">
+                    En attente
+                  </div>
                 </div>
-                <div style="position:relative">
-                  <input type="number" class="input" id="reps-${idx}-${s}"
-                         placeholder="${ex.reps?.split('-')[0] || 10}"
-                         style="padding:6px;font-size:.82rem;text-align:center"/>
-                  <div style="position:absolute;bottom:-14px;left:0;right:0;
-                              text-align:center;font-size:.52rem;
-                              color:var(--text-muted);font-weight:600;pointer-events:none">REPS</div>
+
+                <!-- ✅ POIDS — Pavé custom + input direct -->
+                <div style="margin-bottom:12px">
+                  <div style="font-size:.6rem;font-weight:700;
+                              text-transform:uppercase;
+                              letter-spacing:.08em;
+                              color:var(--text-muted);
+                              margin-bottom:6px">
+                    🏋️ Charge (kg)
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <!-- Bouton - -->
+                    <button onclick="LiveRapide.modifierPoids(
+                              ${exoIdx}, -2.5)"
+                            style="width:48px;height:48px;
+                                   flex-shrink:0;
+                                   background:rgba(255,141,150,0.12);
+                                   border:2px solid rgba(255,141,150,0.3);
+                                   border-radius:var(--radius-md);
+                                   font-size:1.2rem;font-weight:800;
+                                   color:var(--fd-coral);cursor:pointer">
+                      −
+                    </button>
+
+                    <!-- Input poids -->
+                    <div style="flex:1;position:relative">
+                      <input type="number"
+                             inputmode="decimal"
+                             id="lr-poids-${exoIdx}-${serieIdx}"
+                             placeholder="${poidsDefaut || 'kg'}"
+                             value="${poidsDefaut || ''}"
+                             step="2.5"
+                             min="0"
+                             oninput="LiveRapide.setPoids(
+                               ${exoIdx}, this.value)"
+                             style="width:100%;padding:12px 8px;
+                                    font-size:1.3rem;font-weight:800;
+                                    text-align:center;
+                                    background:var(--bg-card);
+                                    border:2px solid var(--border-color);
+                                    border-radius:var(--radius-md);
+                                    color:var(--text-primary);
+                                    outline:none;
+                                    transition:border-color .2s"
+                             onfocus="this.style.borderColor=
+                               'var(--fd-indigo)';
+                               this.select()"
+                             onblur="this.style.borderColor=
+                               'var(--border-color)'"/>
+                      <div style="position:absolute;
+                                  bottom:-14px;left:0;right:0;
+                                  text-align:center;
+                                  font-size:.52rem;
+                                  color:var(--text-muted);
+                                  font-weight:700;pointer-events:none">
+                        KG
+                      </div>
+                    </div>
+
+                    <!-- Bouton + -->
+                    <button onclick="LiveRapide.modifierPoids(
+                              ${exoIdx}, 2.5)"
+                            style="width:48px;height:48px;
+                                   flex-shrink:0;
+                                   background:rgba(139,240,187,0.12);
+                                   border:2px solid rgba(139,240,187,0.3);
+                                   border-radius:var(--radius-md);
+                                   font-size:1.2rem;font-weight:800;
+                                   color:var(--fd-mint);cursor:pointer">
+                      +
+                    </button>
+                  </div>
                 </div>
-                <div style="position:relative">
-                  <input type="number" class="input" id="rpe-${idx}-${s}"
-                         placeholder="7" min="1" max="10"
-                         style="padding:6px;font-size:.78rem;text-align:center"/>
-                  <div style="position:absolute;bottom:-14px;left:0;right:0;
-                              text-align:center;font-size:.52rem;
-                              color:var(--text-muted);font-weight:600;pointer-events:none">RPE</div>
+
+                <!-- ✅ REPS — Pavé custom + input direct -->
+                <div style="margin-bottom:16px">
+                  <div style="font-size:.6rem;font-weight:700;
+                              text-transform:uppercase;
+                              letter-spacing:.08em;
+                              color:var(--text-muted);
+                              margin-bottom:6px">
+                    🔁 Répétitions
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <!-- Bouton - -->
+                    <button onclick="LiveRapide.modifierReps(
+                              ${exoIdx}, -1)"
+                            style="width:48px;height:48px;
+                                   flex-shrink:0;
+                                   background:rgba(255,141,150,0.12);
+                                   border:2px solid rgba(255,141,150,0.3);
+                                   border-radius:var(--radius-md);
+                                   font-size:1.2rem;font-weight:800;
+                                   color:var(--fd-coral);cursor:pointer">
+                      −
+                    </button>
+
+                    <!-- Input reps -->
+                    <div style="flex:1;position:relative">
+                      <input type="number"
+                             inputmode="numeric"
+                             id="lr-reps-${exoIdx}-${serieIdx}"
+                             placeholder="${repsDefaut || 'reps'}"
+                             value="${repsDefaut || ''}"
+                             min="1"
+                             oninput="LiveRapide.setReps(
+                               ${exoIdx}, this.value)"
+                             style="width:100%;padding:12px 8px;
+                                    font-size:1.3rem;font-weight:800;
+                                    text-align:center;
+                                    background:var(--bg-card);
+                                    border:2px solid var(--border-color);
+                                    border-radius:var(--radius-md);
+                                    color:var(--text-primary);
+                                    outline:none;
+                                    transition:border-color .2s"
+                             onfocus="this.style.borderColor=
+                               'var(--fd-indigo)';
+                               this.select()"
+                             onblur="this.style.borderColor=
+                               'var(--border-color)'"/>
+                      <div style="position:absolute;
+                                  bottom:-14px;left:0;right:0;
+                                  text-align:center;
+                                  font-size:.52rem;
+                                  color:var(--text-muted);
+                                  font-weight:700;pointer-events:none">
+                        REPS
+                      </div>
+                    </div>
+
+                    <!-- Bouton + -->
+                    <button onclick="LiveRapide.modifierReps(
+                              ${exoIdx}, 1)"
+                            style="width:48px;height:48px;
+                                   flex-shrink:0;
+                                   background:rgba(139,240,187,0.12);
+                                   border:2px solid rgba(139,240,187,0.3);
+                                   border-radius:var(--radius-md);
+                                   font-size:1.2rem;font-weight:800;
+                                   color:var(--fd-mint);cursor:pointer">
+                      +
+                    </button>
+                  </div>
                 </div>
-                <button onclick="TimerManager.lancerTimerReps(${idx},${s})"
-                        id="btn-timer-${idx}-${s}" title="Timer repos"
-                        style="width:32px;height:32px;border-radius:50%;
-                               background:rgba(75,75,249,0.15);
-                               border:2px solid var(--fd-indigo);
-                               font-size:.8rem;cursor:pointer;
-                               display:flex;align-items:center;justify-content:center">⏱</button>
-                <button onclick="App.validerSerie('${seanceId}','${ex.ref}',${idx},${s})"
-                        id="btn-serie-${idx}-${s}"
-                        style="width:32px;height:32px;border-radius:50%;
-                               background:var(--bg-card);
-                               border:2px solid var(--border-color);
-                               font-size:.9rem;cursor:pointer;
-                               display:flex;align-items:center;justify-content:center">○</button>
+
+                <!-- ✅ RPE rapide -->
+                <div style="margin-bottom:16px">
+                  <div style="font-size:.6rem;font-weight:700;
+                              text-transform:uppercase;
+                              letter-spacing:.08em;
+                              color:var(--text-muted);
+                              margin-bottom:6px">
+                    😤 Effort ressenti (RPE)
+                    <span style="font-weight:400;opacity:.6">
+                      · optionnel
+                    </span>
+                  </div>
+                  <div style="display:flex;gap:4px">
+                    ${[6,7,8,9,10].map(rpe => `
+                      <button onclick="LiveRapide.setRPE(
+                                ${exoIdx}, ${rpe});
+                              document.getElementById(
+                                'lr-rpe-${exoIdx}-${serieIdx}'
+                              ).value=${rpe};
+                              this.parentElement
+                                .querySelectorAll('button')
+                                .forEach(b=>b.style.background=
+                                  'rgba(255,255,255,0.04)');
+                              this.style.background=
+                                'rgba(75,75,249,0.3)'"
+                              style="flex:1;padding:8px 4px;
+                                     font-size:.75rem;font-weight:700;
+                                     background:rgba(255,255,255,0.04);
+                                     border:1px solid
+                                       rgba(255,255,255,0.08);
+                                     border-radius:var(--radius-sm);
+                                     color:var(--text-muted);
+                                     cursor:pointer;
+                                     transition:all .15s">
+                        ${rpe}
+                      </button>`).join('')}
+                  </div>
+                  <input type="hidden"
+                         id="lr-rpe-${exoIdx}-${serieIdx}"
+                         value="7"/>
+                </div>
+
+                <!-- ✅ GROS BOUTON "SÉRIE FAITE" -->
+                <button onclick="App.validerSerieLR(
+                          '${seanceId}',
+                          '${ex.ref}',
+                          ${exoIdx},
+                          ${serieIdx},
+                          ${ex.series},
+                          ${exos.length},
+                          ${ex.repos || 75})"
+                        id="btn-serie-${exoIdx}-${serieIdx}"
+                        style="width:100%;padding:18px;
+                               background:var(--fd-indigo);
+                               border:none;
+                               border-radius:var(--radius-lg);
+                               font-size:1rem;font-weight:800;
+                               color:white;cursor:pointer;
+                               letter-spacing:.02em;
+                               box-shadow:0 4px 20px
+                                 rgba(75,75,249,0.4);
+                               transition:all .15s;
+                               -webkit-tap-highlight-color:
+                                 transparent"
+                        onmousedown="this.style.transform=
+                          'scale(.97)'"
+                        onmouseup="this.style.transform=''"
+                        ontouchstart="this.style.transform=
+                          'scale(.97)'"
+                        ontouchend="this.style.transform=''">
+                  ✅ SÉRIE FAITE
+                </button>
+
+                <!-- Copier de la série précédente -->
+                ${serieIdx > 0 ? `
+                  <button onclick="LiveRapide.copierSeriePrecedente(
+                            ${exoIdx}, ${serieIdx})"
+                          style="width:100%;margin-top:8px;
+                                 padding:8px;
+                                 background:none;
+                                 border:1px dashed
+                                   rgba(255,255,255,0.1);
+                                 border-radius:var(--radius-md);
+                                 font-size:.72rem;
+                                 color:var(--text-muted);
+                                 cursor:pointer">
+                    ↩️ Copier S${serieIdx} (même poids/reps)
+                  </button>` : ''}
               </div>`).join('')}
 
+            <!-- Conseils techniques -->
             ${exo.conseils?.length ? `
-              <details style="margin-top:var(--space-xs)">
-                <summary style="font-size:.68rem;color:var(--text-muted);cursor:pointer">
+              <details style="margin-top:8px">
+                <summary style="font-size:.68rem;
+                                color:var(--text-muted);
+                                cursor:pointer">
                   💡 Conseils techniques
                 </summary>
-                <div style="font-size:.72rem;color:var(--text-muted);
-                            margin-top:var(--space-xs);padding-left:var(--space-sm)">
-                  ${exo.conseils.map(c => `<div>• ${c}</div>`).join('')}
+                <div style="font-size:.72rem;
+                            color:var(--text-muted);
+                            margin-top:6px;
+                            padding-left:8px">
+                  ${exo.conseils.map(c => `
+                    <div>• ${c}</div>`).join('')}
                 </div>
               </details>` : ''}
           </div>`;
       }).join('')}
 
+      <!-- ✅ BOUTONS FIN DE SÉANCE -->
       <button onclick="App.terminerSeance('${seanceId}')"
               class="btn-primary mt-md"
-              style="width:100%;font-size:.9rem;padding:var(--space-md)">
+              style="width:100%;font-size:.95rem;
+                     padding:18px;
+                     box-shadow:0 4px 20px rgba(75,75,249,0.4)">
         🏁 Terminer la séance
       </button>
       <button onclick="App.arreterSeance('${seanceId}')"
               class="btn-secondary mt-sm"
-              style="width:100%;font-size:.82rem;color:var(--text-muted)">
+              style="width:100%;font-size:.82rem;
+                     color:var(--text-muted)">
         ✕ Arrêter
       </button>
     </div>`;
@@ -2850,122 +3539,238 @@ const App = {
     }
   },
 
-  validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
-    const poids = parseFloat(document.getElementById(`poids-${exoIdx}-${serieIdx}`)?.value);
-    const reps  = parseInt(document.getElementById(`reps-${exoIdx}-${serieIdx}`)?.value);
-    const rpe   = parseFloat(document.getElementById(`rpe-${exoIdx}-${serieIdx}`)?.value) || null;
+  // ✅ NOUVEAU — validerSerieLR remplace validerSerie
+validerSerieLR(seanceId, exoRef, exoIdx, serieIdx,
+               totalSeries, totalExos, reposDuree) {
 
-    if (!poids || !reps) { Utils.toast('Entre le poids et les reps !', 'error'); return; }
+  // ✅ Récupérer les valeurs depuis LiveRapide
+  const poids = parseFloat(
+    document.getElementById(
+      `lr-poids-${exoIdx}-${serieIdx}`
+    )?.value
+  );
+  const reps  = parseInt(
+    document.getElementById(
+      `lr-reps-${exoIdx}-${serieIdx}`
+    )?.value
+  );
+  const rpe   = parseInt(
+    document.getElementById(
+      `lr-rpe-${exoIdx}-${serieIdx}`
+    )?.value
+  ) || null;
 
-    let result = { isPR:false };
-    try { result = Tracker.sauvegarderSerie(seanceId, exoRef, serieIdx+1, reps, poids, rpe); } catch(e) {}
-
-    try {
-      if (!Chrono._actif) {
-        Chrono.reset();
-        Chrono.demarrer();
-        const nomSeance = (window.SEANCES_BASE || {})[seanceId]?.nom || 'Séance en cours';
-        ChronoSticky.afficher(nomSeance);
+  // ✅ Vérifier que poids et reps sont renseignés
+  if (!poids || !reps) {
+    // Highlight les champs vides
+    if (!poids) {
+      const inp = document.getElementById(
+        `lr-poids-${exoIdx}-${serieIdx}`
+      );
+      if (inp) {
+        inp.style.borderColor = 'var(--fd-coral)';
+        inp.focus();
+        setTimeout(() => {
+          inp.style.borderColor = 'var(--border-color)';
+        }, 2000);
       }
-    } catch(e) {}
-
-    try {
-      if (!ChronoSticky._visible) {
-        const nomSeance = (window.SEANCES_BASE || {})[seanceId]?.nom || 'Séance en cours';
-        Chrono.reset?.();
-        Chrono.demarrer?.();
-        ChronoSticky.afficher(nomSeance);
+    } else if (!reps) {
+      const inp = document.getElementById(
+        `lr-reps-${exoIdx}-${serieIdx}`
+      );
+      if (inp) {
+        inp.style.borderColor = 'var(--fd-coral)';
+        inp.focus();
+        setTimeout(() => {
+          inp.style.borderColor = 'var(--border-color)';
+        }, 2000);
       }
-    } catch(e) {}
-
-    const btn = document.getElementById(`btn-serie-${exoIdx}-${serieIdx}`);
-    if (btn) {
-      btn.textContent       = '✅';
-      btn.style.background  = 'var(--fd-mint)';
-      btn.style.borderColor = 'var(--fd-mint)';
     }
+    Utils.toast('Entre le poids et les reps !', 'error');
+    return;
+  }
 
-    try {
-      const seanceInfo = (window.SEANCES_BASE || {})[seanceId];
-      const exo        = seanceInfo?.exercices?.[exoIdx];
-      const reposDuree = exo?.repos || 75;
-      TimerManager.demarrerRepos(reposDuree);
-    } catch(e) {}
+  // ✅ Sauvegarder la série
+  let result = { isPR:false };
+  try {
+    result = Tracker.sauvegarderSerie(
+      seanceId, exoRef, serieIdx + 1, reps, poids, rpe
+    );
+  } catch(e) {}
 
-    if (result.isPR) {
-      try { timerRepos.jouerSon('pr');               } catch(e) {}
-      try { Gamification.recompenser('PR_BATTU');    } catch(e) {}
-      try { Notifications.notifierPR(exoRef, poids, reps); } catch(e) {}
-      Utils.toast(`🏆 Nouveau record ! ${poids}kg × ${reps}`, 'pr', 4000);
-      Utils.vibrerPR();
-    } else {
-      Utils.vibrerSuccess();
-      Utils.toast('✅ Série validée !', 'success', 1500);
+  // ✅ Chrono
+  try {
+    if (!Chrono._actif) {
+      Chrono.reset();
+      Chrono.demarrer();
+      const nomSeance = (window.SEANCES_BASE||{})[seanceId]?.nom
+        || 'Séance en cours';
+      ChronoSticky.afficher(nomSeance);
     }
+  } catch(e) {}
 
-    try { Gamification.recompenser('SERIE_COMPLETE'); } catch(e) {}
-    // ✅ Séance guidée — annonce vocale
+  // ✅ Mettre à jour le bouton → validé
+  const btn = document.getElementById(
+    `btn-serie-${exoIdx}-${serieIdx}`
+  );
+  if (btn) {
+    btn.innerHTML = `✅ ${poids}kg × ${reps} reps`;
+    btn.style.background  = 'rgba(139,240,187,0.2)';
+    btn.style.border      = '2px solid var(--fd-mint)';
+    btn.style.color       = 'var(--fd-mint)';
+    btn.style.boxShadow   = 'none';
+    btn.disabled          = true;
+    btn.style.cursor      = 'default';
+  }
+
+  // ✅ Mettre à jour le statut
+  const statut = document.getElementById(
+    `lr-statut-${exoIdx}-${serieIdx}`
+  );
+  if (statut) {
+    statut.textContent  = `✅ ${poids}kg × ${reps}`;
+    statut.style.color  = 'var(--fd-mint)';
+    statut.style.fontWeight = '700';
+  }
+
+  // ✅ Copier valeurs vers séries suivantes du même exo
+  LiveRapide._valeurs[exoIdx] = {
+    poids, reps, rpe: rpe || 7
+  };
+  // Pré-remplir les inputs des séries suivantes
+  for (let s = serieIdx + 1; s < totalSeries; s++) {
+    const pInp = document.getElementById(
+      `lr-poids-${exoIdx}-${s}`
+    );
+    const rInp = document.getElementById(
+      `lr-reps-${exoIdx}-${s}`
+    );
+    const btnS = document.getElementById(
+      `btn-serie-${exoIdx}-${s}`
+    );
+    // Seulement si pas encore validé
+    if (btnS && !btnS.disabled) {
+      if (pInp && !pInp.value) pInp.value = poids;
+      if (rInp && !rInp.value) rInp.value = reps;
+    }
+  }
+
+  // ✅ PR
+  if (result.isPR) {
+    try { timerRepos?.jouerSon('pr');              } catch(e) {}
+    try { Gamification.recompenser('PR_BATTU');   } catch(e) {}
+    try { Notifications.notifierPR(exoRef, poids, reps); } catch(e) {}
+    Utils.toast(
+      `🏆 NOUVEAU RECORD ! ${poids}kg × ${reps}`,
+      'pr', 4000
+    );
+    Utils.vibrerPR();
+  } else {
+    Utils.vibrerSuccess();
+  }
+
+  try { Gamification.recompenser('SERIE_COMPLETE'); } catch(e) {}
+  try { SeanceGuidee.serieValidee(
+    exoIdx, serieIdx, poids, reps, result.isPR
+  ); } catch(e) {}
+  try {
+    if (!Offline.estEnLigne()) {
+      Offline.ajouterAction('serie_sauvegardee', {
+        seanceId, exoRef, poids, reps, rpe,
+        date: Utils.aujourd_hui()
+      });
+    }
+  } catch(e) {}
+
+  // ✅ Lancer timer repos AUTO
+  LiveRapide.lancerReposAuto(
+    reposDuree,
+    exoIdx,
+    serieIdx,
+    totalSeries,
+    totalExos,
+    seanceId
+  );
+},
+
+// ✅ Garder l'ancien pour compatibilité
+validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
+  const totalSeries = parseInt(
+    document.querySelectorAll(
+      `[id^="btn-serie-${exoIdx}-"]`
+    ).length
+  ) || 1;
+  const totalExos = document.querySelectorAll(
+    '.live-exo-card'
+  ).length || 1;
+  const reposDuree = 75;
+  this.validerSerieLR(
+    seanceId, exoRef, exoIdx, serieIdx,
+    totalSeries, totalExos, reposDuree
+  );
+},
+
+  async terminerSeance(seanceId) {
+  try {
+    // ✅ Libérer WakeLock
+    try { await LiveRapide.relacherWakeLock(); } catch(e) {}
+    // ✅ Fermer overlay repos si ouvert
+    try { LiveRapide._fermerRepos(); } catch(e) {}
+    LiveRapide.reset();
+
+    const duree  = Tracker.getDureeSeance?.(seanceId) || 0;
+    const volume = Tracker.getVolumeSemaine?.()       || 0;
+    const prs = (() => {
       try {
-        SeanceGuidee.serieValidee(exoIdx, serieIdx, poids, reps, result.isPR);
-      } catch(e) {}  
+        return (Tracker.getPRsSeance?.(seanceId) || []).length;
+      }
+      catch(e) { return 0; }
+    })();
+    const seance = (window.SEANCES_BASE || {})[seanceId];
+    const nom    = seance?.nom || 'Séance';
+
+    try { Tracker.terminerSeance(seanceId); } catch(e) {}
+    try { ChronoSticky.masquer(); Chrono.reset?.(); } catch(e) {}
+
+    try {
+      const secondes = TempsSalle.getDureeChronoSecondes();
+      TempsSalle.sauvegarder(seanceId, secondes);
+    } catch(e) {}
+
+    try {
+      Gamification.recompenser('SEANCE_COMPLETE');
+      Gamification.verifierTrophees();
+    } catch(e) {}
+
+    try { Defis.mettreAJourProgression();                 } catch(e) {}
+    try { Notifications.notifierFinSeance(nom,duree,volume); } catch(e) {}
+    try { Notifications.verifierSemaineParf();            } catch(e) {}
+    try {
+      if (Programme.isDecharge?.())
+        Notifications.notifierDecharge();
+    } catch(e) {}
     try {
       if (!Offline.estEnLigne()) {
-        Offline.ajouterAction('serie_sauvegardee', {
-          seanceId, exoRef, poids, reps, rpe, date: Utils.aujourd_hui()
+        Offline.ajouterAction('seance_complete', {
+          seanceId, date: Utils.aujourd_hui(), duree, volume
         });
       }
     } catch(e) {}
-  },
 
-  async terminerSeance(seanceId) {
-    try {
-      const duree  = Tracker.getDureeSeance?.(seanceId) || 0;
-      const volume = Tracker.getVolumeSemaine?.()       || 0;
-      const prs = (() => {
-        try { return (Tracker.getPRsSeance?.(seanceId) || []).length; }
-        catch(e) { return 0; }
-      })();
-      const seance = (window.SEANCES_BASE || {})[seanceId];
-      const nom    = seance?.nom || 'Séance';
+    Utils.confetti(3000);
+    try { timerRepos?.jouerSon('pr'); } catch(e) {}
+    Utils.vibrer([200,100,200,100,400]);
 
-      try { Tracker.terminerSeance(seanceId); } catch(e) {}
-      try { ChronoSticky.masquer(); Chrono.reset?.(); } catch(e) {}
+    try { SeanceGuidee.annoncerFinSeance(volume, prs); } catch(e) {}
+    try { SeanceGuidee.arreter(); } catch(e) {}
 
-      try {
-        const secondes = TempsSalle.getDureeChronoSecondes();
-        TempsSalle.sauvegarder(seanceId, secondes);
-      } catch(e) {}
+    _afficherResumSeance(seanceId, duree, volume, prs);
 
-      try {
-        Gamification.recompenser('SEANCE_COMPLETE');
-        Gamification.verifierTrophees();
-      } catch(e) {}
-
-      try { Defis.mettreAJourProgression();              } catch(e) {}
-      try { Notifications.notifierFinSeance(nom,duree,volume); } catch(e) {}
-      try { Notifications.verifierSemaineParf();         } catch(e) {}
-      try { if (Programme.isDecharge?.()) Notifications.notifierDecharge(); } catch(e) {}
-      try {
-        if (!Offline.estEnLigne()) {
-          Offline.ajouterAction('seance_complete', {
-            seanceId, date: Utils.aujourd_hui(), duree, volume
-          });
-        }
-      } catch(e) {}
-
-      Utils.confetti(3000);
-      try { timerRepos.jouerSon('pr'); } catch(e) {}
-      Utils.vibrer([200,100,200,100,400]);
-      // ✅ Annonce vocale fin de séance
-try { SeanceGuidee.annoncerFinSeance(volume, prs); } catch(e) {}
-try { SeanceGuidee.arreter(); } catch(e) {} 
-      _afficherResumSeance(seanceId, duree, volume, prs);
-
-    } catch(e) {
-      console.error('[App] Erreur terminer séance:', e);
-      naviguer('home');
-    }
-  },
+  } catch(e) {
+    console.error('[App] Erreur terminer séance:', e);
+    naviguer('home');
+  }
+},
 
   async arreterSeance(seanceId) {
     const ok = await Utils.confirmer('Arrêter la séance ?', 'Ta progression sera sauvegardée.');
