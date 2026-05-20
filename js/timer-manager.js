@@ -88,6 +88,8 @@ const TimerManager = {
 
     if (phase === 'repos') {
       Utils.toast('✅ Repos terminé — Go !', 'success', 2000);
+       // ✅ Annonce vocale fin de repos
+try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
     } else {
       Utils.toast('⏹ Timer terminé !', 'info', 1500);
     }
