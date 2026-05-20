@@ -205,12 +205,90 @@ function _rendrePlaceholder(container, emoji, titre, desc) {
 // ════════════════════════════════════════════════════════════
 // ✅ HELPER — Adapter exercices selon temps disponible
 // ════════════════════════════════════════════════════════════
+// ✅ NOUVEAU — avec complétion automatique
 function getExercicesSelonTemps(exercices, minutes) {
   if (!Array.isArray(exercices)) return [];
+
   if (minutes <= 30) return exercices.slice(0, 3);
   if (minutes <= 60) return exercices.slice(0, 5);
   if (minutes <= 90) return exercices.slice(0, 7);
-  return exercices; // 120 min = séance complète
+
+  // ✅ 2h — Compléter avec exercices bonus
+  return _completerSeance2h(exercices);
+}
+
+// ✅ NOUVEAU — Compléter une séance pour 2h
+function _completerSeance2h(exercicesBase) {
+  const base = [...exercicesBase];
+
+  // Détecter le type de séance depuis les exercices
+  const refs = base.map(e => e.ref);
+
+  // Exercices bonus selon le muscle dominant
+  const BONUS = {
+    // Pec/Tri → ajouter decline + overhead câble
+    pec_tri: [
+      { ref:'decline_bench',          series:3, reps:'10',    repos:75 },
+      { ref:'cable_fly',              series:3, reps:'12-15', repos:60 },
+      { ref:'overhead_triceps_cable', series:3, reps:'12',    repos:60 },
+      { ref:'close_grip_bench',       series:3, reps:'10',    repos:75 }
+    ],
+    // Dos/Bi → ajouter chin-up + spider curl
+    dos_bi: [
+      { ref:'chin_up',     series:3, reps:'max', repos:90 },
+      { ref:'rack_pull',   series:3, reps:'6-8', repos:90 },
+      { ref:'spider_curl', series:3, reps:'12',  repos:60 },
+      { ref:'incline_curl',series:3, reps:'12',  repos:60 }
+    ],
+    // Épaules/Bras → ajouter arnold + shrug
+    epaules_bras: [
+      { ref:'arnold_press',  series:3, reps:'12',    repos:75 },
+      { ref:'shrug',         series:3, reps:'15',    repos:60 },
+      { ref:'upright_row',   series:3, reps:'12',    repos:60 },
+      { ref:'curl_marteau',  series:3, reps:'12',    repos:60 }
+    ],
+    // Jambes → ajouter hack squat + nordic + kickback
+    jambes: [
+      { ref:'hack_squat',    series:3, reps:'10-12', repos:90 },
+      { ref:'hip_thrust',    series:4, reps:'12',    repos:75 },
+      { ref:'nordic_curl',   series:3, reps:'8',     repos:90 },
+      { ref:'glute_kickback',series:3, reps:'15/j',  repos:60 }
+    ],
+    // Full Body → ajouter KB swing + goblet
+    full_body: [
+      { ref:'kettlebell_swing', series:3, reps:'15',    repos:60 },
+      { ref:'goblet_squat',     series:3, reps:'12',    repos:75 },
+      { ref:'face_pull',        series:3, reps:'15',    repos:60 },
+      { ref:'burpees',          series:3, reps:'10',    repos:75 }
+    ]
+  };
+
+  // Détecter le type de séance
+  let typeSeance = 'full_body';
+  if (refs.some(r => ['bench_press','incline_halteres',
+    'chest_press_machine','ecarte_poulie'].includes(r))) {
+    typeSeance = 'pec_tri';
+  } else if (refs.some(r => ['tractions','rowing_barre',
+    'lat_pulldown','soulevé_terre'].includes(r))) {
+    typeSeance = 'dos_bi';
+  } else if (refs.some(r => ['dev_militaire','elev_laterales',
+    'shoulder_press_machine'].includes(r))) {
+    typeSeance = 'epaules_bras';
+  } else if (refs.some(r => ['squat','presse_cuisses',
+    'fentes','leg_curl'].includes(r))) {
+    typeSeance = 'jambes';
+  }
+
+  // Ajouter les exercices bonus non déjà présents
+  const bonus = BONUS[typeSeance] || BONUS.full_body;
+  bonus.forEach(ex => {
+    if (!refs.includes(ex.ref)) {
+      base.push(ex);
+      refs.push(ex.ref);
+    }
+  });
+
+  return base; // ~9-10 exercices pour 2h
 }
 
 // ════════════════════════════════════════════════════════════
