@@ -1,6 +1,7 @@
 /* ============================================================
-   FitTracker Pro — Notifications v3.0 CORRIGÉ
+   FitTracker Pro — Notifications v3.0 CORRIGÉ + SMART
    Rappels + Absence + Streak + PR + Motivation
+   + Séance en cours + Surmenage + Milestone XP
    ============================================================ */
 
 const Notifications = {
@@ -284,11 +285,10 @@ const Notifications = {
     if (!config.active) return;
 
     let jours = -1, nom = 'Athlète', streak = 0;
-    try { jours  = Tracker.getJoursAbsence();          } catch(e) {}
+    try { jours  = Tracker.getJoursAbsence();            } catch(e) {}
     try { nom    = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
-    try { streak = Tracker.getStreak().count;           } catch(e) {}
+    try { streak = Tracker.getStreak().count;            } catch(e) {}
 
-    // ✅ FIX — window.PLANNING_SEMAINE
     try {
       const planning = window.PLANNING_SEMAINE?.[
         Utils.indexJourSemaine(Utils.aujourd_hui())
@@ -306,7 +306,7 @@ const Notifications = {
           tag:'absence-5j',
           actions: [
             { action:'express', title:'⚡ Séance express' },
-            { action:'go',      title:'▶ Je fonce'       }
+            { action:'go',      title:'▶ Je fonce'        }
           ]
         }
       );
@@ -364,7 +364,6 @@ const Notifications = {
     const config = this.getConfig();
     if (!config.active || !config.motivationMatin) return;
 
-    // ✅ FIX — vérifier que Coach existe avant d'appeler
     let citation = { texte:'La progression est un choix.', auteur:'Anonyme' };
     try {
       if (typeof Coach !== 'undefined' && Coach.getCitationDuJour) {
@@ -401,7 +400,6 @@ const Notifications = {
       if (seanceDuJour?.complete) return;
     } catch(e) {}
 
-    // ✅ FIX — window.PLANNING_SEMAINE
     try {
       const planning = window.PLANNING_SEMAINE?.[
         Utils.indexJourSemaine(Utils.aujourd_hui())
@@ -429,12 +427,11 @@ const Notifications = {
 
     let objectif = 4, seances = 0, nom = 'Athlète';
     try { objectif = Utils.storage.get('ft_objectif_seances_semaine', 4); } catch(e) {}
-    try { seances  = Tracker.getSeancesParSemaine();   } catch(e) {}
-    try { nom      = Tracker.getProfil().nom||'Athlète'; } catch(e) {}
+    try { seances  = Tracker.getSeancesParSemaine();                       } catch(e) {}
+    try { nom      = Tracker.getProfil().nom || 'Athlète';                 } catch(e) {}
 
     if (seances < objectif) return;
 
-    // ✅ FIX — Anti double-déclenchement par clé de cache
     const cleNotif = 'ft_notif_semaine_parf_'
       + Utils.debutSemaine(Utils.aujourd_hui());
     if (Utils.storage.get(cleNotif, false)) return;
@@ -524,8 +521,8 @@ const Notifications = {
     if (!config.active || !config.prProche) return;
 
     let prs = {}, seance = null, nom = 'Athlète';
-    try { prs    = Tracker.getAllPRs();            } catch(e) {}
-    try { seance = Programme.getProchaineSeance(); } catch(e) {}
+    try { prs    = Tracker.getAllPRs();                } catch(e) {}
+    try { seance = Programme.getProchaineSeance();     } catch(e) {}
     try { nom    = Tracker.getProfil().nom||'Athlète'; } catch(e) {}
     if (!seance) return;
 
@@ -553,6 +550,43 @@ const Notifications = {
         break;
       }
     }
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU — Séance en cours depuis trop longtemps
+  // ════════════════════════════════════════════════════════
+  async _verifierSeanceEnCours() {
+    try {
+      const config = this.getConfig();
+      if (!config.active) return;
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const cle = localStorage.key(i);
+        if (!cle?.startsWith('ft_seance_start_')) continue;
+
+        const debut    = Utils.storage.get(cle, null);
+        if (!debut) continue;
+
+        const dureeMin = Math.floor((Date.now() - debut) / 60000);
+
+        if (dureeMin > 120) {
+          let nom = 'Athlète';
+          try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+
+          const cle2 = 'ft_notif_seance_longue_' + Utils.aujourd_hui();
+          if (Utils.storage.get(cle2, false)) return;
+
+          await this.envoyer(
+            '⏱️ Séance longue !',
+            `${nom}, ta séance dure depuis ${dureeMin} minutes. Pense à terminer pour que tes stats soient enregistrées !`,
+            { tag:'seance-longue' }
+          );
+
+          Utils.storage.set(cle2, true);
+          break;
+        }
+      }
+    } catch(e) {}
   },
 
   // ════════════════════════════════════════════════════════
@@ -586,18 +620,17 @@ const Notifications = {
   },
 
   // ════════════════════════════════════════════════════════
-  // PLANIFICATION — ✅ FIX interval nettoyé proprement
+  // PLANIFICATION
   // ════════════════════════════════════════════════════════
   planifierRappels() {
     const config = this.getConfig();
     if (!config.active) return;
 
-    // ✅ FIX — Toujours nettoyer avant de recréer
     this.arreterPlanification();
 
-    const parts       = (config.heureRappel||'07:30').split(':');
-    const heureConf   = parseInt(parts[0]) || 7;
-    const minConf     = parseInt(parts[1]) || 30;
+    const parts     = (config.heureRappel||'07:30').split(':');
+    const heureConf = parseInt(parts[0]) || 7;
+    const minConf   = parseInt(parts[1]) || 30;
 
     this._intervalVerif = setInterval(async () => {
       const now     = new Date();
@@ -642,7 +675,7 @@ const Notifications = {
         await this.verifierSemaineParf();
       }
 
-      // ✅ NOUVEAU — Vérifications smart
+      // ✅ Vérifications smart
       if (heure === 22 && minutes === 0) {
         await this.verifierSurmenage();
         await this.verifierMilestoneXP();
@@ -651,7 +684,12 @@ const Notifications = {
       if (heure === 10 && minutes === 0) {
         await this.envoyerRappelPersonnalise();
         await this.notifierComeback();
-      } 
+      }
+
+      // ✅ Vérifier séance en cours toutes les heures
+      if (minutes === 0) {
+        await this._verifierSeanceEnCours();
+      }
 
     }, 60 * 1000);
 
@@ -699,19 +737,19 @@ const Notifications = {
     const autorisee = await this.demanderPermission();
     if (autorisee) {
       this.planifierRappels();
-      setTimeout(() => this.verifierAuLancement(), 4000);
-      setTimeout(() => this._analyserRoutine(), 8000);
-      setTimeout(() => this._verifierSeanceEnCours(), 12000); 
+      setTimeout(() => this.verifierAuLancement(),  4000);
+      setTimeout(() => this._analyserRoutine(),      8000);
+      // ✅ AJOUT — vérifier séance en cours au démarrage
+      setTimeout(() => this._verifierSeanceEnCours(), 12000);
       console.log('✅ Notifications v3.0 + Smart initialisées');
     } else {
       console.log('[Notifs] Permissions non accordées');
     }
   },
 
-  // ════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════
   // NOTIFICATIONS INTELLIGENTES
-  // ════════════════════════════════════════════════════
-
+  // ════════════════════════════════════════════════════════
   _analyserRoutine() {
     try {
       const hist   = Tracker.getHistoriqueSeances(30);
@@ -758,9 +796,7 @@ const Notifications = {
 
         await this.envoyer(
           '⚠️ Attention au surmenage !',
-          `${nom}, ${seances} séances en 7 jours. `
-          + `Ton corps a besoin de récupérer. `
-          + `Prends 1-2 jours de repos ! 🛌`,
+          `${nom}, ${seances} séances en 7 jours. Ton corps a besoin de récupérer. Prends 1-2 jours de repos ! 🛌`,
           { tag:'surmenage', vibrate:[300,100,300] }
         );
         Utils.storage.set(cle, true);
@@ -788,8 +824,7 @@ const Notifications = {
 
           await this.envoyer(
             `⭐ Plus que ${diff} XP !`,
-            `${nom}, il te manque seulement ${diff} XP `
-            + `pour atteindre ${m} XP ! Une séance suffit ! 💪`,
+            `${nom}, il te manque seulement ${diff} XP pour atteindre ${m} XP ! Une séance suffit ! 💪`,
             { tag:`milestone-xp-${m}` }
           );
           Utils.storage.set(cle, true);
@@ -857,8 +892,7 @@ const Notifications = {
       const cle = 'ft_notif_comeback_' + Utils.aujourd_hui();
       if (Utils.storage.get(cle, false)) return;
 
-      const vientDeRevenir =
-        Utils.storage.get('ft_comeback', false);
+      const vientDeRevenir = Utils.storage.get('ft_comeback', false);
       if (!vientDeRevenir) return;
 
       let nom   = 'Athlète';
@@ -868,9 +902,7 @@ const Notifications = {
 
       await this.envoyer(
         `🎉 Bienvenue de retour ${nom} !`,
-        `${jours} jours de pause, c'est du passé. `
-        + `Repars doucement, ton corps va vite retrouver `
-        + `ses sensations ! 💪`,
+        `${jours} jours de pause, c'est du passé. Repars doucement, ton corps va vite retrouver ses sensations ! 💪`,
         {
           tag:'comeback',
           actions: [{ action:'go', title:'💪 C\'est reparti !' }]
@@ -908,4 +940,4 @@ const Notifications = {
 };
 
 window.Notifications = Notifications;
-console.log('✅ Notifications v3.0 chargé');
+console.log('✅ Notifications v3.0 + Smart chargé');
