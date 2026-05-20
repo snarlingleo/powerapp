@@ -132,7 +132,21 @@ function _rendreContenu(page, container, options = {}) {
     switch(page) {
       case 'home':         _rendreHome(container);                        break;
       case 'training':     _rendreTraining(container);                    break;
-      case 'live':         _rendreLive(container, options);               break;
+      case 'live':
+  // ✅ Checklist pré-séance avant le live
+  const skipChecklist = options.skipChecklist
+    || Utils.storage.get('ft_skip_checklist', false);
+
+  if (!skipChecklist && options.seanceId
+      || (!skipChecklist && Programme.getSeanceduJour()?.id)) {
+    _rendreChecklistPreSeance(
+      container, options, options.seanceId
+        || Programme.getSeanceduJour()?.id
+    );
+  } else {
+    _rendreLive(container, options);
+  }
+  break;
       case 'stats':        Stats.render(container);                       break;
       case 'profil':       _rendreProfil(container);                      break;
       case 'coach':        Coach.renderCoachTab(container);               break;
@@ -2878,6 +2892,406 @@ _verifierTimerAuRetour() {
 window.LiveRapide = LiveRapide;
 
 // ════════════════════════════════════════════════════════════
+// ✅ CHECKLIST PRÉ-SÉANCE
+// ════════════════════════════════════════════════════════════
+function _rendreChecklistPreSeance(container, options, seanceId) {
+  if (!seanceId) {
+    _rendreLive(container, options);
+    return;
+  }
+
+  let seanceComplete = null;
+  try {
+    seanceComplete = Programme.getSeanceComplete(seanceId);
+  } catch(e) {}
+
+  if (!seanceComplete) {
+    _rendreLive(container, options);
+    return;
+  }
+
+  const exos        = seanceComplete.exercicesDetails || [];
+  const skipChecklist = Utils.storage.get('ft_skip_checklist', false);
+
+  // ✅ Récupérer état des cases cochées
+  const cleVus = `ft_checklist_vus_${seanceId}`;
+  let exosVus  = Utils.storage.get(cleVus, []);
+
+  container.innerHTML = `
+
+    <!-- Header séance -->
+    <div style="background:linear-gradient(135deg,
+                rgba(75,75,249,0.2),rgba(75,75,249,0.05));
+                border:1px solid rgba(75,75,249,0.35);
+                border-radius:var(--radius-xl);
+                padding:20px;margin-bottom:16px;
+                position:relative;overflow:hidden">
+
+      <div style="position:absolute;top:-40px;right:-30px;
+                  width:160px;height:160px;
+                  background:radial-gradient(circle,
+                    rgba(75,75,249,0.2) 0%,transparent 70%);
+                  pointer-events:none"></div>
+
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.15em;
+                  color:var(--fd-indigo);margin-bottom:8px;
+                  display:flex;align-items:center;gap:6px">
+        <div style="width:6px;height:6px;border-radius:50%;
+                    background:var(--fd-indigo);
+                    box-shadow:0 0 8px var(--fd-indigo);
+                    animation:pulse 2s infinite"></div>
+        Checklist pré-séance
+      </div>
+
+      <div style="font-size:1.4rem;font-weight:800;
+                  margin-bottom:4px">
+        ${seanceComplete.emoji} ${seanceComplete.nom}
+      </div>
+
+      <div style="font-size:.75rem;color:var(--text-muted);
+                  margin-bottom:14px">
+        ~${seanceComplete.duree_estimee}min
+        · ${exos.length} exercices
+        · Vérifie avant de commencer !
+      </div>
+
+      <!-- Barre de progression exercices vus -->
+      <div style="display:flex;align-items:center;
+                  justify-content:space-between;
+                  margin-bottom:6px">
+        <div style="font-size:.65rem;color:var(--text-muted)">
+          Exercices consultés
+        </div>
+        <div id="checklist-compteur"
+             style="font-size:.72rem;font-weight:700;
+                    color:var(--fd-indigo)">
+          ${exosVus.length}/${exos.length}
+        </div>
+      </div>
+      <div style="height:6px;background:rgba(255,255,255,0.06);
+                  border-radius:99px;overflow:hidden;
+                  margin-bottom:0">
+        <div id="checklist-progress-bar"
+             style="height:100%;
+                    width:${Math.round((exosVus.length/Math.max(exos.length,1))*100)}%;
+                    background:linear-gradient(90deg,
+                      var(--fd-indigo),var(--fd-mint));
+                    border-radius:99px;
+                    transition:width .5s ease">
+        </div>
+      </div>
+    </div>
+
+    <!-- Muscles ciblés -->
+    <div style="display:flex;flex-wrap:wrap;gap:6px;
+                margin-bottom:16px">
+      ${(seanceComplete.muscles || []).map(m => `
+        <span style="padding:4px 12px;
+                     background:rgba(75,75,249,0.15);
+                     border:1px solid rgba(75,75,249,0.25);
+                     border-radius:99px;font-size:.65rem;
+                     font-weight:700;color:var(--fd-lavender)">
+          ${m}
+        </span>`).join('')}
+    </div>
+
+    <!-- Liste exercices checklist -->
+    <div style="display:flex;flex-direction:column;gap:8px;
+                margin-bottom:20px"
+         id="checklist-exos-list">
+
+      ${exos.map((ex, idx) => {
+        const exoData = ex.details || {};
+        const estVu   = exosVus.includes(idx);
+
+        return `
+          <div id="checklist-item-${idx}"
+               style="background:${estVu
+                 ? 'rgba(139,240,187,0.07)'
+                 : 'rgba(255,255,255,0.04)'};
+                      border:1px solid ${estVu
+                 ? 'rgba(139,240,187,0.25)'
+                 : 'rgba(255,255,255,0.08)'};
+                      border-radius:var(--radius-lg);
+                      padding:14px;
+                      transition:all .25s">
+
+            <!-- Ligne principale -->
+            <div style="display:flex;align-items:center;gap:12px">
+
+              <!-- Checkbox -->
+              <div onclick="_checklistToggle(${idx}, '${seanceId}', ${exos.length})"
+                   style="width:28px;height:28px;border-radius:50%;
+                          flex-shrink:0;cursor:pointer;
+                          background:${estVu
+                            ? 'var(--fd-mint)'
+                            : 'rgba(255,255,255,0.06)'};
+                          border:2px solid ${estVu
+                            ? 'var(--fd-mint)'
+                            : 'rgba(255,255,255,0.2)'};
+                          display:flex;align-items:center;
+                          justify-content:center;
+                          font-size:.85rem;
+                          transition:all .2s">
+                ${estVu ? '✓' : ''}
+              </div>
+
+              <!-- Emoji + Nom + Muscle -->
+              <div style="flex:1;min-width:0">
+                <div style="font-size:.9rem;font-weight:700;
+                            color:${estVu
+                              ? 'var(--fd-mint)'
+                              : 'var(--text-primary)'};
+                            overflow:hidden;
+                            text-overflow:ellipsis;
+                            white-space:nowrap;
+                            transition:color .2s">
+                  ${exoData.emoji || '💪'}
+                  ${exoData.nom || ex.ref}
+                </div>
+                <div style="font-size:.62rem;color:var(--text-muted);
+                            margin-top:2px">
+                  ${exoData.muscle || ''}
+                  · ${ex.series}×${ex.reps}
+                  · ⏱ ${ex.repos || 75}s
+                </div>
+              </div>
+
+              <!-- Difficulté dots -->
+              <div style="display:flex;gap:3px;flex-shrink:0;
+                          align-items:center">
+                ${[1,2,3,4,5].map(d => `
+                  <div style="width:6px;height:6px;border-radius:50%;
+                              background:${d <= (exoData.difficulte || 1)
+                                ? 'var(--fd-lemon)'
+                                : 'rgba(255,255,255,0.1)'}">
+                  </div>`).join('')}
+              </div>
+
+              <!-- Bouton Démo YouTube -->
+              ${exoData.youtube ? `
+                <button onclick="VideoDemo.ouvrir(
+                          '${exoData.youtube}',
+                          '${(exoData.nom||ex.ref).replace(/'/g,"\\'")}',
+                          '${exoData.muscle||''}'
+                        );_checklistToggle(${idx},'${seanceId}',${exos.length})"
+                        style="flex-shrink:0;
+                               display:flex;align-items:center;
+                               gap:4px;padding:6px 10px;
+                               background:rgba(255,0,0,0.12);
+                               border:1px solid rgba(255,0,0,0.25);
+                               border-radius:var(--radius-full);
+                               font-size:.65rem;font-weight:700;
+                               color:#ff4444;cursor:pointer;
+                               white-space:nowrap">
+                  ▶ Démo
+                </button>` : `
+                <div style="width:10px;flex-shrink:0"></div>`}
+            </div>
+
+            <!-- Conseils (dépliables) -->
+            ${exoData.conseils?.length ? `
+              <details style="margin-top:10px">
+                <summary style="font-size:.65rem;
+                                color:var(--text-muted);
+                                cursor:pointer;
+                                list-style:none;
+                                display:flex;
+                                align-items:center;gap:5px">
+                  <span style="color:var(--fd-indigo)">▸</span>
+                  💡 Conseils techniques
+                </summary>
+                <div style="margin-top:8px;padding:8px 10px;
+                            background:rgba(75,75,249,0.06);
+                            border-radius:var(--radius-sm);
+                            border-left:2px solid rgba(75,75,249,0.3)">
+                  ${exoData.conseils.map(c => `
+                    <div style="font-size:.72rem;
+                                color:var(--text-secondary);
+                                padding:2px 0;
+                                display:flex;gap:6px">
+                      <span style="color:var(--fd-indigo);
+                                   flex-shrink:0">•</span>
+                      ${c}
+                    </div>`).join('')}
+                </div>
+              </details>` : ''}
+          </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Option "Ne plus afficher" -->
+    <div style="display:flex;align-items:center;gap:10px;
+                padding:12px 14px;
+                background:rgba(255,255,255,0.03);
+                border:1px solid rgba(255,255,255,0.07);
+                border-radius:var(--radius-md);
+                margin-bottom:16px;cursor:pointer"
+         onclick="_checklistToggleSkip(this)">
+      <div id="skip-toggle"
+           style="width:20px;height:20px;border-radius:5px;
+                  flex-shrink:0;
+                  background:${skipChecklist
+                    ? 'var(--fd-indigo)'
+                    : 'rgba(255,255,255,0.08)'};
+                  border:2px solid ${skipChecklist
+                    ? 'var(--fd-indigo)'
+                    : 'rgba(255,255,255,0.2)'};
+                  display:flex;align-items:center;
+                  justify-content:center;
+                  font-size:.7rem;color:white;
+                  transition:all .2s">
+        ${skipChecklist ? '✓' : ''}
+      </div>
+      <div>
+        <div style="font-size:.78rem;font-weight:600;
+                    color:var(--text-primary)">
+          Passer la checklist à l'avenir
+        </div>
+        <div style="font-size:.62rem;color:var(--text-muted)">
+          Tu pourras la réactiver dans Paramètres
+        </div>
+      </div>
+    </div>
+
+    <!-- Boutons action -->
+    <div style="display:grid;grid-template-columns:1fr 2fr;
+                gap:10px;padding-bottom:8px">
+      <button onclick="naviguer('training')"
+              class="btn-secondary"
+              style="font-size:.82rem">
+        ← Retour
+      </button>
+      <button id="btn-demarrer-seance"
+              onclick="_lancerSeanceDepuisChecklist(
+                '${seanceId}',
+                ${JSON.stringify(options).replace(/'/g,"\\'")}
+              )"
+              class="btn-primary"
+              style="font-size:.92rem;
+                     box-shadow:0 4px 20px
+                       rgba(75,75,249,0.4)">
+        ${exosVus.length >= exos.length
+          ? '🚀 Démarrer !'
+          : '▶ Démarrer quand même'}
+      </button>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════
+// ✅ HELPERS CHECKLIST
+// ════════════════════════════════════════════════════════════
+
+// ✅ Toggle un exercice comme "vu"
+function _checklistToggle(idx, seanceId, totalExos) {
+  const cleVus = `ft_checklist_vus_${seanceId}`;
+  let exosVus  = Utils.storage.get(cleVus, []);
+
+  if (exosVus.includes(idx)) {
+    exosVus = exosVus.filter(i => i !== idx);
+  } else {
+    exosVus.push(idx);
+  }
+
+  Utils.storage.set(cleVus, exosVus);
+
+  // ✅ Mettre à jour l'item visuellement
+  const item = document.getElementById(`checklist-item-${idx}`);
+  if (item) {
+    const estVu = exosVus.includes(idx);
+
+    item.style.background   = estVu
+      ? 'rgba(139,240,187,0.07)'
+      : 'rgba(255,255,255,0.04)';
+    item.style.borderColor  = estVu
+      ? 'rgba(139,240,187,0.25)'
+      : 'rgba(255,255,255,0.08)';
+
+    // Checkbox
+    const checkbox = item.querySelector(
+      '[onclick^="_checklistToggle"]'
+    );
+    if (checkbox) {
+      checkbox.textContent  = estVu ? '✓' : '';
+      checkbox.style.background  = estVu
+        ? 'var(--fd-mint)'
+        : 'rgba(255,255,255,0.06)';
+      checkbox.style.borderColor = estVu
+        ? 'var(--fd-mint)'
+        : 'rgba(255,255,255,0.2)';
+    }
+
+    // Nom texte
+    const nomEl = item.querySelector(
+      '[style*="font-size:.9rem"]'
+    );
+    if (nomEl) nomEl.style.color = estVu
+      ? 'var(--fd-mint)'
+      : 'var(--text-primary)';
+  }
+
+  // ✅ Mettre à jour compteur + barre
+  const compteur = document.getElementById('checklist-compteur');
+  const barre    = document.getElementById('checklist-progress-bar');
+  const btnStart = document.getElementById('btn-demarrer-seance');
+
+  if (compteur) compteur.textContent = `${exosVus.length}/${totalExos}`;
+  if (barre) barre.style.width =
+    `${Math.round((exosVus.length / Math.max(totalExos, 1)) * 100)}%`;
+
+  if (btnStart) {
+    btnStart.textContent = exosVus.length >= totalExos
+      ? '🚀 Démarrer !'
+      : '▶ Démarrer quand même';
+  }
+
+  // ✅ Vibration légère
+  Utils.vibrer();
+}
+
+// ✅ Toggle option "ne plus afficher"
+function _checklistToggleSkip(container) {
+  const actuel = Utils.storage.get('ft_skip_checklist', false);
+  const nouveau = !actuel;
+  Utils.storage.set('ft_skip_checklist', nouveau);
+
+  const toggle = document.getElementById('skip-toggle');
+  if (toggle) {
+    toggle.textContent    = nouveau ? '✓' : '';
+    toggle.style.background  = nouveau
+      ? 'var(--fd-indigo)'
+      : 'rgba(255,255,255,0.08)';
+    toggle.style.borderColor = nouveau
+      ? 'var(--fd-indigo)'
+      : 'rgba(255,255,255,0.2)';
+  }
+
+  Utils.toast(
+    nouveau
+      ? 'Checklist désactivée — tu peux la réactiver dans Paramètres'
+      : '✅ Checklist réactivée',
+    'info',
+    2500
+  );
+}
+
+// ✅ Lancer la séance depuis la checklist
+function _lancerSeanceDepuisChecklist(seanceId, options = {}) {
+  // Nettoyer les exercices vus (reset pour la prochaine fois)
+  Utils.storage.remove(`ft_checklist_vus_${seanceId}`);
+
+  // Lancer le live directement
+  const container = document.getElementById('page-live')
+    || document.getElementById(`page-${window._pageActive}`);
+
+  if (container) {
+    _rendreLive(container, { ...options, seanceId });
+  }
+}
+
+// ════════════════════════════════════════════════════════════
 // PAGE LIVE
 // ════════════════════════════════════════════════════════════
 function _rendreLive(container, options = {}) {
@@ -2925,12 +3339,8 @@ function _rendreLive(container, options = {}) {
     seanceComplete.exercicesDetails || [], tempsSalle
   );
 
-  try {
-    const cleStart = `ft_seance_start_${Utils.aujourd_hui()}_${seanceId}`;
-    if (!Utils.storage.get(cleStart)) {
-      Tracker.demarrerSeance(seanceId);
-    }
-  } catch(e) {}
+  // ✅ NE PAS démarrer auto — l'utilisateur démarre manuellement
+// Tracker.demarrerSeance() sera appelé au premier clic "SÉRIE FAITE"
 
   container.innerHTML = `
     <div id="live-content">
@@ -2968,6 +3378,23 @@ function _renderLiveHeader(seance) {
               </div>
             </div>` : ''}
           <div id="chrono-container"></div>
+          <!-- ✅ BOUTON DÉMARRER LA SÉANCE -->
+<button id="btn-demarrer-chrono"
+        onclick="App._demarrerSeanceManuellement('${seance.id}')"
+        style="display:flex;align-items:center;gap:6px;
+               padding:8px 14px;
+               background:var(--fd-mint);
+               border:none;
+               border-radius:var(--radius-full);
+               font-size:.72rem;font-weight:800;
+               color:#09092d;cursor:pointer;
+               box-shadow:0 4px 16px rgba(139,240,187,0.4);
+               margin-top:4px;
+               transition:all .2s"
+        onmousedown="this.style.transform='scale(.95)'"
+        onmouseup="this.style.transform=''">
+  ▶ Démarrer le chrono
+</button>
 <button id="btn-mode-guide"
         onclick="SeanceGuidee._actif 
           ? SeanceGuidee.arreter() 
@@ -3635,17 +4062,47 @@ function _rendreSettings(container) {
     </div>
 
     <div class="card mb-md">
-      <div class="card-label">💾 Données</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;
-                  gap:var(--space-sm);margin-top:var(--space-sm)">
-        <button onclick="Utils.exporterJSON()" class="btn-secondary" style="font-size:.78rem">
-          📤 Exporter JSON
-        </button>
-        <button onclick="Utils.importerJSON()" class="btn-secondary" style="font-size:.78rem">
-          📥 Importer JSON
-        </button>
+  <div class="card-label">💾 Données</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;
+              gap:var(--space-sm);margin-top:var(--space-sm)">
+    <button onclick="Utils.exporterJSON()" class="btn-secondary" style="font-size:.78rem">
+      📤 Exporter JSON
+    </button>
+    <button onclick="Utils.importerJSON()" class="btn-secondary" style="font-size:.78rem">
+      📥 Importer JSON
+    </button>
+  </div>
+</div>
+
+<!-- ✅ NOUVEAU — Checklist pré-séance -->
+<div class="card mb-md">
+  <div class="card-label">🎛️ Checklist pré-séance</div>
+  <div class="score-row" style="margin-top:var(--space-sm)">
+    <div>
+      <span class="score-row-label" style="font-size:.85rem">
+        Afficher avant chaque séance
+      </span>
+      <div style="font-size:.68rem;color:var(--text-muted);margin-top:2px">
+        Liste les exercices avec démo YouTube
       </div>
     </div>
+    <label class="toggle"
+           style="position:relative;display:inline-block;
+                  width:44px;height:24px">
+      <input type="checkbox"
+             ${!Utils.storage.get('ft_skip_checklist', false) ? 'checked' : ''}
+             onchange="Utils.storage.set('ft_skip_checklist', !this.checked);
+                       Utils.toast(
+                         this.checked
+                           ? '✅ Checklist activée'
+                           : 'Checklist désactivée',
+                         'success', 1500
+                       )"
+             style="opacity:0;width:0;height:0"/>
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+</div>
 
     <div class="card mb-md">
       <div class="card-label">🎯 Objectif séances/semaine</div>
@@ -3842,16 +4299,24 @@ validerSerieLR(seanceId, exoRef, exoIdx, serieIdx,
     );
   } catch(e) {}
 
-  // ✅ Chrono
-  try {
-    if (!Chrono._actif) {
-      Chrono.reset();
-      Chrono.demarrer();
-      const nomSeance = (window.SEANCES_BASE||{})[seanceId]?.nom
-        || 'Séance en cours';
-      ChronoSticky.afficher(nomSeance);
-    }
-  } catch(e) {}
+  // ✅ Chrono — démarre auto à la première série si pas encore démarré
+try {
+  if (!Chrono._actif) {
+    Chrono.reset();
+    Chrono.demarrer();
+    const nomSeance = (window.SEANCES_BASE||{})[seanceId]?.nom
+      || 'Séance en cours';
+    ChronoSticky.afficher(nomSeance);
+    // ✅ Démarrer le tracker ici si pas encore fait
+    try {
+      if (!Tracker._seanceEnCours) {
+        Tracker.demarrerSeance(seanceId);
+      }
+    } catch(e) {}
+    // ✅ Mettre à jour le bouton démarrer
+    App._mettreAJourBtnDemarrer(true);
+  }
+} catch(e) {}
 
   // ✅ Mettre à jour le bouton → validé
   const btn = document.getElementById(
@@ -4040,12 +4505,84 @@ validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
       Utils.toast('Fatigue enregistrée.', 'success', 1500);
       naviguer('home');
     } catch(e) {}
+  },
+
+  // ✅ Démarrer la séance manuellement
+  _demarrerSeanceManuellement(seanceId) {
+    try {
+      // Démarrer le tracker
+      try {
+        Tracker.demarrerSeance(seanceId);
+      } catch(e) {}
+
+      // Démarrer le chrono
+      try {
+        Chrono.reset();
+        Chrono.demarrer();
+        const nomSeance = (window.SEANCES_BASE||{})[seanceId]?.nom
+          || 'Séance en cours';
+        ChronoSticky.afficher(nomSeance);
+      } catch(e) {}
+
+      // ✅ Mettre à jour le bouton
+      this._mettreAJourBtnDemarrer(true);
+
+      // ✅ Vibration + toast
+      Utils.vibrer([100, 50, 100]);
+      Utils.toast('💪 Séance démarrée ! Let\'s go !', 'success', 2000);
+
+      // ✅ Scroll vers le premier exercice
+      setTimeout(() => {
+        const premierExo = document.getElementById('live-exo-0');
+        if (premierExo) {
+          premierExo.scrollIntoView({
+            behavior: 'smooth',
+            block:    'start'
+          });
+        }
+      }, 400);
+
+      // ✅ Mode guidé auto si activé
+      try {
+        if (SeanceGuidee._actif) {
+          const seance = Programme.getSeanceComplete(seanceId);
+          SeanceGuidee.demarrer(
+            seanceId,
+            seance?.exercices || []
+          );
+        }
+      } catch(e) {}
+
+    } catch(e) {
+      console.error('[App] Erreur démarrage manuel:', e);
+    }
+  },
+
+  // ✅ Mettre à jour le bouton démarrer
+  _mettreAJourBtnDemarrer(estDemarre) {
+    const btn = document.getElementById('btn-demarrer-chrono');
+    if (!btn) return;
+
+    if (estDemarre) {
+      btn.innerHTML         = '⏱️ En cours';
+      btn.style.background  = 'rgba(139,240,187,0.15)';
+      btn.style.color       = 'var(--fd-mint)';
+      btn.style.border      = '1px solid rgba(139,240,187,0.3)';
+      btn.style.boxShadow   = 'none';
+      btn.style.cursor      = 'default';
+      btn.disabled          = true;
+    } else {
+      btn.innerHTML         = '▶ Démarrer le chrono';
+      btn.style.background  = 'var(--fd-mint)';
+      btn.style.color       = '#09092d';
+      btn.style.border      = 'none';
+      btn.style.boxShadow   = '0 4px 16px rgba(139,240,187,0.4)';
+      btn.style.cursor      = 'pointer';
+      btn.disabled          = false;
+    }
   }
 };
 
-// ════════════════════════════════════════════════════════════
-// RÉSUMÉ FIN DE SÉANCE
-// ════════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════
 // RÉSUMÉ FIN DE SÉANCE v2.0
 // Donut muscles + Score + PR animés + Image PNG
