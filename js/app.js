@@ -3162,7 +3162,7 @@ ${!derniereSerie ? `
     const r = s % 60;
     if (m > 0) return `${m}:${String(r).padStart(2,'0')}`;
     return String(s);
-  },,
+  },
    // ✅ FIX BACKGROUND — Vérifier si timer fini pendant l'absence
 _verifierTimerAuRetour() {
   const actif = localStorage.getItem('ft_timer_actif');
