@@ -712,63 +712,83 @@ const EXERCICES = {
 const SEANCES_BASE = {
   pec_tri: {
     id:'pec_tri', nom:'Pectoraux + Triceps', emoji:'💪',
-    muscles:['Pectoraux','Triceps'], duree_estimee:65,
+    muscles:['Pectoraux','Triceps','Core'], duree_estimee:70,
     exercices:[
       {ref:'bench_press',         series:4, reps:'8-10',  repos:90},
       {ref:'incline_halteres',    series:4, reps:'10',    repos:90},
       {ref:'chest_press_machine', series:3, reps:'12',    repos:75},
       {ref:'ecarte_poulie',       series:3, reps:'12-15', repos:60},
       {ref:'ext_triceps_poulie',  series:3, reps:'12',    repos:60},
-      {ref:'dips_triceps',        series:3, reps:'échec', repos:60}
+      {ref:'dips_triceps',        series:3, reps:'échec', repos:60},
+      // ✅ ABDOS FIN DE SÉANCE
+      {ref:'planche',             series:3, reps:'45-60s',repos:45},
+      {ref:'crunch_machine',      series:3, reps:'15',    repos:45},
+      {ref:'russian_twist',       series:3, reps:'20',    repos:45}
     ]
   },
   dos_bi: {
     id:'dos_bi', nom:'Dos + Biceps', emoji:'🔗',
-    muscles:['Dos','Biceps'], duree_estimee:65,
+    muscles:['Dos','Biceps','Core'], duree_estimee:70,
     exercices:[
       {ref:'tractions',      series:4, reps:'max',   repos:90},
       {ref:'rowing_barre',   series:4, reps:'8-10',  repos:90},
       {ref:'lat_pulldown',   series:3, reps:'10-12', repos:75},
       {ref:'rowing_machine', series:3, reps:'12',    repos:75},
       {ref:'curl_halteres',  series:3, reps:'12',    repos:60},
-      {ref:'curl_marteau',   series:3, reps:'12',    repos:60}
+      {ref:'curl_marteau',   series:3, reps:'12',    repos:60},
+      // ✅ ABDOS FIN DE SÉANCE
+      {ref:'releve_jambes',  series:3, reps:'12-15', repos:45},
+      {ref:'planche',        series:3, reps:'45-60s',repos:45},
+      {ref:'hollow_body',    series:3, reps:'30s',   repos:45}
     ]
   },
   epaules_bras: {
     id:'epaules_bras', nom:'Épaules + Bras', emoji:'💪',
-    muscles:['Épaules','Biceps','Triceps'], duree_estimee:65,
+    muscles:['Épaules','Biceps','Triceps','Core'], duree_estimee:70,
     exercices:[
       {ref:'dev_militaire',          series:4, reps:'8-10',  repos:90},
       {ref:'elev_laterales',         series:4, reps:'12-15', repos:60},
       {ref:'shoulder_press_machine', series:3, reps:'12',    repos:75},
       {ref:'face_pull',              series:3, reps:'15',    repos:60},
       {ref:'curl_barre',             series:3, reps:'10',    repos:60},
-      {ref:'barre_front',            series:3, reps:'10',    repos:60}
+      {ref:'barre_front',            series:3, reps:'10',    repos:60},
+      // ✅ ABDOS FIN DE SÉANCE
+      {ref:'russian_twist',  series:3, reps:'20',    repos:45},
+      {ref:'side_plank',     series:3, reps:'30s/c', repos:45},
+      {ref:'crunch_machine', series:3, reps:'15',    repos:45}
     ]
   },
   jambes: {
     id:'jambes', nom:'Jambes + Fessiers', emoji:'🦵',
-    muscles:['Quadriceps','Ischio-jambiers','Fessiers','Mollets'],
-    duree_estimee:70,
+    muscles:['Quadriceps','Ischio-jambiers','Fessiers','Mollets','Core'],
+    duree_estimee:75,
     exercices:[
       {ref:'squat',          series:4, reps:'8-10',  repos:120},
       {ref:'presse_cuisses', series:4, reps:'10-12', repos:90},
       {ref:'fentes',         series:3, reps:'12/j',  repos:75},
       {ref:'leg_curl',       series:3, reps:'12',    repos:75},
       {ref:'leg_extension',  series:3, reps:'15',    repos:60},
-      {ref:'mollets',        series:4, reps:'15-20', repos:45}
+      {ref:'mollets',        series:4, reps:'15-20', repos:45},
+      // ✅ ABDOS FIN DE SÉANCE
+      {ref:'planche',        series:3, reps:'45-60s',repos:45},
+      {ref:'releve_jambes',  series:3, reps:'12',    repos:45},
+      {ref:'russian_twist',  series:3, reps:'20',    repos:45}
     ]
   },
   full_body: {
     id:'full_body', nom:'Full Body + Gainage', emoji:'🔄',
-    muscles:['Full Body','Core'], duree_estimee:60,
+    muscles:['Full Body','Core'], duree_estimee:65,
     exercices:[
       {ref:'soulevé_terre',  series:4, reps:'6-8',    repos:120},
       {ref:'rowing_machine', series:3, reps:'12',     repos:75},
       {ref:'planche',        series:3, reps:'45-60s', repos:60},
       {ref:'releve_jambes',  series:3, reps:'12-15',  repos:60},
       {ref:'russian_twist',  series:3, reps:'20',     repos:45},
-      {ref:'crunch_machine', series:3, reps:'15',     repos:45}
+      {ref:'crunch_machine', series:3, reps:'15',     repos:45},
+      // ✅ ABDOS RENFORCÉS
+      {ref:'hollow_body',    series:3, reps:'30s',    repos:45},
+      {ref:'side_plank',     series:3, reps:'30s/c',  repos:45},
+      {ref:'dragon_flag',    series:3, reps:'5-8',    repos:60}
     ]
   }
 };
