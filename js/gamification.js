@@ -296,8 +296,8 @@ const Gamification = {
   XP_ACTIONS: {
     SEANCE_COMPLETE:   100,
     SERIE_COMPLETE:      5,
-    CIRCUIT_COMPLETE:   150, // ✅ Circuit.js appelle cette action
-    JOURNAL:             25,,  // ✅ NOUVEAU — par série validée
+    CIRCUIT_COMPLETE:  150,
+    JOURNAL:            25,
     PR_BATTU:           50,
     STREAK_7:          150,
     DEFI_SEMAINE:      200,
