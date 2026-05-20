@@ -723,21 +723,107 @@ function _rendreHome(container) {
     </div>
 
     <!-- ══ STATS SEMAINE ══ -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);
-                gap:8px;margin-bottom:14px">
-      ${[
-        { label:'Séances',  val:`${analyse.seances}/${analyse.objectif}`, color:'var(--fd-indigo)' },
-        { label:'Volume',   val:Utils.formatVolume(analyse.volume),       color:'var(--fd-mint)'   },
-        { label:'RPE moy.', val:analyse.rpe > 0 ? `${analyse.rpe}/10` : '—', color:'var(--fd-lemon)' }
-      ].map(s => `
-        <div style="background:rgba(255,255,255,0.04);
-                    border:1px solid rgba(255,255,255,0.08);
-                    border-radius:var(--radius-md);padding:12px 8px;text-align:center">
-          <div style="font-size:1rem;font-weight:800;color:${s.color};line-height:1">${s.val}</div>
-          <div style="font-size:.55rem;color:var(--text-muted);margin-top:4px;
-                      text-transform:uppercase;letter-spacing:.04em">${s.label}</div>
-        </div>`).join('')}
-    </div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);
+            gap:8px;margin-bottom:14px">
+  ${[
+    { label:'Séances',  val:`${analyse.seances}/${analyse.objectif}`,
+      color:'var(--fd-indigo)' },
+    { label:'Volume',   val:Utils.formatVolume(analyse.volume),
+      color:'var(--fd-mint)'  },
+    { label:'RPE moy.', val:analyse.rpe > 0
+        ? `${analyse.rpe}/10` : '—',
+      color:'var(--fd-lemon)' }
+  ].map(s => `
+    <div style="background:rgba(255,255,255,0.04);
+                border:1px solid rgba(255,255,255,0.08);
+                border-radius:var(--radius-md);
+                padding:12px 8px;text-align:center;
+                cursor:pointer"
+         onclick="naviguer('stats')">
+      <div style="font-size:1rem;font-weight:800;
+                  color:${s.color};line-height:1">
+        ${s.val}
+      </div>
+      <div style="font-size:.55rem;color:var(--text-muted);
+                  margin-top:4px;text-transform:uppercase;
+                  letter-spacing:.04em">
+        ${s.label}
+      </div>
+    </div>`).join('')}
+</div>
+
+<!-- ══ PROGRESSION LIVE ══ -->
+${(() => {
+  try {
+    const seanceAujourdhui = Tracker.getSeanceDuJour();
+    if (!seanceAujourdhui?.series?.length) return '';
+    
+    const series  = seanceAujourdhui.series || [];
+    const volume  = seanceAujourdhui.volumeTotal || 0;
+    const prsAuj  = seanceAujourdhui.prs?.length || 0;
+    const nbSeries = series.length;
+    const seanceBase = (window.SEANCES_BASE||{})[seanceAujourdhui.id];
+    const totalSeries = (seanceBase?.exercices||[])
+      .reduce((a,e) => a + (e.series||0), 0) || 1;
+    const pct = Math.min(100, Math.round((nbSeries / totalSeries) * 100));
+
+    return `
+      <div style="background:linear-gradient(135deg,
+                  rgba(75,75,249,0.15),
+                  rgba(139,240,187,0.05));
+                  border:1px solid rgba(75,75,249,0.3);
+                  border-radius:var(--radius-lg);
+                  padding:14px 16px;margin-bottom:14px"
+           onclick="naviguer('live')">
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;margin-bottom:8px">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;
+                      letter-spacing:.1em;color:var(--fd-indigo)">
+            ⚡ Séance en cours
+          </div>
+          <div style="font-size:.72rem;font-weight:700;
+                      color:var(--fd-lemon)">
+            ${pct}%
+          </div>
+        </div>
+        <div style="height:6px;background:rgba(255,255,255,0.08);
+                    border-radius:99px;overflow:hidden;
+                    margin-bottom:10px">
+          <div style="height:100%;width:${pct}%;
+                      background:linear-gradient(90deg,
+                        var(--fd-indigo),var(--fd-mint));
+                      border-radius:99px;
+                      transition:width .5s ease"></div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="text-align:center;flex:1">
+            <div style="font-size:.95rem;font-weight:800;
+                        color:var(--fd-mint)">${nbSeries}</div>
+            <div style="font-size:.55rem;color:var(--text-muted);
+                        text-transform:uppercase">Séries</div>
+          </div>
+          <div style="text-align:center;flex:1">
+            <div style="font-size:.95rem;font-weight:800;
+                        color:var(--fd-indigo)">
+              ${Utils.formatVolume(volume)}
+            </div>
+            <div style="font-size:.55rem;color:var(--text-muted);
+                        text-transform:uppercase">Volume</div>
+          </div>
+          ${prsAuj > 0 ? `
+            <div style="text-align:center;flex:1">
+              <div style="font-size:.95rem;font-weight:800;
+                          color:var(--fd-lemon)">
+                ${prsAuj} 🏆
+              </div>
+              <div style="font-size:.55rem;color:var(--text-muted);
+                          text-transform:uppercase">Records</div>
+            </div>` : ''}
+        </div>
+      </div>`;
+  } catch(e) { return ''; }
+})()}
 
     <!-- ══ COACH DU JOUR ══ -->
     <div onclick="naviguer('coach')"
@@ -2823,6 +2909,7 @@ async function init() {
 
     try { ThemeManager.init(); } catch(e) {}
     try { SwipeNav.init();     } catch(e) {}
+    try { SeanceGuidee.prechargerVoix(); } catch(e) {} 
     try { TimerManager.initAlarme(); } catch(e) {}
 
     setTimeout(() => {
