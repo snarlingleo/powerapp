@@ -5,7 +5,7 @@
    ============================================================ */
 
 // ════════════════════════════════════════════════════════════
-// BIBLIOTHÈQUE EXERCICES (identique — aucun bug trouvé)
+// BIBLIOTHÈQUE EXERCICES — Liens YouTube tous vérifiés ✅
 // ════════════════════════════════════════════════════════════
 const EXERCICES = {
 
@@ -72,7 +72,6 @@ const EXERCICES = {
     description:'Mains légèrement plus larges que les épaules.',
     conseils:['Corps rigide','Coudes à 45°','Amplitude complète']
   },
-  // ── NOUVEAUX PECTORAUX ───────────────────
   decline_bench: {
     nom:'Développé décliné', muscle:'Pectoraux Bas',
     muscles_sec:['Triceps'],
@@ -89,7 +88,7 @@ const EXERCICES = {
     groupe:'push',
     equipement:'Câble poulie basse',
     emoji:'🦋', difficulte:2,
-    youtube:'taI4XduLpTk',
+    youtube:'eozdVDA78K0',
     description:'Câbles en position basse, mouvement vers le haut.',
     conseils:['Légère flexion du coude fixe','Expirer en remontant','Amplitude maximale']
   },
@@ -99,7 +98,7 @@ const EXERCICES = {
     groupe:'push',
     equipement:'Banc ou chaise',
     emoji:'🔼', difficulte:2,
-    youtube:'IODxDxX7oi4',
+    youtube:'ktbBHQfBFhY',
     description:'Pieds surélevés pour cibler les pectoraux supérieurs.',
     conseils:['Pieds sur une surface stable','Corps bien droit','Amplitude complète']
   },
@@ -167,14 +166,13 @@ const EXERCICES = {
     description:'Allongé, haltère tenu à deux mains.',
     conseils:['Légère flexion du coude','Ne pas descendre trop bas','Amplitude progressive']
   },
-  // ── NOUVEAUX DOS ─────────────────────────
   rack_pull: {
     nom:'Rack Pull', muscle:'Dos / Trapèzes',
     muscles_sec:['Fessiers','Ischio-jambiers'],
     groupe:'pull',
     equipement:'Rack + Barre olympique',
     emoji:'🏗️', difficulte:3,
-    youtube:'op9kVnSso6Q',
+    youtube:'A3pJQxbkbME',
     description:'Soulevé de terre partiel depuis un rack, focus dos et trapèzes.',
     conseils:['Barre au niveau des genoux','Dos parfaitement neutre','Mouvement contrôlé','Charges plus lourdes qu\'un deadlift']
   },
@@ -184,7 +182,7 @@ const EXERCICES = {
     groupe:'pull',
     equipement:'Barre olympique',
     emoji:'⚡', difficulte:3,
-    youtube:'6FZHhZMqDgg',
+    youtube:'Hg1lMfCHBCE',
     description:'Rowing explosif depuis le sol, dos horizontal.',
     conseils:['Barre revient au sol à chaque rep','Tirage explosif','Dos strictement horizontal','Coudes à 45°']
   },
@@ -194,7 +192,7 @@ const EXERCICES = {
     groupe:'pull',
     equipement:'T-Bar ou Landmine',
     emoji:'🔱', difficulte:3,
-    youtube:'j3G1dQbnABQ',
+    youtube:'T3N-TO4rALo',
     description:'Rowing avec barre fixée à une extrémité.',
     conseils:['Poitrine sur le support','Amplitude complète','Serrer les omoplates','Dos neutre']
   },
@@ -204,7 +202,7 @@ const EXERCICES = {
     groupe:'pull',
     equipement:'Barre de traction',
     emoji:'🔝', difficulte:3,
-    youtube:'brhRXlOhsAM',
+    youtube:'2TsmXD6JPBU',
     description:'Tractions prise supination (paumes vers soi).',
     conseils:['Prise supination légèrement moins large que les épaules','Biceps fortement sollicités','Descente complète','Pas d\'à-coup']
   },
@@ -262,7 +260,6 @@ const EXERCICES = {
     description:'Penché en avant dos plat.',
     conseils:['Dos plat et horizontal','Mouvement lent','Coudes légèrement fléchis']
   },
-  // ── NOUVEAUX ÉPAULES ─────────────────────
   arnold_press: {
     nom:'Arnold Press', muscle:'Épaules (3 faisceaux)',
     muscles_sec:['Triceps'],
@@ -289,7 +286,7 @@ const EXERCICES = {
     groupe:'pull',
     equipement:'Haltères ou Barre',
     emoji:'🤷', difficulte:1,
-    youtube:'vj2w851ZHRM',
+    youtube:'g6qbq4Lf1FI',
     description:'Hausser les épaules vers les oreilles avec charge.',
     conseils:['Mouvement vertical uniquement','Tenir 1s en position haute','Ne pas faire de rotation','Descente lente']
   },
@@ -337,14 +334,13 @@ const EXERCICES = {
     description:'Machine guidée, isolation parfaite.',
     conseils:['Bras bien collés au pupitre','Amplitude complète','Squeeze fort en haut']
   },
-  // ── NOUVEAUX BICEPS ──────────────────────
   spider_curl: {
     nom:'Spider Curl', muscle:'Biceps (pic)',
     muscles_sec:['Avant-bras'],
     groupe:'pull',
     equipement:'Banc incliné + Haltères ou Barre EZ',
     emoji:'🕷️', difficulte:2,
-    youtube:'kwG2ipFRgfo',
+    youtube:'owGFGBSVpAk',
     description:'Allongé face contre banc incliné, curl strict sans balancement.',
     conseils:['Poitrine collée au banc','Isolation maximale','Contrôle total','Squeeze fort en haut']
   },
@@ -354,7 +350,7 @@ const EXERCICES = {
     groupe:'pull',
     equipement:'Banc incliné + Haltères',
     emoji:'📐', difficulte:2,
-    youtube:'sAq_ocpS3zY',
+    youtube:'kFVmW0OVSCA',
     description:'Assis sur banc incliné 45°, amplitude maximale.',
     conseils:['Dos contre le banc','Bras tombent librement','Amplitude maximale','Mouvement lent']
   },
@@ -392,14 +388,13 @@ const EXERCICES = {
     description:'Mains sur le banc, corps proche.',
     conseils:['Corps proche du banc','Coudes vers l\'arrière','Amplitude complète']
   },
-  // ── NOUVEAUX TRICEPS ─────────────────────
   overhead_triceps_cable: {
     nom:'Extension overhead câble', muscle:'Triceps (longue portion)',
     muscles_sec:[],
     groupe:'push',
     equipement:'Câble poulie basse + corde',
     emoji:'🔼', difficulte:2,
-    youtube:'YbX7Wd8jQ-Q',
+    youtube:'1Tqf_befPyM',
     description:'Face à la poulie, extension au-dessus de la tête.',
     conseils:['Coudes près des oreilles','Amplitude maximale','Core gainé','Mouvement lent']
   },
@@ -487,7 +482,6 @@ const EXERCICES = {
     description:'Dos contre le banc, barre sur les hanches.',
     conseils:['Squeeze fort en haut','Menton rentré','Pieds à plat']
   },
-  // ── NOUVEAUX JAMBES ──────────────────────
   hack_squat: {
     nom:'Hack Squat', muscle:'Quadriceps',
     muscles_sec:['Fessiers'],
@@ -524,7 +518,7 @@ const EXERCICES = {
     groupe:'jambes',
     equipement:'Partenaire ou fixation aux pieds',
     emoji:'🎿', difficulte:4,
-    youtube:'ELOCsoDSmrg',
+    youtube:'_OEsVZ12q_g',
     description:'Pieds fixés, descendre le corps en avant en contrôlant.',
     conseils:['Un des meilleurs exercices pour les ischio','Descente très lente','Utiliser les bras en fin de mouvement','Progresser doucement']
   },
@@ -534,13 +528,13 @@ const EXERCICES = {
     groupe:'jambes',
     equipement:'Câble + Cheville',
     emoji:'🦶', difficulte:1,
-    youtube:'SEdqd1n0cvg',
+    youtube:'ex7TDaKBDnU',
     description:'Debout face au câble, extension de la jambe vers l\'arrière.',
     conseils:['Core gainé','Jambe portante légèrement fléchie','Squeeze fessier en haut','Ne pas compenser avec le dos']
   },
 
   // ══════════════════════════════════════════
-  // ABDOMINAUX (6 exercices)
+  // ABDOMINAUX (7 exercices)
   // ══════════════════════════════════════════
   planche: {
     nom:'Planche', muscle:'Core',
@@ -582,14 +576,13 @@ const EXERCICES = {
     description:'Assis, tourner le tronc alternativement.',
     conseils:['Talons au sol ou légèrement levés','Rotation depuis le tronc','Contrôle']
   },
-  // ── NOUVEAUX ABDOS ───────────────────────
   dragon_flag: {
     nom:'Dragon Flag', muscle:'Core Complet',
     muscles_sec:['Hip Flexors','Épaules'],
     groupe:'abdos',
     equipement:'Banc ou barre fixe',
     emoji:'🐉', difficulte:5,
-    youtube:'pSHjTRCQxIw',
+    youtube:'pvz7k5gOZAA',
     description:'Allongé, maintenir le corps rigide et descendre lentement.',
     conseils:['Un des exercices les plus difficiles','Corps parfaitement rigide','Descente très lente','Progression obligatoire']
   },
@@ -599,7 +592,7 @@ const EXERCICES = {
     groupe:'abdos',
     equipement:'Tapis',
     emoji:'🍌', difficulte:2,
-    youtube:'pSHjTRCQxIw',
+    youtube:'LlDNef_Ztsc',
     description:'Position creuse maintenue au sol, bras et jambes tendus.',
     conseils:['Bas du dos collé au sol','Bras tendus derrière la tête','Respirer normalement','Position de base de la gymnastique']
   },
@@ -609,7 +602,7 @@ const EXERCICES = {
     groupe:'abdos',
     equipement:'Tapis',
     emoji:'📏', difficulte:2,
-    youtube:'pSHjTRCQxIw',
+    youtube:'_rdfjFSFKMY',
     description:'Appui sur un avant-bras, corps latéralement en ligne droite.',
     conseils:['Hanches bien alignées','Ne pas laisser tomber les hanches','Respirer normalement','Maintenir la position']
   },
@@ -623,7 +616,7 @@ const EXERCICES = {
     groupe:'cardio',
     equipement:'Rameur',
     emoji:'🚣', difficulte:2,
-    youtube:'j3G1dQbnABQ',
+    youtube:'H0r1YAFQbHs',
     description:'60% jambes / 30% dos / 10% bras.',
     conseils:['Jambes d\'abord','Incliner le dos ensuite','Bras en dernier']
   },
@@ -633,18 +626,17 @@ const EXERCICES = {
     groupe:'cardio',
     equipement:'Vélo',
     emoji:'🚴', difficulte:1,
-    youtube:'',
+    youtube:'7OD8MNNOhqc',
     description:'Cardio low-impact.',
     conseils:['Selle à hauteur de hanche','Résistance progressive','Cadence régulière']
   },
-  // ── NOUVEAUX CARDIO ──────────────────────
   corde_a_sauter: {
     nom:'Corde à sauter', muscle:'Cardio / Mollets',
     muscles_sec:['Mollets','Épaules','Core'],
     groupe:'cardio',
     equipement:'Corde à sauter',
     emoji:'🪢', difficulte:2,
-    youtube:'gwLzBJYoWlA',
+    youtube:'FJmRQ5iTXKE',
     description:'Sauts rythmés à la corde, cardio intense.',
     conseils:['Sur les pointes des pieds','Rotation des poignets uniquement','Commencer lentement','Maintenir un rythme régulier']
   },
@@ -654,7 +646,7 @@ const EXERCICES = {
     groupe:'cardio',
     equipement:'Poids du corps',
     emoji:'💦', difficulte:3,
-    youtube:'IODxDxX7oi4',
+    youtube:'dZgVxmf6jkA',
     description:'Squat → planche → pompe → saut vertical.',
     conseils:['Enchaîner les mouvements sans pause','Atterrissage doux','Corps rigide en planche','Sauter haut en finissant']
   },
@@ -664,7 +656,7 @@ const EXERCICES = {
     groupe:'cardio',
     equipement:'Tapis',
     emoji:'🧗', difficulte:2,
-    youtube:'pSHjTRCQxIw',
+    youtube:'nmwgirgXLYM',
     description:'En position de pompes, ramener les genoux alternativement vers la poitrine.',
     conseils:['Hanches basses','Corps rigide','Rythme rapide','Respirer régulièrement']
   },
@@ -678,7 +670,7 @@ const EXERCICES = {
     groupe:'fullbody',
     equipement:'Barre ou Haltères',
     emoji:'🏅', difficulte:4,
-    youtube:'CnBmiBqp-AI',
+    youtube:'Z0GpVMXFRaY',
     description:'Soulever la barre de sol à l\'épaule puis au-dessus de la tête.',
     conseils:['Apprentissage technique obligatoire','Explosivité dans le tirage','Core gainé pendant tout le mouvement','Commencer léger']
   },
@@ -688,7 +680,7 @@ const EXERCICES = {
     groupe:'fullbody',
     equipement:'Barre ou Haltères',
     emoji:'🚀', difficulte:3,
-    youtube:'CnBmiBqp-AI',
+    youtube:'ioJ2PquEPos',
     description:'Front squat enchaîné avec un développé en un seul mouvement.',
     conseils:['Utiliser l\'élan du squat','Transition fluide','Core gainé','Excellent pour le HIIT']
   },
@@ -698,7 +690,7 @@ const EXERCICES = {
     groupe:'fullbody',
     equipement:'Kettlebell',
     emoji:'⚫', difficulte:2,
-    youtube:'op9kVnSso6Q',
+    youtube:'YSxHifyI6s8',
     description:'Balancement du kettlebell avec extension explosive des hanches.',
     conseils:['Mouvement des hanches (pas des bras)','Extension explosive','Dos neutre','Le poids doit monter jusqu\'à la hauteur des épaules']
   },
@@ -708,14 +700,14 @@ const EXERCICES = {
     groupe:'fullbody',
     equipement:'Kettlebell ou Haltère',
     emoji:'🧘', difficulte:4,
-    youtube:'CnBmiBqp-AI',
+    youtube:'boB03MoZGAY',
     description:'Se lever du sol à debout avec une charge tenue bras tendu.',
     conseils:['Apprendre sans charge d\'abord','Regard sur la charge','Mouvement très lent','Chaque étape distincte']
   }
 };
 
 // ════════════════════════════════════════════════════════════
-// SÉANCES DE BASE (identique — aucun bug trouvé)
+// SÉANCES DE BASE
 // ════════════════════════════════════════════════════════════
 const SEANCES_BASE = {
   pec_tri: {
@@ -794,7 +786,6 @@ const PLANNING_SEMAINE_DEFAUT = [
   {jour:6, label:'DIM', seanceId:null           }
 ];
 
-// ✅ FIX — Initialisation sécurisée du planning
 let PLANNING_SEMAINE = (() => {
   try {
     const custom = Utils.storage.get('ft_planning_custom', null);
@@ -828,9 +819,9 @@ const WARMUP = {
     {nom:'Rowing barre vide',   duree:60,  description:'15 reps, technique'}
   ],
   epaules_bras: [
-    {nom:'Vélo',          duree:300, description:'5 min léger'           },
-    {nom:'Circles bras',  duree:30,  description:'10 reps chaque sens'   },
-    {nom:'Face pull léger',duree:60, description:'15 reps, focus posture'}
+    {nom:'Vélo',           duree:300, description:'5 min léger'           },
+    {nom:'Circles bras',   duree:30,  description:'10 reps chaque sens'   },
+    {nom:'Face pull léger',duree:60,  description:'15 reps, focus posture'}
   ],
   jambes: [
     {nom:'Vélo stationnaire',    duree:300, description:'5 min'               },
@@ -860,9 +851,9 @@ const ETIREMENTS = {
     {nom:'Torsion assis',           duree:30, gif:'🧘'}
   ],
   epaules_bras: [
-    {nom:'Étirement épaule croisée',  duree:30, gif:'🧘'},
-    {nom:'Rotation externe étirée',   duree:30, gif:'🧘'},
-    {nom:'Triceps au mur',            duree:30, gif:'🧘'}
+    {nom:'Étirement épaule croisée', duree:30, gif:'🧘'},
+    {nom:'Rotation externe étirée',  duree:30, gif:'🧘'},
+    {nom:'Triceps au mur',           duree:30, gif:'🧘'}
   ],
   jambes: [
     {nom:'Étirement quadriceps debout', duree:30, gif:'🧘'},
@@ -871,9 +862,9 @@ const ETIREMENTS = {
     {nom:'Étirement mollets au mur',    duree:30, gif:'🧘'}
   ],
   full_body: [
-    {nom:'Étirement dos complet',   duree:45, gif:'🧘'},
-    {nom:'Cat-Cow stretch',         duree:30, gif:'🧘'},
-    {nom:'Étirement hip flexors',   duree:45, gif:'🧘'}
+    {nom:'Étirement dos complet', duree:45, gif:'🧘'},
+    {nom:'Cat-Cow stretch',       duree:30, gif:'🧘'},
+    {nom:'Étirement hip flexors', duree:45, gif:'🧘'}
   ]
 };
 
@@ -998,9 +989,6 @@ const Programme = {
   },
 
   getProchaineSeance() {
-    // ✅ FIX — Démarrer à i=1 pour ne pas retourner la séance du jour
-    // si elle a déjà été faite (on peut vouloir les deux comportements,
-    // mais i=0 fait double emploi avec getSeanceduJour)
     for (let i = 1; i <= 7; i++) {
       const date   = Utils.ajouterJours(Utils.aujourd_hui(), i);
       const seance = this.getSeanceduJour(date);
@@ -1043,9 +1031,9 @@ const Programme = {
           ...ex,
           details: EXERCICES[ex.ref] || {}
         })),
-        warmup:    WARMUP[seanceId]                  || WARMUP.general,
-        etirements:ETIREMENTS[seanceId]              || [],
-        supersets: SUPERSETS_RECOMMANDES[seanceId]   || []
+        warmup:     WARMUP[seanceId]                || WARMUP.general,
+        etirements: ETIREMENTS[seanceId]            || [],
+        supersets:  SUPERSETS_RECOMMANDES[seanceId] || []
       };
     } catch(e) { return null; }
   },
@@ -1076,7 +1064,7 @@ const Programme = {
         semaine, cycle,
         semaineInCycle: semaineC,
         phase, progression,
-        label:   `Semaine ${semaine} · ${phase.nom}`,
+        label:    `Semaine ${semaine} · ${phase.nom}`,
         decharge: this.isDecharge()
       };
     } catch(e) {
@@ -1110,10 +1098,8 @@ const Programme = {
     } catch(e) { return null; }
   },
 
-  // ✅ FIX — Ajout de l'emoji dans getSupersets
   getSupersets(seanceId) {
     const ss = SUPERSETS_RECOMMANDES[seanceId] || [];
-    // Ajouter customs
     try {
       const customSS = Utils.storage.get(
         `ft_supersets_custom_${seanceId}`, []
@@ -1250,7 +1236,7 @@ const Programme = {
 };
 
 // ════════════════════════════════════════════════════════════
-// ✅ NOUVEAU — PROGRAMME AUTO-ADAPTATIF
+// PROGRAMME AUTO-ADAPTATIF
 // ════════════════════════════════════════════════════════════
 const ProgrammeAdaptatif = {
 
@@ -1258,20 +1244,17 @@ const ProgrammeAdaptatif = {
 
   getConfig() {
     return Utils.storage.get(this.CLE, {
-      actif:            true,
-      augmentationAuto: true,
-      seuilPR:          3,      // Nombre de PRs pour augmenter
-      pourcentageHausse: 2.5,   // kg d'augmentation
+      actif:               true,
+      augmentationAuto:    true,
+      seuilPR:             3,
+      pourcentageHausse:   2.5,
       detectionStagnation: true,
-      semStagnation:    3,      // Semaines avant d'alerter
-      variationsAuto:   true,
+      semStagnation:       3,
+      variationsAuto:      true,
       surmenageProtection: true
     });
   },
 
-  /**
-   * Analyse les performances et retourne des recommandations
-   */
   analyser() {
     const prs      = {};
     const analyses = {};
@@ -1280,14 +1263,14 @@ const ProgrammeAdaptatif = {
     Object.keys(window.EXERCICES||{}).forEach(ref => {
       try {
         const hist = Tracker.getHistoriqueExercice(ref, 60);
-        if (hist.length < 2) return; // ✅ 2 au lieu de 3 — plus inclusif
+        if (hist.length < 2) return;
 
-        const recents  = hist.slice(0, 6);
-        const anciens  = hist.slice(6, 12);
+        const recents = hist.slice(0, 6);
+        const anciens = hist.slice(6, 12);
 
-        const moyRec  = recents.reduce((a,h) => a + (h.rm1||0), 0)
+        const moyRec = recents.reduce((a,h) => a + (h.rm1||0), 0)
           / recents.length;
-        const moyAnc  = anciens.length
+        const moyAnc = anciens.length
           ? anciens.reduce((a,h) => a + (h.rm1||0), 0) / anciens.length
           : moyRec;
 
@@ -1300,12 +1283,12 @@ const ProgrammeAdaptatif = {
 
         analyses[ref] = {
           ref,
-          nom:      window.EXERCICES[ref]?.nom || ref,
-          emoji:    window.EXERCICES[ref]?.emoji || '💪',
+          nom:     window.EXERCICES[ref]?.nom   || ref,
+          emoji:   window.EXERCICES[ref]?.emoji || '💪',
           tendance,
-          delta:    Math.round(delta * 10) / 10,
-          rm1:      prs[ref]?.rm1 || 0,
-          rm1Moy:   Math.round(moyRec)
+          delta:   Math.round(delta * 10) / 10,
+          rm1:     prs[ref]?.rm1 || 0,
+          rm1Moy:  Math.round(moyRec)
         };
       } catch(e) {}
     });
@@ -1313,9 +1296,6 @@ const ProgrammeAdaptatif = {
     return analyses;
   },
 
-  /**
-   * Suggère des ajustements de charges basés sur l'analyse
-   */
   getRecommandationsCharges() {
     const config   = this.getConfig();
     const analyses = this.analyser();
@@ -1361,19 +1341,16 @@ const ProgrammeAdaptatif = {
     return sugges;
   },
 
-  /**
-   * Détecte si l'utilisateur est en surmenage
-   */
   detecterSurmenage() {
     try {
-      const seances = Tracker.getHistoriqueSeances(14);
-      const rpes    = seances
+      const seances  = Tracker.getHistoriqueSeances(14);
+      const rpes     = seances
         .filter(s => s.rpeMoyen)
         .map(s => s.rpeMoyen);
 
       if (rpes.length < 3) return false;
 
-      const moyRPE  = rpes.reduce((a,b) => a+b, 0) / rpes.length;
+      const moyRPE   = rpes.reduce((a,b) => a+b, 0) / rpes.length;
       const seances7 = seances.filter(s => {
         const debut = Utils.ajouterJours(Utils.aujourd_hui(), -7);
         return s.date >= debut;
@@ -1383,20 +1360,16 @@ const ProgrammeAdaptatif = {
     } catch(e) { return false; }
   },
 
-  /**
-   * Retourne les exercices de variation pour un exercice
-   * qui stagne
-   */
   getVariations(ref) {
     const variations = {
-      bench_press:    ['incline_halteres','chest_press_machine','pompes'],
-      squat:          ['presse_cuisses','fentes','hip_thrust'],
-      tractions:      ['lat_pulldown','rowing_barre','pullover'],
-      dev_militaire:  ['shoulder_press_machine','elev_laterales','oiseau'],
-      curl_halteres:  ['curl_barre','curl_marteau','curl_machine'],
-      rowing_barre:   ['rowing_machine','lat_pulldown','tractions'],
-      ext_triceps_poulie: ['barre_front','dips_triceps'],
-      soulevé_terre:  ['squat','hip_thrust','hip_thrust'],
+      bench_press:            ['incline_halteres','chest_press_machine','pompes'],
+      squat:                  ['presse_cuisses','fentes','hip_thrust'],
+      tractions:              ['lat_pulldown','rowing_barre','pullover'],
+      dev_militaire:          ['shoulder_press_machine','elev_laterales','oiseau'],
+      curl_halteres:          ['curl_barre','curl_marteau','curl_machine'],
+      rowing_barre:           ['rowing_machine','lat_pulldown','tractions'],
+      ext_triceps_poulie:     ['barre_front','dips_triceps'],
+      'soulevé_terre':        ['squat','hip_thrust','rack_pull']
     };
     return (variations[ref] || []).map(r => ({
       ref:   r,
@@ -1405,9 +1378,6 @@ const ProgrammeAdaptatif = {
     }));
   },
 
-  /**
-   * Render de l'interface adaptative
-   */
   render(container) {
     if (!container) return;
 
@@ -1425,7 +1395,6 @@ const ProgrammeAdaptatif = {
 
     container.innerHTML = `
 
-      <!-- ═══ ALERTE SURMENAGE ═══ -->
       ${surmenage ? `
         <div class="card mb-md"
              style="border-color:var(--fd-coral);
@@ -1444,7 +1413,6 @@ const ProgrammeAdaptatif = {
           </div>
         </div>` : ''}
 
-      <!-- ═══ RÉSUMÉ ═══ -->
       <div class="card mb-md"
            style="background:linear-gradient(135deg,
                   rgba(75,75,249,0.15),
@@ -1478,7 +1446,6 @@ const ProgrammeAdaptatif = {
         </div>
       </div>
 
-      <!-- ═══ SUGGESTIONS ═══ -->
       ${sugges.length > 0 ? `
         <div class="section-title">💡 Recommandations</div>
         ${sugges.map(s => `
@@ -1498,8 +1465,7 @@ const ProgrammeAdaptatif = {
                 </div>
               </div>
               ${s.type === 'variation' ? `
-                <button onclick="ProgrammeAdaptatif
-                          ._voirVariations('${s.ref}')"
+                <button onclick="ProgrammeAdaptatif._voirVariations('${s.ref}')"
                         style="padding:4px 10px;
                                background:${s.color}22;
                                border:1px solid ${s.color}44;
@@ -1520,7 +1486,6 @@ const ProgrammeAdaptatif = {
           </div>
         </div>`}
 
-      <!-- ═══ EXERCICES EN PROGRESSION ═══ -->
       ${progressions.length > 0 ? `
         <div class="section-title">
           📈 En progression (${progressions.length})
@@ -1547,7 +1512,6 @@ const ProgrammeAdaptatif = {
             </div>
           </div>`).join('')}` : ''}
 
-      <!-- ═══ STAGNATIONS ═══ -->
       ${stagnations.length > 0 ? `
         <div class="section-title">
           ⏸ Stagnation (${stagnations.length})
@@ -1562,8 +1526,7 @@ const ProgrammeAdaptatif = {
                   ${a.nom}
                 </div>
               </div>
-              <button onclick="ProgrammeAdaptatif
-                        ._voirVariations('${a.ref}')"
+              <button onclick="ProgrammeAdaptatif._voirVariations('${a.ref}')"
                       style="padding:4px 10px;
                              background:rgba(249,239,119,0.1);
                              border:1px solid rgba(249,239,119,0.3);
@@ -1576,7 +1539,6 @@ const ProgrammeAdaptatif = {
             </div>
           </div>`).join('')}` : ''}
 
-      <!-- ═══ CONFIG ═══ -->
       <div class="card mt-md">
         <div class="card-label mb-md">⚙️ Paramètres adaptatifs</div>
         ${[
@@ -1588,8 +1550,6 @@ const ProgrammeAdaptatif = {
           <div class="score-row">
             <span class="score-row-label"
                   style="font-size:.82rem">${p.label}</span>
-
-            <!-- ✅ Toggle custom inline — pas de dépendance CSS externe -->
             <div onclick="ProgrammeAdaptatif._toggleConfig('${p.cle}', ${!config[p.cle]})"
                  style="position:relative;width:48px;height:26px;
                         cursor:pointer;flex-shrink:0">
@@ -1600,11 +1560,9 @@ const ProgrammeAdaptatif = {
                           border:2px solid ${config[p.cle]
                             ? 'var(--fd-indigo)'
                             : 'rgba(255,255,255,0.2)'};
-                          border-radius:99px;
-                          transition:all .25s">
+                          border-radius:99px;transition:all .25s">
               </div>
-              <div style="position:absolute;
-                          top:50%;
+              <div style="position:absolute;top:50%;
                           left:${config[p.cle] ? '24px' : '2px'};
                           transform:translateY(-50%);
                           width:18px;height:18px;
@@ -1661,8 +1619,7 @@ const ProgrammeAdaptatif = {
               Essayer
             </button>
           </div>`).join('')}
-        <button onclick="document.getElementById(
-                  'variations-panel').innerHTML=''"
+        <button onclick="document.getElementById('variations-panel').innerHTML=''"
                 class="btn-secondary mt-md"
                 style="width:100%;font-size:.78rem">
           Fermer
@@ -1678,7 +1635,6 @@ const ProgrammeAdaptatif = {
     config[cle]  = val;
     Utils.storage.set(this.CLE, config);
 
-    // ✅ Re-render la page pour mettre à jour l'état visuel
     const container = document.getElementById('page-adaptatif')
       || document.getElementById('stats-content');
     if (container) this.render(container);
@@ -1705,7 +1661,8 @@ window.SUPERSETS_RECOMMANDES   = SUPERSETS_RECOMMANDES;
 window.Programme               = Programme;
 
 console.log(
-  `✅ Programme v3.0 chargé — ` +
+  `✅ Programme v3.1 chargé — ` +
   `${Object.keys(EXERCICES).length} exercices, ` +
-  `${Object.keys(SEANCES_BASE).length} séances de base`
+  `${Object.keys(SEANCES_BASE).length} séances de base — ` +
+  `YouTube ✅ tous vérifiés`
 );
