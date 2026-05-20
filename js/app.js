@@ -2490,173 +2490,192 @@ modifierReps(exoIdx, delta) {
 
   // ✅ Timer repos AUTO avec transition
   lancerReposAuto(secondes, exoIdx, serieIdx,
-                  totalSeries, totalExos, seanceId) {
+                totalSeries, totalExos, seanceId) {
 
-    // Fermer overlay existant
-    TimerManager._fermerOverlay?.();
+  // ✅ Fermer overlay existant
+  this._fermerRepos?.();
 
-    const overlay = document.createElement('div');
-    overlay.id    = 'repos-auto-overlay';
-    overlay.style.cssText = `
-      position:fixed;inset:0;z-index:900;
-      background:rgba(9,9,45,0.97);
-      display:flex;flex-direction:column;
-      align-items:center;justify-content:center;
-      padding:24px;text-align:center;
-      animation:fadeIn .3s ease`;
+  // ✅ FIX BACKGROUND — Sauvegarder heure de fin
+  const heureFin = Date.now() + (secondes * 1000);
+  localStorage.setItem('ft_timer_fin',   heureFin.toString());
+  localStorage.setItem('ft_timer_total', secondes.toString());
+  localStorage.setItem('ft_timer_actif', 'true');
+  localStorage.setItem('ft_timer_seance', seanceId);
 
-    const derniereSerie = serieIdx + 1 >= totalSeries;
-    const dernierExo    = exoIdx + 1 >= totalExos;
+  const overlay = document.createElement('div');
+  overlay.id    = 'repos-auto-overlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:900;
+    background:rgba(9,9,45,0.97);
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:24px;text-align:center;
+    animation:fadeIn .3s ease`;
 
-    overlay.innerHTML = `
+  const derniereSerie = serieIdx + 1 >= totalSeries;
+  const dernierExo    = exoIdx + 1 >= totalExos;
 
-      <!-- Label repos -->
-      <div style="font-size:.65rem;font-weight:700;
-                  text-transform:uppercase;letter-spacing:.15em;
-                  color:var(--fd-mint);margin-bottom:16px">
-        😴 REPOS
-      </div>
+  overlay.innerHTML = `
+    <div style="font-size:.65rem;font-weight:700;
+                text-transform:uppercase;letter-spacing:.15em;
+                color:var(--fd-mint);margin-bottom:16px">
+      😴 REPOS
+    </div>
 
-      <!-- Cercle timer géant -->
-      <div style="position:relative;width:200px;height:200px;
-                  margin-bottom:24px" id="repos-cercle-wrap">
-        <svg width="200" height="200" style="transform:rotate(-90deg)">
-          <circle cx="100" cy="100" r="88"
-                  fill="none"
-                  stroke="rgba(139,240,187,0.1)"
-                  stroke-width="10"/>
-          <circle cx="100" cy="100" r="88"
-                  fill="none"
-                  stroke="var(--fd-mint)"
-                  stroke-width="10"
-                  stroke-linecap="round"
-                  stroke-dasharray="${2 * Math.PI * 88}"
-                  stroke-dashoffset="0"
-                  id="repos-arc"
-                  style="transition:stroke-dashoffset 1s linear"/>
-        </svg>
-        <div style="position:absolute;top:50%;left:50%;
-                    transform:translate(-50%,-50%)">
-          <div id="repos-display"
-               style="font-size:3.5rem;font-weight:800;
-                      color:var(--fd-mint);
-                      font-variant-numeric:tabular-nums;
-                      line-height:1">
-            ${this._formaterTemps(secondes)}
-          </div>
-          <div style="font-size:.65rem;color:var(--text-muted);
-                      margin-top:4px">secondes</div>
+    <div style="position:relative;width:200px;height:200px;
+                margin-bottom:24px" id="repos-cercle-wrap">
+      <svg width="200" height="200"
+           style="transform:rotate(-90deg)">
+        <circle cx="100" cy="100" r="88"
+                fill="none"
+                stroke="rgba(139,240,187,0.1)"
+                stroke-width="10"/>
+        <circle cx="100" cy="100" r="88"
+                fill="none"
+                stroke="var(--fd-mint)"
+                stroke-width="10"
+                stroke-linecap="round"
+                stroke-dasharray="${2 * Math.PI * 88}"
+                stroke-dashoffset="0"
+                id="repos-arc"
+                style="transition:stroke-dashoffset 1s linear"/>
+      </svg>
+      <div style="position:absolute;top:50%;left:50%;
+                  transform:translate(-50%,-50%)">
+        <div id="repos-display"
+             style="font-size:3.5rem;font-weight:800;
+                    color:var(--fd-mint);
+                    font-variant-numeric:tabular-nums;
+                    line-height:1">
+          ${this._formaterTemps(secondes)}
         </div>
+        <div style="font-size:.65rem;color:var(--text-muted);
+                    margin-top:4px">secondes</div>
       </div>
+    </div>
 
-      <!-- Prochaine série -->
-      <div style="font-size:.9rem;font-weight:700;
-                  color:var(--text-secondary);margin-bottom:20px">
-        ${derniereSerie
-          ? dernierExo
-            ? '🏁 Dernier exercice terminé !'
-            : `➡️ Prochain exercice`
-          : `Série ${serieIdx + 2} / ${totalSeries}`}
-      </div>
+    <div style="font-size:.9rem;font-weight:700;
+                color:var(--text-secondary);margin-bottom:20px">
+      ${derniereSerie
+        ? dernierExo
+          ? '🏁 Dernier exercice terminé !'
+          : '➡️ Prochain exercice'
+        : `Série ${serieIdx + 2} / ${totalSeries}`}
+    </div>
 
-      <!-- Même poids ? Copier -->
-      ${!derniereSerie ? `
-        <button onclick="LiveRapide._copierPourSuivante(
-                  ${exoIdx}, ${serieIdx})"
-                style="padding:10px 20px;margin-bottom:16px;
-                       background:rgba(75,75,249,0.15);
-                       border:1px solid rgba(75,75,249,0.3);
-                       border-radius:var(--radius-full);
-                       font-size:.78rem;font-weight:700;
-                       color:var(--fd-indigo);cursor:pointer">
-          ↩️ Même poids pour S${serieIdx + 2}
-        </button>` : ''}
+    ${!derniereSerie ? `
+      <button onclick="LiveRapide._copierPourSuivante(
+                ${exoIdx}, ${serieIdx})"
+              style="padding:10px 20px;margin-bottom:16px;
+                     background:rgba(75,75,249,0.15);
+                     border:1px solid rgba(75,75,249,0.3);
+                     border-radius:var(--radius-full);
+                     font-size:.78rem;font-weight:700;
+                     color:var(--fd-indigo);cursor:pointer">
+        ↩️ Même poids pour S${serieIdx + 2}
+      </button>` : ''}
 
-      <!-- Contrôles -->
-      <div style="display:flex;gap:10px;width:100%;max-width:300px">
-        <button onclick="LiveRapide._ajouterTemps(15)"
-                style="flex:1;padding:12px;
-                       background:rgba(255,255,255,0.06);
-                       border:1px solid rgba(255,255,255,0.1);
-                       border-radius:var(--radius-md);
-                       font-size:.82rem;font-weight:700;
-                       color:var(--text-secondary);cursor:pointer">
-          +15s
-        </button>
-        <button onclick="LiveRapide._passerRepos('${seanceId}')"
-                style="flex:2;padding:12px;
-                       background:var(--fd-indigo);
-                       border:none;border-radius:var(--radius-md);
-                       font-size:.85rem;font-weight:700;
-                       color:white;cursor:pointer">
-          ⚡ Passer
-        </button>
-      </div>
+    <div style="display:flex;gap:10px;
+                width:100%;max-width:300px">
+      <button onclick="LiveRapide._ajouterTemps(15)"
+              style="flex:1;padding:12px;
+                     background:rgba(255,255,255,0.06);
+                     border:1px solid rgba(255,255,255,0.1);
+                     border-radius:var(--radius-md);
+                     font-size:.82rem;font-weight:700;
+                     color:var(--text-secondary);cursor:pointer">
+        +15s
+      </button>
+      <button onclick="LiveRapide._passerRepos('${seanceId}')"
+              style="flex:2;padding:12px;
+                     background:var(--fd-indigo);border:none;
+                     border-radius:var(--radius-md);
+                     font-size:.85rem;font-weight:700;
+                     color:white;cursor:pointer">
+        ⚡ Passer
+      </button>
+    </div>
 
-      <!-- Countdown transition -->
-      <div id="repos-countdown"
-           style="display:none;margin-top:20px;font-size:.88rem;
-                  color:var(--text-muted)">
-        Prochaine série dans <span id="repos-countdown-val"
-        style="font-weight:800;color:var(--fd-indigo)">3</span>s
-        <button onclick="LiveRapide._annulerTransition()"
-                style="margin-left:8px;background:none;border:none;
-                       color:var(--text-muted);font-size:.78rem;
-                       cursor:pointer;text-decoration:underline">
-          Attendre
-        </button>
-      </div>
-    `;
+    <div id="repos-countdown"
+         style="display:none;margin-top:20px;
+                font-size:.88rem;color:var(--text-muted)">
+      Prochaine série dans
+      <span id="repos-countdown-val"
+            style="font-weight:800;color:var(--fd-indigo)">
+        3
+      </span>s
+      <button onclick="LiveRapide._annulerTransition()"
+              style="margin-left:8px;background:none;border:none;
+                     color:var(--text-muted);font-size:.78rem;
+                     cursor:pointer;text-decoration:underline">
+        Attendre
+      </button>
+    </div>
 
-    document.body.appendChild(overlay);
+    <!-- ✅ Message retour arrière-plan -->
+    <div id="repos-bg-msg"
+         style="display:none;margin-top:16px;
+                padding:10px 14px;
+                background:rgba(139,240,187,0.1);
+                border:1px solid rgba(139,240,187,0.2);
+                border-radius:var(--radius-md);
+                font-size:.75rem;color:var(--fd-mint);
+                text-align:center">
+      ✅ Repos terminé pendant que l'app était en arrière-plan !
+    </div>
+  `;
 
-    // ✅ Lancer le timer
-    this._reposSecondes  = secondes;
-    this._reposTotal     = secondes;
-    this._reposActif     = true;
-    this._transitionActif = false;
-    this._prochainSeanceId = seanceId;
+  document.body.appendChild(overlay);
 
-    this._reposInterval = setInterval(() => {
-      if (!this._reposActif) return;
+  // ✅ State timer
+  this._reposSecondes   = secondes;
+  this._reposTotal      = secondes;
+  this._reposActif      = true;
+  this._transitionActif = false;
 
-      this._reposSecondes--;
+  // ✅ FIX — Utiliser heure absolue au lieu de décompte
+  const heureDeFin = Date.now() + (secondes * 1000);
 
-      // Mettre à jour display
-      const disp = document.getElementById('repos-display');
-      if (disp) disp.textContent = this._formaterTemps(
-        Math.max(0, this._reposSecondes)
-      );
+  this._reposInterval = setInterval(() => {
+    if (!this._reposActif) return;
 
-      // Mettre à jour arc
-      const arc  = document.getElementById('repos-arc');
-      if (arc) {
-        const circ = 2 * Math.PI * 88;
-        const pct  = Math.max(0,
-          this._reposSecondes / this._reposTotal
-        );
-        arc.style.strokeDashoffset = circ * (1 - pct);
-      }
+    // ✅ FIX — Calculer depuis l'heure réelle
+    const resteMs  = heureDeFin - Date.now();
+    const resteSec = Math.ceil(resteMs / 1000);
 
-      // Sons 3 dernières secondes
-      if (this._reposSecondes <= 3
-          && this._reposSecondes > 0) {
-        Utils.vibrer([30]);
-        try { timerRepos?.jouerSon('bip'); } catch(e) {}
-      }
+    // Stocker pour _ajouterTemps
+    this._reposSecondes = Math.max(0, resteSec);
 
-      // ✅ Timer terminé → transition auto
-      if (this._reposSecondes <= 0) {
-        clearInterval(this._reposInterval);
-        Utils.vibrer([200, 100, 200]);
-        try { timerRepos?.jouerSon('rest'); } catch(e) {}
-        try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
+    // Mettre à jour display
+    const disp = document.getElementById('repos-display');
+    if (disp) disp.textContent =
+      this._formaterTemps(Math.max(0, resteSec));
 
-        // Q2 = B + C — vibration forte + retour auto en 3s
-        this._lancerCountdown(seanceId);
-      }
-    }, 1000);
-  },
+    // Mettre à jour arc
+    const arc = document.getElementById('repos-arc');
+    if (arc) {
+      const circ = 2 * Math.PI * 88;
+      const pct  = Math.max(0, resteMs / (secondes * 1000));
+      arc.style.strokeDashoffset = circ * (1 - pct);
+    }
+
+    // Sons 3 dernières secondes
+    if (resteSec <= 3 && resteSec > 0) {
+      Utils.vibrer([30]);
+      try { timerRepos?.jouerSon('bip'); } catch(e) {}
+    }
+
+    // ✅ Timer terminé
+    if (resteSec <= 0) {
+      clearInterval(this._reposInterval);
+      localStorage.removeItem('ft_timer_actif');
+      Utils.vibrer([200, 100, 200]);
+      try { timerRepos?.jouerSon('rest'); } catch(e) {}
+      try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
+      this._lancerCountdown(seanceId);
+    }
+  }, 500); // ✅ Rafraîchir toutes les 500ms pour plus de précision
+},
 
   // ✅ Countdown 3s avant retour auto
   _lancerCountdown(seanceId) {
@@ -2711,12 +2730,20 @@ modifierReps(exoIdx, delta) {
   },
 
   _ajouterTemps(secondes) {
-    this._reposSecondes  = (this._reposSecondes || 0) + secondes;
-    this._reposTotal     = Math.max(
-      this._reposTotal || 0, this._reposSecondes
-    );
-    Utils.vibrer([20]);
-  },
+  // ✅ FIX — Mettre à jour aussi l'heure dans localStorage
+  const heureFin    = parseInt(
+    localStorage.getItem('ft_timer_fin') || Date.now().toString()
+  );
+  const nouvelleFin = heureFin + (secondes * 1000);
+  localStorage.setItem('ft_timer_fin', nouvelleFin.toString());
+
+  this._reposSecondes = (this._reposSecondes || 0) + secondes;
+  this._reposTotal    = Math.max(
+    this._reposTotal || 0, this._reposSecondes
+  );
+  Utils.vibrer([20]);
+  Utils.toast(`+${secondes}s ajoutées ✅`, 'success', 800);
+},
 
   _copierPourSuivante(exoIdx, serieActuelleIdx) {
     const poidsInput = document.getElementById(
@@ -2775,15 +2802,77 @@ modifierReps(exoIdx, delta) {
     if (m > 0) return `${m}:${String(r).padStart(2,'0')}`;
     return String(s);
   },
+   // ✅ FIX BACKGROUND — Vérifier si timer fini pendant l'absence
+_verifierTimerAuRetour() {
+  const actif = localStorage.getItem('ft_timer_actif');
+  if (!actif) return;
 
-  reset() {
-    this._valeurs = {};
-    clearInterval(this._reposInterval);
-    clearInterval(this._countdownInterval);
-    this._reposActif      = false;
-    this._transitionActif = false;
-    document.getElementById('repos-auto-overlay')?.remove();
+  const heureFin = parseInt(
+    localStorage.getItem('ft_timer_fin') || '0'
+  );
+  const resteMs  = heureFin - Date.now();
+  const resteSec = Math.ceil(resteMs / 1000);
+
+  // ✅ Timer déjà terminé pendant l'absence
+  if (resteSec <= 0) {
+    localStorage.removeItem('ft_timer_actif');
+    localStorage.removeItem('ft_timer_fin');
+    localStorage.removeItem('ft_timer_total');
+
+    // ✅ Si l'overlay est toujours visible → le mettre à 0
+    const disp = document.getElementById('repos-display');
+    if (disp) {
+      disp.textContent  = '0';
+      disp.style.color  = 'var(--fd-coral)';
+    }
+
+    // ✅ Afficher message si overlay ouvert
+    const bgMsg = document.getElementById('repos-bg-msg');
+    if (bgMsg) bgMsg.style.display = 'block';
+
+    // ✅ Si pas d'overlay → toast + vibration
+    const overlay = document.getElementById('repos-auto-overlay');
+    if (!overlay) {
+      Utils.toast(
+        '⏱ Repos terminé ! Prêt pour la série suivante ?',
+        'success',
+        5000
+      );
+      Utils.vibrer([200, 100, 200, 100, 200]);
+      try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
+    } else {
+      // ✅ Lancer le countdown si overlay visible
+      Utils.vibrer([200, 100, 200]);
+      this._lancerCountdown(
+        localStorage.getItem('ft_timer_seance') || ''
+      );
+    }
+
+    return true; // Timer était fini
   }
+
+  // ✅ Timer encore en cours → mettre à jour l'affichage
+  if (resteSec > 0) {
+    const disp = document.getElementById('repos-display');
+    if (disp) disp.textContent = this._formaterTemps(resteSec);
+    return false; // Timer encore actif
+  }
+},
+  reset() {
+  this._valeurs         = {};
+  this._reposActif      = false;
+  this._transitionActif = false;
+  clearInterval(this._reposInterval);
+  clearInterval(this._countdownInterval);
+
+  // ✅ FIX — Nettoyer localStorage
+  localStorage.removeItem('ft_timer_actif');
+  localStorage.removeItem('ft_timer_fin');
+  localStorage.removeItem('ft_timer_total');
+  localStorage.removeItem('ft_timer_seance');
+
+  document.getElementById('repos-auto-overlay')?.remove();
+}
 };
 
 window.LiveRapide = LiveRapide;
@@ -5397,6 +5486,30 @@ async function init() {
 
     naviguer('home');
     _updateHeaderXP();
+    // ✅ FIX BACKGROUND TIMER — Détecter retour au premier plan
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    // Vérifier si timer repos fini pendant l'absence
+    try {
+      LiveRapide._verifierTimerAuRetour();
+    } catch(e) {}
+
+    // Rafraîchir le chrono sticky
+    try {
+      if (ChronoSticky._visible) {
+        const disp = document.querySelector(
+          '.chrono-sticky-display'
+        );
+        if (disp && Chrono?._actif) {
+          disp.textContent =
+            Chrono.formaterDuree(
+              Chrono.getDureeSecondes()
+            );
+        }
+      }
+    } catch(e) {}
+  }
+}); 
 
     try { ThemeManager.init(); } catch(e) {}
     try { SwipeNav.init();     } catch(e) {}
