@@ -2234,23 +2234,93 @@ const LiveRapide = {
     return this._valeurs[exoIdx] || { poids:'', reps:'', rpe:7 };
   },
 
-  // ✅ Modifier poids avec +/-
-  modifierPoids(exoIdx, delta) {
-    const v     = this.get(exoIdx);
-    const actuel = parseFloat(v.poids) || 0;
-    const nouveau = Math.max(0, Math.round((actuel + delta) * 4) / 4);
-    this._valeurs[exoIdx] = { ...v, poids: nouveau };
-    this._updateAffichage(exoIdx);
-  },
+// ✅ Modifier poids avec +/- — FIX DOM direct
+modifierPoids(exoIdx, delta) {
 
-  // ✅ Modifier reps avec +/-
-  modifierReps(exoIdx, delta) {
-    const v      = this.get(exoIdx);
-    const actuel = parseInt(v.reps) || 0;
-    const nouveau = Math.max(1, actuel + delta);
-    this._valeurs[exoIdx] = { ...v, reps: nouveau };
-    this._updateAffichage(exoIdx);
-  },
+  // Trouver le premier input poids non validé
+  let inputActif = null;
+  document.querySelectorAll(
+    `[id^="lr-poids-${exoIdx}-"]`
+  ).forEach(input => {
+    if (inputActif) return;
+    const parts    = input.id.split('-');
+    const serieIdx = parseInt(parts[parts.length - 1]);
+    const btn      = document.getElementById(
+      `btn-serie-${exoIdx}-${serieIdx}`
+    );
+    if (btn && !btn.disabled) inputActif = input;
+  });
+
+  if (!inputActif) return;
+
+  // Calculer nouvelle valeur
+  const actuel  = parseFloat(inputActif.value) || 0;
+  const nouveau = Math.max(0,
+    Math.round((actuel + delta) * 4) / 4
+  );
+
+  // ✅ Mettre à jour le DOM directement
+  inputActif.value = nouveau;
+
+  // Mettre à jour le state
+  const v = this.get(exoIdx);
+  this._valeurs[exoIdx] = { ...v, poids: nouveau };
+
+  // Feedback visuel
+  inputActif.style.borderColor = delta > 0
+    ? 'var(--fd-mint)' : 'var(--fd-coral)';
+  inputActif.style.transform = 'scale(1.04)';
+  setTimeout(() => {
+    inputActif.style.borderColor = 'var(--border-color)';
+    inputActif.style.transform   = '';
+  }, 180);
+
+  // Vibration légère
+  Utils.vibrer([10]);
+},
+
+// ✅ Modifier reps avec +/- — FIX DOM direct
+modifierReps(exoIdx, delta) {
+
+  // Trouver le premier input reps non validé
+  let inputActif = null;
+  document.querySelectorAll(
+    `[id^="lr-reps-${exoIdx}-"]`
+  ).forEach(input => {
+    if (inputActif) return;
+    const parts    = input.id.split('-');
+    const serieIdx = parseInt(parts[parts.length - 1]);
+    const btn      = document.getElementById(
+      `btn-serie-${exoIdx}-${serieIdx}`
+    );
+    if (btn && !btn.disabled) inputActif = input;
+  });
+
+  if (!inputActif) return;
+
+  // Calculer nouvelle valeur
+  const actuel  = parseInt(inputActif.value) || 0;
+  const nouveau = Math.max(1, actuel + delta);
+
+  // ✅ Mettre à jour le DOM directement
+  inputActif.value = nouveau;
+
+  // Mettre à jour le state
+  const v = this.get(exoIdx);
+  this._valeurs[exoIdx] = { ...v, reps: nouveau };
+
+  // Feedback visuel
+  inputActif.style.borderColor = delta > 0
+    ? 'var(--fd-mint)' : 'var(--fd-coral)';
+  inputActif.style.transform = 'scale(1.04)';
+  setTimeout(() => {
+    inputActif.style.borderColor = 'var(--border-color)';
+    inputActif.style.transform   = '';
+  }, 180);
+
+  // Vibration légère
+  Utils.vibrer([10]);
+},
 
   // ✅ Saisie directe poids
   setPoids(exoIdx, val) {
