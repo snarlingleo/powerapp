@@ -3235,7 +3235,7 @@ ${!derniereSerie ? `
       // ✅ NOTIFICATION SYSTÈME — même téléphone verrouillé
       LiveRapide._notifierFinRepos(exoIdx, serieIdx, totalSeries);
 
-      this._lancerCountdown(seanceId);
+      this._enchaînerSerieSuivante(exoIdx, serieIdx, totalSeries);
     }
   }, 500); // ✅ Rafraîchir toutes les 500ms pour plus de précision
 },
@@ -3770,6 +3770,160 @@ const LiveStickyBar = {
   }
 };
 
+// ════════════════════════════════════════════════════════════
+// ✅ CHRONO SÉRIE — Compte à rebours durée effort
+// ════════════════════════════════════════════════════════════
+const ChronoSerie = {
+
+  _interval:  null,
+  _exoIdx:    null,
+  _serieIdx:  null,
+
+  // ✅ Calcul durée selon reps (2.5s/rep)
+  _calculerDuree(reps) {
+    const r = parseInt(reps) || 10;
+    return Math.min(60, Math.max(15, Math.round(r * 2.5)));
+  },
+
+  // ✅ Démarrer le chrono pour une série
+  demarrer(exoIdx, serieIdx, repsTarget) {
+    // Stopper l'ancien si actif
+    this.stopper();
+
+    this._exoIdx  = exoIdx;
+    this._serieIdx = serieIdx;
+
+    const duree = this._calculerDuree(repsTarget);
+    const circ  = 2 * Math.PI * 14;
+    let restant = duree;
+    const heureFin = Date.now() + (duree * 1000);
+
+    // ✅ Masquer le bouton "Commencer"
+    const btnCommencer = document.getElementById(
+      `btn-commencer-${exoIdx}`
+    );
+    if (btnCommencer) btnCommencer.style.display = 'none';
+
+    // ✅ Afficher le chrono actif
+    const chronoActif = document.getElementById(
+      `chrono-serie-actif-${exoIdx}-${serieIdx}`
+    );
+    if (chronoActif) chronoActif.style.display = 'flex';
+
+    // ✅ Masquer "En attente"
+    const idle = document.getElementById(
+      `chrono-serie-idle-${exoIdx}-${serieIdx}`
+    );
+    if (idle) idle.style.display = 'none';
+
+    // ✅ Scroll vers l'exercice
+    document.getElementById(`lr-bloc-${exoIdx}-${serieIdx}`)
+      ?.scrollIntoView({ behavior:'smooth', block:'center' });
+
+    // ✅ Toast démarrage
+    Utils.toast(
+      `⏱️ Série en cours — ${duree}s (~${repsTarget} reps)`,
+      'info', 2000
+    );
+    Utils.vibrer([30]);
+
+    // ✅ Lancer le décompte
+    this._interval = setInterval(() => {
+      const resteMs  = heureFin - Date.now();
+      const resteSec = Math.ceil(resteMs / 1000);
+      restant        = Math.max(0, resteSec);
+
+      // Mettre à jour l'affichage
+      const val = document.getElementById(
+        `chrono-val-${exoIdx}-${serieIdx}`
+      );
+      const arc = document.getElementById(
+        `arc-serie-${exoIdx}-${serieIdx}`
+      );
+
+      if (val) val.textContent = restant;
+
+      if (arc) {
+        const pct    = Math.max(0, resteMs / (duree * 1000));
+        arc.style.strokeDashoffset = circ * (1 - pct);
+        // Changer couleur selon urgence
+        arc.style.stroke = restant <= 5
+          ? 'var(--fd-coral)'
+          : restant <= 10
+            ? 'var(--fd-lemon)'
+            : 'var(--fd-mint)';
+      }
+
+      // ✅ 3 dernières secondes → vibration
+      if (restant <= 3 && restant > 0) {
+        Utils.vibrer([20]);
+      }
+
+      // ✅ Temps écoulé !
+      if (restant <= 0) {
+        this.stopper();
+        this._onTermine(exoIdx, serieIdx);
+      }
+    }, 250);
+  },
+
+  // ✅ Quand le chrono se termine
+  _onTermine(exoIdx, serieIdx) {
+    const val = document.getElementById(
+      `chrono-val-${exoIdx}-${serieIdx}`
+    );
+    const arc = document.getElementById(
+      `arc-serie-${exoIdx}-${serieIdx}`
+    );
+
+    if (val) {
+      val.textContent  = '✅';
+      val.style.color  = 'var(--fd-mint)';
+      val.style.fontSize = '.5rem';
+    }
+    if (arc) arc.style.stroke = 'var(--fd-mint)';
+
+    // ✅ Vibration + toast
+    Utils.vibrer([100, 50, 100]);
+    Utils.toast('💪 C\'est l\'heure ! Lance ta série !', 'success', 2000);
+
+    // ✅ Highlight le bouton "SÉRIE FAITE"
+    const btn = document.getElementById(
+      `btn-serie-${exoIdx}-${serieIdx}`
+    );
+    if (btn) {
+      btn.style.animation  = 'pulse 1s infinite';
+      btn.style.background = 'rgba(139,240,187,0.9)';
+      btn.style.color      = '#09092d';
+    }
+  },
+
+  // ✅ Afficher chrono pour série suivante (après repos)
+  // appelé automatiquement depuis lancerReposAuto
+  demarrerApresRepos(exoIdx, serieIdx, repsTarget) {
+    // ✅ Masquer "En attente" de la série suivante
+    const idle = document.getElementById(
+      `chrono-serie-idle-${exoIdx}-${serieIdx}`
+    );
+    if (idle) idle.style.display = 'none';
+
+    // ✅ Démarrer direct le chrono
+    this.demarrer(exoIdx, serieIdx, repsTarget);
+  },
+
+  stopper() {
+    clearInterval(this._interval);
+    this._interval = null;
+  },
+
+  reset() {
+    this.stopper();
+    this._exoIdx  = null;
+    this._serieIdx = null;
+  }
+};
+
+window.ChronoSerie = ChronoSerie;
 window.LiveStickyBar = LiveStickyBar;
 
 // ════════════════════════════════════════════════════════════
@@ -4233,13 +4387,17 @@ function _rendreLive(container, options = {}) {
 }
 
 // ✅ Toggle mode guidé
-function _toggleModeGuide(seanceId, exercicesJson) {
+function _toggleModeGuide(seanceId) {
   try {
     if (SeanceGuidee._actif) {
       SeanceGuidee.arreter();
+      Utils.toast('🔇 Mode guidé désactivé', 'info', 1500);
     } else {
-      const exercices = JSON.parse(exercicesJson);
+      // ✅ Récupérer les exercices depuis window
+      // au lieu du JSON inline (évite les erreurs de parsing)
+      const exercices = window._liveExercices?.[seanceId] || [];
       SeanceGuidee.demarrer(seanceId, exercices);
+      Utils.toast('🎙️ Mode guidé activé !', 'success', 1500);
     }
   } catch(e) {
     console.error('[App] Erreur mode guidé:', e);
@@ -4253,8 +4411,12 @@ function _renderLiveHeader(seance) {
 
   // ✅ Créer la barre sticky si pas encore là
   setTimeout(() => {
-    LiveStickyBar.init(seance);
-  }, 100);
+  LiveStickyBar.init(seance);
+}, 100);
+
+// ✅ Stocker les exercices pour le mode guidé
+window._liveExercices = window._liveExercices || {};
+window._liveExercices[seance.id] = seance.exercices || [];
 
   return `
     <div class="card mb-md"
@@ -4298,12 +4460,7 @@ function _renderLiveHeader(seance) {
             ▶ Démarrer le chrono
           </button>
           <button id="btn-mode-guide"
-                  onclick="_toggleModeGuide(
-                    '${seance.id}',
-                    '${JSON.stringify(seance.exercices||[])
-                      .replace(/'/g,"\\'")
-                      .replace(/\n/g,'')}'
-                  )"
+        onclick="_toggleModeGuide('${seance.id}')"
                   style="display:flex;align-items:center;gap:4px;
                          padding:5px 10px;
                          background:rgba(75,75,249,0.12);
@@ -4351,9 +4508,17 @@ function _renderExercicesLive(seance, seanceId) {
 
   // ✅ Init WakeLock au démarrage de la séance
   setTimeout(() => {
-    try { LiveRapide.activerWakeLock(); } catch(e) {}
+  try { LiveRapide.activerWakeLock(); } catch(e) {}
+
+  // ✅ Essayer de restaurer un état précédent
+  const restaure = LiveRapide.restaurerEtat(seanceId);
+  if (!restaure) {
+    // Pas d'état sauvegardé → reset normal
     LiveRapide.reset();
-  }, 300);
+  }
+  // ✅ Réinitialiser ChronoSerie
+  try { ChronoSerie.reset(); } catch(e) {}
+}, 300);
 
   return `
     <div class="card mb-md">
@@ -4453,265 +4618,254 @@ function _renderExercicesLive(seance, seanceId) {
             </div>
 
             <!-- ✅ SÉRIES ULTRA-RAPIDES -->
-            ${Array.from({ length: ex.series }, (_, serieIdx) => `
+           ${Array.from({ length: ex.series }, (_, serieIdx) => `
 
-              <div class="lr-serie-bloc"
-                   id="lr-bloc-${exoIdx}-${serieIdx}"
-                   style="margin-bottom:16px;padding:14px;
-                          background:rgba(255,255,255,0.03);
-                          border:1px solid rgba(255,255,255,0.07);
-                          border-radius:var(--radius-lg);
-                          transition:all .3s">
+  <div class="lr-serie-bloc"
+       id="lr-bloc-${exoIdx}-${serieIdx}"
+       style="margin-bottom:16px;padding:14px;
+              background:rgba(255,255,255,0.03);
+              border:1px solid rgba(255,255,255,0.07);
+              border-radius:var(--radius-lg);
+              transition:all .3s">
 
-                <!-- Label série + statut -->
-                <div style="display:flex;align-items:center;
-                            justify-content:space-between;
-                            margin-bottom:12px">
-                  <div style="font-size:.78rem;font-weight:800;
-                              color:var(--fd-indigo)">
-                    Série ${serieIdx + 1} / ${ex.series}
-                  </div>
-                  <div id="lr-statut-${exoIdx}-${serieIdx}"
-                       style="font-size:.65rem;
-                              color:var(--text-muted)">
-                    En attente
-                  </div>
-                </div>
+    <!-- Label série + chrono -->
+    <div style="display:flex;align-items:center;
+                justify-content:space-between;
+                margin-bottom:12px">
+      <div style="font-size:.78rem;font-weight:800;
+                  color:var(--fd-indigo)">
+        Série ${serieIdx + 1} / ${ex.series}
+      </div>
 
-                <!-- ✅ POIDS — Pavé custom + input direct -->
-                <div style="margin-bottom:12px">
-                  <div style="font-size:.6rem;font-weight:700;
-                              text-transform:uppercase;
-                              letter-spacing:.08em;
-                              color:var(--text-muted);
-                              margin-bottom:6px">
-                    🏋️ Charge (kg)
-                  </div>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <!-- Bouton - -->
-                    <button onclick="LiveRapide.modifierPoids(
-                              ${exoIdx}, -2.5)"
-                            style="width:48px;height:48px;
-                                   flex-shrink:0;
-                                   background:rgba(255,141,150,0.12);
-                                   border:2px solid rgba(255,141,150,0.3);
-                                   border-radius:var(--radius-md);
-                                   font-size:1.2rem;font-weight:800;
-                                   color:var(--fd-coral);cursor:pointer">
-                      −
-                    </button>
+      <!-- ✅ CHRONO SÉRIE -->
+      <div id="chrono-serie-${exoIdx}-${serieIdx}"
+           style="display:flex;align-items:center;gap:6px">
 
-                    <!-- Input poids -->
-                    <div style="flex:1;position:relative">
-                      <input type="number"
-                             inputmode="decimal"
-                             id="lr-poids-${exoIdx}-${serieIdx}"
-                             placeholder="${poidsDefaut || 'kg'}"
-                             value="${poidsDefaut || ''}"
-                             step="2.5"
-                             min="0"
-                             oninput="LiveRapide.setPoids(
-                               ${exoIdx}, this.value)"
-                             style="width:100%;padding:12px 8px;
-                                    font-size:1.3rem;font-weight:800;
-                                    text-align:center;
-                                    background:var(--bg-card);
-                                    border:2px solid var(--border-color);
-                                    border-radius:var(--radius-md);
-                                    color:var(--text-primary);
-                                    outline:none;
-                                    transition:border-color .2s"
-                             onfocus="this.style.borderColor=
-                               'var(--fd-indigo)';
-                               this.select()"
-                             onblur="this.style.borderColor=
-                               'var(--border-color)'"/>
-                      <div style="position:absolute;
-                                  bottom:-14px;left:0;right:0;
-                                  text-align:center;
-                                  font-size:.52rem;
-                                  color:var(--text-muted);
-                                  font-weight:700;pointer-events:none">
-                        KG
-                      </div>
-                    </div>
+        <!-- Affiché quand pas encore démarré -->
+        <div id="chrono-serie-idle-${exoIdx}-${serieIdx}"
+             style="font-size:.65rem;color:var(--text-muted);
+                    display:${serieIdx === 0 ? 'none' : 'flex'};
+                    align-items:center;gap:4px">
+          <span style="width:8px;height:8px;border-radius:50%;
+                       background:rgba(255,255,255,0.15);
+                       display:inline-block"></span>
+          En attente
+        </div>
 
-                    <!-- Bouton + -->
-                    <button onclick="LiveRapide.modifierPoids(
-                              ${exoIdx}, 2.5)"
-                            style="width:48px;height:48px;
-                                   flex-shrink:0;
-                                   background:rgba(139,240,187,0.12);
-                                   border:2px solid rgba(139,240,187,0.3);
-                                   border-radius:var(--radius-md);
-                                   font-size:1.2rem;font-weight:800;
-                                   color:var(--fd-mint);cursor:pointer">
-                      +
-                    </button>
-                  </div>
-                </div>
+        <!-- ✅ BOUTON COMMENCER — seulement S1 de chaque exo -->
+        ${serieIdx === 0 ? `
+          <button id="btn-commencer-${exoIdx}"
+                  onclick="ChronoSerie.demarrer(${exoIdx}, ${serieIdx}, ${ex.reps?.split?.('-')?.[0] || ex.reps || 10})"
+                  style="display:flex;align-items:center;gap:5px;
+                         padding:6px 12px;
+                         background:var(--fd-mint);
+                         border:none;
+                         border-radius:var(--radius-full);
+                         font-size:.7rem;font-weight:800;
+                         color:#09092d;cursor:pointer;
+                         box-shadow:0 2px 10px rgba(139,240,187,0.4);
+                         transition:all .2s"
+                  onmousedown="this.style.transform='scale(.95)'"
+                  onmouseup="this.style.transform=''">
+            ▶ Commencer
+          </button>` : ''}
 
-                <!-- ✅ REPS — Pavé custom + input direct -->
-                <div style="margin-bottom:16px">
-                  <div style="font-size:.6rem;font-weight:700;
-                              text-transform:uppercase;
-                              letter-spacing:.08em;
-                              color:var(--text-muted);
-                              margin-bottom:6px">
-                    🔁 Répétitions
-                  </div>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <!-- Bouton - -->
-                    <button onclick="LiveRapide.modifierReps(
-                              ${exoIdx}, -1)"
-                            style="width:48px;height:48px;
-                                   flex-shrink:0;
-                                   background:rgba(255,141,150,0.12);
-                                   border:2px solid rgba(255,141,150,0.3);
-                                   border-radius:var(--radius-md);
-                                   font-size:1.2rem;font-weight:800;
-                                   color:var(--fd-coral);cursor:pointer">
-                      −
-                    </button>
+        <!-- Chrono en cours -->
+        <div id="chrono-serie-actif-${exoIdx}-${serieIdx}"
+             style="display:none;align-items:center;gap:6px">
+          <div style="position:relative;width:36px;height:36px">
+            <svg width="36" height="36" viewBox="0 0 36 36"
+                 style="transform:rotate(-90deg)">
+              <circle cx="18" cy="18" r="14"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.08)"
+                      stroke-width="3"/>
+              <circle cx="18" cy="18" r="14"
+                      fill="none"
+                      stroke="var(--fd-lemon)"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      stroke-dasharray="${2 * Math.PI * 14}"
+                      stroke-dashoffset="0"
+                      id="arc-serie-${exoIdx}-${serieIdx}"
+                      style="transition:stroke-dashoffset .5s linear"/>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;
+                        transform:translate(-50%,-50%);
+                        font-size:.55rem;font-weight:800;
+                        color:var(--fd-lemon)"
+                 id="chrono-val-${exoIdx}-${serieIdx}">
+              —
+            </div>
+          </div>
+          <div style="font-size:.72rem;font-weight:700;
+                      color:var(--fd-lemon)">
+            Série en cours
+          </div>
+        </div>
 
-                    <!-- Input reps -->
-                    <div style="flex:1;position:relative">
-                      <input type="number"
-                             inputmode="numeric"
-                             id="lr-reps-${exoIdx}-${serieIdx}"
-                             placeholder="${repsDefaut || 'reps'}"
-                             value="${repsDefaut || ''}"
-                             min="1"
-                             oninput="LiveRapide.setReps(
-                               ${exoIdx}, this.value)"
-                             style="width:100%;padding:12px 8px;
-                                    font-size:1.3rem;font-weight:800;
-                                    text-align:center;
-                                    background:var(--bg-card);
-                                    border:2px solid var(--border-color);
-                                    border-radius:var(--radius-md);
-                                    color:var(--text-primary);
-                                    outline:none;
-                                    transition:border-color .2s"
-                             onfocus="this.style.borderColor=
-                               'var(--fd-indigo)';
-                               this.select()"
-                             onblur="this.style.borderColor=
-                               'var(--border-color)'"/>
-                      <div style="position:absolute;
-                                  bottom:-14px;left:0;right:0;
-                                  text-align:center;
-                                  font-size:.52rem;
-                                  color:var(--text-muted);
-                                  font-weight:700;pointer-events:none">
-                        REPS
-                      </div>
-                    </div>
+        <!-- Statut validé -->
+        <div id="lr-statut-${exoIdx}-${serieIdx}"
+             style="font-size:.65rem;color:var(--text-muted);
+                    display:none">
+        </div>
+      </div>
+    </div>
 
-                    <!-- Bouton + -->
-                    <button onclick="LiveRapide.modifierReps(
-                              ${exoIdx}, 1)"
-                            style="width:48px;height:48px;
-                                   flex-shrink:0;
-                                   background:rgba(139,240,187,0.12);
-                                   border:2px solid rgba(139,240,187,0.3);
-                                   border-radius:var(--radius-md);
-                                   font-size:1.2rem;font-weight:800;
-                                   color:var(--fd-mint);cursor:pointer">
-                      +
-                    </button>
-                  </div>
-                </div>
+    <!-- POIDS -->
+    <div style="margin-bottom:12px">
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.08em;
+                  color:var(--text-muted);margin-bottom:6px">
+        🏋️ Charge (kg)
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="LiveRapide.modifierPoids(${exoIdx}, -2.5)"
+                style="width:48px;height:48px;flex-shrink:0;
+                       background:rgba(255,141,150,0.12);
+                       border:2px solid rgba(255,141,150,0.3);
+                       border-radius:var(--radius-md);
+                       font-size:1.2rem;font-weight:800;
+                       color:var(--fd-coral);cursor:pointer">−</button>
+        <div style="flex:1;position:relative">
+          <input type="number" inputmode="decimal"
+                 id="lr-poids-${exoIdx}-${serieIdx}"
+                 placeholder="${poidsDefaut || 'kg'}"
+                 value="${poidsDefaut || ''}"
+                 step="2.5" min="0"
+                 oninput="LiveRapide.setPoids(${exoIdx}, this.value)"
+                 style="width:100%;padding:12px 8px;
+                        font-size:1.3rem;font-weight:800;
+                        text-align:center;
+                        background:var(--bg-card);
+                        border:2px solid var(--border-color);
+                        border-radius:var(--radius-md);
+                        color:var(--text-primary);outline:none;
+                        transition:border-color .2s"
+                 onfocus="this.style.borderColor='var(--fd-indigo)';this.select()"
+                 onblur="this.style.borderColor='var(--border-color)'"/>
+          <div style="position:absolute;bottom:-14px;
+                      left:0;right:0;text-align:center;
+                      font-size:.52rem;color:var(--text-muted);
+                      font-weight:700;pointer-events:none">KG</div>
+        </div>
+        <button onclick="LiveRapide.modifierPoids(${exoIdx}, 2.5)"
+                style="width:48px;height:48px;flex-shrink:0;
+                       background:rgba(139,240,187,0.12);
+                       border:2px solid rgba(139,240,187,0.3);
+                       border-radius:var(--radius-md);
+                       font-size:1.2rem;font-weight:800;
+                       color:var(--fd-mint);cursor:pointer">+</button>
+      </div>
+    </div>
 
-                <!-- ✅ RPE rapide -->
-                <div style="margin-bottom:16px">
-                  <div style="font-size:.6rem;font-weight:700;
-                              text-transform:uppercase;
-                              letter-spacing:.08em;
-                              color:var(--text-muted);
-                              margin-bottom:6px">
-                    😤 Effort ressenti (RPE)
-                    <span style="font-weight:400;opacity:.6">
-                      · optionnel
-                    </span>
-                  </div>
-                  <div style="display:flex;gap:4px">
-                    ${[6,7,8,9,10].map(rpe => `
-                      <button onclick="LiveRapide.setRPE(
-                                ${exoIdx}, ${rpe});
-                              document.getElementById(
-                                'lr-rpe-${exoIdx}-${serieIdx}'
-                              ).value=${rpe};
-                              this.parentElement
-                                .querySelectorAll('button')
-                                .forEach(b=>b.style.background=
-                                  'rgba(255,255,255,0.04)');
-                              this.style.background=
-                                'rgba(75,75,249,0.3)'"
-                              style="flex:1;padding:8px 4px;
-                                     font-size:.75rem;font-weight:700;
-                                     background:rgba(255,255,255,0.04);
-                                     border:1px solid
-                                       rgba(255,255,255,0.08);
-                                     border-radius:var(--radius-sm);
-                                     color:var(--text-muted);
-                                     cursor:pointer;
-                                     transition:all .15s">
-                        ${rpe}
-                      </button>`).join('')}
-                  </div>
-                  <input type="hidden"
-                         id="lr-rpe-${exoIdx}-${serieIdx}"
-                         value="7"/>
-                </div>
+    <!-- REPS -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.08em;
+                  color:var(--text-muted);margin-bottom:6px">
+        🔁 Répétitions
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="LiveRapide.modifierReps(${exoIdx}, -1)"
+                style="width:48px;height:48px;flex-shrink:0;
+                       background:rgba(255,141,150,0.12);
+                       border:2px solid rgba(255,141,150,0.3);
+                       border-radius:var(--radius-md);
+                       font-size:1.2rem;font-weight:800;
+                       color:var(--fd-coral);cursor:pointer">−</button>
+        <div style="flex:1;position:relative">
+          <input type="number" inputmode="numeric"
+                 id="lr-reps-${exoIdx}-${serieIdx}"
+                 placeholder="${repsDefaut || 'reps'}"
+                 value="${repsDefaut || ''}"
+                 min="1"
+                 oninput="LiveRapide.setReps(${exoIdx}, this.value)"
+                 style="width:100%;padding:12px 8px;
+                        font-size:1.3rem;font-weight:800;
+                        text-align:center;
+                        background:var(--bg-card);
+                        border:2px solid var(--border-color);
+                        border-radius:var(--radius-md);
+                        color:var(--text-primary);outline:none;
+                        transition:border-color .2s"
+                 onfocus="this.style.borderColor='var(--fd-indigo)';this.select()"
+                 onblur="this.style.borderColor='var(--border-color)'"/>
+          <div style="position:absolute;bottom:-14px;
+                      left:0;right:0;text-align:center;
+                      font-size:.52rem;color:var(--text-muted);
+                      font-weight:700;pointer-events:none">REPS</div>
+        </div>
+        <button onclick="LiveRapide.modifierReps(${exoIdx}, 1)"
+                style="width:48px;height:48px;flex-shrink:0;
+                       background:rgba(139,240,187,0.12);
+                       border:2px solid rgba(139,240,187,0.3);
+                       border-radius:var(--radius-md);
+                       font-size:1.2rem;font-weight:800;
+                       color:var(--fd-mint);cursor:pointer">+</button>
+      </div>
+    </div>
 
-                <!-- ✅ GROS BOUTON "SÉRIE FAITE" -->
-                <button onclick="App.validerSerieLR(
-                          '${seanceId}',
-                          '${ex.ref}',
-                          ${exoIdx},
-                          ${serieIdx},
-                          ${ex.series},
-                          ${exos.length},
-                          ${ex.repos || 75})"
-                        id="btn-serie-${exoIdx}-${serieIdx}"
-                        style="width:100%;padding:18px;
-                               background:var(--fd-indigo);
-                               border:none;
-                               border-radius:var(--radius-lg);
-                               font-size:1rem;font-weight:800;
-                               color:white;cursor:pointer;
-                               letter-spacing:.02em;
-                               box-shadow:0 4px 20px
-                                 rgba(75,75,249,0.4);
-                               transition:all .15s;
-                               -webkit-tap-highlight-color:
-                                 transparent"
-                        onmousedown="this.style.transform=
-                          'scale(.97)'"
-                        onmouseup="this.style.transform=''"
-                        ontouchstart="this.style.transform=
-                          'scale(.97)'"
-                        ontouchend="this.style.transform=''">
-                  ✅ SÉRIE FAITE
-                </button>
+    <!-- RPE -->
+    <div style="margin-bottom:16px">
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.08em;
+                  color:var(--text-muted);margin-bottom:6px">
+        😤 Effort ressenti (RPE)
+        <span style="font-weight:400;opacity:.6">· optionnel</span>
+      </div>
+      <div style="display:flex;gap:4px">
+        ${[6,7,8,9,10].map(rpe => `
+          <button onclick="LiveRapide.setRPE(${exoIdx},${rpe});
+                          document.getElementById('lr-rpe-${exoIdx}-${serieIdx}').value=${rpe};
+                          this.parentElement.querySelectorAll('button')
+                            .forEach(b=>b.style.background='rgba(255,255,255,0.04)');
+                          this.style.background='rgba(75,75,249,0.3)'"
+                  style="flex:1;padding:8px 4px;font-size:.75rem;font-weight:700;
+                         background:rgba(255,255,255,0.04);
+                         border:1px solid rgba(255,255,255,0.08);
+                         border-radius:var(--radius-sm);
+                         color:var(--text-muted);cursor:pointer;transition:all .15s">
+            ${rpe}
+          </button>`).join('')}
+      </div>
+      <input type="hidden" id="lr-rpe-${exoIdx}-${serieIdx}" value="7"/>
+    </div>
 
-                <!-- Copier de la série précédente -->
-                ${serieIdx > 0 ? `
-                  <button onclick="LiveRapide.copierSeriePrecedente(
-                            ${exoIdx}, ${serieIdx})"
-                          style="width:100%;margin-top:8px;
-                                 padding:8px;
-                                 background:none;
-                                 border:1px dashed
-                                   rgba(255,255,255,0.1);
-                                 border-radius:var(--radius-md);
-                                 font-size:.72rem;
-                                 color:var(--text-muted);
-                                 cursor:pointer">
-                    ↩️ Copier S${serieIdx} (même poids/reps)
-                  </button>` : ''}
-              </div>`).join('')}
+    <!-- BOUTON SÉRIE FAITE -->
+    <button onclick="App.validerSerieLR(
+                '${seanceId}','${ex.ref}',
+                ${exoIdx},${serieIdx},
+                ${ex.series},${exos.length},
+                ${ex.repos || 75})"
+            id="btn-serie-${exoIdx}-${serieIdx}"
+            style="width:100%;padding:18px;
+                   background:var(--fd-indigo);border:none;
+                   border-radius:var(--radius-lg);
+                   font-size:1rem;font-weight:800;
+                   color:white;cursor:pointer;
+                   letter-spacing:.02em;
+                   box-shadow:0 4px 20px rgba(75,75,249,0.4);
+                   transition:all .15s;
+                   -webkit-tap-highlight-color:transparent"
+            onmousedown="this.style.transform='scale(.97)'"
+            onmouseup="this.style.transform=''"
+            ontouchstart="this.style.transform='scale(.97)'"
+            ontouchend="this.style.transform=''">
+      ✅ SÉRIE FAITE
+    </button>
+
+    ${serieIdx > 0 ? `
+      <button onclick="LiveRapide.copierSeriePrecedente(${exoIdx},${serieIdx})"
+              style="width:100%;margin-top:8px;padding:8px;
+                     background:none;
+                     border:1px dashed rgba(255,255,255,0.1);
+                     border-radius:var(--radius-md);
+                     font-size:.72rem;color:var(--text-muted);cursor:pointer">
+        ↩️ Copier S${serieIdx} (même poids/reps)
+      </button>` : ''}
+  </div>`).join('')}
+                  `).join('')}
 
             <!-- Conseils techniques -->
             ${exo.conseils?.length ? `
@@ -5327,7 +5481,8 @@ try {
       });
     }
   } catch(e) {}
-
+  // ✅ Sauvegarder l'état après chaque série validée
+try { LiveRapide.sauvegarderEtat(seanceId); } catch(e) {} 
   // ✅ Lancer timer repos AUTO
   LiveRapide.lancerReposAuto(
     reposDuree,
