@@ -3575,6 +3575,116 @@ _verifierTimerAuRetour() {
   localStorage.removeItem('ft_timer_seance');
 
   document.getElementById('repos-auto-overlay')?.remove();
+},
+
+// ✅ Sauvegarder l'état complet en localStorage
+sauvegarderEtat(seanceId) {
+  try {
+    const etat = {
+      seanceId,
+      valeurs:   this._valeurs,
+      timestamp: Date.now()
+    };
+
+    // ✅ Sauvegarder les séries validées
+    const seriesValidees = [];
+    document.querySelectorAll('[id^="btn-serie-"]').forEach(btn => {
+      if (btn.disabled) {
+        const parts    = btn.id.split('-');
+        const exoIdx   = parseInt(parts[2]);
+        const serieIdx = parseInt(parts[3]);
+        seriesValidees.push({
+          exoIdx,
+          serieIdx,
+          texte:      btn.innerHTML,
+          background: btn.style.background,
+          color:      btn.style.color
+        });
+      }
+    });
+    etat.seriesValidees = seriesValidees;
+
+    // ✅ Sauvegarder les valeurs des inputs
+    const inputsValeurs = {};
+    document.querySelectorAll('[id^="lr-poids-"],[id^="lr-reps-"]')
+      .forEach(inp => {
+        if (inp.value) inputsValeurs[inp.id] = inp.value;
+      });
+    etat.inputsValeurs = inputsValeurs;
+
+    localStorage.setItem('ft_live_etat', JSON.stringify(etat));
+  } catch(e) {
+    console.warn('[LiveRapide] Erreur sauvegarde état:', e);
+  }
+},
+
+// ✅ Restaurer l'état depuis localStorage
+restaurerEtat(seanceId) {
+  try {
+    const saved = localStorage.getItem('ft_live_etat');
+    if (!saved) return false;
+
+    const etat = JSON.parse(saved);
+
+    // ✅ Vérifier que c'est bien pour cette séance
+    // et pas trop ancien (> 4h = abandonné)
+    if (etat.seanceId !== seanceId) return false;
+    if (Date.now() - etat.timestamp > 4 * 60 * 60 * 1000) {
+      localStorage.removeItem('ft_live_etat');
+      return false;
+    }
+
+    // ✅ Restaurer les valeurs internes
+    if (etat.valeurs) {
+      this._valeurs = etat.valeurs;
+    }
+
+    // ✅ Restaurer après render
+    requestAnimationFrame(() => {
+      // Restaurer les valeurs des inputs
+      if (etat.inputsValeurs) {
+        Object.entries(etat.inputsValeurs).forEach(([id, val]) => {
+          const inp = document.getElementById(id);
+          if (inp) inp.value = val;
+        });
+      }
+
+      // Restaurer les séries validées
+      if (etat.seriesValidees) {
+        etat.seriesValidees.forEach(s => {
+          const btn = document.getElementById(
+            `btn-serie-${s.exoIdx}-${s.serieIdx}`
+          );
+          if (btn) {
+            btn.innerHTML         = s.texte;
+            btn.style.background  = s.background || 'rgba(139,240,187,0.2)';
+            btn.style.border      = '2px solid var(--fd-mint)';
+            btn.style.color       = s.color || 'var(--fd-mint)';
+            btn.style.boxShadow   = 'none';
+            btn.disabled          = true;
+            btn.style.cursor      = 'default';
+          }
+        });
+      }
+
+      // ✅ Toast discret
+      if (etat.seriesValidees?.length > 0) {
+        Utils.toast(
+          `↩️ ${etat.seriesValidees.length} série${etat.seriesValidees.length > 1 ? 's' : ''} restaurée${etat.seriesValidees.length > 1 ? 's' : ''} !`,
+          'success', 2500
+        );
+        // Mettre à jour la sticky bar
+        setTimeout(() => {
+          try { LiveStickyBar.mettreAJourProgression(); } catch(e) {}
+        }, 500);
+      }
+    });
+
+    return true;
+  } catch(e) {
+    console.warn('[LiveRapide] Erreur restauration état:', e);
+    return false;
+  }
 }
 };
 
@@ -4865,8 +4975,7 @@ function _renderExercicesLive(seance, seanceId) {
         ↩️ Copier S${serieIdx} (même poids/reps)
       </button>` : ''}
   </div>`).join('')}
-                  `).join('')}
-
+                  
             <!-- Conseils techniques -->
             ${exo.conseils?.length ? `
               <details style="margin-top:8px">
@@ -5518,6 +5627,10 @@ validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
     // ✅ Fermer overlay repos si ouvert
     try { LiveRapide._fermerRepos(); } catch(e) {}
     LiveRapide.reset();
+    // ✅ Nettoyer l'état sauvegardé
+    localStorage.removeItem('ft_live_etat');
+
+    const duree  = Tracker.getDureeSeance?.(seanceId) || 0;
 
     const duree  = Tracker.getDureeSeance?.(seanceId) || 0;
     const volume = Tracker.getVolumeSemaine?.()       || 0;
