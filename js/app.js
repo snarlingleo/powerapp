@@ -5631,8 +5631,6 @@ validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
     localStorage.removeItem('ft_live_etat');
 
     const duree  = Tracker.getDureeSeance?.(seanceId) || 0;
-
-    const duree  = Tracker.getDureeSeance?.(seanceId) || 0;
     const volume = Tracker.getVolumeSemaine?.()       || 0;
     const prs = (() => {
       try {
