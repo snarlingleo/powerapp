@@ -764,6 +764,283 @@ const WidgetsHome = {
   }
 };
 
+// ════════════════════════════════════════════════════════════
+// ✅ PLANNING EDITOR — Changer les séances du planning
+// ════════════════════════════════════════════════════════════
+const PlanningEditor = {
+
+  // ✅ Ouvrir la modal de choix de séance pour un jour
+  ouvrirChoixSeance(jourIdx) {
+    const modal   = document.getElementById('modal-info');
+    const content = document.getElementById('modal-info-content');
+    if (!modal || !content) return;
+
+    const planning    = Programme.getPlanningActuel();
+    const jourActuel  = planning[jourIdx];
+    const toutes      = Programme.getAllSeances();
+    const labels      = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+    // ✅ Trouver où est chaque séance dans le planning actuel
+    const placements = {};
+    planning.forEach((p, idx) => {
+      if (p.seanceId) {
+        placements[p.seanceId] = {
+          jourIdx: idx,
+          label:   labels[idx]
+        };
+      }
+    });
+
+    content.innerHTML = `
+      <div style="padding:16px">
+
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,
+                    rgba(75,75,249,0.2),rgba(75,75,249,0.05));
+                    border:1px solid rgba(75,75,249,0.3);
+                    border-radius:var(--radius-lg);
+                    padding:14px 16px;margin-bottom:16px">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--fd-indigo);margin-bottom:4px">
+            📅 Changer la séance du
+          </div>
+          <div style="font-size:1.2rem;font-weight:800">
+            ${labels[jourIdx]}
+          </div>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">
+            Actuellement :
+            ${jourActuel.seanceId
+              ? `${Programme._getSeanceById(jourActuel.seanceId)?.emoji || '💪'} ${Programme._getSeanceById(jourActuel.seanceId)?.nom || ''}`
+              : '😴 Jour de repos'}
+          </div>
+        </div>
+
+        <!-- Info échange -->
+        <div style="padding:8px 12px;margin-bottom:14px;
+                    background:rgba(191,161,255,0.08);
+                    border:1px solid rgba(191,161,255,0.15);
+                    border-radius:var(--radius-md);
+                    font-size:.7rem;color:rgba(191,161,255,0.8);
+                    line-height:1.5">
+          💡 Si la séance choisie est déjà placée un autre jour,
+          les deux jours s'échangeront automatiquement.
+        </div>
+
+        <!-- Option Repos -->
+        <div onclick="PlanningEditor.changerSeance(${jourIdx}, null)"
+             style="display:flex;align-items:center;gap:12px;
+                    padding:12px 14px;margin-bottom:8px;
+                    background:${!jourActuel.seanceId
+                      ? 'rgba(139,240,187,0.1)'
+                      : 'rgba(255,255,255,0.03)'};
+                    border:1px solid ${!jourActuel.seanceId
+                      ? 'rgba(139,240,187,0.3)'
+                      : 'rgba(255,255,255,0.08)'};
+                    border-radius:var(--radius-lg);
+                    cursor:pointer;transition:all .2s"
+             onmouseenter="this.style.borderColor='rgba(139,240,187,0.3)';this.style.background='rgba(139,240,187,0.06)'"
+             onmouseleave="this.style.borderColor='${!jourActuel.seanceId ? 'rgba(139,240,187,0.3)' : 'rgba(255,255,255,0.08)'}';this.style.background='${!jourActuel.seanceId ? 'rgba(139,240,187,0.1)' : 'rgba(255,255,255,0.03)'}'">
+          <div style="width:44px;height:44px;border-radius:12px;
+                      background:rgba(139,240,187,0.1);
+                      border:1px solid rgba(139,240,187,0.2);
+                      display:flex;align-items:center;
+                      justify-content:center;font-size:1.4rem;
+                      flex-shrink:0">
+            😴
+          </div>
+          <div style="flex:1">
+            <div style="font-size:.9rem;font-weight:700">
+              Jour de repos
+            </div>
+            <div style="font-size:.62rem;color:var(--text-muted);margin-top:2px">
+              Pas de séance ce jour
+            </div>
+          </div>
+          ${!jourActuel.seanceId ? `
+            <div style="font-size:.65rem;color:var(--fd-mint);
+                        font-weight:700">✅ Actuel</div>` : ''}
+        </div>
+
+        <!-- Séparateur -->
+        <div style="font-size:.6rem;font-weight:700;
+                    text-transform:uppercase;letter-spacing:.1em;
+                    color:var(--text-muted);margin:12px 0 8px;
+                    display:flex;align-items:center;gap:8px">
+          💪 Choisir une séance
+          <div style="flex:1;height:1px;background:var(--border-color)"></div>
+        </div>
+
+        <!-- Liste séances -->
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${toutes.map(s => {
+            const estActuelle  = jourActuel.seanceId === s.id;
+            const placement    = placements[s.id];
+            const estAilleurs  = placement && placement.jourIdx !== jourIdx;
+
+            return `
+              <div onclick="PlanningEditor.changerSeance(${jourIdx}, '${s.id}')"
+                   style="display:flex;align-items:center;gap:12px;
+                          padding:12px 14px;
+                          background:${estActuelle
+                            ? 'rgba(75,75,249,0.15)'
+                            : 'rgba(255,255,255,0.03)'};
+                          border:1px solid ${estActuelle
+                            ? 'rgba(75,75,249,0.4)'
+                            : 'rgba(255,255,255,0.08)'};
+                          border-radius:var(--radius-lg);
+                          cursor:pointer;transition:all .2s"
+                   onmouseenter="this.style.borderColor='rgba(75,75,249,0.4)';this.style.background='rgba(75,75,249,0.1)'"
+                   onmouseleave="this.style.borderColor='${estActuelle ? 'rgba(75,75,249,0.4)' : 'rgba(255,255,255,0.08)'}';this.style.background='${estActuelle ? 'rgba(75,75,249,0.15)' : 'rgba(255,255,255,0.03)'}'">
+
+                <!-- Emoji séance -->
+                <div style="width:44px;height:44px;border-radius:12px;
+                            background:rgba(75,75,249,0.12);
+                            border:1px solid rgba(75,75,249,0.2);
+                            display:flex;align-items:center;
+                            justify-content:center;font-size:1.4rem;
+                            flex-shrink:0">
+                  ${s.emoji}
+                </div>
+
+                <!-- Infos séance -->
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:.9rem;font-weight:700;
+                              color:${estActuelle
+                                ? 'var(--fd-indigo)'
+                                : 'var(--text-primary)'}">
+                    ${s.nom}
+                  </div>
+                  <div style="font-size:.62rem;color:var(--text-muted);
+                              margin-top:2px">
+                    ~${s.duree_estimee}min
+                    · ${s.exercices?.length || 0} exercices
+                    · ${(s.muscles||[]).slice(0,2).join(', ')}
+                  </div>
+                  ${estAilleurs ? `
+                    <div style="font-size:.6rem;margin-top:3px;
+                                color:var(--fd-lemon);font-weight:600;
+                                display:flex;align-items:center;gap:4px">
+                      🔄 Actuellement le ${placement.label}
+                      → échange automatique
+                    </div>` : ''}
+                </div>
+
+                <!-- Badge statut -->
+                <div style="flex-shrink:0;text-align:right">
+                  ${estActuelle ? `
+                    <div style="font-size:.65rem;color:var(--fd-indigo);
+                                font-weight:700">✅ Actuel</div>` : ''}
+                  ${estAilleurs && !estActuelle ? `
+                    <div style="font-size:.65rem;color:var(--fd-lemon);
+                                font-weight:700">🔄 Échange</div>` : ''}
+                  ${!estActuelle && !estAilleurs ? `
+                    <div style="font-size:.65rem;color:var(--text-muted)">
+                      Libre
+                    </div>` : ''}
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+
+        <!-- Bouton fermer -->
+        <button onclick="document.getElementById('modal-info').classList.add('hidden')"
+                class="btn-secondary"
+                style="width:100%;margin-top:16px;font-size:.85rem">
+          ✕ Annuler
+        </button>
+
+      </div>
+    `;
+
+    modal.classList.remove('hidden');
+
+    // Bouton fermer natif
+    const closeBtn = document.getElementById('modal-info-close');
+    if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
+  },
+
+  // ✅ Changer la séance d'un jour + échange automatique
+  changerSeance(jourIdx, nouvelleSeanceId) {
+    const planning = [...Programme.getPlanningActuel()];
+
+    const ancienneSeanceId = planning[jourIdx].seanceId;
+
+    // Pas de changement
+    if (ancienneSeanceId === nouvelleSeanceId) {
+      document.getElementById('modal-info')?.classList.add('hidden');
+      return;
+    }
+
+    // ✅ Trouver où est déjà la nouvelle séance
+    const ancienJourNouvelleSeance = planning.findIndex(
+      (p, idx) => idx !== jourIdx && p.seanceId === nouvelleSeanceId
+    );
+
+    // ✅ ÉCHANGE AUTOMATIQUE
+    if (ancienJourNouvelleSeance !== -1 && nouvelleSeanceId !== null) {
+      // La nouvelle séance était ailleurs → on échange
+      planning[jourIdx].seanceId                  = nouvelleSeanceId;
+      planning[ancienJourNouvelleSeance].seanceId = ancienneSeanceId;
+    } else {
+      // La nouvelle séance n'était nulle part → simple remplacement
+      planning[jourIdx].seanceId = nouvelleSeanceId;
+    }
+
+    // ✅ Sauvegarder
+    Programme.sauvegarderPlanning(planning);
+
+    // ✅ Fermer la modal
+    document.getElementById('modal-info')?.classList.add('hidden');
+
+    // ✅ Re-render la home
+    const homeContainer = document.getElementById('page-home');
+    if (homeContainer && window._pageActive === 'home') {
+      _rendreHome(homeContainer);
+    }
+
+    // ✅ Toast de confirmation
+    const labels         = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+    const nouvelleSeance = nouvelleSeanceId
+      ? Programme._getSeanceById(nouvelleSeanceId)
+      : null;
+
+    if (ancienJourNouvelleSeance !== -1 && nouvelleSeanceId) {
+      Utils.toast(
+        `🔄 Échangé ! ${nouvelleSeance?.emoji} ${nouvelleSeance?.nom} ↔ ${labels[ancienJourNouvelleSeance]}`,
+        'success', 3000
+      );
+    } else if (nouvelleSeanceId) {
+      Utils.toast(
+        `✅ ${labels[jourIdx]} → ${nouvelleSeance?.emoji} ${nouvelleSeance?.nom}`,
+        'success', 2500
+      );
+    } else {
+      Utils.toast(
+        `😴 ${labels[jourIdx]} → Jour de repos`,
+        'success', 2000
+      );
+    }
+
+    Utils.vibrer([50, 30, 50]);
+  },
+
+  // ✅ Reset le planning par défaut
+  resetPlanning() {
+    Utils.confirmer(
+      '🔄 Réinitialiser le planning ?',
+      'Le planning original sera restauré.'
+    ).then(ok => {
+      if (!ok) return;
+      Programme.resetPlanning();
+      const homeContainer = document.getElementById('page-home');
+      if (homeContainer) _rendreHome(homeContainer);
+      Utils.toast('✅ Planning réinitialisé !', 'success');
+    });
+  }
+};
+
+window.PlanningEditor = PlanningEditor;
 window.WidgetsHome = WidgetsHome;
 
 // ════════════════════════════════════════════════════════════
@@ -1409,90 +1686,105 @@ function _rendreHome(container) {
 
       // ── PLANNING SEMAINE ──────────────────────────────
       case 'planning_semaine': return `
-        <div style="font-size:.58rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.1em;
-                    color:var(--text-muted);
-                    margin:14px 0 8px;
-                    display:flex;align-items:center;gap:8px">
-          📅 Planning semaine
-          <div style="flex:1;height:1px;background:var(--border-color)">
-          </div>
-        </div>
-        <div style="background:rgba(255,255,255,0.04);
-                    border:1px solid rgba(255,255,255,0.08);
-                    border-radius:var(--radius-lg);
-                    padding:14px 16px;margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;
-                      align-items:center;margin-bottom:10px">
-            <div style="font-size:.72rem;font-weight:700;
-                        color:var(--text-muted)">
-              ${analyse.seances}/${analyse.objectif} séances
+  <div style="font-size:.58rem;font-weight:700;
+              text-transform:uppercase;letter-spacing:.1em;
+              color:var(--text-muted);
+              margin:14px 0 8px;
+              display:flex;align-items:center;gap:8px">
+    📅 Planning semaine
+    <div style="flex:1;height:1px;background:var(--border-color)"></div>
+    ${Programme.estPlanningCustom() ? `
+      <button onclick="PlanningEditor.resetPlanning()"
+              style="font-size:.58rem;font-weight:700;
+                     padding:3px 8px;
+                     background:rgba(255,141,150,0.1);
+                     border:1px solid rgba(255,141,150,0.2);
+                     border-radius:99px;
+                     color:var(--fd-coral);cursor:pointer">
+        🔄 Reset
+      </button>` : ''}
+  </div>
+  <div style="background:rgba(255,255,255,0.04);
+              border:1px solid rgba(255,255,255,0.08);
+              border-radius:var(--radius-lg);
+              padding:14px 16px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;
+                align-items:center;margin-bottom:10px">
+      <div style="font-size:.72rem;font-weight:700;
+                  color:var(--text-muted)">
+        ${analyse.seances}/${analyse.objectif} séances
+      </div>
+      <div style="font-size:.72rem;font-weight:700;
+                  color:var(--fd-mint)">
+        ${Math.round((analyse.seances/Math.max(analyse.objectif,1))*100)}%
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);
+                gap:4px">
+      ${(() => {
+        const planning = (() => {
+          try { return Programme.getSeancesSemaine(); }
+          catch(e) { return []; }
+        })();
+        if (!planning.length) return '';
+        return planning.map(jour => `
+          <div style="display:flex;flex-direction:column;
+                      align-items:center;gap:4px">
+            <div onclick="PlanningEditor.ouvrirChoixSeance(${jour.jour})"
+                 style="width:36px;height:36px;border-radius:10px;
+                        display:flex;align-items:center;
+                        justify-content:center;
+                        font-size:.75rem;font-weight:700;
+                        cursor:pointer;
+                        position:relative;
+                        transition:all .2s;
+                        ${jour.estAujourdhui
+                          ? 'background:var(--fd-indigo);color:white;box-shadow:0 0 12px rgba(75,75,249,0.5)'
+                          : jour.seance
+                            ? 'background:rgba(75,75,249,0.2);border:1px solid rgba(75,75,249,0.4);color:var(--fd-lavender)'
+                            : 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text-muted)'}"
+                 title="${jour.seance ? jour.seance.nom : 'Repos'} — Cliquer pour changer">
+              ${jour.estAujourdhui ? '▶'
+                : jour.seance ? jour.seance.emoji : '😴'}
+              <!-- Petit badge édition -->
+              <div style="position:absolute;top:-4px;right:-4px;
+                          width:12px;height:12px;
+                          background:rgba(75,75,249,0.8);
+                          border-radius:50%;
+                          display:flex;align-items:center;
+                          justify-content:center;
+                          font-size:.45rem;color:white">
+                ✏️
+              </div>
             </div>
-            <div style="font-size:.72rem;font-weight:700;
-                        color:var(--fd-mint)">
-              ${Math.round((analyse.seances/Math.max(analyse.objectif,1))*100)}%
+            <div style="font-size:.5rem;color:var(--text-muted);
+                        text-transform:uppercase;font-weight:600">
+              ${jour.label}
             </div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(6,1fr);
-                      gap:5px">
-            ${(() => {
-              const planning = (() => {
-                try { return Programme.getSeancesSemaine(); }
-                catch(e) { return []; }
-              })();
-              if (planning.length) {
-                return planning.slice(0,6).map(jour => `
-                  <div style="display:flex;flex-direction:column;
-                              align-items:center;gap:4px">
-                    <div style="width:32px;height:32px;border-radius:10px;
-                                display:flex;align-items:center;
-                                justify-content:center;
-                                font-size:.7rem;font-weight:700;
-                                ${jour.estAujourdhui
-                                  ? 'background:var(--fd-indigo);color:white;box-shadow:0 0 12px rgba(75,75,249,0.5)'
-                                  : jour.seance
-                                    ? 'background:rgba(75,75,249,0.25);border:1px solid var(--fd-indigo);color:var(--fd-lavender)'
-                                    : 'background:var(--bg-input);border:1px solid var(--border-color);color:var(--text-muted)'}">
-                      ${jour.estAujourdhui ? '▶'
-                        : jour.seance ? jour.seance.emoji : '·'}
-                    </div>
-                    <div style="font-size:.52rem;color:var(--text-muted);
-                                text-transform:uppercase;font-weight:600">
-                      ${jour.label}
-                    </div>
-                  </div>`).join('');
-              }
-              const jrsL   = ['Lun','Mar','Mer','Jeu','Ven','Sam'];
-              const todayI = new Date().getDay()===0?6:new Date().getDay()-1;
-              return jrsL.map((l,i) => `
-                <div style="display:flex;flex-direction:column;
-                            align-items:center;gap:4px">
-                  <div style="width:32px;height:32px;border-radius:10px;
-                              display:flex;align-items:center;
-                              justify-content:center;
-                              font-size:.7rem;font-weight:700;
-                              ${i===todayI
-                                ? 'background:var(--fd-indigo);color:white;box-shadow:0 0 12px rgba(75,75,249,0.5)'
-                                : i<todayI
-                                  ? 'background:rgba(75,75,249,0.25);border:1px solid var(--fd-indigo);color:var(--fd-lavender)'
-                                  : 'background:var(--bg-input);border:1px solid var(--border-color);color:var(--text-muted)'}">
-                    ${i===todayI ? '▶' : i<todayI ? '✓' : '·'}
-                  </div>
-                  <div style="font-size:.52rem;color:var(--text-muted);
-                              text-transform:uppercase;font-weight:600">
-                    ${l}
-                  </div>
-                </div>`).join('');
-            })()}
-          </div>
-          <div class="progress-bar mt-sm">
-            <div class="progress-fill"
-                 style="width:${Math.min(100,
-                   Math.round((analyse.seances/
-                     Math.max(analyse.objectif,1))*100))}%">
-            </div>
-          </div>
-        </div>`;
+            ${jour.seance ? `
+              <div style="font-size:.45rem;color:var(--text-muted);
+                          text-align:center;
+                          max-width:36px;
+                          overflow:hidden;
+                          text-overflow:ellipsis;
+                          white-space:nowrap;
+                          line-height:1.2">
+                ${jour.seance.nom.split(' ')[0]}
+              </div>` : `
+              <div style="font-size:.45rem;color:var(--text-muted)">
+                Repos
+              </div>`}
+          </div>`).join('');
+      })()}
+    </div>
+    <div class="progress-bar mt-sm">
+      <div class="progress-fill"
+           style="width:${Math.min(100,
+             Math.round((analyse.seances/
+               Math.max(analyse.objectif,1))*100))}%">
+      </div>
+    </div>
+  </div>`;
 
       // ── STATS SEMAINE ─────────────────────────────────
       case 'stats_semaine': return `
@@ -2164,22 +2456,24 @@ function _rendreTraining(container) {
     <div style="display:grid;grid-template-columns:repeat(7,1fr);
                 gap:3px;margin-bottom:var(--space-md)">
       ${planning.map(jour => `
-        <div style="text-align:center;padding:var(--space-sm) 2px;
-                    background:${jour.estAujourdhui
-                      ? 'var(--fd-indigo)'
-                      : jour.seance ? 'rgba(75,75,249,0.15)' : 'var(--bg-input)'};
-                    border-radius:var(--radius-sm);
-                    cursor:${jour.seance ? 'pointer' : 'default'}"
-             ${jour.seance ? `onclick="naviguer('live',{seanceId:'${jour.seance?.id}'})"` : ''}>
-          <div style="font-size:.6rem;
-                      color:${jour.estAujourdhui ? 'white' : 'var(--text-muted)'};
-                      font-weight:${jour.estAujourdhui ? '700' : '400'}">
-            ${jour.label}
-          </div>
-          <div style="font-size:.9rem;margin-top:2px">
-            ${jour.seance ? jour.seance.emoji : jour.estRepos ? '😴' : '·'}
-          </div>
-        </div>`).join('')}
+  <div style="text-align:center;padding:var(--space-sm) 2px;
+              background:${jour.estAujourdhui
+                ? 'var(--fd-indigo)'
+                : jour.seance ? 'rgba(75,75,249,0.15)' : 'var(--bg-input)'};
+              border-radius:var(--radius-sm);
+              cursor:pointer;position:relative"
+       onclick="PlanningEditor.ouvrirChoixSeance(${jour.jour})">
+    <div style="font-size:.6rem;
+                color:${jour.estAujourdhui ? 'white' : 'var(--text-muted)'};
+                font-weight:${jour.estAujourdhui ? '700' : '400'}">
+      ${jour.label}
+    </div>
+    <div style="font-size:.9rem;margin-top:2px">
+      ${jour.seance ? jour.seance.emoji : jour.estRepos ? '😴' : '·'}
+    </div>
+    <div style="position:absolute;top:2px;right:2px;
+                font-size:.5rem;opacity:.5">✏️</div>
+  </div>`).join('')}
     </div>
 
     <div class="section-title">🏋️ Séances</div>
