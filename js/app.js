@@ -2937,6 +2937,10 @@ ${!derniereSerie ? `
       Utils.vibrer([200, 100, 200]);
       try { timerRepos?.jouerSon('rest'); } catch(e) {}
       try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
+
+      // ✅ NOTIFICATION SYSTÈME — même téléphone verrouillé
+      LiveRapide._notifierFinRepos(exoIdx, serieIdx, totalSeries);
+
       this._lancerCountdown(seanceId);
     }
   }, 500); // ✅ Rafraîchir toutes les 500ms pour plus de précision
@@ -3156,6 +3160,50 @@ ${!derniereSerie ? `
     });
   },
 
+  // ✅ Notification système fin de repos
+  async _notifierFinRepos(exoIdx, serieIdx, totalSeries) {
+    try {
+      // Demander permission si pas encore accordée
+      if (Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+
+      if (Notification.permission !== 'granted') return;
+
+      // ✅ Trouver l'exercice actuel
+      const exoCard = document.getElementById(`live-exo-${exoIdx}`);
+      const nomExo  = exoCard
+        ?.querySelector('[style*="font-size:1rem"]')
+        ?.textContent?.trim()
+        || 'Exercice';
+
+      const serieNum = serieIdx + 2;
+
+      // ✅ Envoyer la notification
+      const notif = new Notification('⏱️ Repos terminé !', {
+        body:    `Série ${serieNum}/${totalSeries} — ${nomExo}\nC'est reparti ! 💪`,
+        icon:    '/icon-192.png',
+        badge:   '/icon-192.png',
+        vibrate: [200, 100, 200],
+        tag:     'repos-termine',   // Remplace la notif précédente
+        silent:  false,
+        requireInteraction: false
+      });
+
+      // ✅ Clic sur la notif → ramène l'app au premier plan
+      notif.onclick = () => {
+        window.focus();
+        notif.close();
+      };
+
+      // ✅ Fermer auto après 8s
+      setTimeout(() => notif.close(), 8000);
+
+    } catch(e) {
+      console.warn('[LiveRapide] Notification non disponible:', e);
+    }
+  },
+   
   _formaterTemps(sec) {
     const s = Math.max(0, Math.round(sec));
     const m = Math.floor(s / 60);
@@ -3236,7 +3284,199 @@ _verifierTimerAuRetour() {
 }
 };
 
-window.LiveRapide = LiveRapide;
+// ════════════════════════════════════════════════════════════
+// ✅ BARRE STICKY LIVE — Chrono + Progression
+// ════════════════════════════════════════════════════════════
+const LiveStickyBar = {
+
+  _interval:    null,
+  _seance:      null,
+  _totalSeries: 0,
+  _seriesFaites: 0,
+
+  init(seance) {
+    this._seance = seance;
+
+    // ✅ Calculer total séries
+    try {
+      this._totalSeries = (seance.exercicesDetails || [])
+        .reduce((a, ex) => a + (ex.series || 0), 0);
+    } catch(e) { this._totalSeries = 0; }
+
+    this._seriesFaites = 0;
+
+    // ✅ Créer la barre si pas déjà là
+    let bar = document.getElementById('live-sticky-bar');
+    if (!bar) {
+      bar    = document.createElement('div');
+      bar.id = 'live-sticky-bar';
+      bar.style.cssText = `
+        position:fixed;top:var(--header-height);
+        left:50%;transform:translateX(-50%);
+        width:100%;max-width:480px;
+        z-index:250;
+        background:rgba(9,9,45,0.97);
+        backdrop-filter:blur(12px);
+        border-bottom:1px solid rgba(75,75,249,0.3);
+        padding:8px 16px;
+        display:flex;flex-direction:column;gap:6px;
+        box-shadow:0 4px 20px rgba(0,0,0,0.4);
+        transition:all .3s`;
+      document.body.appendChild(bar);
+    }
+
+    this._render();
+    this._lancerUpdate();
+  },
+
+  // ✅ Mettre à jour séries faites
+  mettreAJourProgression() {
+    const btns = document.querySelectorAll('[id^="btn-serie-"]');
+    let faites = 0;
+    btns.forEach(btn => {
+      if (btn.disabled) faites++;
+    });
+    this._seriesFaites = faites;
+
+    // Calculer exo actuel
+    const exos = document.querySelectorAll('.live-exo-card');
+    let exoActuel = 0;
+    exos.forEach((exo, idx) => {
+      const btnsExo = exo.querySelectorAll('[id^="btn-serie-"]');
+      const tousFaits = [...btnsExo].every(b => b.disabled);
+      if (tousFaits && idx < exos.length - 1) exoActuel = idx + 1;
+    });
+
+    this._exoActuel   = exoActuel;
+    this._totalExos   = exos.length;
+    this._render();
+  },
+
+  _render() {
+    const bar = document.getElementById('live-sticky-bar');
+    if (!bar) return;
+
+    const pct   = this._totalSeries > 0
+      ? Math.round((this._seriesFaites / this._totalSeries) * 100)
+      : 0;
+
+    const exoActuel  = (this._exoActuel  || 0) + 1;
+    const totalExos  = this._totalExos   || 0;
+
+    // Temps chrono
+    let temps = '00:00';
+    try {
+      if (Chrono?._actif) {
+        temps = Chrono.formaterDuree(Chrono.getDureeSecondes());
+      }
+    } catch(e) {}
+
+    const enPause = Chrono?._enPause || false;
+
+    bar.innerHTML = `
+
+      <!-- Ligne 1 : Chrono + Nom + Pause -->
+      <div style="display:flex;align-items:center;
+                  justify-content:space-between">
+
+        <!-- Chrono -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:1.1rem;font-weight:800;
+                      color:${enPause
+                        ? 'var(--fd-coral)'
+                        : 'var(--fd-mint)'};
+                      font-variant-numeric:tabular-nums;
+                      letter-spacing:.02em">
+            ${enPause ? '⏸' : '⏱️'} ${temps}
+          </div>
+        </div>
+
+        <!-- Nom séance -->
+        <div style="font-size:.65rem;font-weight:700;
+                    color:var(--text-muted);
+                    text-align:center;flex:1;
+                    padding:0 8px;
+                    overflow:hidden;
+                    text-overflow:ellipsis;
+                    white-space:nowrap">
+          ${this._seance?.emoji || ''} ${this._seance?.nom || ''}
+        </div>
+
+        <!-- Bouton pause -->
+        <button onclick="ChronoSticky._togglePause();
+                         LiveStickyBar._render()"
+                style="padding:4px 10px;
+                       background:${enPause
+                         ? 'rgba(139,240,187,0.15)'
+                         : 'rgba(255,255,255,0.06)'};
+                       border:1px solid ${enPause
+                         ? 'rgba(139,240,187,0.3)'
+                         : 'rgba(255,255,255,0.1)'};
+                       border-radius:var(--radius-full);
+                       font-size:.65rem;font-weight:700;
+                       color:${enPause
+                         ? 'var(--fd-mint)'
+                         : 'var(--text-muted)'};
+                       cursor:pointer;white-space:nowrap">
+          ${enPause ? '▶ Reprendre' : '⏸ Pause'}
+        </button>
+      </div>
+
+      <!-- Ligne 2 : Barre progression + détail -->
+      <div>
+        <!-- Barre -->
+        <div style="height:5px;background:rgba(255,255,255,0.07);
+                    border-radius:99px;overflow:hidden;
+                    margin-bottom:4px">
+          <div style="height:100%;width:${pct}%;
+                      background:linear-gradient(90deg,
+                        var(--fd-indigo),var(--fd-mint));
+                      border-radius:99px;
+                      transition:width .5s ease">
+          </div>
+        </div>
+
+        <!-- Détail texte -->
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center">
+          <div style="font-size:.6rem;color:var(--text-muted)">
+            ${totalExos > 0
+              ? `Exo ${Math.min(exoActuel, totalExos)}/${totalExos}`
+              : 'Démarrer la séance'}
+            ${this._seriesFaites > 0
+              ? ` · ${this._seriesFaites} série${this._seriesFaites > 1 ? 's' : ''} faite${this._seriesFaites > 1 ? 's' : ''}`
+              : ''}
+          </div>
+          <div style="font-size:.6rem;font-weight:700;
+                      color:var(--fd-indigo)">
+            ${this._seriesFaites}/${this._totalSeries} séries
+            · ${pct}%
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  _lancerUpdate() {
+    clearInterval(this._interval);
+    this._interval = setInterval(() => {
+      const bar = document.getElementById('live-sticky-bar');
+      if (!bar) { clearInterval(this._interval); return; }
+      this._render();
+    }, 1000);
+  },
+
+  masquer() {
+    clearInterval(this._interval);
+    const bar = document.getElementById('live-sticky-bar');
+    if (bar) {
+      bar.style.animation = 'fadeOut .3s ease forwards';
+      setTimeout(() => bar.remove(), 300);
+    }
+  }
+};
+
+window.LiveStickyBar = LiveStickyBar;
 
 // ════════════════════════════════════════════════════════════
 // ✅ CHECKLIST PRÉ-SÉANCE
@@ -3717,63 +3957,69 @@ function _renderLiveHeader(seance) {
   let charge = null;
   try { charge = Predict.analyserFatigue(); } catch(e) {}
 
+  // ✅ Créer la barre sticky si pas encore là
+  setTimeout(() => {
+    LiveStickyBar.init(seance);
+  }, 100);
+
   return `
     <div class="card mb-md"
-         style="background:linear-gradient(135deg,rgba(75,75,249,0.15),rgba(139,240,187,0.05));
+         style="background:linear-gradient(135deg,
+                rgba(75,75,249,0.15),rgba(139,240,187,0.05));
                 border-color:var(--fd-indigo)">
       <div class="flex justify-between items-center">
         <div>
-          <div style="font-size:1.2rem;font-weight:800">${seance.emoji} ${seance.nom}</div>
+          <div style="font-size:1.2rem;font-weight:800">
+            ${seance.emoji} ${seance.nom}
+          </div>
           <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">
-            ~${seance.duree_estimee}min · ${seance.exercices?.length || 0} exos
+            ~${seance.duree_estimee}min
+            · ${seance.exercices?.length || 0} exos
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div style="display:flex;flex-direction:column;
+                    align-items:flex-end;gap:6px">
           ${charge ? `
             <div style="text-align:center">
               <div style="font-size:1rem;font-weight:700;
-                          color:${charge.recommandation?.couleur || 'white'}">
+                          color:${charge.recommandation?.couleur||'white'}">
                 ${charge.score}/100
               </div>
               <div style="font-size:.6rem;color:var(--text-muted)">
-                ${charge.recommandation?.emoji || '💪'} Forme
+                ${charge.recommandation?.emoji||'💪'} Forme
               </div>
             </div>` : ''}
           <div id="chrono-container"></div>
-          <!-- ✅ BOUTON DÉMARRER LA SÉANCE -->
-<button id="btn-demarrer-chrono"
-        onclick="App._demarrerSeanceManuellement('${seance.id}')"
-        style="display:flex;align-items:center;gap:6px;
-               padding:8px 14px;
-               background:var(--fd-mint);
-               border:none;
-               border-radius:var(--radius-full);
-               font-size:.72rem;font-weight:800;
-               color:#09092d;cursor:pointer;
-               box-shadow:0 4px 16px rgba(139,240,187,0.4);
-               margin-top:4px;
-               transition:all .2s"
-        onmousedown="this.style.transform='scale(.95)'"
-        onmouseup="this.style.transform=''">
-  ▶ Démarrer le chrono
-</button>
-<button id="btn-mode-guide"
-        onclick="_toggleModeGuide(
-          '${seance.id}',
-          '${JSON.stringify(seance.exercices||[])
-            .replace(/'/g,"\\'")
-            .replace(/\n/g,'')}'
-        )"
-        style="display:flex;align-items:center;gap:4px;
-               padding:5px 10px;
-               background:rgba(75,75,249,0.12);
-               border:1px solid rgba(75,75,249,0.25);
-               border-radius:var(--radius-full);
-               font-size:.68rem;font-weight:600;
-               color:var(--fd-indigo);cursor:pointer;
-               margin-top:4px">
-  🎙️ Mode guidé
-</button>
+          <button id="btn-demarrer-chrono"
+                  onclick="App._demarrerSeanceManuellement('${seance.id}')"
+                  style="display:flex;align-items:center;gap:6px;
+                         padding:8px 14px;background:var(--fd-mint);
+                         border:none;border-radius:var(--radius-full);
+                         font-size:.72rem;font-weight:800;
+                         color:#09092d;cursor:pointer;
+                         box-shadow:0 4px 16px rgba(139,240,187,0.4);
+                         margin-top:4px;transition:all .2s"
+                  onmousedown="this.style.transform='scale(.95)'"
+                  onmouseup="this.style.transform=''">
+            ▶ Démarrer le chrono
+          </button>
+          <button id="btn-mode-guide"
+                  onclick="_toggleModeGuide(
+                    '${seance.id}',
+                    '${JSON.stringify(seance.exercices||[])
+                      .replace(/'/g,"\\'")
+                      .replace(/\n/g,'')}'
+                  )"
+                  style="display:flex;align-items:center;gap:4px;
+                         padding:5px 10px;
+                         background:rgba(75,75,249,0.12);
+                         border:1px solid rgba(75,75,249,0.25);
+                         border-radius:var(--radius-full);
+                         font-size:.68rem;font-weight:600;
+                         color:var(--fd-indigo);cursor:pointer;
+                         margin-top:4px">
+            🎙️ Mode guidé
+          </button>
         </div>
       </div>
     </div>`;
@@ -4740,41 +4986,42 @@ try {
     Utils.vibrerSuccess();
   }
    // ✅ RPE auto-suggéré selon reps faites vs cibles
-try {
-  const repsTarget = parseInt(
-    document.getElementById(`lr-reps-${exoIdx}-0`)
-      ?.getAttribute('placeholder') || '0'
-  ) || 10;
-  const ratio = reps / repsTarget;
+  try {
+    const repsTarget = parseInt(
+      document.getElementById(`lr-reps-${exoIdx}-0`)
+        ?.getAttribute('placeholder') || '0'
+    ) || 10;
+    const ratio = reps / repsTarget;
 
-  // Auto-sélectionner RPE selon performance
-  let rpeAuto = 7;
-  if (ratio >= 1.2)       rpeAuto = 6;  // Trop facile
-  else if (ratio >= 1.0)  rpeAuto = 7;  // Parfait
-  else if (ratio >= 0.8)  rpeAuto = 8;  // Difficile
-  else if (ratio >= 0.6)  rpeAuto = 9;  // Très difficile
-  else                    rpeAuto = 10; // Max
+    let rpeAuto = 7;
+    if (ratio >= 1.2)       rpeAuto = 6;
+    else if (ratio >= 1.0)  rpeAuto = 7;
+    else if (ratio >= 0.8)  rpeAuto = 8;
+    else if (ratio >= 0.6)  rpeAuto = 9;
+    else                    rpeAuto = 10;
 
-  // Mettre à jour le hidden input RPE si pas déjà saisi
-  const rpeInput = document.getElementById(
-    `lr-rpe-${exoIdx}-${serieIdx}`
-  );
-  if (rpeInput && parseInt(rpeInput.value) === 7) {
-    rpeInput.value = rpeAuto;
-
-    // ✅ Highlight le bouton RPE correspondant
-    const rpeBtns = document.querySelectorAll(
-      `#lr-bloc-${exoIdx}-${serieIdx} button`
+    const rpeInput = document.getElementById(
+      `lr-rpe-${exoIdx}-${serieIdx}`
     );
-    rpeBtns.forEach(btn => {
-      if (btn.textContent.trim() === String(rpeAuto)) {
-        btn.style.background = 'rgba(75,75,249,0.3)';
-      }
-    });
-  }
-} catch(e) {}
-   
+    if (rpeInput && parseInt(rpeInput.value) === 7) {
+      rpeInput.value = rpeAuto;
+      const rpeBtns = document.querySelectorAll(
+        `#lr-bloc-${exoIdx}-${serieIdx} button`
+      );
+      rpeBtns.forEach(btn => {
+        if (btn.textContent.trim() === String(rpeAuto)) {
+          btn.style.background = 'rgba(75,75,249,0.3)';
+        }
+      });
+    }
+  } catch(e) {}
+
+  // ✅ XP série
   try { Gamification.recompenser('SERIE_COMPLETE'); } catch(e) {}
+
+  // ✅ Mettre à jour la barre sticky progression
+  try { LiveStickyBar.mettreAJourProgression(); } catch(e) {}
+
   try { SeanceGuidee.serieValidee(
     exoIdx, serieIdx, poids, reps, result.isPR
   ); } catch(e) {}
@@ -4836,6 +5083,7 @@ validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
 
     try { Tracker.terminerSeance(seanceId); } catch(e) {}
     try { ChronoSticky.masquer(); Chrono.reset?.(); } catch(e) {}
+    try { LiveStickyBar.masquer(); } catch(e) {}
 
     try {
       const secondes = TempsSalle.getDureeChronoSecondes();
@@ -4924,8 +5172,22 @@ validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
       this._mettreAJourBtnDemarrer(true);
 
       // ✅ Vibration + toast
-      Utils.vibrer([100, 50, 100]);
+      Utils.vibrer([100, 50, 100]);       
       Utils.toast('💪 Séance démarrée ! Let\'s go !', 'success', 2000);
+
+      // ✅ Demander permission notifications
+      try {
+        if (Notification.permission === 'default') {
+          Notification.requestPermission().then(perm => {
+            if (perm === 'granted') {
+              Utils.toast(
+                '🔔 Notifications activées — tu seras alerté à la fin du repos !',
+                'success', 3000
+              );
+            }
+          });
+        }
+      } catch(e) {} 
 
       // ✅ Scroll vers le premier exercice
       setTimeout(() => {
