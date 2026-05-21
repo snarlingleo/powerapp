@@ -7028,6 +7028,398 @@ document.addEventListener('visibilitychange', () => {
 }
 
 // ════════════════════════════════════════════════════════════
+// ✅ ONBOARDING — Proposition programme Coach IA
+// ════════════════════════════════════════════════════════════
+function _renderPropositionProgramme(data) {
+  const objectif = data.objectif || 'forme';
+  const niveau   = data.niveau   || 'intermediaire';
+  const nom      = data.nom      || 'Athlète';
+
+  // ✅ Choisir le nombre de jours selon le niveau
+  const nbJoursParNiveau = {
+    debutant:      3,
+    intermediaire: 4,
+    avance:        5
+  };
+  const nbJours = nbJoursParNiveau[niveau] || 4;
+
+  // ✅ Choisir le style selon objectif + niveau
+  const styleChoix = (() => {
+    if (nbJours <= 3) return 'full_body';
+    if (objectif === 'force') return 'upper_lower';
+    if (nbJours >= 5) return 'ppl';
+    return 'ppl';
+  })();
+
+  const styleLabel = {
+    ppl:         'Push / Pull / Legs',
+    full_body:   'Full Body',
+    upper_lower: 'Upper / Lower'
+  }[styleChoix];
+
+  // ✅ Générer le planning qui commence AUJOURD'HUI
+  const planning = _genererPlanningDepuisAujourdhui(
+    styleChoix, nbJours, objectif
+  );
+
+  // ✅ Sauvegarder la proposition pour _terminerOb()
+  window._obProgrammePropose = {
+    objectif,
+    niveau,
+    nbJours,
+    style:             styleChoix,
+    jours_specifiques: planning.map(p => p.jour),
+    equipement:       ['barre','halteres','machines','cables','poids_corps','rack'],
+    duree:            niveau === 'debutant' ? '60' : '75'
+  };
+
+  // ✅ Labels des objectifs
+  const objectifLabel = {
+    prise_masse: '💪 Prise de masse',
+    perte_poids: '⬇️ Perte de poids',
+    seche:       '🔥 Sèche',
+    force:       '🏋️ Force',
+    endurance:   '🏃 Endurance',
+    forme:       '✨ Forme générale'
+  }[objectif] || objectif;
+
+  const niveauLabel = {
+    debutant:      '🌱 Débutant',
+    intermediaire: '💪 Intermédiaire',
+    avance:        '🔥 Avancé'
+  }[niveau] || niveau;
+
+  // ✅ Message coach personnalisé
+  const messages = {
+    prise_masse: `Pour ta prise de masse, je te recommande un programme ${styleLabel} sur ${nbJours} jours. Priorité aux charges lourdes et aux exercices composés.`,
+    perte_poids: `Pour perdre du gras tout en gardant le muscle, un programme ${styleLabel} sur ${nbJours} jours est idéal. Repos courts et cardio en complément.`,
+    seche:       `Pour ta sèche, le ${styleLabel} sur ${nbJours} jours maximise la dépense calorique tout en préservant le muscle.`,
+    force:       `Pour développer ta force, l'${styleLabel} sur ${nbJours} jours avec des charges lourdes et des temps de repos longs est optimal.`,
+    endurance:   `Pour ton endurance, le ${styleLabel} sur ${nbJours} jours avec des répétitions élevées et des repos courts est parfait.`,
+    forme:       `Pour ta forme générale, le ${styleLabel} sur ${nbJours} jours est l'approche la plus équilibrée pour toi.`
+  }[objectif] || `Programme ${styleLabel} adapté à ton profil.`;
+
+  const labels = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+  return `
+    <!-- Message Coach -->
+    <div style="background:rgba(75,75,249,0.08);
+                border:1px solid rgba(75,75,249,0.2);
+                border-left:3px solid var(--fd-indigo);
+                border-radius:var(--radius-lg);
+                padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.1em;
+                  color:var(--fd-indigo);margin-bottom:6px">
+        🤖 Coach IA — Analyse de ton profil
+      </div>
+      <p style="font-size:.82rem;color:var(--text-secondary);
+                line-height:1.6;margin:0">
+        Salut <strong style="color:white">${nom}</strong> !
+        ${messages}
+      </p>
+    </div>
+
+    <!-- Badges profil -->
+    <div style="display:flex;flex-wrap:wrap;gap:6px;
+                margin-bottom:14px">
+      <span style="padding:4px 10px;
+                   background:rgba(75,75,249,0.15);
+                   border:1px solid rgba(75,75,249,0.25);
+                   border-radius:99px;font-size:.65rem;
+                   font-weight:700;color:var(--fd-indigo)">
+        ${niveauLabel}
+      </span>
+      <span style="padding:4px 10px;
+                   background:rgba(249,239,119,0.1);
+                   border:1px solid rgba(249,239,119,0.2);
+                   border-radius:99px;font-size:.65rem;
+                   font-weight:700;color:var(--fd-lemon)">
+        ${objectifLabel}
+      </span>
+      <span style="padding:4px 10px;
+                   background:rgba(139,240,187,0.1);
+                   border:1px solid rgba(139,240,187,0.2);
+                   border-radius:99px;font-size:.65rem;
+                   font-weight:700;color:var(--fd-mint)">
+        ${styleLabel}
+      </span>
+      <span style="padding:4px 10px;
+                   background:rgba(191,161,255,0.1);
+                   border:1px solid rgba(191,161,255,0.2);
+                   border-radius:99px;font-size:.65rem;
+                   font-weight:700;color:var(--fd-lavender)">
+        ${nbJours}j/semaine
+      </span>
+    </div>
+
+    <!-- Planning visuel qui commence aujourd'hui -->
+    <div style="background:rgba(255,255,255,0.03);
+                border:1px solid rgba(255,255,255,0.08);
+                border-radius:var(--radius-lg);
+                padding:14px;margin-bottom:14px">
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.1em;
+                  color:var(--text-muted);margin-bottom:12px;
+                  display:flex;align-items:center;gap:6px">
+        <div style="width:6px;height:6px;border-radius:50%;
+                    background:var(--fd-mint);
+                    box-shadow:0 0 6px var(--fd-mint)"></div>
+        📅 Planning — commence aujourd'hui
+      </div>
+      <div style="display:grid;
+                  grid-template-columns:repeat(7,1fr);
+                  gap:4px">
+        ${planning.map(j => `
+          <div style="display:flex;flex-direction:column;
+                      align-items:center;gap:4px">
+            <div style="width:36px;height:36px;border-radius:10px;
+                        display:flex;align-items:center;
+                        justify-content:center;
+                        font-size:.75rem;font-weight:700;
+                        ${j.estAujourdhui
+                          ? 'background:var(--fd-indigo);color:white;box-shadow:0 0 12px rgba(75,75,249,0.5)'
+                          : j.seanceEmoji
+                            ? 'background:rgba(75,75,249,0.2);border:1px solid rgba(75,75,249,0.3);color:var(--fd-lavender)'
+                            : 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text-muted)'}">
+              ${j.estAujourdhui ? '▶'
+                : j.seanceEmoji ? j.seanceEmoji
+                : '😴'}
+            </div>
+            <div style="font-size:.48rem;color:var(--text-muted);
+                        text-transform:uppercase;font-weight:600">
+              ${labels[j.jour]}
+            </div>
+            ${j.estAujourdhui ? `
+              <div style="font-size:.42rem;color:var(--fd-mint);
+                          font-weight:700">
+                Auj.
+              </div>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Séances du programme -->
+    <div style="font-size:.6rem;font-weight:700;
+                text-transform:uppercase;letter-spacing:.1em;
+                color:var(--text-muted);margin-bottom:8px">
+      💪 Séances incluses
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;
+                margin-bottom:14px">
+      ${_getSeancesPourStyle(styleChoix, objectif, niveau)
+        .map(s => `
+          <div style="display:flex;align-items:center;
+                      gap:10px;padding:10px 12px;
+                      background:rgba(255,255,255,0.03);
+                      border:1px solid rgba(255,255,255,0.07);
+                      border-radius:var(--radius-md)">
+            <span style="font-size:1.3rem">${s.emoji}</span>
+            <div style="flex:1">
+              <div style="font-size:.82rem;font-weight:700">
+                ${s.nom}
+              </div>
+              <div style="font-size:.6rem;color:var(--text-muted);
+                          margin-top:1px">
+                ${s.muscles}
+              </div>
+            </div>
+            <div style="font-size:.65rem;color:var(--fd-indigo);
+                        font-weight:700">
+              ~${s.duree}min
+            </div>
+          </div>`).join('')}
+    </div>
+
+    <!-- Boutons -->
+    <div style="display:grid;grid-template-columns:1fr 2fr;
+                gap:8px">
+      <button onclick="_obModifierProgramme()"
+              style="padding:10px;
+                     background:rgba(255,255,255,0.06);
+                     border:1px solid rgba(255,255,255,0.1);
+                     border-radius:var(--radius-md);
+                     font-size:.72rem;font-weight:700;
+                     color:var(--text-muted);cursor:pointer">
+        ✏️ Modifier
+      </button>
+      <button onclick="_obValiderProgramme()"
+              style="padding:10px;
+                     background:var(--fd-indigo);border:none;
+                     border-radius:var(--radius-md);
+                     font-size:.82rem;font-weight:800;
+                     color:white;cursor:pointer;
+                     box-shadow:0 4px 16px rgba(75,75,249,0.4)">
+        ✅ J'adopte ce programme !
+      </button>
+    </div>
+  `;
+}
+
+// ✅ Générer le planning qui commence aujourd'hui
+function _genererPlanningDepuisAujourdhui(style, nbJours, objectif) {
+  const aujourdhuiIdx = Utils.indexJourSemaine(Utils.aujourd_hui());
+  const labels        = ['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
+
+  // ✅ Emojis par style
+  const emojisParStyle = {
+    ppl: [
+      { emoji:'⬆️', muscles:'Pec · Épaules · Tri' },
+      { emoji:'⬇️', muscles:'Dos · Biceps'         },
+      { emoji:'🦵', muscles:'Jambes · Fessiers'     }
+    ],
+    full_body: [
+      { emoji:'🔄', muscles:'Full Body A' },
+      { emoji:'🔄', muscles:'Full Body B' }
+    ],
+    upper_lower: [
+      { emoji:'💪', muscles:'Haut du corps'  },
+      { emoji:'🦵', muscles:'Bas du corps'   }
+    ]
+  };
+
+  const modeles  = emojisParStyle[style] || emojisParStyle.ppl;
+  const planning = Array.from({length: 7}, (_, i) => ({
+    jour:        i,
+    label:       labels[i],
+    seanceEmoji: null,
+    seanceMuscles: null,
+    estAujourdhui: i === aujourdhuiIdx
+  }));
+
+  // ✅ Distributions selon nombre de jours
+  const distributions = {
+    3: [0, 2, 4],
+    4: [0, 1, 3, 4],
+    5: [0, 1, 2, 3, 4],
+    6: [0, 1, 2, 3, 4, 5]
+  };
+
+  let joursActifs = distributions[nbJours] || [0, 1, 3, 4];
+
+  // ✅ RÉORDONNER pour commencer par aujourd'hui
+  // Trouver si aujourd'hui est un jour d'entraînement
+  // Sinon, décaler pour que le prochain jour soit demain
+  const joursDecales = [];
+  for (let offset = 0; offset < 7; offset++) {
+    const jourCible = (aujourdhuiIdx + offset) % 7;
+    if (joursDecales.length < nbJours) {
+      // Vérifier si ce jour était prévu dans la distribution
+      const positionDansDistrib = joursActifs.indexOf(
+        (jourCible - (joursActifs[0] || 0) + 7) % 7
+      );
+      joursDecales.push(jourCible);
+    }
+  }
+
+  // ✅ Approche simple : placer les séances en commençant par aujourd'hui
+  const joursFinaux = [];
+  let compteJours   = 0;
+  for (let offset = 0; offset < 7 && compteJours < nbJours; offset++) {
+    const jourCible = (aujourdhuiIdx + offset) % 7;
+
+    // Éviter 2 jours consécutifs sauf si 5-6 jours/semaine
+    const dernierAjoute = joursFinaux[joursFinaux.length - 1];
+    const estConsecutif = dernierAjoute !== undefined
+      && (jourCible - dernierAjoute + 7) % 7 === 1;
+
+    if (nbJours <= 4 && estConsecutif && compteJours > 0) {
+      continue; // Sauter les jours consécutifs pour laisser récupérer
+    }
+
+    joursFinaux.push(jourCible);
+    compteJours++;
+  }
+
+  // ✅ Si on n'a pas assez de jours (à cause des contraintes)
+  // Remplir les jours manquants
+  if (joursFinaux.length < nbJours) {
+    for (let i = 0; i < 7 && joursFinaux.length < nbJours; i++) {
+      const jourCible = (aujourdhuiIdx + i) % 7;
+      if (!joursFinaux.includes(jourCible)) {
+        joursFinaux.push(jourCible);
+      }
+    }
+    joursFinaux.sort((a, b) => {
+      const ra = (a - aujourdhuiIdx + 7) % 7;
+      const rb = (b - aujourdhuiIdx + 7) % 7;
+      return ra - rb;
+    });
+  }
+
+  // ✅ Assigner les séances
+  joursFinaux.forEach((jourIdx, i) => {
+    const modele = modeles[i % modeles.length];
+    planning[jourIdx].seanceEmoji    = modele.emoji;
+    planning[jourIdx].seanceMuscles  = modele.muscles;
+  });
+
+  return planning;
+}
+
+// ✅ Séances résumées pour affichage
+function _getSeancesPourStyle(style, objectif, niveau) {
+  const dureeBase = niveau === 'debutant' ? 60
+                  : niveau === 'avance'   ? 75
+                  : 65;
+
+  const seancesParStyle = {
+    ppl: [
+      { emoji:'⬆️', nom:'Push',
+        muscles:'Pectoraux · Épaules · Triceps',
+        duree: dureeBase },
+      { emoji:'⬇️', nom:'Pull',
+        muscles:'Dos · Biceps · Épaules Postérieures',
+        duree: dureeBase },
+      { emoji:'🦵', nom:'Legs',
+        muscles:'Quadriceps · Ischio · Fessiers',
+        duree: dureeBase + 5 }
+    ],
+    full_body: [
+      { emoji:'🔄', nom:'Full Body A',
+        muscles:'Force — Squat · Bench · Row',
+        duree: dureeBase },
+      { emoji:'🔄', nom:'Full Body B',
+        muscles:'Volume — Deadlift · Press · Pull',
+        duree: dureeBase }
+    ],
+    upper_lower: [
+      { emoji:'💪', nom:'Upper',
+        muscles:'Pectoraux · Dos · Épaules · Bras',
+        duree: dureeBase },
+      { emoji:'🦵', nom:'Lower',
+        muscles:'Quadriceps · Ischio · Fessiers · Mollets',
+        duree: dureeBase + 5 }
+    ]
+  };
+
+  return seancesParStyle[style] || seancesParStyle.ppl;
+}
+
+// ✅ Valider le programme proposé
+function _obValiderProgramme() {
+  // Marquer comme validé
+  window._obProgrammeValide = true;
+  Utils.vibrer([50, 30, 50]);
+  Utils.toast('✅ Programme adopté !', 'success', 1500);
+
+  // Passer à l'étape suivante
+  _suivantOb(4);
+}
+
+// ✅ Ouvrir le questionnaire IA complet
+function _obModifierProgramme() {
+  // Rediriger vers le questionnaire IA après l'onboarding
+  window._obOuvrirIA = true;
+  Utils.toast(
+    '💡 Tu pourras personnaliser depuis Coach IA',
+    'info', 2500
+  );
+  // Passer quand même à l'étape suivante
+  _suivantOb(4);
+}
+
+// ════════════════════════════════════════════════════════════
 // ONBOARDING
 // ════════════════════════════════════════════════════════════
 function _afficherOnboarding() {
@@ -7049,19 +7441,22 @@ function _renderEtapeOnboarding(etape, data) {
           <input class="input mb-md" id="ob-nom"
                  placeholder="ex: Othmane" value="${data.nom || ''}"
                  autocomplete="given-name"/>
-          <div class="input-label">Ton poids (kg)</div>
+          <div class="input-label">Poids (kg)</div>
           <input class="input mb-md" id="ob-poids"
-                 type="number" placeholder="ex: 80" value="${data.poids || ''}"/>
-          <div class="input-label">Ta taille (cm)</div>
+                 type="number" placeholder="ex: 80"
+                 value="${data.poids || ''}"/>
+          <div class="input-label">Taille (cm)</div>
           <input class="input" id="ob-taille"
-                 type="number" placeholder="ex: 178" value="${data.taille || ''}"/>
+                 type="number" placeholder="ex: 178"
+                 value="${data.taille || ''}"/>
         </div>`
     },
     {
       titre:'Ton objectif 🎯',
       sousTitre:'Qu\'est-ce qui te motive ?',
       contenu:`
-        <div style="display:grid;gap:var(--space-sm);margin-top:var(--space-lg)">
+        <div style="display:grid;gap:var(--space-sm);
+                    margin-top:var(--space-lg)">
           ${[
             { val:'prise_masse', label:'💪 Prise de masse' },
             { val:'perte_poids', label:'⬇️ Perte de poids' },
@@ -7073,7 +7468,8 @@ function _renderEtapeOnboarding(etape, data) {
             <button onclick="_selectObj('${o.val}',this)"
                     class="btn-secondary ob-obj"
                     style="${data.objectif === o.val
-                      ? 'border-color:var(--fd-indigo);background:rgba(75,75,249,.15)' : ''}">
+                      ? 'border-color:var(--fd-indigo);background:rgba(75,75,249,.15)'
+                      : ''}">
               ${o.label}
             </button>`).join('')}
         </div>`
@@ -7082,61 +7478,117 @@ function _renderEtapeOnboarding(etape, data) {
       titre:'Ton niveau 📊',
       sousTitre:'Pour adapter ton programme',
       contenu:`
-        <div style="display:grid;gap:var(--space-sm);margin-top:var(--space-lg)">
+        <div style="display:grid;gap:var(--space-sm);
+                    margin-top:var(--space-lg)">
           ${[
-            { val:'debutant',      label:'🌱 Débutant',      desc:'< 6 mois'       },
-            { val:'intermediaire', label:'💪 Intermédiaire', desc:'6 mois — 2 ans' },
-            { val:'avance',        label:'🔥 Avancé',        desc:'2 ans +'        }
+            { val:'debutant',      label:'🌱 Débutant',
+              desc:'< 6 mois'       },
+            { val:'intermediaire', label:'💪 Intermédiaire',
+              desc:'6 mois — 2 ans' },
+            { val:'avance',        label:'🔥 Avancé',
+              desc:'2 ans +'        }
           ].map(n => `
             <button onclick="_selectNiv('${n.val}',this)"
                     class="btn-secondary ob-niv"
                     style="text-align:left;${data.niveau === n.val
-                      ? 'border-color:var(--fd-indigo);background:rgba(75,75,249,.15)' : ''}">
+                      ? 'border-color:var(--fd-indigo);background:rgba(75,75,249,.15)'
+                      : ''}">
               <div style="font-weight:700">${n.label}</div>
-              <div style="font-size:.72rem;color:var(--text-muted)">${n.desc}</div>
+              <div style="font-size:.72rem;color:var(--text-muted)">
+                ${n.desc}
+              </div>
             </button>`).join('')}
+        </div>`
+    },
+    {
+      // ✅ NOUVELLE ÉTAPE 4 — Coach IA propose le programme
+      titre:'🧠 Ton programme personnalisé',
+      sousTitre:'Le Coach IA analyse ton profil',
+      contenu:`
+        <div id="ob-programme-container"
+             style="margin-top:var(--space-lg)">
+          ${_renderPropositionProgramme(data)}
         </div>`
     },
     {
       titre:'C\'est parti ! 🚀',
       sousTitre:'Ton programme est prêt',
       contenu:`
-        <div style="text-align:center;padding:var(--space-xl) 0">
-          <div style="font-size:4rem;margin-bottom:var(--space-md)">⚡</div>
-          <div style="font-size:1.1rem;font-weight:700;margin-bottom:var(--space-sm)">
+        <div style="text-align:center;
+                    padding:var(--space-xl) 0">
+          <div style="font-size:4rem;
+                      margin-bottom:var(--space-md)">⚡</div>
+          <div style="font-size:1.1rem;font-weight:700;
+                      margin-bottom:var(--space-sm)">
             Prêt ${data.nom} !
           </div>
-          <div style="font-size:.85rem;color:var(--text-muted);line-height:1.6">
-            Ton programme personnalisé est configuré.<br>
-            Commence ta première séance dès maintenant !
+          <div style="font-size:.85rem;color:var(--text-muted);
+                      line-height:1.6">
+            Ton programme est configuré et commence
+            <strong style="color:var(--fd-mint)">
+              aujourd'hui
+            </strong> !<br>
+            Commence ta première séance maintenant 💪
+          </div>
+          <div style="margin-top:16px;padding:12px 16px;
+                      background:rgba(139,240,187,0.08);
+                      border:1px solid rgba(139,240,187,0.2);
+                      border-radius:var(--radius-lg);
+                      font-size:.78rem;color:var(--fd-mint)">
+            ✅ Planning démarré le
+            ${new Date().toLocaleDateString('fr-FR',{
+              weekday:'long', day:'numeric', month:'long'
+            })}
           </div>
         </div>`
     }
   ];
 
   const e = etapes[etape - 1];
+  const totalEtapes = etapes.length;
+
   return `
-    <div style="max-width:480px;margin:0 auto;padding:var(--space-lg)">
-      <div style="display:flex;justify-content:center;gap:8px;margin-bottom:var(--space-lg)">
-        ${[1,2,3,4].map(i => `
-          <div style="width:${etape === i ? 24 : 8}px;height:8px;border-radius:4px;
-                      background:${etape === i ? 'var(--fd-indigo)' : 'var(--border-color)'};
+    <div style="max-width:480px;margin:0 auto;
+                padding:var(--space-lg)">
+      <div style="display:flex;justify-content:center;
+                  gap:8px;margin-bottom:var(--space-lg)">
+        ${Array.from({length: totalEtapes}, (_,i) => `
+          <div style="width:${etape === i+1 ? 24 : 8}px;
+                      height:8px;border-radius:4px;
+                      background:${etape === i+1
+                        ? 'var(--fd-indigo)'
+                        : i+1 < etape
+                          ? 'rgba(75,75,249,0.4)'
+                          : 'var(--border-color)'};
                       transition:all .3s"></div>`).join('')}
       </div>
-      <div style="font-size:1.3rem;font-weight:800;margin-bottom:4px">${e.titre}</div>
-      <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:var(--space-md)">
+      <div style="font-size:1.3rem;font-weight:800;
+                  margin-bottom:4px">${e.titre}</div>
+      <div style="font-size:.82rem;color:var(--text-muted);
+                  margin-bottom:var(--space-md)">
         ${e.sousTitre}
       </div>
       ${e.contenu}
       <div style="margin-top:var(--space-xl)">
-        ${etape < 4 ? `
-          <button onclick="_suivantOb(${etape})" class="btn-primary"
-                  style="width:100%;font-size:.9rem">Suivant →</button>` : `
-          <button onclick="_terminerOb()" class="btn-primary"
-                  style="width:100%;font-size:.9rem">🚀 Commencer !</button>`}
+        ${etape < totalEtapes ? `
+          <button onclick="_suivantOb(${etape})"
+                  class="btn-primary"
+                  style="width:100%;font-size:.9rem">
+            ${etape === totalEtapes - 1
+              ? '🚀 Démarrer !'
+              : 'Suivant →'}
+          </button>` : `
+          <button onclick="_terminerOb()"
+                  class="btn-primary"
+                  style="width:100%;font-size:.9rem">
+            🚀 C'est parti !
+          </button>`}
         ${etape > 1 ? `
-          <button onclick="_renderEtapeOb(${etape - 1})" class="btn-secondary mt-sm"
-                  style="width:100%;font-size:.85rem">← Retour</button>` : ''}
+          <button onclick="_renderEtapeOb(${etape - 1})"
+                  class="btn-secondary mt-sm"
+                  style="width:100%;font-size:.85rem">
+            ← Retour
+          </button>` : ''}
       </div>
     </div>`;
 }
@@ -7165,8 +7617,25 @@ function _suivantOb(etapeActuelle) {
     window._obData.poids  = isNaN(poids)  ? null : poids;
     window._obData.taille = isNaN(taille) ? null : taille;
   }
+
+  // ✅ Étape 3 (niveau) → Étape 4 (programme Coach IA)
+  // On sauvegarde objectif + niveau pour la proposition
+  if (etapeActuelle === 3) {
+    // S'assurer que objectif et niveau sont bien sauvegardés
+    if (!window._obData.objectif) {
+      Utils.toast('Choisis ton objectif !', 'error');
+      return;
+    }
+    if (!window._obData.niveau) {
+      Utils.toast('Choisis ton niveau !', 'error');
+      return;
+    }
+  }
+
   const ob = document.getElementById('onboarding-screen');
-  ob.innerHTML = _renderEtapeOnboarding(etapeActuelle + 1, window._obData);
+  ob.innerHTML = _renderEtapeOnboarding(
+    etapeActuelle + 1, window._obData
+  );
 }
 
 function _renderEtapeOb(etape) {
@@ -7177,22 +7646,126 @@ function _renderEtapeOb(etape) {
 function _terminerOb() {
   try {
     const profil = {
-      nom:       window._obData.nom     || 'Athlète',
+      nom:       window._obData.nom      || 'Athlète',
       poids:     window._obData.poids,
       taille:    window._obData.taille,
-      objectif:  window._obData.objectif,
-      niveau:    window._obData.niveau,
+      objectif:  window._obData.objectif || 'forme',
+      niveau:    window._obData.niveau   || 'intermediaire',
       avatar:    '💪',
       dateDebut: Utils.aujourd_hui()
     };
+
     Utils.storage.set('ft_profil', profil);
     Programme.setDateDebut(Utils.aujourd_hui());
     Gamification.ajouterXP(200, 'Bienvenue');
-    document.getElementById('onboarding-screen').classList.add('hidden');
-    document.getElementById('app-wrapper').style.display = 'flex';
+
+    // ✅ Générer et appliquer le programme IA automatiquement
+    if (window._obProgrammePropose) {
+      try {
+        const config = {
+          ...window._obProgrammePropose,
+          // ✅ S'assurer que les jours_specifiques reflètent
+          // le planning qui commence aujourd'hui
+          jours_specifiques: null // laisser _genererPlanning recalculer
+        };
+
+        // ✅ Recalculer le planning depuis aujourd'hui
+        const aujourdhuiIdx = Utils.indexJourSemaine(
+          Utils.aujourd_hui()
+        );
+        const nbJours    = config.nbJours || 4;
+        const styleChoix = config.style   || 'ppl';
+
+        // Recréer les jours en commençant par aujourd'hui
+        const joursFinaux = [];
+        for (
+          let offset = 0;
+          offset < 7 && joursFinaux.length < nbJours;
+          offset++
+        ) {
+          const jourCible = (aujourdhuiIdx + offset) % 7;
+          const dernier   = joursFinaux[joursFinaux.length - 1];
+          const estConsec = dernier !== undefined
+            && (jourCible - dernier + 7) % 7 === 1;
+
+          if (nbJours <= 4 && estConsec && joursFinaux.length > 0) {
+            continue;
+          }
+          joursFinaux.push(jourCible);
+        }
+
+        // Compléter si besoin
+        if (joursFinaux.length < nbJours) {
+          for (
+            let i = 0;
+            i < 7 && joursFinaux.length < nbJours;
+            i++
+          ) {
+            const jourCible = (aujourdhuiIdx + i) % 7;
+            if (!joursFinaux.includes(jourCible)) {
+              joursFinaux.push(jourCible);
+            }
+          }
+        }
+
+        config.jours_specifiques = joursFinaux;
+
+        // ✅ Générer le programme via le Coach IA
+        const programme = Coach.ProgrammeIA.generer(config);
+
+        console.log(
+          '[Onboarding] Programme IA généré et appliqué ✅',
+          programme
+        );
+
+        Utils.toast(
+          `🧠 Programme ${programme.styleLabel} activé !`,
+          'success', 3000
+        );
+      } catch(e) {
+        console.error(
+          '[Onboarding] Erreur génération programme:', e
+        );
+      }
+    }
+
+    // ✅ Si l'utilisateur veut personnaliser via le questionnaire IA
+    if (window._obOuvrirIA) {
+      window._obOuvrirIA = false;
+      document.getElementById('onboarding-screen')
+        .classList.add('hidden');
+      document.getElementById('app-wrapper')
+        .style.display = 'flex';
+      naviguer('home');
+
+      setTimeout(() => {
+        Coach.ProgrammeIA._modeQuestionnaire = true;
+        Coach.ProgrammeIA._etapeActuelle     = 0;
+        Coach.ProgrammeIA._reponses          = {};
+        naviguer('adaptatif');
+      }, 500);
+
+      return;
+    }
+
+    document.getElementById('onboarding-screen')
+      .classList.add('hidden');
+    document.getElementById('app-wrapper')
+      .style.display = 'flex';
+
     naviguer('home');
-    Utils.toast(`Bienvenue ${profil.nom} ! 🎉`, 'success', 4000);
+
+    Utils.toast(
+      `Bienvenue ${profil.nom} ! 🎉`,
+      'success', 4000
+    );
     Utils.confetti(2000);
+
+    // ✅ Nettoyer les variables temporaires
+    window._obProgrammePropose = null;
+    window._obProgrammeValide  = null;
+    window._obOuvrirIA         = null;
+
   } catch(e) {
     console.error('[App] Erreur onboarding:', e);
     window.location.reload();
