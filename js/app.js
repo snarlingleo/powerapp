@@ -3240,6 +3240,61 @@ ${!derniereSerie ? `
   }, 500); // ✅ Rafraîchir toutes les 500ms pour plus de précision
 },
 
+// ✅ NOUVEAU — Enchaîner série suivante après repos
+_enchaînerSerieSuivante(exoIdx, serieIdx, totalSeries) {
+  this._fermerRepos();
+
+  const prochaineSerieIdx = serieIdx + 1;
+
+  if (prochaineSerieIdx < totalSeries) {
+    const repsInput  = document.getElementById(
+      `lr-reps-${exoIdx}-${prochaineSerieIdx}`
+    );
+    const repsTarget = parseInt(repsInput?.value)
+      || parseInt(repsInput?.placeholder)
+      || 10;
+
+    let seanceId   = '';
+    let exoRef     = '';
+    let totalExos  = 1;
+    let reposDuree = 75;
+
+    try {
+      const btnProchain = document.getElementById(
+        `btn-serie-${exoIdx}-${prochaineSerieIdx}`
+      );
+      if (btnProchain) {
+        const onclick = btnProchain.getAttribute('onclick');
+        const match   = onclick?.match(
+          /validerSerieLR\('([^']+)','([^']+)',\d+,\d+,\d+,(\d+),(\d+)\)/
+        );
+        if (match) {
+          seanceId   = match[1];
+          exoRef     = match[2];
+          totalExos  = parseInt(match[3]);
+          reposDuree = parseInt(match[4]);
+        }
+      }
+    } catch(e) {}
+
+    setTimeout(() => {
+      ChronoSerie.demarrerApresRepos(
+        exoIdx,
+        prochaineSerieIdx,
+        repsTarget,
+        seanceId,
+        totalSeries,
+        totalExos,
+        reposDuree,
+        exoRef
+      );
+    }, 300);
+
+  } else {
+    this._scrollVersProchaineSerie();
+  }
+},
+
   // ✅ Countdown 3s avant retour auto
   _lancerCountdown(seanceId) {
     const cdEl  = document.getElementById('repos-countdown');
@@ -3881,13 +3936,14 @@ const LiveStickyBar = {
 };
 
 // ════════════════════════════════════════════════════════════
-// ✅ CHRONO SÉRIE — Compte à rebours durée effort
+// ✅ CHRONO SÉRIE — Overlay plein écran (comme repos)
 // ════════════════════════════════════════════════════════════
 const ChronoSerie = {
 
-  _interval:  null,
-  _exoIdx:    null,
-  _serieIdx:  null,
+  _interval:   null,
+  _exoIdx:     null,
+  _serieIdx:   null,
+  _actif:      false,
 
   // ✅ Calcul durée selon reps (2.5s/rep)
   _calculerDuree(reps) {
@@ -3895,141 +3951,277 @@ const ChronoSerie = {
     return Math.min(60, Math.max(15, Math.round(r * 2.5)));
   },
 
-  // ✅ Démarrer le chrono pour une série
-  demarrer(exoIdx, serieIdx, repsTarget) {
-    // Stopper l'ancien si actif
+  // ✅ Démarrer le chrono SÉRIE — overlay plein écran
+  demarrer(exoIdx, serieIdx, repsTarget, seanceId, totalSeries, totalExos, reposDuree, exoRef) {
     this.stopper();
 
-    this._exoIdx  = exoIdx;
+    this._exoIdx   = exoIdx;
     this._serieIdx = serieIdx;
+    this._actif    = true;
 
-    const duree = this._calculerDuree(repsTarget);
-    const circ  = 2 * Math.PI * 14;
-    let restant = duree;
+    const duree    = this._calculerDuree(repsTarget);
     const heureFin = Date.now() + (duree * 1000);
+    const circ     = 2 * Math.PI * 88;
 
-    // ✅ Masquer le bouton "Commencer"
-    const btnCommencer = document.getElementById(
-      `btn-commencer-${exoIdx}`
-    );
+    // ✅ Masquer le bouton "Commencer" de cet exercice
+    const btnCommencer = document.getElementById(`btn-commencer-${exoIdx}`);
     if (btnCommencer) btnCommencer.style.display = 'none';
 
-    // ✅ Afficher le chrono actif
-    const chronoActif = document.getElementById(
-      `chrono-serie-actif-${exoIdx}-${serieIdx}`
-    );
-    if (chronoActif) chronoActif.style.display = 'flex';
+    // ✅ Récupérer infos exercice
+    const exoCard = document.getElementById(`live-exo-${exoIdx}`);
+    const nomExo  = exoCard?.querySelector('[style*="font-size:1rem"]')
+      ?.textContent?.trim() || 'Exercice';
 
-    // ✅ Masquer "En attente"
-    const idle = document.getElementById(
-      `chrono-serie-idle-${exoIdx}-${serieIdx}`
-    );
-    if (idle) idle.style.display = 'none';
+    const poids = document.getElementById(`lr-poids-${exoIdx}-${serieIdx}`)?.value || '—';
+    const reps  = document.getElementById(`lr-reps-${exoIdx}-${serieIdx}`)?.value || repsTarget;
 
-    // ✅ Scroll vers l'exercice
-    document.getElementById(`lr-bloc-${exoIdx}-${serieIdx}`)
-      ?.scrollIntoView({ behavior:'smooth', block:'center' });
+    // ✅ Créer l'overlay plein écran
+    const overlay = document.createElement('div');
+    overlay.id    = 'serie-overlay';
+    overlay.style.cssText = `
+      position:fixed;inset:0;z-index:900;
+      background:rgba(9,9,45,0.97);
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      padding:24px;text-align:center;
+      animation:fadeIn .3s ease`;
 
-    // ✅ Toast démarrage
-    Utils.toast(
-      `⏱️ Série en cours — ${duree}s (~${repsTarget} reps)`,
-      'info', 2000
-    );
+    overlay.innerHTML = `
+
+      <!-- Badge SÉRIE EN COURS -->
+      <div style="font-size:.65rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.15em;
+                  color:var(--fd-lemon);margin-bottom:8px">
+        💪 SÉRIE EN COURS
+      </div>
+
+      <!-- Nom exercice -->
+      <div style="font-size:.95rem;font-weight:700;
+                  color:var(--text-muted);margin-bottom:6px">
+        ${nomExo}
+      </div>
+
+      <!-- Info série -->
+      <div style="font-size:.82rem;font-weight:700;
+                  color:var(--text-secondary);margin-bottom:20px">
+        Série ${serieIdx + 1} / ${totalSeries}
+      </div>
+
+      <!-- Cercle SVG (comme repos) -->
+      <div style="position:relative;width:200px;height:200px;
+                  margin-bottom:20px">
+        <svg width="200" height="200"
+             style="transform:rotate(-90deg)">
+          <circle cx="100" cy="100" r="88"
+                  fill="none"
+                  stroke="rgba(249,239,119,0.1)"
+                  stroke-width="10"/>
+          <circle cx="100" cy="100" r="88"
+                  fill="none"
+                  stroke="var(--fd-lemon)"
+                  stroke-width="10"
+                  stroke-linecap="round"
+                  stroke-dasharray="${circ}"
+                  stroke-dashoffset="0"
+                  id="serie-arc"
+                  style="transition:stroke-dashoffset .5s linear"/>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;
+                    transform:translate(-50%,-50%)">
+          <div id="serie-display"
+               style="font-size:3.5rem;font-weight:800;
+                      color:var(--fd-lemon);
+                      font-variant-numeric:tabular-nums;
+                      line-height:1">
+            ${duree}
+          </div>
+          <div style="font-size:.65rem;color:var(--text-muted);
+                      margin-top:4px">secondes</div>
+        </div>
+      </div>
+
+      <!-- Charge -->
+      <div style="margin-bottom:20px;
+                  background:rgba(255,255,255,0.04);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-lg);
+                  padding:14px 24px;text-align:center">
+        <div id="serie-charge-display"
+             style="font-size:2rem;font-weight:800;
+                    color:var(--fd-indigo);line-height:1">
+          ${poids}kg × ${reps}
+        </div>
+        <div style="font-size:.65rem;color:var(--text-muted);
+                    margin-top:4px">Charge prévue</div>
+      </div>
+
+      <!-- Boutons -->
+      <div style="display:flex;gap:10px;
+                  width:100%;max-width:300px">
+        <button onclick="ChronoSerie._terminerManuellement(
+                  '${seanceId}','${exoRef}',
+                  ${exoIdx},${serieIdx},
+                  ${totalSeries},${totalExos},
+                  ${reposDuree})"
+                style="flex:2;padding:16px;
+                       background:var(--fd-indigo);border:none;
+                       border-radius:var(--radius-md);
+                       font-size:.95rem;font-weight:800;
+                       color:white;cursor:pointer;
+                       box-shadow:0 4px 20px rgba(75,75,249,0.4)">
+          ✅ Série terminée !
+        </button>
+      </div>
+
+      <!-- Modifier charge pendant la série -->
+      <div style="margin-top:16px;
+                  width:100%;max-width:300px">
+        <div style="font-size:.6rem;font-weight:700;
+                    text-transform:uppercase;letter-spacing:.08em;
+                    color:var(--text-muted);margin-bottom:8px;
+                    text-align:center">
+          Modifier la charge
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onclick="ChronoSerie._modifierCharge(${exoIdx},${serieIdx},-2.5)"
+                  style="flex:1;padding:10px;
+                         background:rgba(255,141,150,0.12);
+                         border:2px solid rgba(255,141,150,0.3);
+                         border-radius:var(--radius-md);
+                         font-size:.85rem;font-weight:800;
+                         color:var(--fd-coral);cursor:pointer">
+            −2.5
+          </button>
+          <div id="serie-poids-display"
+               style="flex:2;text-align:center;
+                      font-size:1.2rem;font-weight:800;
+                      color:var(--fd-indigo)">
+            ${poids}kg
+          </div>
+          <button onclick="ChronoSerie._modifierCharge(${exoIdx},${serieIdx},2.5)"
+                  style="flex:1;padding:10px;
+                         background:rgba(139,240,187,0.12);
+                         border:2px solid rgba(139,240,187,0.3);
+                         border-radius:var(--radius-md);
+                         font-size:.85rem;font-weight:800;
+                         color:var(--fd-mint);cursor:pointer">
+            +2.5
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
     Utils.vibrer([30]);
 
     // ✅ Lancer le décompte
     this._interval = setInterval(() => {
       const resteMs  = heureFin - Date.now();
       const resteSec = Math.ceil(resteMs / 1000);
-      restant        = Math.max(0, resteSec);
+      const reste    = Math.max(0, resteSec);
 
-      // Mettre à jour l'affichage
-      const val = document.getElementById(
-        `chrono-val-${exoIdx}-${serieIdx}`
-      );
-      const arc = document.getElementById(
-        `arc-serie-${exoIdx}-${serieIdx}`
-      );
+      const disp = document.getElementById('serie-display');
+      const arc  = document.getElementById('serie-arc');
 
-      if (val) val.textContent = restant;
+      if (disp) disp.textContent = reste;
 
       if (arc) {
-        const pct    = Math.max(0, resteMs / (duree * 1000));
+        const pct = Math.max(0, resteMs / (duree * 1000));
         arc.style.strokeDashoffset = circ * (1 - pct);
         // Changer couleur selon urgence
-        arc.style.stroke = restant <= 5
+        arc.style.stroke = reste <= 5
           ? 'var(--fd-coral)'
-          : restant <= 10
+          : reste <= 10
             ? 'var(--fd-lemon)'
-            : 'var(--fd-mint)';
+            : 'var(--fd-lemon)';
       }
 
-      // ✅ 3 dernières secondes → vibration
-      if (restant <= 3 && restant > 0) {
-        Utils.vibrer([20]);
-      }
+      // 3 dernières secondes → vibration
+      if (reste <= 3 && reste > 0) Utils.vibrer([20]);
 
-      // ✅ Temps écoulé !
-      if (restant <= 0) {
+      // ✅ Temps écoulé → terminer automatiquement
+      if (reste <= 0) {
         this.stopper();
-        this._onTermine(exoIdx, serieIdx);
+        this._onTempsEcoule(seanceId, exoRef, exoIdx, serieIdx, totalSeries, totalExos, reposDuree);
       }
     }, 250);
   },
 
-  // ✅ Quand le chrono se termine
-  _onTermine(exoIdx, serieIdx) {
-    const val = document.getElementById(
-      `chrono-val-${exoIdx}-${serieIdx}`
-    );
-    const arc = document.getElementById(
-      `arc-serie-${exoIdx}-${serieIdx}`
-    );
+  // ✅ Temps écoulé — valider auto et lancer repos
+  _onTempsEcoule(seanceId, exoRef, exoIdx, serieIdx, totalSeries, totalExos, reposDuree) {
+    Utils.vibrer([200, 100, 200]);
+    Utils.toast('⏱️ Temps écoulé !', 'info', 1500);
 
-    if (val) {
-      val.textContent  = '✅';
-      val.style.color  = 'var(--fd-mint)';
-      val.style.fontSize = '.5rem';
+    // ✅ Fermer l'overlay série
+    this._fermerOverlay();
+
+    // ✅ Valider la série automatiquement
+    App.validerSerieLR(seanceId, exoRef, exoIdx, serieIdx, totalSeries, totalExos, reposDuree);
+  },
+
+  // ✅ Bouton "Série terminée !" — valider manuellement
+  _terminerManuellement(seanceId, exoRef, exoIdx, serieIdx, totalSeries, totalExos, reposDuree) {
+    this.stopper();
+    this._fermerOverlay();
+    App.validerSerieLR(seanceId, exoRef, exoIdx, serieIdx, totalSeries, totalExos, reposDuree);
+  },
+
+  // ✅ Modifier charge pendant la série
+  _modifierCharge(exoIdx, serieIdx, delta) {
+    const inp = document.getElementById(`lr-poids-${exoIdx}-${serieIdx}`);
+    if (!inp) return;
+
+    const actuel  = parseFloat(inp.value) || 0;
+    const nouveau = Math.max(0, Math.round((actuel + delta) * 4) / 4);
+    inp.value     = nouveau;
+
+    // Mettre à jour l'affichage dans l'overlay
+    const display      = document.getElementById('serie-charge-display');
+    const poidsDisplay = document.getElementById('serie-poids-display');
+    const repsInp      = document.getElementById(`lr-reps-${exoIdx}-${serieIdx}`);
+    const reps         = repsInp?.value || '—';
+
+    if (display)      display.textContent      = `${nouveau}kg × ${reps}`;
+    if (poidsDisplay) poidsDisplay.textContent = `${nouveau}kg`;
+
+    // Feedback couleur
+    if (display) {
+      display.style.color = delta > 0
+        ? 'var(--fd-mint)'
+        : 'var(--fd-coral)';
+      setTimeout(() => {
+        if (display) display.style.color = 'var(--fd-indigo)';
+      }, 500);
     }
-    if (arc) arc.style.stroke = 'var(--fd-mint)';
 
-    // ✅ Vibration + toast
-    Utils.vibrer([100, 50, 100]);
-    Utils.toast('💪 C\'est l\'heure ! Lance ta série !', 'success', 2000);
+    Utils.vibrer([10]);
+  },
 
-    // ✅ Highlight le bouton "SÉRIE FAITE"
-    const btn = document.getElementById(
-      `btn-serie-${exoIdx}-${serieIdx}`
-    );
-    if (btn) {
-      btn.style.animation  = 'pulse 1s infinite';
-      btn.style.background = 'rgba(139,240,187,0.9)';
-      btn.style.color      = '#09092d';
+  // ✅ Fermer l'overlay série
+  _fermerOverlay() {
+    const el = document.getElementById('serie-overlay');
+    if (el) {
+      el.style.animation = 'fadeOut .3s ease forwards';
+      setTimeout(() => el.remove(), 300);
     }
   },
 
-  // ✅ Afficher chrono pour série suivante (après repos)
-  // appelé automatiquement depuis lancerReposAuto
-  demarrerApresRepos(exoIdx, serieIdx, repsTarget) {
-    // ✅ Masquer "En attente" de la série suivante
-    const idle = document.getElementById(
-      `chrono-serie-idle-${exoIdx}-${serieIdx}`
-    );
-    if (idle) idle.style.display = 'none';
-
-    // ✅ Démarrer direct le chrono
-    this.demarrer(exoIdx, serieIdx, repsTarget);
+  // ✅ Démarrer après repos (appelé depuis _enchaînerSerieSuivante)
+  demarrerApresRepos(exoIdx, serieIdx, repsTarget, seanceId, totalSeries, totalExos, reposDuree, exoRef) {
+    this.demarrer(exoIdx, serieIdx, repsTarget, seanceId, totalSeries, totalExos, reposDuree, exoRef);
   },
 
   stopper() {
     clearInterval(this._interval);
     this._interval = null;
+    this._actif    = false;
   },
 
   reset() {
     this.stopper();
     this._exoIdx  = null;
     this._serieIdx = null;
+    this._fermerOverlay();
   }
 };
 
@@ -4764,8 +4956,16 @@ function _renderExercicesLive(seance, seanceId) {
 
         <!-- ✅ BOUTON COMMENCER — seulement S1 de chaque exo -->
         ${serieIdx === 0 ? `
-          <button id="btn-commencer-${exoIdx}"
-                  onclick="ChronoSerie.demarrer(${exoIdx}, ${serieIdx}, ${ex.reps?.split?.('-')?.[0] || ex.reps || 10})"
+  <button id="btn-commencer-${exoIdx}"
+          onclick="ChronoSerie.demarrer(
+            ${exoIdx}, ${serieIdx},
+            ${ex.reps?.split?.('-')?.[0] || ex.reps || 10},
+            '${seanceId}',
+            ${ex.series},
+            ${exos.length},
+            ${ex.repos || 75},
+            '${ex.ref}'
+          )"
                   style="display:flex;align-items:center;gap:5px;
                          padding:6px 12px;
                          background:var(--fd-mint);
