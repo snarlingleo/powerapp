@@ -1559,7 +1559,7 @@ function _rendreHome(container) {
                           ${ex.series}×${ex.reps}
                         </div>
                         <div style="font-size:.58rem;color:var(--text-muted)">
-                          ⏱ ${ex.repos || 75}s
+                          ⏱ ${ex.repos || 60}s
                         </div>
                       </div>
                     </div>`;
@@ -4391,7 +4391,7 @@ function _rendreChecklistPreSeance(container, options, seanceId) {
                             margin-top:2px">
                   ${exoData.muscle || ''}
                   · ${ex.series}×${ex.reps}
-                  · ⏱ ${ex.repos || 75}s
+                  · ⏱ ${ex.repos || 60}s
                 </div>
               </div>
 
@@ -4871,7 +4871,7 @@ function _renderExercicesLive(seance, seanceId) {
                 <div style="font-size:.65rem;color:var(--text-muted);
                             margin-top:3px">
                   ${ex.series} séries × ${ex.reps} reps
-                  · repos ${ex.repos || 75}s
+                  · repos ${ex.repos || 60}s
                 </div>
               </div>
               <div style="text-align:right;flex-shrink:0">
@@ -4963,7 +4963,7 @@ function _renderExercicesLive(seance, seanceId) {
             '${seanceId}',
             ${ex.series},
             ${exos.length},
-            ${ex.repos || 75},
+            ${ex.repos || 60},
             '${ex.ref}'
           )"
                   style="display:flex;align-items:center;gap:5px;
@@ -5147,7 +5147,7 @@ function _renderExercicesLive(seance, seanceId) {
                 '${seanceId}','${ex.ref}',
                 ${exoIdx},${serieIdx},
                 ${ex.series},${exos.length},
-                ${ex.repos || 75})"
+                ${ex.repos || 60})"
             id="btn-serie-${exoIdx}-${serieIdx}"
             style="width:100%;padding:18px;
                    background:var(--fd-indigo);border:none;
@@ -5813,7 +5813,7 @@ validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
   const totalExos = document.querySelectorAll(
     '.live-exo-card'
   ).length || 1;
-  const reposDuree = 75;
+  const reposDuree = 60;
   this.validerSerieLR(
     seanceId, exoRef, exoIdx, serieIdx,
     totalSeries, totalExos, reposDuree
