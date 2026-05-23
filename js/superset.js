@@ -951,34 +951,90 @@ const Superset = {
     }
 
     switch(result.type) {
-      case 'prochain_exo': {
-        const exoData = (window.EXERCICES||{})[result.exoSuivant?.ref] || {};
-        Utils.toast(
-          `→ ${exoData.emoji||'💪'} ${exoData.nom||result.exoSuivant?.ref}`,
-          'info', 1500
+
+  // ✅ Exercice suivant dans le superset → overlay ChronoSerie
+  case 'prochain_exo': {
+    const modal = document.getElementById('modal-info');
+    modal?.classList.add('hidden');
+
+    const exoSuivant = result.exoSuivant;
+    const exoData    = (window.EXERCICES||{})[exoSuivant?.ref] || {};
+    const repsTarget = parseInt(exoSuivant?.reps)
+      || parseInt(exoSuivant?.reps?.split?.('-')?.[0])
+      || 10;
+
+    // ✅ Lancer ChronoSerie pour l'exo suivant (repos 0 = direct)
+    setTimeout(() => {
+      if (typeof ChronoSerie !== 'undefined') {
+        ChronoSerie.demarrerApresRepos(
+          this._exoActuel,   // exoIdx
+          this._serieActuelle - 1, // serieIdx
+          repsTarget,
+          seanceId,
+          this._supersetActif?.exercices[0]?.series || 3,
+          this._supersetActif?.exercices?.length || 2,
+          0,                 // repos = 0 → direct
+          exoSuivant?.ref
         );
+      } else {
+        // Fallback → re-render UI classique
         this._renderUIActif(seanceId);
-        break;
       }
-      case 'repos': {
-        const modal = document.getElementById('modal-info');
-        modal?.classList.add('hidden');
-        this._lancerReposSuperset(result.repos, result.serie, seanceId);
-        break;
-      }
-      case 'termine': {
-        const log   = this.terminer(seanceId);
-        const modal = document.getElementById('modal-info');
-        modal?.classList.add('hidden');
-        Utils.confetti(2000);
-        Utils.toast(
-          `⚡ Superset terminé ! Volume : ${Utils.formatVolume(log?.volume||0)}`,
-          'success', 4000
-        );
-        try { Defis.mettreAJourProgression(); } catch(e) {}
-        break;
-      }
+    }, 300);
+    break;
+  }
+
+  // ✅ Repos entre séries → overlay repos Live
+  case 'repos': {
+    const modal = document.getElementById('modal-info');
+    modal?.classList.add('hidden');
+
+    const reposDuree = result.repos || 75;
+
+    // ✅ Utiliser timerRepos de Live si disponible
+    if (typeof timerRepos !== 'undefined'
+        && typeof LiveRapide !== 'undefined') {
+      // Stocker infos pour callback
+      window._ssReposCallback = () => {
+        this._renderUIActif(seanceId);
+      };
+
+      LiveRapide.lancerReposAuto(
+        this._exoActuel,
+        this._serieActuelle - 2,
+        this._supersetActif?.exercices[0]?.series || 3,
+        seanceId,
+        reposDuree
+      );
+
+    } else {
+      // Fallback → overlay repos custom
+      this._lancerReposSuperset(reposDuree, result.serie, seanceId);
     }
+    break;
+  }
+
+  // ✅ Superset terminé
+  case 'termine': {
+    const log   = this.terminer(seanceId);
+    const modal = document.getElementById('modal-info');
+    modal?.classList.add('hidden');
+
+    Utils.confetti(2000);
+    Utils.vibrer([200, 100, 200, 100, 300]);
+    Utils.toast(
+      `⚡ Superset terminé ! Volume : ${Utils.formatVolume(log?.volume||0)}`,
+      'success', 4000
+    );
+
+    // ✅ Overlay résumé
+    this._renderResumeSuperset(log);
+
+    try { Defis.mettreAJourProgression(); } catch(e) {}
+    try { Gamification.ajouterXP(50, 'superset_complete'); } catch(e) {}
+    break;
+  }
+}
   },
 
   _lancerReposSuperset(secondes, serieSuivante, seanceId) {
@@ -1032,16 +1088,92 @@ const Superset = {
   },
 
   _annulerUI() {
-  this.annuler();
-  // ✅ Supprimer le modal créé dynamiquement
-  const modal = document.getElementById('modal-info');
-  if (modal) {
-    modal.classList.add('hidden');
-    // Si modal créé dynamiquement → le supprimer
-    if (modal.dataset.dynamic === 'true') modal.remove();
-  }
-  Utils.toast('Superset abandonné.', 'info');
-},
+    this.annuler();
+    // ✅ Supprimer le modal créé dynamiquement
+    const modal = document.getElementById('modal-info');
+    if (modal) {
+      modal.classList.add('hidden');
+      // Si modal créé dynamiquement → le supprimer
+      if (modal.dataset.dynamic === 'true') modal.remove();
+    }
+    Utils.toast('Superset abandonné.', 'info');
+  },
+
+  // ✅ NOUVEAU — Résumé fin de superset  ← COLLE ICI
+  _renderResumeSuperset(log) {
+    if (!log) return;
+
+    const overlay = document.createElement('div');
+    overlay.id    = 'ss-resume-overlay';
+    overlay.style.cssText = `
+      position:fixed;inset:0;z-index:700;
+      background:rgba(9,9,45,0.97);
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      gap:16px;padding:24px;text-align:center`;
+
+    overlay.innerHTML = `
+      <div style="font-size:3rem">⚡</div>
+      <div style="font-size:1.2rem;font-weight:800;
+                  color:var(--fd-lemon)">
+        Superset terminé !
+      </div>
+      <div style="font-size:.85rem;color:var(--text-muted)">
+        ${log.nom}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
+                  gap:12px;width:100%;max-width:320px;margin:8px 0">
+        <div style="background:rgba(75,75,249,0.15);
+                    border:1px solid rgba(75,75,249,0.3);
+                    border-radius:12px;padding:12px">
+          <div style="font-size:1.3rem;font-weight:800;
+                      color:var(--fd-indigo)">
+            ${log.seriesCompletes}
+          </div>
+          <div style="font-size:.6rem;color:var(--text-muted);
+                      margin-top:2px">Séries</div>
+        </div>
+        <div style="background:rgba(139,240,187,0.1);
+                    border:1px solid rgba(139,240,187,0.2);
+                    border-radius:12px;padding:12px">
+          <div style="font-size:1.3rem;font-weight:800;
+                      color:var(--fd-mint)">
+            ${Utils.formatVolume(log.volume||0)}
+          </div>
+          <div style="font-size:.6rem;color:var(--text-muted);
+                      margin-top:2px">Volume</div>
+        </div>
+        <div style="background:rgba(249,239,119,0.1);
+                    border:1px solid rgba(249,239,119,0.2);
+                    border-radius:12px;padding:12px">
+          <div style="font-size:1.3rem;font-weight:800;
+                      color:var(--fd-lemon)">
+            ${log.prs > 0 ? `🏆${log.prs}` : '—'}
+          </div>
+          <div style="font-size:.6rem;color:var(--text-muted);
+                      margin-top:2px">PRs</div>
+        </div>
+      </div>
+      <div style="font-size:.78rem;color:var(--text-muted)">
+        ⏱ Durée : ${Utils.formatDuree(log.duree||0)}
+      </div>
+      <button onclick="
+          document.getElementById('ss-resume-overlay')?.remove();"
+              style="margin-top:8px;padding:14px 32px;
+                     background:var(--fd-indigo);border:none;
+                     border-radius:99px;color:white;
+                     font-weight:700;font-size:.95rem;
+                     cursor:pointer">
+        ✅ Continuer la séance
+      </button>`;
+
+    document.body.appendChild(overlay);
+
+    // ✅ Auto-remove après 8s
+    setTimeout(() => overlay.remove(), 8000);
+  },
+
+  _getCustom() { ... }  // ← existant
 
   _getCustom()       { return Utils.storage.get('ft_supersets_custom', []); },
   _saveCustom(data)  { Utils.storage.set('ft_supersets_custom', data);      }
