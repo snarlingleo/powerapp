@@ -528,18 +528,18 @@ const Coach = {
     _genererSeances(style, objectif, niveau,
                     nbJours, duree, equipement) {
       const params = {
-        debutant: {
-          series:3, repsForce:'8-10',
-          repsVol:'12-15', repsEnd:'15-20', repos:75
-        },
-        intermediaire: {
-          series:4, repsForce:'5-8',
-          repsVol:'8-12',  repsEnd:'12-15', repos:90
-        },
-        avance: {
-          series:5, repsForce:'3-6',
-          repsVol:'6-10',  repsEnd:'10-15', repos:120
-        }
+  debutant: {
+    series:3, repsForce:'8-10',
+    repsVol:'12-15', repsEnd:'15-20', repos:60
+  },
+  intermediaire: {
+    series:4, repsForce:'5-8',
+    repsVol:'8-12',  repsEnd:'12-15', repos:75
+  },
+  avance: {
+    series:5, repsForce:'3-6',
+    repsVol:'6-10',  repsEnd:'10-15', repos:90
+  }
       }[niveau] || {
         series:4, repsForce:'6-8',
         repsVol:'8-12', repsEnd:'12-15', repos:90
@@ -579,15 +579,14 @@ const Coach = {
         muscles:       ['Pectoraux','Épaules','Triceps'],
         duree_estimee: duree,
         exercices: this._filtrerExos([
-          { ref:'bench_press',        series:s,   reps:reps,    repos:r  },
-          { ref:'incline_halteres',   series:s-1, reps:reps,    repos:r  },
-          { ref:'dev_militaire',      series:s-1, reps:reps,    repos:r  },
-          { ref:'elev_laterales',     series:s,   reps:'12-15', repos:60 },
-          { ref:'ext_triceps_poulie', series:s-1, reps:'12',    repos:60 },
-          { ref:'dips_triceps',       series:s-1, reps:'échec', repos:60 },
-          // ✅ Abdos fin de séance
-          { ref:'planche',            series:3,   reps:'45-60s',repos:45 },
-          { ref:'crunch_machine',     series:3,   reps:'15',    repos:45 }
+          { ref:'bench_press',        series:s,   reps:reps,    repos:90 },
+{ ref:'incline_halteres',   series:s-1, reps:reps,    repos:75 },
+{ ref:'dev_militaire',      series:s-1, reps:reps,    repos:75 },
+{ ref:'elev_laterales',     series:s,   reps:'12-15', repos:45 },
+{ ref:'ext_triceps_poulie', series:s-1, reps:'12',    repos:45 },
+{ ref:'dips_triceps',       series:s-1, reps:'échec', repos:45 },
+{ ref:'planche',            series:3,   reps:'45-60s',repos:30 },
+{ ref:'crunch_machine',     series:3,   reps:'15',    repos:30 }
         ], equip, duree)
       };
 
@@ -598,15 +597,14 @@ const Coach = {
         muscles:       ['Dos','Biceps','Épaules Postérieures'],
         duree_estimee: duree,
         exercices: this._filtrerExos([
-          { ref:'tractions',     series:s,   reps:reps,    repos:r  },
-          { ref:'rowing_barre',  series:s,   reps:reps,    repos:r  },
-          { ref:'lat_pulldown',  series:s-1, reps:'10-12', repos:r  },
-          { ref:'face_pull',     series:s-1, reps:'15',    repos:60 },
-          { ref:'curl_halteres', series:s-1, reps:'12',    repos:60 },
-          { ref:'curl_marteau',  series:s-1, reps:'12',    repos:60 },
-          // ✅ Abdos fin de séance
-          { ref:'releve_jambes', series:3,   reps:'12',    repos:45 },
-          { ref:'russian_twist', series:3,   reps:'20',    repos:45 }
+          { ref:'tractions',     series:s,   reps:reps,    repos:90 },
+{ ref:'rowing_barre',  series:s,   reps:reps,    repos:90 },
+{ ref:'lat_pulldown',  series:s-1, reps:'10-12', repos:75 },
+{ ref:'face_pull',     series:s-1, reps:'15',    repos:45 },
+{ ref:'curl_halteres', series:s-1, reps:'12',    repos:45 },
+{ ref:'curl_marteau',  series:s-1, reps:'12',    repos:45 },
+{ ref:'releve_jambes', series:3,   reps:'12',    repos:30 },
+{ ref:'russian_twist', series:3,   reps:'20',    repos:30 }
         ], equip, duree)
       };
 
@@ -617,15 +615,14 @@ const Coach = {
         muscles:       ['Quadriceps','Ischio-jambiers','Fessiers','Mollets'],
         duree_estimee: duree,
         exercices: this._filtrerExos([
-          { ref:'squat',         series:s,   reps:reps,    repos:r+30 },
-          { ref:'presse_cuisses',series:s-1, reps:'10-12', repos:r    },
-          { ref:'fentes',        series:s-1, reps:'12/j',  repos:r    },
-          { ref:'leg_curl',      series:s-1, reps:'12',    repos:r    },
-          { ref:'hip_thrust',    series:s-1, reps:'12',    repos:r    },
-          { ref:'mollets',       series:s,   reps:'15-20', repos:45   },
-          // ✅ Abdos fin de séance
-          { ref:'planche',       series:3,   reps:'45-60s',repos:45   },
-          { ref:'releve_jambes', series:3,   reps:'12',    repos:45   }
+          { ref:'squat',         series:s,   reps:reps,    repos:120 },
+{ ref:'presse_cuisses',series:s-1, reps:'10-12', repos:90  },
+{ ref:'fentes',        series:s-1, reps:'12/j',  repos:75  },
+{ ref:'leg_curl',      series:s-1, reps:'12',    repos:60  },
+{ ref:'hip_thrust',    series:s-1, reps:'12',    repos:75  },
+{ ref:'mollets',       series:s,   reps:'15-20', repos:45  },
+{ ref:'planche',       series:3,   reps:'45-60s',repos:30  },
+{ ref:'releve_jambes', series:3,   reps:'12',    repos:30  }
         ], equip, duree)
       };
 
