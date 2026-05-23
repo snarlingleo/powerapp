@@ -432,11 +432,12 @@ const Superset = {
 
       <!-- Créer custom -->
       <button class="btn-secondary mb-md" style="width:100%"
-              onclick="Superset.renderFormCreation(
-                document.getElementById('ss-form-container'),
-                '${seanceId||''}')">
-        ➕ Créer un superset custom
-      </button>
+        onclick="event.stopPropagation();
+                 Superset.renderFormCreation(
+                   document.getElementById('ss-form-container'),
+                   '${seanceId||''}')">
+  ➕ Créer un superset custom
+</button>
       <div id="ss-form-container"></div>
 
       <!-- Supersets disponibles -->
@@ -485,7 +486,8 @@ const Superset = {
             </div>
           </div>
           ${seanceId ? `
-            <button onclick="Superset.lancerUI('${ss.id}','${seanceId}')"
+  <button onclick="event.stopPropagation();
+                   Superset.lancerUI('${ss.id}','${seanceId}')"
                     style="padding:var(--space-sm) var(--space-md);
                            background:var(--fd-indigo);color:white;
                            border:none;border-radius:var(--radius-full);
@@ -728,12 +730,29 @@ const Superset = {
   // UI SUPERSET EN SÉANCE LIVE
   // ════════════════════════════════════════════════════════
   lancerUI(ssId, seanceId) {
-    const ok = this.demarrer(ssId, seanceId);
-    if (!ok) { Utils.toast('Superset introuvable !', 'error'); return; }
+  const ok = this.demarrer(ssId, seanceId);
+  if (!ok) { Utils.toast('Superset introuvable !', 'error'); return; }
 
-    Utils.toast(`⚡ Superset lancé : ${this._supersetActif.nom}`, 'info', 2000);
-    this._renderUIActif(seanceId);
-  },
+  // ✅ Créer le modal s'il n'existe pas
+  if (!document.getElementById('modal-info')) {
+    const modal = document.createElement('div');
+    modal.id    = 'modal-info';
+    modal.innerHTML = `
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <button id="modal-info-close"
+                style="position:absolute;top:12px;right:12px;
+                       background:none;border:none;
+                       color:var(--text-muted);font-size:1.4rem;
+                       cursor:pointer;z-index:10">✕</button>
+        <div id="modal-info-content"></div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+
+  Utils.toast(`⚡ Superset lancé : ${this._supersetActif.nom}`, 'info', 2000);
+  this._renderUIActif(seanceId);
+},
 
   _renderUIActif(seanceId) {
     const ss      = this._supersetActif;
@@ -1003,10 +1022,16 @@ const Superset = {
   },
 
   _annulerUI() {
-    this.annuler();
-    document.getElementById('modal-info')?.classList.add('hidden');
-    Utils.toast('Superset abandonné.', 'info');
-  },
+  this.annuler();
+  // ✅ Supprimer le modal créé dynamiquement
+  const modal = document.getElementById('modal-info');
+  if (modal) {
+    modal.classList.add('hidden');
+    // Si modal créé dynamiquement → le supprimer
+    if (modal.dataset.dynamic === 'true') modal.remove();
+  }
+  Utils.toast('Superset abandonné.', 'info');
+},
 
   _getCustom()       { return Utils.storage.get('ft_supersets_custom', []); },
   _saveCustom(data)  { Utils.storage.set('ft_supersets_custom', data);      }
