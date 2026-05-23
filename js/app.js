@@ -133,7 +133,16 @@ function _rendreContenu(page, container, options = {}) {
       case 'home':         _rendreHome(container);                        break;
       case 'training':     _rendreTraining(container);                    break;
       case 'live':
-  // ✅ Checklist pré-séance avant le live
+  // ✅ Si séance déjà en cours → ne pas re-render
+  const seanceEnCours = document.getElementById('live-exo-0');
+  const chronoActif   = Chrono?._actif || false;
+
+  if (seanceEnCours && chronoActif) {
+    // Séance déjà lancée → juste scroller en haut
+    container.scrollTop = 0;
+    break;
+  }
+
   const skipChecklist = options.skipChecklist
     || Utils.storage.get('ft_skip_checklist', false);
 
