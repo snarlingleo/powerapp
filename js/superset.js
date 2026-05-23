@@ -1173,10 +1173,9 @@ const Superset = {
     setTimeout(() => overlay.remove(), 8000);
   },
 
-  _getCustom() { ... }  // ← existant
-
   _getCustom()       { return Utils.storage.get('ft_supersets_custom', []); },
   _saveCustom(data)  { Utils.storage.set('ft_supersets_custom', data);      }
+   
 };
 
 window.Superset = Superset;
