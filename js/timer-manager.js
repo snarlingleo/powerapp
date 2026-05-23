@@ -22,11 +22,15 @@ const TimerManager = {
   // ════════════════════════════════════════════════════════
   // TIMER REPS — Manuel
   // ════════════════════════════════════════════════════════
-  lancerTimerReps(exoIdx, serieIdx) {
-    const duree = 40;
-    this._afficherOverlay('reps', duree, exoIdx, serieIdx);
-    this._demarrer(duree, 'reps');
-  },
+  lancerTimerReps(exoIdx, serieIdx, poids = null, reps = null, nomExo = null) {
+  const duree = 40;
+  // ✅ Stocker les infos pour l'overlay
+  this._poidsActuel = poids;
+  this._repsActuel  = reps;
+  this._nomExo      = nomExo;
+  this._afficherOverlay('reps', duree, exoIdx, serieIdx);
+  this._demarrer(duree, 'reps');
+},
 
   // ════════════════════════════════════════════════════════
   // TIMER REPOS — Auto après validation série
@@ -143,7 +147,31 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
                        color:var(--text-muted);font-size:1rem;
                        cursor:pointer;padding:4px">✕</button>
       </div>
-
+      <!-- Infos exercice -->
+      ${(this._nomExo || this._poidsActuel) ? `
+        <div style="text-align:center;margin-bottom:10px">
+          ${this._nomExo ? `
+            <div style="font-size:.82rem;font-weight:700;
+                        color:var(--text-primary);margin-bottom:4px">
+              ${this._nomExo}
+            </div>` : ''}
+          ${this._poidsActuel ? `
+            <div style="display:inline-flex;align-items:center;
+                        gap:8px;padding:8px 20px;
+                        background:rgba(75,75,249,0.15);
+                        border:1px solid rgba(75,75,249,0.3);
+                        border-radius:99px">
+              <span style="font-size:1.3rem;font-weight:800;
+                           color:var(--fd-indigo)">
+                ${this._poidsActuel}kg
+              </span>
+              <span style="color:var(--text-muted);font-size:.9rem">×</span>
+              <span style="font-size:1.3rem;font-weight:800;
+                           color:var(--fd-lemon)">
+                ${this._repsActuel || '—'}
+              </span>
+            </div>` : ''}
+        </div>` : ''}
       <!-- Cercle SVG -->
       <div style="position:relative;width:140px;height:140px;
                   margin:0 auto 12px">
@@ -214,9 +242,48 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
           ✕ Stop
         </button>
       </div>
+      <!-- Modifier charge pendant série -->
+      ${phase === 'reps' ? `
+        <div style="margin-bottom:10px">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.08em;
+                      color:var(--text-muted);text-align:center;
+                      margin-bottom:6px">
+            MODIFIER LA CHARGE
+          </div>
+          <div style="display:flex;align-items:center;
+                      justify-content:center;gap:12px">
+            <button onclick="TimerManager._modifierPoids(-2.5)"
+                    style="width:60px;height:44px;
+                           background:rgba(255,141,150,0.15);
+                           border:1px solid var(--fd-coral);
+                           border-radius:12px;
+                           color:var(--fd-coral);
+                           font-size:.85rem;font-weight:700;
+                           cursor:pointer">
+              -2.5
+            </button>
+            <div id="timer-poids-display"
+                 style="font-size:1.4rem;font-weight:800;
+                        color:var(--fd-indigo);
+                        min-width:80px;text-align:center">
+              ${this._poidsActuel ? `${this._poidsActuel}kg` : '—kg'}
+            </div>
+            <button onclick="TimerManager._modifierPoids(2.5)"
+                    style="width:60px;height:44px;
+                           background:rgba(139,240,187,0.1);
+                           border:1px solid var(--fd-mint);
+                           border-radius:12px;
+                           color:var(--fd-mint);
+                           font-size:.85rem;font-weight:700;
+                           cursor:pointer">
+              +2.5
+            </button>
+          </div>
+        </div>` : ''}
 
       ${phase === 'repos' ? `
-        <!-- Presets repos -->
+              <!-- Presets repos -->
         <div style="display:flex;gap:6px">
           ${[45, 60, 90, 120].map(s => `
             <button onclick="TimerManager._resetAvec(${s})"
@@ -275,6 +342,27 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
     this._mettreAJourCercle();
     Utils.vibrer([30]);
   },
+
+   _modifierPoids(delta) {
+  if (this._poidsActuel === null) {
+    this._poidsActuel = 0;
+  }
+  this._poidsActuel = Math.max(0,
+    Math.round((this._poidsActuel + delta) * 10) / 10
+  );
+
+  // ✅ Mettre à jour l'affichage
+  const el = document.getElementById('timer-poids-display');
+  if (el) el.textContent = `${this._poidsActuel}kg`;
+
+  // ✅ Sauvegarder pour récupérer après validation
+  window._timerPoidsModifie = this._poidsActuel;
+
+  Utils.vibrer([30]);
+  Utils.toast(
+    `Charge : ${this._poidsActuel}kg`, 'info', 800
+  );
+},
 
   _resetAvec(secondes) {
     this._arreter();
