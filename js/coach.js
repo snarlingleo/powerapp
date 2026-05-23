@@ -642,40 +642,38 @@ const Coach = {
     _seancesFullBody(objectif, niveau, nbJours,
                      s, reps, r, duree, equip) {
       const fbA = {
-        id:            'ia_fba',
-        nom:           'Full Body A',
-        emoji:         '🔄',
-        muscles:       ['Full Body','Force'],
-        duree_estimee: duree,
-        exercices: this._filtrerExos([
-          { ref:'squat',          series:s-1, reps:reps,    repos:r+30 },
-          { ref:'bench_press',    series:s-1, reps:reps,    repos:r    },
-          { ref:'rowing_barre',   series:s-1, reps:reps,    repos:r    },
-          { ref:'dev_militaire',  series:s-2, reps:reps,    repos:r    },
-          { ref:'curl_halteres',  series:s-2, reps:'12',    repos:60   },
-          // ✅ Abdos
-          { ref:'planche',        series:3,   reps:'45-60s',repos:45   },
-          { ref:'crunch_machine', series:3,   reps:'15',    repos:45   }
-        ], equip, duree)
-      };
+  id:            'ia_fba',
+  nom:           'Full Body A',
+  emoji:         '🔄',
+  muscles:       ['Full Body','Force'],
+  duree_estimee: duree,
+  exercices: this._filtrerExos([
+    { ref:'squat',          series:s-1, reps:reps,    repos:120 },
+    { ref:'bench_press',    series:s-1, reps:reps,    repos:90  },
+    { ref:'rowing_barre',   series:s-1, reps:reps,    repos:90  },
+    { ref:'dev_militaire',  series:s-2, reps:reps,    repos:75  },
+    { ref:'curl_halteres',  series:s-2, reps:'12',    repos:45  },
+    { ref:'planche',        series:3,   reps:'45-60s',repos:30  },
+    { ref:'crunch_machine', series:3,   reps:'15',    repos:30  }
+  ], equip, duree)
+};
 
-      const fbB = {
-        id:            'ia_fbb',
-        nom:           'Full Body B',
-        emoji:         '🔄',
-        muscles:       ['Full Body','Volume'],
-        duree_estimee: duree,
-        exercices: this._filtrerExos([
-          { ref:'soulevé_terre',   series:s-1, reps:reps,    repos:r+30 },
-          { ref:'incline_halteres',series:s-1, reps:reps,    repos:r    },
-          { ref:'tractions',       series:s-1, reps:'max',   repos:r    },
-          { ref:'elev_laterales',  series:s-1, reps:'12-15', repos:60   },
-          { ref:'leg_curl',        series:s-2, reps:'12',    repos:60   },
-          // ✅ Abdos
-          { ref:'releve_jambes',   series:3,   reps:'12',    repos:45   },
-          { ref:'russian_twist',   series:3,   reps:'20',    repos:45   }
-        ], equip, duree)
-      };
+const fbB = {
+  id:            'ia_fbb',
+  nom:           'Full Body B',
+  emoji:         '🔄',
+  muscles:       ['Full Body','Volume'],
+  duree_estimee: duree,
+  exercices: this._filtrerExos([
+    { ref:'soulevé_terre',   series:s-1, reps:reps,    repos:120 },
+    { ref:'incline_halteres',series:s-1, reps:reps,    repos:90  },
+    { ref:'tractions',       series:s-1, reps:'max',   repos:90  },
+    { ref:'elev_laterales',  series:s-1, reps:'12-15', repos:45  },
+    { ref:'leg_curl',        series:s-2, reps:'12',    repos:60  },
+    { ref:'releve_jambes',   series:3,   reps:'12',    repos:30  },
+    { ref:'russian_twist',   series:3,   reps:'20',    repos:30  }
+  ], equip, duree)
+};
 
       if (nbJours === 3) return [fbA, fbB, fbA];
       if (nbJours === 4) return [fbA, fbB, fbA, fbB];
@@ -688,42 +686,40 @@ const Coach = {
     _seancesUpperLower(objectif, niveau, nbJours,
                        s, reps, r, duree, equip) {
       const upper = {
-        id:            'ia_upper',
-        nom:           'Upper — Haut du corps',
-        emoji:         '💪',
-        muscles:       ['Pectoraux','Dos','Épaules','Bras'],
-        duree_estimee: duree,
-        exercices: this._filtrerExos([
-          { ref:'bench_press',         series:s-1, reps:reps,  repos:r  },
-          { ref:'rowing_barre',        series:s-1, reps:reps,  repos:r  },
-          { ref:'dev_militaire',       series:s-1, reps:reps,  repos:r  },
-          { ref:'tractions',           series:s-1, reps:'max', repos:r  },
-          { ref:'curl_halteres',       series:s-2, reps:'12',  repos:60 },
-          { ref:'ext_triceps_poulie',  series:s-2, reps:'12',  repos:60 },
-          // ✅ Abdos
-          { ref:'planche',             series:3,   reps:'45-60s',repos:45 },
-          { ref:'russian_twist',       series:3,   reps:'20',  repos:45 }
-        ], equip, duree)
-      };
+  id:            'ia_upper',
+  nom:           'Upper — Haut du corps',
+  emoji:         '💪',
+  muscles:       ['Pectoraux','Dos','Épaules','Bras'],
+  duree_estimee: duree,
+  exercices: this._filtrerExos([
+    { ref:'bench_press',        series:s-1, reps:reps,    repos:90  },
+    { ref:'rowing_barre',       series:s-1, reps:reps,    repos:90  },
+    { ref:'dev_militaire',      series:s-1, reps:reps,    repos:75  },
+    { ref:'tractions',          series:s-1, reps:'max',   repos:90  },
+    { ref:'curl_halteres',      series:s-2, reps:'12',    repos:45  },
+    { ref:'ext_triceps_poulie', series:s-2, reps:'12',    repos:45  },
+    { ref:'planche',            series:3,   reps:'45-60s',repos:30  },
+    { ref:'russian_twist',      series:3,   reps:'20',    repos:30  }
+  ], equip, duree)
+};
 
-      const lower = {
-        id:            'ia_lower',
-        nom:           'Lower — Bas du corps',
-        emoji:         '🦵',
-        muscles:       ['Quadriceps','Ischio-jambiers','Fessiers','Mollets'],
-        duree_estimee: duree,
-        exercices: this._filtrerExos([
-          { ref:'squat',          series:s,   reps:reps,    repos:r+30 },
-          { ref:'soulevé_terre',  series:s-1, reps:reps,    repos:r+30 },
-          { ref:'presse_cuisses', series:s-1, reps:'10-12', repos:r    },
-          { ref:'fentes',         series:s-1, reps:'12/j',  repos:r    },
-          { ref:'hip_thrust',     series:s-1, reps:'12',    repos:r    },
-          { ref:'mollets',        series:s,   reps:'15-20', repos:45   },
-          // ✅ Abdos
-          { ref:'releve_jambes',  series:3,   reps:'12',    repos:45   },
-          { ref:'crunch_machine', series:3,   reps:'15',    repos:45   }
-        ], equip, duree)
-      };
+const lower = {
+  id:            'ia_lower',
+  nom:           'Lower — Bas du corps',
+  emoji:         '🦵',
+  muscles:       ['Quadriceps','Ischio-jambiers','Fessiers','Mollets'],
+  duree_estimee: duree,
+  exercices: this._filtrerExos([
+    { ref:'squat',          series:s,   reps:reps,    repos:120 },
+    { ref:'soulevé_terre',  series:s-1, reps:reps,    repos:120 },
+    { ref:'presse_cuisses', series:s-1, reps:'10-12', repos:90  },
+    { ref:'fentes',         series:s-1, reps:'12/j',  repos:75  },
+    { ref:'hip_thrust',     series:s-1, reps:'12',    repos:75  },
+    { ref:'mollets',        series:s,   reps:'15-20', repos:45  },
+    { ref:'releve_jambes',  series:3,   reps:'12',    repos:30  },
+    { ref:'crunch_machine', series:3,   reps:'15',    repos:30  }
+  ], equip, duree)
+};
 
       if (nbJours === 4) return [upper, lower, upper, lower];
       if (nbJours === 5) return [upper, lower, upper, lower, upper];
