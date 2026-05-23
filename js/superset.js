@@ -485,15 +485,20 @@ const Superset = {
               </span>
             </div>
           </div>
-          ${seanceId ? `
-  <button onclick="event.stopPropagation();
-                   Superset.lancerUI('${ss.id}','${seanceId}')"
-                    style="padding:var(--space-sm) var(--space-md);
-                           background:var(--fd-indigo);color:white;
-                           border:none;border-radius:var(--radius-full);
-                           font-size:.78rem;font-weight:700;cursor:pointer">
-              ▶ Lancer
-            </button>` : ''}
+          <button onclick="event.stopPropagation();
+                 (() => {
+                   const sid = '${seanceId}'
+                     || localStorage.getItem('ft_seance_active')
+                     || localStorage.getItem('ft_timer_seance')
+                     || 'libre';
+                   Superset.lancerUI('${ss.id}', sid);
+                 })();"
+        style="padding:var(--space-sm) var(--space-md);
+               background:var(--fd-indigo);color:white;
+               border:none;border-radius:var(--radius-full);
+               font-size:.78rem;font-weight:700;cursor:pointer">
+  ▶ Lancer
+</button>
         </div>
 
         ${ss.exercices.map((ex, i) => {
@@ -733,13 +738,15 @@ const Superset = {
   const ok = this.demarrer(ssId, seanceId);
   if (!ok) { Utils.toast('Superset introuvable !', 'error'); return; }
 
-  // ✅ Créer le modal s'il n'existe pas
+  // ✅ Créer modal si absent
   if (!document.getElementById('modal-info')) {
-    const modal = document.createElement('div');
-    modal.id    = 'modal-info';
+    const modal    = document.createElement('div');
+    modal.id       = 'modal-info';
+    modal.dataset.dynamic = 'true';
+    modal.className = 'modal';
     modal.innerHTML = `
       <div class="modal-overlay"></div>
-      <div class="modal-content">
+      <div class="modal-content" style="position:relative">
         <button id="modal-info-close"
                 style="position:absolute;top:12px;right:12px;
                        background:none;border:none;
@@ -750,7 +757,10 @@ const Superset = {
     document.body.appendChild(modal);
   }
 
-  Utils.toast(`⚡ Superset lancé : ${this._supersetActif.nom}`, 'info', 2000);
+  Utils.toast(
+    `⚡ Superset lancé : ${this._supersetActif.nom}`,
+    'info', 2000
+  );
   this._renderUIActif(seanceId);
 },
 
