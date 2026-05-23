@@ -894,7 +894,13 @@ const Superset = {
         </div>
 
         <button class="btn-primary"
-                onclick="Superset._validerSerieUI('${seanceId}')">
+        onclick="
+          // ✅ Récupérer poids modifié si dispo
+          const p = window._timerPoidsModifie
+            || parseFloat(document.getElementById('ss-inp-poids')?.value)
+            || 0;
+          window._timerPoidsModifie = null;
+          Superset._validerSerieUI('${seanceId}', p);">
           ✅ Valider · ${exoData.nom||exo?.ref}
           <span style="font-size:.8rem;opacity:.8">
             (${this._exoActuel+1}/${ss.exercices.length})
