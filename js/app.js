@@ -5329,74 +5329,20 @@ function _rendreProfil(container) {
 }
 
 // ════════════════════════════════════════════════════════════
-// PAGE MON PROFIL
+// PAGE MON PROFIL — Délégué à Profil.js
 // ════════════════════════════════════════════════════════════
 function _renderMonProfil(container) {
-  let profil = { nom:'', poids:null, taille:null, objectif:'forme', niveau:'intermediaire', avatar:'💪' };
-  try { profil = Tracker.getProfil(); } catch(e) {}
-
-  const objectifs = [
-    { val:'prise_masse', label:'💪 Prise de masse' },
-    { val:'perte_poids', label:'⬇️ Perte de poids' },
-    { val:'seche',       label:'🔥 Sèche'          },
-    { val:'force',       label:'🏋️ Force'           },
-    { val:'endurance',   label:'🏃 Endurance'       },
-    { val:'forme',       label:'✨ Forme générale'  }
-  ];
-
-  const avatars = ['💪','🏋️','🔥','⚡','🚀','🦁','🐺','👊'];
-
-  container.innerHTML = `
-    <div class="card mb-md">
-      <div class="card-label">🎭 Avatar</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--space-sm)">
-        ${avatars.map(a => `
-          <button onclick="App._selectAvatar('${a}',this)"
-                  class="profil-avatar-btn"
-                  style="width:44px;height:44px;font-size:1.5rem;
-                         background:${profil.avatar === a ? 'var(--fd-indigo-dim)' : 'var(--bg-input)'};
-                         border:2px solid ${profil.avatar === a ? 'var(--fd-indigo)' : 'var(--border-color)'};
-                         border-radius:var(--radius-sm);cursor:pointer">
-            ${a}
-          </button>`).join('')}
-      </div>
-    </div>
-
-    <div class="card mb-md">
-      <div class="card-label">👤 Informations</div>
-      <div class="mt-sm">
-        <div class="input-label">Prénom *</div>
-        <input class="input mb-md" id="profil-edit-nom"
-               value="${profil.nom || ''}" placeholder="Ton prénom"
-               autocomplete="given-name"/>
-        <div class="input-label">Poids (kg)</div>
-        <input class="input mb-md" id="profil-edit-poids"
-               type="number" step="0.1"
-               value="${profil.poids || ''}" placeholder="80"/>
-        <div class="input-label">Taille (cm)</div>
-        <input class="input mb-md" id="profil-edit-taille"
-               type="number" value="${profil.taille || ''}" placeholder="175"/>
-      </div>
-    </div>
-
-    <div class="card mb-md">
-      <div class="card-label">🎯 Objectif</div>
-      <div style="display:grid;gap:var(--space-xs);margin-top:var(--space-sm)">
-        ${objectifs.map(o => `
-          <button onclick="App._selectObjectifProfil('${o.val}',this)"
-                  class="profil-obj-btn btn-secondary"
-                  style="${profil.objectif === o.val
-                    ? 'border-color:var(--fd-indigo);background:var(--fd-indigo-dim)' : ''}">
-            ${o.label}
-          </button>`).join('')}
-      </div>
-    </div>
-
-    <button onclick="App.sauvegarderProfil()" class="btn-primary btn-full mb-md">
-      💾 Sauvegarder
-    </button>
-    <button onclick="retourArriere()" class="btn-secondary btn-full">← Retour</button>
-  `;
+  try {
+    Profil.renderPage(container);
+  } catch(e) {
+    console.error('[App] Erreur renderMonProfil:', e);
+    container.innerHTML = `
+      <div class="card mt-md" style="text-align:center">
+        <p>Erreur chargement profil.</p>
+        <button onclick="retourArriere()"
+                class="btn-secondary mt-md">← Retour</button>
+      </div>`;
+  }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -7505,20 +7451,20 @@ document.addEventListener('visibilitychange', () => {
 // ════════════════════════════════════════════════════════════
 // ✅ ONBOARDING — Proposition programme Coach IA
 // ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// ✅ ONBOARDING v2.0 — Complet avec corps SVG
+// ════════════════════════════════════════════════════════════
+
 function _renderPropositionProgramme(data) {
   const objectif = data.objectif || 'forme';
   const niveau   = data.niveau   || 'intermediaire';
   const nom      = data.nom      || 'Athlète';
 
-  // ✅ Choisir le nombre de jours selon le niveau
   const nbJoursParNiveau = {
-    debutant:      3,
-    intermediaire: 4,
-    avance:        5
+    debutant: 3, intermediaire: 4, avance: 5
   };
   const nbJours = nbJoursParNiveau[niveau] || 4;
 
-  // ✅ Choisir le style selon objectif + niveau
   const styleChoix = (() => {
     if (nbJours <= 3) return 'full_body';
     if (objectif === 'force') return 'upper_lower';
@@ -7527,28 +7473,24 @@ function _renderPropositionProgramme(data) {
   })();
 
   const styleLabel = {
-    ppl:         'Push / Pull / Legs',
-    full_body:   'Full Body',
+    ppl: 'Push / Pull / Legs',
+    full_body: 'Full Body',
     upper_lower: 'Upper / Lower'
   }[styleChoix];
 
-  // ✅ Générer le planning qui commence AUJOURD'HUI
   const planning = _genererPlanningDepuisAujourdhui(
     styleChoix, nbJours, objectif
   );
 
-  // ✅ Sauvegarder la proposition pour _terminerOb()
   window._obProgrammePropose = {
-    objectif,
-    niveau,
-    nbJours,
-    style:             styleChoix,
+    objectif, niveau, nbJours,
+    style: styleChoix,
     jours_specifiques: planning.map(p => p.jour),
-    equipement:       ['barre','halteres','machines','cables','poids_corps','rack'],
-    duree:            niveau === 'debutant' ? '60' : '75'
+    equipement: ['barre','halteres','machines',
+                 'cables','poids_corps','rack'],
+    duree: niveau === 'debutant' ? '60' : '75'
   };
 
-  // ✅ Labels des objectifs
   const objectifLabel = {
     prise_masse: '💪 Prise de masse',
     perte_poids: '⬇️ Perte de poids',
@@ -7564,17 +7506,38 @@ function _renderPropositionProgramme(data) {
     avance:        '🔥 Avancé'
   }[niveau] || niveau;
 
-  // ✅ Message coach personnalisé
+  const lieuLabel = {
+    salle:  '🏋️ Salle',
+    maison: '🏠 Maison',
+    dehors: '🌳 Dehors'
+  }[data.lieu || 'salle'] || '🏋️ Salle';
+
+  const genreLabel = data.genre === 'femme'
+    ? '👩 Femme' : '👨 Homme';
+
   const messages = {
     prise_masse: `Pour ta prise de masse, je te recommande un programme ${styleLabel} sur ${nbJours} jours. Priorité aux charges lourdes et aux exercices composés.`,
-    perte_poids: `Pour perdre du gras tout en gardant le muscle, un programme ${styleLabel} sur ${nbJours} jours est idéal. Repos courts et cardio en complément.`,
-    seche:       `Pour ta sèche, le ${styleLabel} sur ${nbJours} jours maximise la dépense calorique tout en préservant le muscle.`,
-    force:       `Pour développer ta force, l'${styleLabel} sur ${nbJours} jours avec des charges lourdes et des temps de repos longs est optimal.`,
-    endurance:   `Pour ton endurance, le ${styleLabel} sur ${nbJours} jours avec des répétitions élevées et des repos courts est parfait.`,
-    forme:       `Pour ta forme générale, le ${styleLabel} sur ${nbJours} jours est l'approche la plus équilibrée pour toi.`
-  }[objectif] || `Programme ${styleLabel} adapté à ton profil.`;
+    perte_poids: `Pour perdre du gras tout en gardant le muscle, un programme ${styleLabel} sur ${nbJours} jours est idéal.`,
+    seche:       `Pour ta sèche, le ${styleLabel} sur ${nbJours} jours maximise la dépense calorique.`,
+    force:       `Pour développer ta force, l'${styleLabel} sur ${nbJours} jours avec charges lourdes est optimal.`,
+    endurance:   `Pour ton endurance, le ${styleLabel} sur ${nbJours} jours avec reps élevées est parfait.`,
+    forme:       `Pour ta forme générale, le ${styleLabel} sur ${nbJours} jours est l'approche la plus équilibrée.`
+  }[objectif] || `Programme ${styleLabel} adapté.`;
 
   const labels = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+  // ✅ Calcul nutrition depuis Profil.js
+  let nut = { calories:2000, proteines:150, glucides:200, lipides:65, eau:2.5 };
+  try {
+    nut = Profil.calculerNutrition({
+      poids:    data.poids    || 75,
+      taille:   data.taille   || 175,
+      age:      data.age      || 25,
+      genre:    data.genre    || 'homme',
+      objectif: data.objectif || 'forme',
+      niveau:   data.niveau   || 'intermediaire'
+    });
+  } catch(e) {}
 
   return `
     <!-- Message Coach -->
@@ -7598,37 +7561,24 @@ function _renderPropositionProgramme(data) {
     <!-- Badges profil -->
     <div style="display:flex;flex-wrap:wrap;gap:6px;
                 margin-bottom:14px">
-      <span style="padding:4px 10px;
-                   background:rgba(75,75,249,0.15);
-                   border:1px solid rgba(75,75,249,0.25);
-                   border-radius:99px;font-size:.65rem;
-                   font-weight:700;color:var(--fd-indigo)">
-        ${niveauLabel}
-      </span>
-      <span style="padding:4px 10px;
-                   background:rgba(249,239,119,0.1);
-                   border:1px solid rgba(249,239,119,0.2);
-                   border-radius:99px;font-size:.65rem;
-                   font-weight:700;color:var(--fd-lemon)">
-        ${objectifLabel}
-      </span>
-      <span style="padding:4px 10px;
-                   background:rgba(139,240,187,0.1);
-                   border:1px solid rgba(139,240,187,0.2);
-                   border-radius:99px;font-size:.65rem;
-                   font-weight:700;color:var(--fd-mint)">
-        ${styleLabel}
-      </span>
-      <span style="padding:4px 10px;
-                   background:rgba(191,161,255,0.1);
-                   border:1px solid rgba(191,161,255,0.2);
-                   border-radius:99px;font-size:.65rem;
-                   font-weight:700;color:var(--fd-lavender)">
-        ${nbJours}j/semaine
-      </span>
+      ${[
+        { label: genreLabel,    color:'var(--fd-lavender)' },
+        { label: niveauLabel,   color:'var(--fd-indigo)'   },
+        { label: objectifLabel, color:'var(--fd-lemon)'    },
+        { label: lieuLabel,     color:'var(--fd-mint)'     },
+        { label: `${styleLabel} · ${nbJours}j/sem`,
+          color:'var(--fd-coral)' }
+      ].map(b => `
+        <span style="padding:4px 10px;
+                     background:${b.color}22;
+                     border:1px solid ${b.color}44;
+                     border-radius:99px;font-size:.65rem;
+                     font-weight:700;color:${b.color}">
+          ${b.label}
+        </span>`).join('')}
     </div>
 
-    <!-- Planning visuel qui commence aujourd'hui -->
+    <!-- Planning -->
     <div style="background:rgba(255,255,255,0.03);
                 border:1px solid rgba(255,255,255,0.08);
                 border-radius:var(--radius-lg);
@@ -7643,12 +7593,12 @@ function _renderPropositionProgramme(data) {
         📅 Planning — commence aujourd'hui
       </div>
       <div style="display:grid;
-                  grid-template-columns:repeat(7,1fr);
-                  gap:4px">
+                  grid-template-columns:repeat(7,1fr);gap:4px">
         ${planning.map(j => `
           <div style="display:flex;flex-direction:column;
                       align-items:center;gap:4px">
-            <div style="width:36px;height:36px;border-radius:10px;
+            <div style="width:36px;height:36px;
+                        border-radius:10px;
                         display:flex;align-items:center;
                         justify-content:center;
                         font-size:.75rem;font-weight:700;
@@ -7658,30 +7608,60 @@ function _renderPropositionProgramme(data) {
                             ? 'background:rgba(75,75,249,0.2);border:1px solid rgba(75,75,249,0.3);color:var(--fd-lavender)'
                             : 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text-muted)'}">
               ${j.estAujourdhui ? '▶'
-                : j.seanceEmoji ? j.seanceEmoji
-                : '😴'}
+                : j.seanceEmoji ? j.seanceEmoji : '😴'}
             </div>
             <div style="font-size:.48rem;color:var(--text-muted);
                         text-transform:uppercase;font-weight:600">
               ${labels[j.jour]}
             </div>
-            ${j.estAujourdhui ? `
-              <div style="font-size:.42rem;color:var(--fd-mint);
-                          font-weight:700">
-                Auj.
-              </div>` : ''}
           </div>`).join('')}
       </div>
     </div>
 
-    <!-- Séances du programme -->
+    <!-- Nutrition prévisionnelle -->
+    <div style="background:rgba(255,255,255,0.03);
+                border:1px solid rgba(255,255,255,0.08);
+                border-radius:var(--radius-lg);
+                padding:14px;margin-bottom:14px">
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.1em;
+                  color:var(--text-muted);margin-bottom:10px">
+        🥗 Nutrition recommandée
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);
+                  gap:6px">
+        ${[
+          { label:'Kcal',  val:nut.calories,  color:'var(--fd-lemon)'    },
+          { label:'Prot.', val:`${nut.proteines}g`, color:'var(--fd-coral)'    },
+          { label:'Gluc.', val:`${nut.glucides}g`,  color:'var(--fd-mint)'     },
+          { label:'Lip.',  val:`${nut.lipides}g`,   color:'var(--fd-lavender)' }
+        ].map(n => `
+          <div style="text-align:center;padding:8px 4px;
+                      background:${n.color}11;
+                      border:1px solid ${n.color}33;
+                      border-radius:var(--radius-md)">
+            <div style="font-size:.82rem;font-weight:800;
+                        color:${n.color}">
+              ${n.val}
+            </div>
+            <div style="font-size:.52rem;color:var(--text-muted);
+                        margin-top:2px">${n.label}</div>
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:8px;text-align:center;
+                  font-size:.65rem;color:var(--fd-indigo)">
+        💧 ${nut.eau}L d'eau / jour
+      </div>
+    </div>
+
+    <!-- Séances -->
     <div style="font-size:.6rem;font-weight:700;
                 text-transform:uppercase;letter-spacing:.1em;
                 color:var(--text-muted);margin-bottom:8px">
       💪 Séances incluses
     </div>
-    <div style="display:flex;flex-direction:column;gap:6px;
-                margin-bottom:14px">
+    <div style="display:flex;flex-direction:column;
+                gap:6px;margin-bottom:14px">
       ${_getSeancesPourStyle(styleChoix, objectif, niveau)
         .map(s => `
           <div style="display:flex;align-items:center;
@@ -7694,8 +7674,7 @@ function _renderPropositionProgramme(data) {
               <div style="font-size:.82rem;font-weight:700">
                 ${s.nom}
               </div>
-              <div style="font-size:.6rem;color:var(--text-muted);
-                          margin-top:1px">
+              <div style="font-size:.6rem;color:var(--text-muted)">
                 ${s.muscles}
               </div>
             </div>
@@ -7719,9 +7698,8 @@ function _renderPropositionProgramme(data) {
         ✏️ Modifier
       </button>
       <button onclick="_obValiderProgramme()"
-              style="padding:10px;
-                     background:var(--fd-indigo);border:none;
-                     border-radius:var(--radius-md);
+              style="padding:10px;background:var(--fd-indigo);
+                     border:none;border-radius:var(--radius-md);
                      font-size:.82rem;font-weight:800;
                      color:white;cursor:pointer;
                      box-shadow:0 4px 16px rgba(75,75,249,0.4)">
@@ -7897,165 +7875,344 @@ function _obModifierProgramme() {
 // ════════════════════════════════════════════════════════════
 // ONBOARDING
 // ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// ONBOARDING v2.0
+// ════════════════════════════════════════════════════════════
 function _afficherOnboarding() {
   document.getElementById('splash-screen').style.display = 'none';
   const ob = document.getElementById('onboarding-screen');
   ob.classList.remove('hidden');
-  window._obData = { nom:'', poids:null, taille:null, objectif:'forme', niveau:'intermediaire' };
-  ob.innerHTML   = _renderEtapeOnboarding(1, window._obData);
+  window._obData = {
+    nom: '', poids: null, taille: null, age: null,
+    genre: null, objectif: 'forme',
+    niveau: 'intermediaire', lieu: 'salle',
+    muscles_cibles: []
+  };
+  ob.innerHTML = _renderEtapeOnboarding(1, window._obData);
 }
 
 function _renderEtapeOnboarding(etape, data) {
+  const totalEtapes = 7;
+
   const etapes = [
+
+    // ── ÉTAPE 1 — Infos de base ──────────────────────────
     {
-      titre:'Bienvenue sur PowerApp ! 🏋️',
-      sousTitre:'Ton coach fitness personnel',
-      contenu:`
+      titre:     'Bienvenue sur PowerApp ! ⚡',
+      sousTitre: 'Ton coach fitness personnel',
+      contenu: `
         <div style="margin-top:var(--space-lg)">
           <div class="input-label">Ton prénom *</div>
           <input class="input mb-md" id="ob-nom"
-                 placeholder="ex: Othmane" value="${data.nom || ''}"
+                 placeholder="ex: Othmane"
+                 value="${data.nom || ''}"
                  autocomplete="given-name"/>
-          <div class="input-label">Poids (kg)</div>
-          <input class="input mb-md" id="ob-poids"
-                 type="number" placeholder="ex: 80"
-                 value="${data.poids || ''}"/>
-          <div class="input-label">Taille (cm)</div>
-          <input class="input" id="ob-taille"
-                 type="number" placeholder="ex: 178"
-                 value="${data.taille || ''}"/>
+          <div style="display:grid;
+                      grid-template-columns:1fr 1fr 1fr;
+                      gap:8px">
+            <div>
+              <div class="input-label">Poids (kg)</div>
+              <input class="input" id="ob-poids"
+                     type="number" placeholder="80"
+                     value="${data.poids || ''}"/>
+            </div>
+            <div>
+              <div class="input-label">Taille (cm)</div>
+              <input class="input" id="ob-taille"
+                     type="number" placeholder="178"
+                     value="${data.taille || ''}"/>
+            </div>
+            <div>
+              <div class="input-label">Âge</div>
+              <input class="input" id="ob-age"
+                     type="number" placeholder="25"
+                     value="${data.age || ''}"/>
+            </div>
+          </div>
         </div>`
     },
+
+    // ── ÉTAPE 2 — Genre ──────────────────────────────────
     {
-      titre:'Ton objectif 🎯',
-      sousTitre:'Qu\'est-ce qui te motive ?',
-      contenu:`
-        <div style="display:grid;gap:var(--space-sm);
+      titre:     'Tu t\'entraînes comment ? 👤',
+      sousTitre: 'Pour adapter ton programme',
+      contenu: `
+        <div style="margin-top:var(--space-lg)">
+          <div style="display:grid;
+                      grid-template-columns:1fr 1fr;
+                      gap:12px">
+            ${[
+              { val:'homme', emoji:'👨',
+                label:'Homme',
+                desc:'Programme orienté force\n& volume haut du corps' },
+              { val:'femme', emoji:'👩',
+                label:'Femme',
+                desc:'Programme orienté galbe\n& bas du corps' }
+            ].map(g => `
+              <button onclick="_selectGenre('${g.val}',this)"
+                      class="ob-genre-btn"
+                      style="padding:20px 14px;
+                             text-align:center;
+                             background:${(data.genre || '') === g.val
+                               ? 'rgba(75,75,249,0.2)'
+                               : 'rgba(255,255,255,0.04)'};
+                             border:2px solid ${(data.genre||'') === g.val
+                               ? 'var(--fd-indigo)'
+                               : 'rgba(255,255,255,0.1)'};
+                             border-radius:var(--radius-lg);
+                             cursor:pointer;transition:all .2s">
+                <div style="font-size:2.5rem;margin-bottom:8px">
+                  ${g.emoji}
+                </div>
+                <div style="font-size:1rem;font-weight:800;
+                            color:var(--text-primary)">
+                  ${g.label}
+                </div>
+                <div style="font-size:.7rem;
+                            color:var(--text-muted);
+                            margin-top:6px;line-height:1.4;
+                            white-space:pre-line">
+                  ${g.desc}
+                </div>
+              </button>`).join('')}
+          </div>
+        </div>`
+    },
+
+    // ── ÉTAPE 3 — Objectif ───────────────────────────────
+    {
+      titre:     'Ton objectif 🎯',
+      sousTitre: 'Qu\'est-ce qui te motive ?',
+      contenu: `
+        <div style="display:grid;gap:8px;
                     margin-top:var(--space-lg)">
-          ${[
-            { val:'prise_masse', label:'💪 Prise de masse' },
-            { val:'perte_poids', label:'⬇️ Perte de poids' },
-            { val:'seche',       label:'🔥 Sèche'          },
-            { val:'force',       label:'🏋️ Force'           },
-            { val:'endurance',   label:'🏃 Endurance'       },
-            { val:'forme',       label:'✨ Forme générale'  }
-          ].map(o => `
-            <button onclick="_selectObj('${o.val}',this)"
+          ${Object.entries(Profil.OBJECTIFS).map(([val, obj]) => `
+            <button onclick="_selectObj('${val}',this)"
                     class="btn-secondary ob-obj"
-                    style="${data.objectif === o.val
-                      ? 'border-color:var(--fd-indigo);background:rgba(75,75,249,.15)'
-                      : ''}">
-              ${o.label}
-            </button>`).join('')}
-        </div>`
-    },
-    {
-      titre:'Ton niveau 📊',
-      sousTitre:'Pour adapter ton programme',
-      contenu:`
-        <div style="display:grid;gap:var(--space-sm);
-                    margin-top:var(--space-lg)">
-          ${[
-            { val:'debutant',      label:'🌱 Débutant',
-              desc:'< 6 mois'       },
-            { val:'intermediaire', label:'💪 Intermédiaire',
-              desc:'6 mois — 2 ans' },
-            { val:'avance',        label:'🔥 Avancé',
-              desc:'2 ans +'        }
-          ].map(n => `
-            <button onclick="_selectNiv('${n.val}',this)"
-                    class="btn-secondary ob-niv"
-                    style="text-align:left;${data.niveau === n.val
-                      ? 'border-color:var(--fd-indigo);background:rgba(75,75,249,.15)'
-                      : ''}">
-              <div style="font-weight:700">${n.label}</div>
-              <div style="font-size:.72rem;color:var(--text-muted)">
-                ${n.desc}
+                    style="display:flex;align-items:center;
+                           gap:12px;text-align:left;
+                           padding:12px 16px;
+                           background:${data.objectif === val
+                             ? `${obj.couleur}22`
+                             : 'rgba(255,255,255,0.04)'};
+                           border-color:${data.objectif === val
+                             ? `${obj.couleur}66`
+                             : 'rgba(255,255,255,0.1)'}">
+              <div style="width:40px;height:40px;flex-shrink:0;
+                          border-radius:10px;
+                          background:${obj.couleur}22;
+                          display:flex;align-items:center;
+                          justify-content:center;font-size:1.3rem">
+                ${obj.label.split(' ')[0]}
               </div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem">
+                  ${obj.label}
+                </div>
+                <div style="font-size:.68rem;
+                            color:var(--text-muted);
+                            margin-top:2px">
+                  ${obj.desc} · ${obj.reps} reps
+                </div>
+              </div>
+              ${data.objectif === val ? `
+                <div style="margin-left:auto;
+                            color:${obj.couleur};
+                            font-size:.8rem">✓</div>` : ''}
             </button>`).join('')}
         </div>`
     },
+
+    // ── ÉTAPE 4 — Niveau ─────────────────────────────────
     {
-      // ✅ NOUVELLE ÉTAPE 4 — Coach IA propose le programme
-      titre:'🧠 Ton programme personnalisé',
-      sousTitre:'Le Coach IA analyse ton profil',
-      contenu:`
+      titre:     'Ton niveau 📊',
+      sousTitre: 'Pour adapter l\'intensité',
+      contenu: `
+        <div style="display:grid;gap:10px;
+                    margin-top:var(--space-lg)">
+          ${Object.entries(Profil.NIVEAUX).map(([val, niv]) => `
+            <button onclick="_selectNiv('${val}',this)"
+                    class="ob-niv"
+                    style="padding:16px;text-align:left;
+                           background:${data.niveau === val
+                             ? 'rgba(75,75,249,0.2)'
+                             : 'rgba(255,255,255,0.04)'};
+                           border:2px solid ${data.niveau === val
+                             ? 'var(--fd-indigo)'
+                             : 'rgba(255,255,255,0.1)'};
+                           border-radius:var(--radius-lg);
+                           cursor:pointer;transition:all .2s;
+                           display:flex;align-items:center;gap:14px">
+              <div style="width:48px;height:48px;flex-shrink:0;
+                          border-radius:12px;
+                          background:rgba(75,75,249,0.15);
+                          display:flex;align-items:center;
+                          justify-content:center;font-size:1.5rem">
+                ${niv.label.split(' ')[0]}
+              </div>
+              <div style="flex:1">
+                <div style="font-weight:800;font-size:.95rem">
+                  ${niv.label}
+                </div>
+                <div style="font-size:.7rem;
+                            color:var(--text-muted);
+                            margin-top:3px">
+                  ${niv.desc}
+                  · ${niv.seances}j/sem
+                  · Repos ${niv.repos}s
+                </div>
+              </div>
+              ${data.niveau === val ? `
+                <div style="color:var(--fd-indigo);
+                            font-size:1.1rem">✓</div>` : ''}
+            </button>`).join('')}
+        </div>`
+    },
+
+    // ── ÉTAPE 5 — Lieu ───────────────────────────────────
+    {
+      titre:     'Où tu t\'entraînes ? 📍',
+      sousTitre: 'Pour adapter les exercices',
+      contenu: `
+        <div style="display:grid;gap:10px;
+                    margin-top:var(--space-lg)">
+          ${Object.entries(Profil.LIEUX).map(([val, lieu]) => `
+            <button onclick="_selectLieu('${val}',this)"
+                    class="ob-lieu"
+                    style="padding:16px;text-align:left;
+                           background:${(data.lieu||'salle') === val
+                             ? 'rgba(139,240,187,0.15)'
+                             : 'rgba(255,255,255,0.04)'};
+                           border:2px solid ${(data.lieu||'salle') === val
+                             ? 'var(--fd-mint)'
+                             : 'rgba(255,255,255,0.1)'};
+                           border-radius:var(--radius-lg);
+                           cursor:pointer;transition:all .2s;
+                           display:flex;align-items:center;
+                           gap:14px">
+              <div style="width:56px;height:56px;flex-shrink:0;
+                          border-radius:14px;
+                          background:rgba(139,240,187,0.1);
+                          display:flex;align-items:center;
+                          justify-content:center;font-size:1.8rem">
+                ${lieu.label.split(' ')[0]}
+              </div>
+              <div style="flex:1">
+                <div style="font-weight:800;font-size:.95rem">
+                  ${lieu.label}
+                </div>
+                <div style="font-size:.7rem;
+                            color:var(--text-muted);
+                            margin-top:3px">
+                  ${lieu.desc}
+                </div>
+                <div style="font-size:.65rem;
+                            color:var(--fd-mint);
+                            margin-top:4px">
+                  ✅ ${lieu.bonus}
+                </div>
+              </div>
+              ${(data.lieu||'salle') === val ? `
+                <div style="color:var(--fd-mint);
+                            font-size:1.1rem">✓</div>` : ''}
+            </button>`).join('')}
+        </div>`
+    },
+
+    // ── ÉTAPE 6 — Corps SVG ──────────────────────────────
+    {
+      titre:     'Tes muscles cibles 💪',
+      sousTitre: 'Clique sur les zones à travailler',
+      contenu: `
+        <div style="margin-top:var(--space-md)">
+          <div id="ob-corps-svg-container">
+            ${(() => {
+              try {
+                return Profil.renderCorpsSVG(
+                  data.muscles_cibles || []
+                );
+              } catch(e) {
+                return '<p style="color:var(--text-muted)">Corps SVG non disponible</p>';
+              }
+            })()}
+          </div>
+          <div style="margin-top:12px;padding:10px 12px;
+                      background:rgba(75,75,249,0.06);
+                      border-radius:var(--radius-md);
+                      font-size:.72rem;color:var(--text-muted);
+                      text-align:center">
+            💡 Laisse vide pour un programme complet
+          </div>
+        </div>`
+    },
+
+    // ── ÉTAPE 7 — Programme Coach IA ─────────────────────
+    {
+      titre:     '🧠 Ton programme personnalisé',
+      sousTitre: 'Le Coach IA analyse ton profil',
+      contenu: `
         <div id="ob-programme-container"
              style="margin-top:var(--space-lg)">
           ${_renderPropositionProgramme(data)}
-        </div>`
-    },
-    {
-      titre:'C\'est parti ! 🚀',
-      sousTitre:'Ton programme est prêt',
-      contenu:`
-        <div style="text-align:center;
-                    padding:var(--space-xl) 0">
-          <div style="font-size:4rem;
-                      margin-bottom:var(--space-md)">⚡</div>
-          <div style="font-size:1.1rem;font-weight:700;
-                      margin-bottom:var(--space-sm)">
-            Prêt ${data.nom} !
-          </div>
-          <div style="font-size:.85rem;color:var(--text-muted);
-                      line-height:1.6">
-            Ton programme est configuré et commence
-            <strong style="color:var(--fd-mint)">
-              aujourd'hui
-            </strong> !<br>
-            Commence ta première séance maintenant 💪
-          </div>
-          <div style="margin-top:16px;padding:12px 16px;
-                      background:rgba(139,240,187,0.08);
-                      border:1px solid rgba(139,240,187,0.2);
-                      border-radius:var(--radius-lg);
-                      font-size:.78rem;color:var(--fd-mint)">
-            ✅ Planning démarré le
-            ${new Date().toLocaleDateString('fr-FR',{
-              weekday:'long', day:'numeric', month:'long'
-            })}
-          </div>
         </div>`
     }
   ];
 
   const e = etapes[etape - 1];
-  const totalEtapes = etapes.length;
 
   return `
     <div style="max-width:480px;margin:0 auto;
-                padding:var(--space-lg)">
+                padding:var(--space-lg);
+                max-height:100vh;overflow-y:auto">
+
+      <!-- Barre de progression -->
       <div style="display:flex;justify-content:center;
-                  gap:8px;margin-bottom:var(--space-lg)">
-        ${Array.from({length: totalEtapes}, (_,i) => `
-          <div style="width:${etape === i+1 ? 24 : 8}px;
+                  gap:6px;margin-bottom:var(--space-lg)">
+        ${Array.from({length: totalEtapes}, (_, i) => `
+          <div style="width:${etape === i+1 ? 28 : 8}px;
                       height:8px;border-radius:4px;
                       background:${etape === i+1
                         ? 'var(--fd-indigo)'
                         : i+1 < etape
                           ? 'rgba(75,75,249,0.4)'
                           : 'var(--border-color)'};
-                      transition:all .3s"></div>`).join('')}
+                      transition:all .3s ease">
+          </div>`).join('')}
       </div>
+
+      <!-- Étape info -->
+      <div style="font-size:.62rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.1em;
+                  color:var(--fd-indigo);margin-bottom:6px">
+        Étape ${etape} / ${totalEtapes}
+      </div>
+
       <div style="font-size:1.3rem;font-weight:800;
-                  margin-bottom:4px">${e.titre}</div>
+                  margin-bottom:4px;letter-spacing:-.02em">
+        ${e.titre}
+      </div>
       <div style="font-size:.82rem;color:var(--text-muted);
-                  margin-bottom:var(--space-md)">
+                  margin-bottom:var(--space-sm)">
         ${e.sousTitre}
       </div>
+
       ${e.contenu}
+
+      <!-- Boutons navigation -->
       <div style="margin-top:var(--space-xl)">
         ${etape < totalEtapes ? `
           <button onclick="_suivantOb(${etape})"
                   class="btn-primary"
-                  style="width:100%;font-size:.9rem">
+                  style="width:100%;font-size:.92rem;
+                         padding:16px">
             ${etape === totalEtapes - 1
-              ? '🚀 Démarrer !'
+              ? '🚀 Voir mon programme !'
               : 'Suivant →'}
           </button>` : `
           <button onclick="_terminerOb()"
                   class="btn-primary"
-                  style="width:100%;font-size:.9rem">
+                  style="width:100%;font-size:.92rem;
+                         padding:16px">
             🚀 C'est parti !
           </button>`}
         ${etape > 1 ? `
@@ -8068,42 +8225,107 @@ function _renderEtapeOnboarding(etape, data) {
     </div>`;
 }
 
+function _selectGenre(val, btn) {
+  window._obData.genre = val;
+  document.querySelectorAll('.ob-genre-btn').forEach(b => {
+    b.style.background  = 'rgba(255,255,255,0.04)';
+    b.style.borderColor = 'rgba(255,255,255,0.1)';
+  });
+  btn.style.background  = 'rgba(75,75,249,0.2)';
+  btn.style.borderColor = 'var(--fd-indigo)';
+  Utils.vibrer([20]);
+}
+
 function _selectObj(val, btn) {
   window._obData.objectif = val;
-  document.querySelectorAll('.ob-obj').forEach(b => { b.style.borderColor = ''; b.style.background = ''; });
-  btn.style.borderColor = 'var(--fd-indigo)';
-  btn.style.background  = 'rgba(75,75,249,.15)';
+  const obj = Profil.OBJECTIFS[val];
+  document.querySelectorAll('.ob-obj').forEach(b => {
+    b.style.background  = 'rgba(255,255,255,0.04)';
+    b.style.borderColor = 'rgba(255,255,255,0.1)';
+  });
+  if (obj) {
+    btn.style.background  = `${obj.couleur}22`;
+    btn.style.borderColor = `${obj.couleur}66`;
+  }
+  Utils.vibrer([20]);
 }
 
 function _selectNiv(val, btn) {
   window._obData.niveau = val;
-  document.querySelectorAll('.ob-niv').forEach(b => { b.style.borderColor = ''; b.style.background = ''; });
+  document.querySelectorAll('.ob-niv').forEach(b => {
+    b.style.background  = 'rgba(255,255,255,0.04)';
+    b.style.borderColor = 'rgba(255,255,255,0.1)';
+  });
+  btn.style.background  = 'rgba(75,75,249,0.2)';
   btn.style.borderColor = 'var(--fd-indigo)';
-  btn.style.background  = 'rgba(75,75,249,.15)';
+  Utils.vibrer([20]);
+}
+
+function _selectLieu(val, btn) {
+  window._obData.lieu = val;
+  document.querySelectorAll('.ob-lieu').forEach(b => {
+    b.style.background  = 'rgba(255,255,255,0.04)';
+    b.style.borderColor = 'rgba(255,255,255,0.1)';
+  });
+  btn.style.background  = 'rgba(139,240,187,0.15)';
+  btn.style.borderColor = 'var(--fd-mint)';
+  Utils.vibrer([20]);
 }
 
 function _suivantOb(etapeActuelle) {
+
+  // ── Étape 1 — Infos de base ──────────────────────────
   if (etapeActuelle === 1) {
     const nom    = document.getElementById('ob-nom')?.value?.trim();
     const poids  = parseFloat(document.getElementById('ob-poids')?.value);
     const taille = parseFloat(document.getElementById('ob-taille')?.value);
+    const age    = parseInt(document.getElementById('ob-age')?.value);
     if (!nom) { Utils.toast('Entre ton prénom !', 'error'); return; }
     window._obData.nom    = nom;
     window._obData.poids  = isNaN(poids)  ? null : poids;
     window._obData.taille = isNaN(taille) ? null : taille;
+    window._obData.age    = isNaN(age)    ? null : age;
   }
 
-  // ✅ Étape 3 (niveau) → Étape 4 (programme Coach IA)
-  // On sauvegarde objectif + niveau pour la proposition
+  // ── Étape 2 — Genre ──────────────────────────────────
+  if (etapeActuelle === 2) {
+    if (!window._obData.genre) {
+      Utils.toast('Choisis ton genre !', 'error');
+      return;
+    }
+  }
+
+  // ── Étape 3 — Objectif ───────────────────────────────
   if (etapeActuelle === 3) {
-    // S'assurer que objectif et niveau sont bien sauvegardés
     if (!window._obData.objectif) {
       Utils.toast('Choisis ton objectif !', 'error');
       return;
     }
+  }
+
+  // ── Étape 4 — Niveau ─────────────────────────────────
+  if (etapeActuelle === 4) {
     if (!window._obData.niveau) {
       Utils.toast('Choisis ton niveau !', 'error');
       return;
+    }
+  }
+
+  // ── Étape 5 — Lieu ───────────────────────────────────
+  if (etapeActuelle === 5) {
+    if (!window._obData.lieu) {
+      window._obData.lieu = 'salle';
+    }
+  }
+
+  // ── Étape 6 — Corps SVG ──────────────────────────────
+  // Récupérer les muscles sélectionnés depuis Profil.js
+  if (etapeActuelle === 6) {
+    try {
+      window._obData.muscles_cibles =
+        Profil.get().muscles_cibles || [];
+    } catch(e) {
+      window._obData.muscles_cibles = [];
     }
   }
 
@@ -8120,19 +8342,24 @@ function _renderEtapeOb(etape) {
 
 function _terminerOb() {
   try {
-    const profil = {
-      nom:       window._obData.nom      || 'Athlète',
-      poids:     window._obData.poids,
-      taille:    window._obData.taille,
-      objectif:  window._obData.objectif || 'forme',
-      niveau:    window._obData.niveau   || 'intermediaire',
-      avatar:    '💪',
-      dateDebut: Utils.aujourd_hui()
-    };
+    // ✅ Sauvegarder via Profil.js (nouveau système)
+    const profilComplet = Profil.set({
+      nom:            window._obData.nom      || 'Athlète',
+      poids:          window._obData.poids,
+      taille:         window._obData.taille,
+      age:            window._obData.age,
+      genre:          window._obData.genre    || 'homme',
+      objectif:       window._obData.objectif || 'forme',
+      niveau:         window._obData.niveau   || 'intermediaire',
+      lieu:           window._obData.lieu     || 'salle',
+      muscles_cibles: window._obData.muscles_cibles || [],
+      avatar:         '💪',
+      dateCreation:   Utils.aujourd_hui()
+    });
 
-    Utils.storage.set('ft_profil', profil);
     Programme.setDateDebut(Utils.aujourd_hui());
     Gamification.ajouterXP(200, 'Bienvenue');
+    // ✅ Le reste de _terminerOb reste identique...
 
     // ✅ Générer et appliquer le programme IA automatiquement
     if (window._obProgrammePropose) {
