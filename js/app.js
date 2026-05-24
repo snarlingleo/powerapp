@@ -7851,13 +7851,17 @@ function _getSeancesPourStyle(style, objectif, niveau) {
 
 // ✅ Valider le programme proposé
 function _obValiderProgramme() {
-  // Marquer comme validé
   window._obProgrammeValide = true;
   Utils.vibrer([50, 30, 50]);
   Utils.toast('✅ Programme adopté !', 'success', 1500);
+  // ✅ FIX — Aller directement à l'étape finale (7→8 = terminer)
+  _terminerOb();
+}
 
-  // Passer à l'étape suivante
-  _suivantOb(4);
+function _obModifierProgramme() {
+  window._obOuvrirIA = true;
+  Utils.toast('💡 Tu pourras personnaliser depuis Coach IA', 'info', 2500);
+  _terminerOb();
 }
 
 // ✅ Ouvrir le questionnaire IA complet
@@ -7872,9 +7876,441 @@ function _obModifierProgramme() {
   _suivantOb(4);
 }
 
-// ════════════════════════════════════════════════════════════
-// ONBOARDING
-// ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+// ✅ CORPS SVG ANATOMIQUE — Onboarding
+// ════════════════════════════════════════════════════════
+function _renderCorpsSVGOnboarding(musclesCibles) {
+  const sel = new Set(musclesCibles);
+
+  const ZONES = {
+    // Avant
+    pectoraux:  { label:'Pectoraux',  couleur:'#4b4bf9', face:'avant' },
+    epaules:    { label:'Épaules',    couleur:'#bfa1ff', face:'deux'  },
+    biceps:     { label:'Biceps',     couleur:'#8bf0bb', face:'avant' },
+    abdos:      { label:'Abdos',      couleur:'#f9ef77', face:'avant' },
+    quadriceps: { label:'Quadriceps', couleur:'#ff8d96', face:'avant' },
+    // Arrière
+    dos:        { label:'Dos',        couleur:'#4b4bf9', face:'arriere'},
+    triceps:    { label:'Triceps',    couleur:'#bfa1ff', face:'arriere'},
+    trapeze:    { label:'Trapèzes',   couleur:'#8bf0bb', face:'arriere'},
+    fessiers:   { label:'Fessiers',   couleur:'#ff8d96', face:'arriere'},
+    ischio:     { label:'Ischio',     couleur:'#f9ef77', face:'arriere'},
+    mollets:    { label:'Mollets',    couleur:'#bfa1ff', face:'deux'  }
+  };
+
+  function couleurZone(muscle, opacity = 0.5) {
+    if (!sel.has(muscle)) return 'rgba(255,255,255,0.07)';
+    return ZONES[muscle]?.couleur
+      ? ZONES[muscle].couleur + Math.round(opacity*255).toString(16).padStart(2,'0')
+      : 'rgba(75,75,249,0.5)';
+  }
+
+  function strokeZone(muscle) {
+    if (!sel.has(muscle)) return 'rgba(255,255,255,0.2)';
+    return ZONES[muscle]?.couleur || '#4b4bf9';
+  }
+
+  function onclick(muscle) {
+    return `_toggleMuscleOb('${muscle}')`;
+  }
+
+  return `
+    <div style="text-align:center;margin-bottom:10px;
+                font-size:.65rem;font-weight:700;
+                text-transform:uppercase;letter-spacing:.1em;
+                color:var(--text-muted)">
+      Clique sur les zones à cibler
+    </div>
+
+    <div style="display:flex;justify-content:center;
+                gap:16px;margin-bottom:14px">
+
+      <!-- FACE AVANT -->
+      <div style="text-align:center">
+        <div style="font-size:.62rem;color:var(--text-muted);
+                    margin-bottom:6px;font-weight:600">
+          AVANT
+        </div>
+        <svg viewBox="0 0 200 460"
+             style="width:145px;height:auto">
+
+          <!-- Tête -->
+          <ellipse cx="100" cy="36" rx="26" ry="30"
+                   fill="rgba(255,255,255,0.08)"
+                   stroke="rgba(255,255,255,0.2)"
+                   stroke-width="1.5"/>
+          <!-- Cou -->
+          <rect x="90" y="64" width="20" height="16"
+                rx="4"
+                fill="rgba(255,255,255,0.07)"
+                stroke="rgba(255,255,255,0.15)"
+                stroke-width="1"/>
+
+          <!-- ÉPAULES -->
+          <ellipse cx="62" cy="90" rx="22" ry="14"
+                   fill="${couleurZone('epaules')}"
+                   stroke="${strokeZone('epaules')}"
+                   stroke-width="2"
+                   style="cursor:pointer"
+                   onclick="${onclick('epaules')}"/>
+          <ellipse cx="138" cy="90" rx="22" ry="14"
+                   fill="${couleurZone('epaules')}"
+                   stroke="${strokeZone('epaules')}"
+                   stroke-width="2"
+                   style="cursor:pointer"
+                   onclick="${onclick('epaules')}"/>
+
+          <!-- PECTORAUX -->
+          <path d="M78 76 Q100 70 122 76 L126 118
+                   Q100 126 74 118 Z"
+                fill="${couleurZone('pectoraux')}"
+                stroke="${strokeZone('pectoraux')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('pectoraux')}"/>
+          <!-- Ligne pec -->
+          <line x1="100" y1="76" x2="100" y2="118"
+                stroke="rgba(255,255,255,0.08)"
+                stroke-width="1"/>
+
+          <!-- BICEPS -->
+          <rect x="38" y="84" width="20" height="76"
+                rx="10"
+                fill="${couleurZone('biceps')}"
+                stroke="${strokeZone('biceps')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('biceps')}"/>
+          <rect x="142" y="84" width="20" height="76"
+                rx="10"
+                fill="${couleurZone('biceps')}"
+                stroke="${strokeZone('biceps')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('biceps')}"/>
+
+          <!-- Avant-bras -->
+          <rect x="30" y="162" width="18" height="54"
+                rx="9"
+                fill="rgba(255,255,255,0.05)"
+                stroke="rgba(255,255,255,0.12)"
+                stroke-width="1.5"/>
+          <rect x="152" y="162" width="18" height="54"
+                rx="9"
+                fill="rgba(255,255,255,0.05)"
+                stroke="rgba(255,255,255,0.12)"
+                stroke-width="1.5"/>
+
+          <!-- ABDOMINAUX -->
+          <rect x="78" y="120" width="44" height="82"
+                rx="8"
+                fill="${couleurZone('abdos')}"
+                stroke="${strokeZone('abdos')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('abdos')}"/>
+          <!-- Grille abdos -->
+          <line x1="100" y1="124" x2="100" y2="198"
+                stroke="rgba(255,255,255,0.12)"
+                stroke-width="1"/>
+          <line x1="78" y1="145" x2="122" y2="145"
+                stroke="rgba(255,255,255,0.12)"
+                stroke-width="1"/>
+          <line x1="78" y1="165" x2="122" y2="165"
+                stroke="rgba(255,255,255,0.12)"
+                stroke-width="1"/>
+          <line x1="78" y1="183" x2="122" y2="183"
+                stroke="rgba(255,255,255,0.12)"
+                stroke-width="1"/>
+
+          <!-- Hanches -->
+          <path d="M74 200 Q100 195 126 200 L130 238
+                   Q100 244 70 238 Z"
+                fill="rgba(255,255,255,0.05)"
+                stroke="rgba(255,255,255,0.1)"
+                stroke-width="1"/>
+
+          <!-- QUADRICEPS -->
+          <path d="M74 236 Q88 230 98 236 L100 316
+                   Q88 322 74 316 Z"
+                fill="${couleurZone('quadriceps')}"
+                stroke="${strokeZone('quadriceps')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('quadriceps')}"/>
+          <path d="M102 236 Q112 230 126 236 L126 316
+                   Q112 322 100 316 Z"
+                fill="${couleurZone('quadriceps')}"
+                stroke="${strokeZone('quadriceps')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('quadriceps')}"/>
+
+          <!-- Genoux -->
+          <ellipse cx="87" cy="322" rx="16" ry="12"
+                   fill="rgba(255,255,255,0.05)"
+                   stroke="rgba(255,255,255,0.12)"
+                   stroke-width="1.5"/>
+          <ellipse cx="113" cy="322" rx="16" ry="12"
+                   fill="rgba(255,255,255,0.05)"
+                   stroke="rgba(255,255,255,0.12)"
+                   stroke-width="1.5"/>
+
+          <!-- MOLLETS avant -->
+          <rect x="76" y="336" width="22" height="74"
+                rx="11"
+                fill="${couleurZone('mollets')}"
+                stroke="${strokeZone('mollets')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('mollets')}"/>
+          <rect x="102" y="336" width="22" height="74"
+                rx="11"
+                fill="${couleurZone('mollets')}"
+                stroke="${strokeZone('mollets')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('mollets')}"/>
+
+          <!-- Pieds -->
+          <ellipse cx="87" cy="418" rx="14" ry="7"
+                   fill="rgba(255,255,255,0.05)"
+                   stroke="rgba(255,255,255,0.1)"
+                   stroke-width="1"/>
+          <ellipse cx="113" cy="418" rx="14" ry="7"
+                   fill="rgba(255,255,255,0.05)"
+                   stroke="rgba(255,255,255,0.1)"
+                   stroke-width="1"/>
+
+          <!-- Labels sélectionnés -->
+          ${sel.has('pectoraux') ? `<text x="100" y="102" text-anchor="middle" fill="${ZONES.pectoraux.couleur}" font-size="9" font-weight="800">PEC</text>` : ''}
+          ${sel.has('epaules')   ? `<text x="62" y="93" text-anchor="middle" fill="${ZONES.epaules.couleur}" font-size="8" font-weight="800">ÉP</text>` : ''}
+          ${sel.has('biceps')    ? `<text x="48" y="126" text-anchor="middle" fill="${ZONES.biceps.couleur}" font-size="8" font-weight="800">BI</text>` : ''}
+          ${sel.has('abdos')     ? `<text x="100" y="164" text-anchor="middle" fill="${ZONES.abdos.couleur}" font-size="9" font-weight="800">ABDOS</text>` : ''}
+          ${sel.has('quadriceps')? `<text x="100" y="278" text-anchor="middle" fill="${ZONES.quadriceps.couleur}" font-size="8" font-weight="800">QUAD</text>` : ''}
+          ${sel.has('mollets')   ? `<text x="100" y="376" text-anchor="middle" fill="${ZONES.mollets.couleur}" font-size="7" font-weight="800">MOL</text>` : ''}
+        </svg>
+      </div>
+
+      <!-- FACE ARRIÈRE -->
+      <div style="text-align:center">
+        <div style="font-size:.62rem;color:var(--text-muted);
+                    margin-bottom:6px;font-weight:600">
+          ARRIÈRE
+        </div>
+        <svg viewBox="0 0 200 460"
+             style="width:145px;height:auto">
+
+          <!-- Tête -->
+          <ellipse cx="100" cy="36" rx="26" ry="30"
+                   fill="rgba(255,255,255,0.08)"
+                   stroke="rgba(255,255,255,0.2)"
+                   stroke-width="1.5"/>
+          <!-- Cou -->
+          <rect x="90" y="64" width="20" height="16"
+                rx="4"
+                fill="rgba(255,255,255,0.07)"
+                stroke="rgba(255,255,255,0.15)"
+                stroke-width="1"/>
+
+          <!-- TRAPÈZE -->
+          <path d="M82 66 Q100 60 118 66 L124 94
+                   Q100 90 76 94 Z"
+                fill="${couleurZone('trapeze')}"
+                stroke="${strokeZone('trapeze')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('trapeze')}"/>
+
+          <!-- ÉPAULES arrière -->
+          <ellipse cx="62" cy="90" rx="22" ry="14"
+                   fill="${couleurZone('epaules')}"
+                   stroke="${strokeZone('epaules')}"
+                   stroke-width="2"
+                   style="cursor:pointer"
+                   onclick="${onclick('epaules')}"/>
+          <ellipse cx="138" cy="90" rx="22" ry="14"
+                   fill="${couleurZone('epaules')}"
+                   stroke="${strokeZone('epaules')}"
+                   stroke-width="2"
+                   style="cursor:pointer"
+                   onclick="${onclick('epaules')}"/>
+
+          <!-- DOS -->
+          <path d="M76 92 Q100 86 124 92 L128 196
+                   Q100 202 72 196 Z"
+                fill="${couleurZone('dos')}"
+                stroke="${strokeZone('dos')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('dos')}"/>
+          <!-- Lignes dos -->
+          <line x1="100" y1="92" x2="100" y2="196"
+                stroke="rgba(255,255,255,0.1)"
+                stroke-width="1"/>
+          <line x1="76" y1="140" x2="124" y2="140"
+                stroke="rgba(255,255,255,0.08)"
+                stroke-width="1"/>
+
+          <!-- TRICEPS -->
+          <rect x="38" y="84" width="20" height="76"
+                rx="10"
+                fill="${couleurZone('triceps')}"
+                stroke="${strokeZone('triceps')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('triceps')}"/>
+          <rect x="142" y="84" width="20" height="76"
+                rx="10"
+                fill="${couleurZone('triceps')}"
+                stroke="${strokeZone('triceps')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('triceps')}"/>
+
+          <!-- Avant-bras -->
+          <rect x="30" y="162" width="18" height="54"
+                rx="9"
+                fill="rgba(255,255,255,0.05)"
+                stroke="rgba(255,255,255,0.12)"
+                stroke-width="1.5"/>
+          <rect x="152" y="162" width="18" height="54"
+                rx="9"
+                fill="rgba(255,255,255,0.05)"
+                stroke="rgba(255,255,255,0.12)"
+                stroke-width="1.5"/>
+
+          <!-- FESSIERS -->
+          <path d="M72 198 Q100 192 128 198 L130 262
+                   Q100 268 70 262 Z"
+                fill="${couleurZone('fessiers')}"
+                stroke="${strokeZone('fessiers')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('fessiers')}"/>
+          <!-- Séparation fesses -->
+          <line x1="100" y1="200" x2="100" y2="260"
+                stroke="rgba(255,255,255,0.1)"
+                stroke-width="1"/>
+
+          <!-- ISCHIO-JAMBIERS -->
+          <path d="M74 260 Q88 254 98 260 L100 336
+                   Q88 342 74 336 Z"
+                fill="${couleurZone('ischio')}"
+                stroke="${strokeZone('ischio')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('ischio')}"/>
+          <path d="M102 260 Q112 254 126 260 L126 336
+                   Q112 342 100 336 Z"
+                fill="${couleurZone('ischio')}"
+                stroke="${strokeZone('ischio')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('ischio')}"/>
+
+          <!-- Genoux arrière -->
+          <ellipse cx="87" cy="342" rx="16" ry="12"
+                   fill="rgba(255,255,255,0.05)"
+                   stroke="rgba(255,255,255,0.12)"
+                   stroke-width="1.5"/>
+          <ellipse cx="113" cy="342" rx="16" ry="12"
+                   fill="rgba(255,255,255,0.05)"
+                   stroke="rgba(255,255,255,0.12)"
+                   stroke-width="1.5"/>
+
+          <!-- MOLLETS arrière -->
+          <rect x="76" y="356" width="22" height="68"
+                rx="11"
+                fill="${couleurZone('mollets')}"
+                stroke="${strokeZone('mollets')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('mollets')}"/>
+          <rect x="102" y="356" width="22" height="68"
+                rx="11"
+                fill="${couleurZone('mollets')}"
+                stroke="${strokeZone('mollets')}"
+                stroke-width="2"
+                style="cursor:pointer"
+                onclick="${onclick('mollets')}"/>
+
+          <!-- Pieds -->
+          <ellipse cx="87" cy="430" rx="14" ry="7"
+                   fill="rgba(255,255,255,0.05)"
+                   stroke="rgba(255,255,255,0.1)"
+                   stroke-width="1"/>
+          <ellipse cx="113" cy="430" rx="14" ry="7"
+                   fill="rgba(255,255,255,0.05)"
+                   stroke="rgba(255,255,255,0.1)"
+                   stroke-width="1"/>
+
+          <!-- Labels -->
+          ${sel.has('trapeze')  ? `<text x="100" y="82" text-anchor="middle" fill="${ZONES.trapeze.couleur}" font-size="8" font-weight="800">TRAP</text>` : ''}
+          ${sel.has('dos')      ? `<text x="100" y="148" text-anchor="middle" fill="${ZONES.dos.couleur}" font-size="9" font-weight="800">DOS</text>` : ''}
+          ${sel.has('triceps')  ? `<text x="48" y="126" text-anchor="middle" fill="${ZONES.triceps.couleur}" font-size="8" font-weight="800">TRI</text>` : ''}
+          ${sel.has('fessiers') ? `<text x="100" y="234" text-anchor="middle" fill="${ZONES.fessiers.couleur}" font-size="8" font-weight="800">FESS</text>` : ''}
+          ${sel.has('ischio')   ? `<text x="100" y="300" text-anchor="middle" fill="${ZONES.ischio.couleur}" font-size="7" font-weight="800">ISCHIO</text>` : ''}
+          ${sel.has('mollets')  ? `<text x="100" y="392" text-anchor="middle" fill="${ZONES.mollets.couleur}" font-size="7" font-weight="800">MOL</text>` : ''}
+        </svg>
+      </div>
+    </div>
+
+    <!-- Chips muscles sélectionnés -->
+    <div id="ob-muscles-chips"
+         style="display:flex;flex-wrap:wrap;
+                gap:6px;justify-content:center;
+                min-height:30px;margin-bottom:10px">
+      ${musclesCibles.length === 0 ? `
+        <span style="font-size:.72rem;
+                     color:var(--text-muted);
+                     font-style:italic">
+          Aucun muscle ciblé — programme complet
+        </span>` :
+        musclesCibles.map(m => `
+          <span onclick="_toggleMuscleOb('${m}')"
+                style="display:inline-flex;align-items:center;
+                       gap:5px;padding:5px 12px;
+                       background:${ZONES[m]?.couleur || '#4b4bf9'}22;
+                       border:1px solid ${ZONES[m]?.couleur || '#4b4bf9'}66;
+                       border-radius:99px;font-size:.68rem;
+                       font-weight:700;cursor:pointer;
+                       color:${ZONES[m]?.couleur || '#4b4bf9'}">
+            ${ZONES[m]?.label || m}
+            <span style="opacity:.6;font-size:.6rem">✕</span>
+          </span>`).join('')}
+    </div>
+
+    <!-- Info -->
+    <div style="padding:10px 14px;
+                background:rgba(75,75,249,0.06);
+                border:1px solid rgba(75,75,249,0.15);
+                border-radius:var(--radius-md);
+                font-size:.72rem;color:var(--text-muted);
+                text-align:center">
+      💡 Laisse vide pour un programme complet du corps
+    </div>
+  `;
+}
+
+// ✅ Toggle muscle dans l'onboarding
+function _toggleMuscleOb(muscle) {
+  const muscles = window._obData.muscles_cibles || [];
+  const idx     = muscles.indexOf(muscle);
+
+  if (idx === -1) muscles.push(muscle);
+  else            muscles.splice(idx, 1);
+
+  window._obData.muscles_cibles = muscles;
+
+  // ✅ Re-render le SVG sans rechargement de page
+  const wrapper = document.getElementById('ob-muscles-wrapper');
+  if (wrapper) {
+    wrapper.innerHTML = _renderCorpsSVGOnboarding(muscles);
+  }
+
+  Utils.vibrer([20]);
+}
 // ════════════════════════════════════════════════════════════
 // ONBOARDING v2.0
 // ════════════════════════════════════════════════════════════
@@ -7883,11 +8319,21 @@ function _afficherOnboarding() {
   const ob = document.getElementById('onboarding-screen');
   ob.classList.remove('hidden');
   window._obData = {
-    nom: '', poids: null, taille: null, age: null,
-    genre: null, objectif: 'forme',
-    niveau: 'intermediaire', lieu: 'salle',
-    muscles_cibles: []
-  };
+  nom:             '',
+  poids:           null,
+  taille:          null,
+  age:             null,
+  genre:           null,
+  objectif:        null,   // ✅ Pas de pré-sélection
+  niveau:          null,   // ✅ Pas de pré-sélection
+  lieu:            null,   // ✅ Pas de pré-sélection
+  muscles_cibles:  [],
+  // Flags pour savoir si choix manuel
+  _objectifChoisi: null,
+  _niveauChoisi:   null,
+  _lieuChoisi:     null,
+  _genreChoisi:    null
+};
   ob.innerHTML = _renderEtapeOnboarding(1, window._obData);
 }
 
@@ -7994,171 +8440,179 @@ function _renderEtapeOnboarding(etape, data) {
     },
 
     // ── ÉTAPE 3 — Objectif ───────────────────────────────
-    {
-      titre:     'Ton objectif 🎯',
-      sousTitre: 'Qu\'est-ce qui te motive ?',
-      contenu: `
-        <div style="display:grid;gap:8px;
-                    margin-top:var(--space-lg)">
-          ${Object.entries(Profil.OBJECTIFS).map(([val, obj]) => `
-            <button onclick="_selectObj('${val}',this)"
-                    class="btn-secondary ob-obj"
-                    style="display:flex;align-items:center;
-                           gap:12px;text-align:left;
-                           padding:12px 16px;
-                           background:${data.objectif === val
-                             ? `${obj.couleur}22`
-                             : 'rgba(255,255,255,0.04)'};
-                           border-color:${data.objectif === val
-                             ? `${obj.couleur}66`
-                             : 'rgba(255,255,255,0.1)'}">
-              <div style="width:40px;height:40px;flex-shrink:0;
-                          border-radius:10px;
-                          background:${obj.couleur}22;
-                          display:flex;align-items:center;
-                          justify-content:center;font-size:1.3rem">
-                ${obj.label.split(' ')[0]}
+{
+  titre:     'Ton objectif 🎯',
+  sousTitre: 'Qu\'est-ce qui te motive ?',
+  contenu: `
+    <div style="display:grid;gap:8px;
+                margin-top:var(--space-lg)">
+      ${Object.entries(Profil.OBJECTIFS).map(([val, obj]) => {
+        const estSelectionne = data.objectif === val
+          && data._objectifChoisi === val; // ✅ Seulement si choisi manuellement
+        return `
+          <button onclick="_selectObj('${val}',this)"
+                  class="ob-obj"
+                  style="display:flex;align-items:center;
+                         gap:12px;text-align:left;
+                         padding:12px 16px;
+                         background:${estSelectionne
+                           ? `${obj.couleur}22`
+                           : 'rgba(255,255,255,0.04)'};
+                         border:1px solid ${estSelectionne
+                           ? `${obj.couleur}66`
+                           : 'rgba(255,255,255,0.12)'};
+                         border-radius:var(--radius-lg);
+                         cursor:pointer;width:100%;
+                         color:white;font-family:inherit">
+            <div style="width:42px;height:42px;flex-shrink:0;
+                        border-radius:10px;
+                        background:${obj.couleur}22;
+                        border:1px solid ${obj.couleur}33;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:1.4rem">
+              ${obj.label.split(' ')[0]}
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:.92rem;
+                          color:white">
+                ${obj.label.split(' ').slice(1).join(' ')}
               </div>
-              <div>
-                <div style="font-weight:700;font-size:.9rem">
-                  ${obj.label}
-                </div>
-                <div style="font-size:.68rem;
-                            color:var(--text-muted);
-                            margin-top:2px">
-                  ${obj.desc} · ${obj.reps} reps
-                </div>
+              <div style="font-size:.68rem;
+                          color:rgba(255,255,255,0.5);
+                          margin-top:2px">
+                ${obj.desc} · ${obj.reps} reps
               </div>
-              ${data.objectif === val ? `
-                <div style="margin-left:auto;
-                            color:${obj.couleur};
-                            font-size:.8rem">✓</div>` : ''}
-            </button>`).join('')}
-        </div>`
-    },
+            </div>
+            ${estSelectionne ? `
+              <div style="color:${obj.couleur};
+                          font-size:1rem;flex-shrink:0">✓</div>
+            ` : ''}
+          </button>`;
+      }).join('')}
+    </div>`
+},
 
     // ── ÉTAPE 4 — Niveau ─────────────────────────────────
-    {
-      titre:     'Ton niveau 📊',
-      sousTitre: 'Pour adapter l\'intensité',
-      contenu: `
-        <div style="display:grid;gap:10px;
-                    margin-top:var(--space-lg)">
-          ${Object.entries(Profil.NIVEAUX).map(([val, niv]) => `
-            <button onclick="_selectNiv('${val}',this)"
-                    class="ob-niv"
-                    style="padding:16px;text-align:left;
-                           background:${data.niveau === val
-                             ? 'rgba(75,75,249,0.2)'
-                             : 'rgba(255,255,255,0.04)'};
-                           border:2px solid ${data.niveau === val
-                             ? 'var(--fd-indigo)'
-                             : 'rgba(255,255,255,0.1)'};
-                           border-radius:var(--radius-lg);
-                           cursor:pointer;transition:all .2s;
-                           display:flex;align-items:center;gap:14px">
-              <div style="width:48px;height:48px;flex-shrink:0;
-                          border-radius:12px;
-                          background:rgba(75,75,249,0.15);
-                          display:flex;align-items:center;
-                          justify-content:center;font-size:1.5rem">
-                ${niv.label.split(' ')[0]}
+{
+  titre:     'Ton niveau 📊',
+  sousTitre: 'Pour adapter l\'intensité',
+  contenu: `
+    <div style="display:grid;gap:10px;
+                margin-top:var(--space-lg)">
+      ${Object.entries(Profil.NIVEAUX).map(([val, niv]) => {
+        const estSelectionne = data.niveau === val
+          && data._niveauChoisi === val;
+        return `
+          <button onclick="_selectNiv('${val}',this)"
+                  class="ob-niv"
+                  style="padding:16px;text-align:left;
+                         background:${estSelectionne
+                           ? 'rgba(75,75,249,0.25)'
+                           : 'rgba(255,255,255,0.04)'};
+                         border:2px solid ${estSelectionne
+                           ? 'var(--fd-indigo)'
+                           : 'rgba(255,255,255,0.12)'};
+                         border-radius:var(--radius-lg);
+                         cursor:pointer;width:100%;
+                         font-family:inherit;
+                         display:flex;align-items:center;
+                         gap:14px;transition:all .2s">
+            <div style="width:52px;height:52px;flex-shrink:0;
+                        border-radius:14px;
+                        background:rgba(75,75,249,0.15);
+                        border:1px solid rgba(75,75,249,0.2);
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:1.6rem">
+              ${niv.label.split(' ')[0]}
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:800;font-size:.95rem;
+                          color:white">
+                ${niv.label.split(' ').slice(1).join(' ')}
               </div>
-              <div style="flex:1">
-                <div style="font-weight:800;font-size:.95rem">
-                  ${niv.label}
-                </div>
-                <div style="font-size:.7rem;
-                            color:var(--text-muted);
-                            margin-top:3px">
-                  ${niv.desc}
-                  · ${niv.seances}j/sem
-                  · Repos ${niv.repos}s
-                </div>
+              <div style="font-size:.7rem;
+                          color:rgba(255,255,255,0.5);
+                          margin-top:3px">
+                ${niv.desc} · ${niv.seances}j/sem
+                · Repos ${niv.repos}s
               </div>
-              ${data.niveau === val ? `
-                <div style="color:var(--fd-indigo);
-                            font-size:1.1rem">✓</div>` : ''}
-            </button>`).join('')}
-        </div>`
-    },
+            </div>
+            ${estSelectionne ? `
+              <div style="color:var(--fd-indigo);
+                          font-size:1.2rem;flex-shrink:0">✓</div>
+            ` : ''}
+          </button>`;
+      }).join('')}
+    </div>`
+},
 
     // ── ÉTAPE 5 — Lieu ───────────────────────────────────
-    {
-      titre:     'Où tu t\'entraînes ? 📍',
-      sousTitre: 'Pour adapter les exercices',
-      contenu: `
-        <div style="display:grid;gap:10px;
-                    margin-top:var(--space-lg)">
-          ${Object.entries(Profil.LIEUX).map(([val, lieu]) => `
-            <button onclick="_selectLieu('${val}',this)"
-                    class="ob-lieu"
-                    style="padding:16px;text-align:left;
-                           background:${(data.lieu||'salle') === val
-                             ? 'rgba(139,240,187,0.15)'
-                             : 'rgba(255,255,255,0.04)'};
-                           border:2px solid ${(data.lieu||'salle') === val
-                             ? 'var(--fd-mint)'
-                             : 'rgba(255,255,255,0.1)'};
-                           border-radius:var(--radius-lg);
-                           cursor:pointer;transition:all .2s;
-                           display:flex;align-items:center;
-                           gap:14px">
-              <div style="width:56px;height:56px;flex-shrink:0;
-                          border-radius:14px;
-                          background:rgba(139,240,187,0.1);
-                          display:flex;align-items:center;
-                          justify-content:center;font-size:1.8rem">
-                ${lieu.label.split(' ')[0]}
+{
+  titre:     'Où tu t\'entraînes ? 📍',
+  sousTitre: 'Pour adapter les exercices',
+  contenu: `
+    <div style="display:grid;gap:10px;
+                margin-top:var(--space-lg)">
+      ${Object.entries(Profil.LIEUX).map(([val, lieu]) => {
+        const estSelectionne = data.lieu === val
+          && data._lieuChoisi === val;
+        return `
+          <button onclick="_selectLieu('${val}',this)"
+                  class="ob-lieu"
+                  style="padding:16px;text-align:left;
+                         background:${estSelectionne
+                           ? 'rgba(139,240,187,0.15)'
+                           : 'rgba(255,255,255,0.04)'};
+                         border:2px solid ${estSelectionne
+                           ? 'var(--fd-mint)'
+                           : 'rgba(255,255,255,0.12)'};
+                         border-radius:var(--radius-lg);
+                         cursor:pointer;width:100%;
+                         font-family:inherit;
+                         display:flex;align-items:center;
+                         gap:14px;transition:all .2s">
+            <div style="width:60px;height:60px;flex-shrink:0;
+                        border-radius:16px;
+                        background:rgba(139,240,187,0.1);
+                        border:1px solid rgba(139,240,187,0.2);
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:2rem">
+              ${lieu.label.split(' ')[0]}
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:800;font-size:.95rem;
+                          color:white">
+                ${lieu.label.split(' ').slice(1).join(' ')}
               </div>
-              <div style="flex:1">
-                <div style="font-weight:800;font-size:.95rem">
-                  ${lieu.label}
-                </div>
-                <div style="font-size:.7rem;
-                            color:var(--text-muted);
-                            margin-top:3px">
-                  ${lieu.desc}
-                </div>
-                <div style="font-size:.65rem;
-                            color:var(--fd-mint);
-                            margin-top:4px">
-                  ✅ ${lieu.bonus}
-                </div>
+              <div style="font-size:.72rem;
+                          color:rgba(255,255,255,0.5);
+                          margin-top:3px">
+                ${lieu.desc}
               </div>
-              ${(data.lieu||'salle') === val ? `
-                <div style="color:var(--fd-mint);
-                            font-size:1.1rem">✓</div>` : ''}
-            </button>`).join('')}
-        </div>`
-    },
+              <div style="font-size:.65rem;
+                          color:var(--fd-mint);
+                          margin-top:4px;font-weight:600">
+                ✅ ${lieu.bonus}
+              </div>
+            </div>
+            ${estSelectionne ? `
+              <div style="color:var(--fd-mint);
+                          font-size:1.2rem;flex-shrink:0">✓</div>
+            ` : ''}
+          </button>`;
+      }).join('')}
+    </div>`
+},
 
-    // ── ÉTAPE 6 — Corps SVG ──────────────────────────────
-    {
-      titre:     'Tes muscles cibles 💪',
-      sousTitre: 'Clique sur les zones à travailler',
-      contenu: `
-        <div style="margin-top:var(--space-md)">
-          <div id="ob-corps-svg-container">
-            ${(() => {
-              try {
-                return Profil.renderCorpsSVG(
-                  data.muscles_cibles || []
-                );
-              } catch(e) {
-                return '<p style="color:var(--text-muted)">Corps SVG non disponible</p>';
-              }
-            })()}
-          </div>
-          <div style="margin-top:12px;padding:10px 12px;
-                      background:rgba(75,75,249,0.06);
-                      border-radius:var(--radius-md);
-                      font-size:.72rem;color:var(--text-muted);
-                      text-align:center">
-            💡 Laisse vide pour un programme complet
-          </div>
-        </div>`
-    },
+   // ── ÉTAPE 6 — Corps SVG ──────────────────────────────
+{
+  titre:     'Tes muscles cibles 💪',
+  sousTitre: 'Clique sur les zones à travailler',
+  contenu: `
+    <div style="margin-top:8px" id="ob-muscles-wrapper">
+      ${_renderCorpsSVGOnboarding(data.muscles_cibles || [])}
+    </div>`
+},
 
     // ── ÉTAPE 7 — Programme Coach IA ─────────────────────
     {
@@ -8250,12 +8704,28 @@ function _selectGenre(val, btn) {
   Utils.vibrer([20]);
 }
 
+function _selectGenre(val, btn) {
+  window._obData.genre = val;
+  window._obData._genreChoisi = val;
+  document.querySelectorAll('.ob-genre-btn').forEach(b => {
+    b.style.background  = 'rgba(255,255,255,0.04)';
+    b.style.borderColor = 'rgba(255,255,255,0.12)';
+  });
+  btn.style.background  = 'rgba(75,75,249,0.2)';
+  btn.style.borderColor = 'var(--fd-indigo)';
+  Utils.vibrer([20]);
+}
+
 function _selectObj(val, btn) {
-  window._obData.objectif = val;
+  window._obData.objectif       = val;
+  window._obData._objectifChoisi = val;
   const obj = Profil.OBJECTIFS[val];
   document.querySelectorAll('.ob-obj').forEach(b => {
     b.style.background  = 'rgba(255,255,255,0.04)';
-    b.style.borderColor = 'rgba(255,255,255,0.1)';
+    b.style.borderColor = 'rgba(255,255,255,0.12)';
+    // ✅ Retirer le ✓ des autres boutons
+    const check = b.querySelector('.ob-check');
+    if (check) check.remove();
   });
   if (obj) {
     btn.style.background  = `${obj.couleur}22`;
@@ -8265,21 +8735,23 @@ function _selectObj(val, btn) {
 }
 
 function _selectNiv(val, btn) {
-  window._obData.niveau = val;
+  window._obData.niveau       = val;
+  window._obData._niveauChoisi = val;
   document.querySelectorAll('.ob-niv').forEach(b => {
     b.style.background  = 'rgba(255,255,255,0.04)';
-    b.style.borderColor = 'rgba(255,255,255,0.1)';
+    b.style.borderColor = 'rgba(255,255,255,0.12)';
   });
-  btn.style.background  = 'rgba(75,75,249,0.2)';
+  btn.style.background  = 'rgba(75,75,249,0.25)';
   btn.style.borderColor = 'var(--fd-indigo)';
   Utils.vibrer([20]);
 }
 
 function _selectLieu(val, btn) {
-  window._obData.lieu = val;
+  window._obData.lieu       = val;
+  window._obData._lieuChoisi = val;
   document.querySelectorAll('.ob-lieu').forEach(b => {
     b.style.background  = 'rgba(255,255,255,0.04)';
-    b.style.borderColor = 'rgba(255,255,255,0.1)';
+    b.style.borderColor = 'rgba(255,255,255,0.12)';
   });
   btn.style.background  = 'rgba(139,240,187,0.15)';
   btn.style.borderColor = 'var(--fd-mint)';
@@ -8310,27 +8782,29 @@ function _suivantOb(etapeActuelle) {
   }
 
   // ── Étape 3 — Objectif ───────────────────────────────
-  if (etapeActuelle === 3) {
-    if (!window._obData.objectif) {
-      Utils.toast('Choisis ton objectif !', 'error');
-      return;
-    }
+if (etapeActuelle === 3) {
+  if (!window._obData._objectifChoisi) {
+    // ✅ Défaut silencieux sans erreur bloquante
+    window._obData.objectif = 'forme';
+    window._obData._objectifChoisi = 'forme';
   }
+}
 
-  // ── Étape 4 — Niveau ─────────────────────────────────
-  if (etapeActuelle === 4) {
-    if (!window._obData.niveau) {
-      Utils.toast('Choisis ton niveau !', 'error');
-      return;
-    }
+// ── Étape 4 — Niveau ─────────────────────────────────
+if (etapeActuelle === 4) {
+  if (!window._obData._niveauChoisi) {
+    window._obData.niveau = 'intermediaire';
+    window._obData._niveauChoisi = 'intermediaire';
   }
+}
 
-  // ── Étape 5 — Lieu ───────────────────────────────────
-  if (etapeActuelle === 5) {
-    if (!window._obData.lieu) {
-      window._obData.lieu = 'salle';
-    }
+// ── Étape 5 — Lieu ───────────────────────────────────
+if (etapeActuelle === 5) {
+  if (!window._obData._lieuChoisi) {
+    window._obData.lieu = 'salle';
+    window._obData._lieuChoisi = 'salle';
   }
+}
 
   // ── Étape 6 — Corps SVG ──────────────────────────────
   // Récupérer les muscles sélectionnés depuis Profil.js
