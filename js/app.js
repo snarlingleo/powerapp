@@ -7892,6 +7892,20 @@ function _afficherOnboarding() {
 }
 
 function _renderEtapeOnboarding(etape, data) {
+  if (typeof Profil === 'undefined') {
+    console.error('[App] profil.js non chargé !');
+    return `
+      <div style="padding:20px;text-align:center">
+        <div style="font-size:2rem">⚠️</div>
+        <div style="margin-top:8px;color:var(--fd-coral)">
+          Erreur chargement — recharge la page
+        </div>
+        <button onclick="window.location.reload()"
+                class="btn-primary mt-md">
+          🔄 Recharger
+        </button>
+      </div>`;
+  } 
   const totalEtapes = 7;
 
   const etapes = [
