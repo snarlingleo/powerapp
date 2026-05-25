@@ -1,7 +1,8 @@
 /* ============================================================
-   FitTracker Pro — Utils.js v3.0 CORRIGÉ
+   PowerApp — Utils.js v4.0
    Utilitaires globaux + Dates + Storage + Graphiques
    + Export/Import + Toast + Confirm + Vibration
+   + Notifications PWA + Animations enrichies
    ============================================================ */
 
 'use strict';
@@ -18,9 +19,7 @@ const Utils = {
         const val = localStorage.getItem(cle);
         if (val === null) return defaut;
         return JSON.parse(val);
-      } catch(e) {
-        return defaut;
-      }
+      } catch(e) { return defaut; }
     },
 
     set(cle, valeur) {
@@ -40,7 +39,6 @@ const Utils = {
       } catch(e) { return false; }
     },
 
-    // ✅ FIX — clear() accepte un préfixe optionnel
     clear(prefixe = null) {
       try {
         if (!prefixe) {
@@ -76,9 +74,7 @@ const Utils = {
         return ko < 1024
           ? `${ko} Ko`
           : `${(ko/1024).toFixed(1)} Mo`;
-      } catch(e) {
-        return '— Ko';
-      }
+      } catch(e) { return '— Ko'; }
     },
 
     clesPar(prefixe) {
@@ -111,40 +107,32 @@ const Utils = {
       const d = new Date(dateStr + 'T00:00:00');
       d.setDate(d.getDate() + n);
       return d.toISOString().split('T')[0];
-    } catch(e) {
-      return dateStr;
-    }
+    } catch(e) { return dateStr; }
   },
 
   diffJours(dateDebut, dateFin) {
     try {
       const d1 = new Date(dateDebut + 'T00:00:00');
       const d2 = new Date(dateFin   + 'T00:00:00');
-      return Math.round(
-        (d2 - d1) / (1000 * 60 * 60 * 24)
-      );
+      return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
     } catch(e) { return 0; }
   },
 
   debutSemaine(dateStr) {
     try {
-      const d   = new Date(dateStr + 'T00:00:00');
-      const day = d.getDay();
+      const d    = new Date(dateStr + 'T00:00:00');
+      const day  = d.getDay();
       const diff = day === 0 ? -6 : 1 - day;
       d.setDate(d.getDate() + diff);
       return d.toISOString().split('T')[0];
-    } catch(e) {
-      return dateStr;
-    }
+    } catch(e) { return dateStr; }
   },
 
   finSemaine(dateStr) {
     try {
       const debut = this.debutSemaine(dateStr);
       return this.ajouterJours(debut, 6);
-    } catch(e) {
-      return dateStr;
-    }
+    } catch(e) { return dateStr; }
   },
 
   indexJourSemaine(dateStr) {
@@ -201,6 +189,26 @@ const Utils = {
       : this.formatDateCourt(dateStr);
   },
 
+  // ✅ NOUVEAU v4.0 — formatHeure
+  formatHeure(date = null) {
+    const d = date ? new Date(date) : new Date();
+    return d.toLocaleTimeString('fr-FR', {
+      hour:   '2-digit',
+      minute: '2-digit'
+    });
+  },
+
+  // ✅ NOUVEAU v4.0 — formatDateTime
+  formatDateTime(dateStr) {
+    if (!dateStr) return '';
+    const d    = new Date(dateStr);
+    const date = this.formatDateCourt(
+      d.toISOString().split('T')[0]
+    );
+    const heure = this.formatHeure(d);
+    return `${date} à ${heure}`;
+  },
+
   estAujourdhui(dateStr) {
     return dateStr === this.aujourd_hui();
   },
@@ -216,9 +224,7 @@ const Utils = {
   // ════════════════════════════════════════════════════════
   formatVolume(kg) {
     if (!kg || isNaN(kg)) return '0kg';
-    if (kg >= 1000) {
-      return `${(kg/1000).toFixed(1)}T`;
-    }
+    if (kg >= 1000) return `${(kg/1000).toFixed(1)}T`;
     return `${Math.round(kg)}kg`;
   },
 
@@ -228,13 +234,8 @@ const Utils = {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
-
-    if (h > 0) {
-      return m > 0 ? `${h}h ${m}min` : `${h}h`;
-    }
-    if (m > 0) {
-      return sec > 0 ? `${m}min ${sec}s` : `${m}min`;
-    }
+    if (h > 0) return m > 0 ? `${h}h ${m}min` : `${h}h`;
+    if (m > 0) return sec > 0 ? `${m}min ${sec}s` : `${m}min`;
     return `${sec}s`;
   },
 
@@ -244,6 +245,11 @@ const Utils = {
     const m = Math.floor(s / 60);
     const r = s % 60;
     return `${m}:${r.toString().padStart(2, '0')}`;
+  },
+
+  // ✅ NOUVEAU v4.0 — getFormate (alias pour chrono.js)
+  getFormate(secondes) {
+    return this.formatDureeMin(secondes);
   },
 
   arrondir(val, decimales = 1) {
@@ -268,16 +274,15 @@ const Utils = {
       }
 
       const colors = {
-        success: { bg:'var(--fd-mint)',     text:'#09092d' },
-        error:   { bg:'var(--fd-coral)',    text:'#09092d' },
-        warning: { bg:'#ffa500',            text:'#09092d' },
-        info:    { bg:'var(--fd-indigo)',   text:'white'   },
-        pr:      { bg:'var(--fd-lemon)',    text:'#09092d' },
-        dark:    { bg:'var(--fd-midnight)', text:'white'   }  // ✅ Extra
+        success: { bg:'var(--fd-mint)',      text:'#09092d' },
+        error:   { bg:'var(--fd-coral)',     text:'#09092d' },
+        warning: { bg:'#ffa500',             text:'#09092d' },
+        info:    { bg:'var(--fd-indigo)',    text:'white'   },
+        pr:      { bg:'var(--fd-lemon)',     text:'#09092d' },
+        dark:    { bg:'var(--fd-midnight)',  text:'white'   }
       };
 
-      const c = colors[type] || colors.info;
-
+      const c     = colors[type] || colors.info;
       const toast = document.createElement('div');
       toast.style.cssText = `
         background:${c.bg};
@@ -314,104 +319,93 @@ const Utils = {
   // MODAL CONFIRM
   // ════════════════════════════════════════════════════════
   confirmer(titre, message) {
-  return new Promise(resolve => {
+    return new Promise(resolve => {
+      const old = document.getElementById('modal-confirmer');
+      if (old) old.remove();
 
-    // Supprimer ancienne modal si existe
-    const old = document.getElementById('modal-confirmer');
-    if (old) old.remove();
+      const modal = document.createElement('div');
+      modal.id    = 'modal-confirmer';
+      modal.style.cssText = `
+        position:fixed;inset:0;z-index:99999;
+        display:flex;align-items:center;
+        justify-content:center;
+        background:rgba(0,0,0,0.75);
+        backdrop-filter:blur(4px);
+        padding:20px;
+      `;
 
-    const modal = document.createElement('div');
-    modal.id    = 'modal-confirmer';
-    modal.style.cssText = `
-      position:fixed;inset:0;z-index:99999;
-      display:flex;align-items:center;
-      justify-content:center;
-      background:rgba(0,0,0,0.75);
-      backdrop-filter:blur(4px);
-      padding:20px;
-    `;
-
-    modal.innerHTML = `
-      <div style="background:var(--bg-card);
-                  border:1px solid var(--border-color);
-                  border-radius:var(--radius-xl);
-                  padding:28px 24px;
-                  width:100%;max-width:340px;
-                  text-align:center;
-                  box-shadow:0 20px 60px rgba(0,0,0,0.5)">
-        <div style="font-size:1.2rem;font-weight:800;
-                    margin-bottom:8px">
-          ${titre}
+      modal.innerHTML = `
+        <div style="background:var(--bg-card);
+                    border:1px solid var(--border-color);
+                    border-radius:var(--radius-xl);
+                    padding:28px 24px;
+                    width:100%;max-width:340px;
+                    text-align:center;
+                    box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+          <div style="font-size:1.2rem;font-weight:800;
+                      margin-bottom:8px">${titre}</div>
+          <div style="font-size:.85rem;color:var(--text-muted);
+                      margin-bottom:24px;line-height:1.5">
+            ${message}</div>
+          <div style="display:grid;
+                      grid-template-columns:1fr 1fr;gap:10px">
+            <button id="confirmer-non"
+                    style="padding:14px;
+                           background:var(--bg-input);
+                           border:1px solid var(--border-color);
+                           border-radius:var(--radius-lg);
+                           color:var(--text-primary);
+                           font-size:.9rem;font-weight:700;
+                           cursor:pointer">
+              Annuler
+            </button>
+            <button id="confirmer-oui"
+                    style="padding:14px;
+                           background:var(--fd-indigo);
+                           border:none;
+                           border-radius:var(--radius-lg);
+                           color:white;
+                           font-size:.9rem;font-weight:700;
+                           cursor:pointer;
+                           box-shadow:0 4px 16px
+                             rgba(75,75,249,0.4)">
+              Confirmer
+            </button>
+          </div>
         </div>
-        <div style="font-size:.85rem;
-                    color:var(--text-muted);
-                    margin-bottom:24px;
-                    line-height:1.5">
-          ${message}
-        </div>
-        <div style="display:grid;
-                    grid-template-columns:1fr 1fr;
-                    gap:10px">
-          <button id="confirmer-non"
-                  style="padding:14px;
-                         background:var(--bg-input);
-                         border:1px solid var(--border-color);
-                         border-radius:var(--radius-lg);
-                         color:var(--text-primary);
-                         font-size:.9rem;font-weight:700;
-                         cursor:pointer">
-            Annuler
-          </button>
-          <button id="confirmer-oui"
-                  style="padding:14px;
-                         background:var(--fd-indigo);
-                         border:none;
-                         border-radius:var(--radius-lg);
-                         color:white;
-                         font-size:.9rem;font-weight:700;
-                         cursor:pointer;
-                         box-shadow:0 4px 16px
-                           rgba(75,75,249,0.4)">
-            Confirmer
-          </button>
-        </div>
-      </div>
-    `;
+      `;
 
-    document.body.appendChild(modal);
+      document.body.appendChild(modal);
 
-    // ✅ Event listeners directs — pas de délégation
-    document.getElementById('confirmer-oui')
-      .addEventListener('click', () => {
-        modal.remove();
-        resolve(true);
+      document.getElementById('confirmer-oui')
+        .addEventListener('click', () => {
+          modal.remove();
+          resolve(true);
+        });
+
+      document.getElementById('confirmer-non')
+        .addEventListener('click', () => {
+          modal.remove();
+          resolve(false);
+        });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+          resolve(false);
+        }
       });
 
-    document.getElementById('confirmer-non')
-      .addEventListener('click', () => {
-        modal.remove();
-        resolve(false);
-      });
-
-    // ✅ Clic en dehors = annuler
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        modal.remove();
-        resolve(false);
-      }
+      const onEscape = (e) => {
+        if (e.key === 'Escape') {
+          modal.remove();
+          resolve(false);
+          document.removeEventListener('keydown', onEscape);
+        }
+      };
+      document.addEventListener('keydown', onEscape);
     });
-
-    // ✅ Échap = annuler
-    const onEscape = (e) => {
-      if (e.key === 'Escape') {
-        modal.remove();
-        resolve(false);
-        document.removeEventListener('keydown', onEscape);
-      }
-    };
-    document.addEventListener('keydown', onEscape);
-  });
-},
+  },
 
   // ════════════════════════════════════════════════════════
   // VIBRATION
@@ -422,27 +416,177 @@ const Utils = {
     } catch(e) {}
   },
 
-  vibrerSuccess() { this.vibrer([100, 50, 100]); },
+  vibrerSuccess() { this.vibrer([100, 50, 100]);          },
   vibrerPR()      { this.vibrer([200, 100, 200, 100, 400]); },
-  vibrerErreur()  { this.vibrer([300, 100, 300]); },
+  vibrerErreur()  { this.vibrer([300, 100, 300]);          },
 
   // ════════════════════════════════════════════════════════
-  // CONFETTI — ✅ FIX responsive resize
+  // ✅ NOUVEAU v4.0 — NOTIFICATIONS PWA (Suggestion 8)
+  // ════════════════════════════════════════════════════════
+  notifications: {
+
+    // ✅ Demander la permission
+    async demanderPermission() {
+      if (!('Notification' in window)) return false;
+      if (Notification.permission === 'granted') return true;
+      if (Notification.permission === 'denied')  return false;
+
+      const perm = await Notification.requestPermission();
+      return perm === 'granted';
+    },
+
+    // ✅ Permission accordée ?
+    estAutorisee() {
+      return 'Notification' in window
+        && Notification.permission === 'granted';
+    },
+
+    // ✅ Envoyer une notification locale
+    async envoyer(titre, options = {}) {
+      const ok = await this.demanderPermission();
+      if (!ok) return false;
+
+      try {
+        const notif = new Notification(titre, {
+          body:    options.body    || '',
+          icon:    options.icon    || '/icons/icon-192.png',
+          badge:   options.badge   || '/icons/badge.png',
+          tag:     options.tag     || 'powerapp',
+          silent:  options.silent  || false,
+          vibrate: options.vibrate || [200, 100, 200],
+          data:    options.data    || {}
+        });
+
+        if (options.duree) {
+          setTimeout(() => notif.close(), options.duree);
+        }
+
+        return true;
+      } catch(e) {
+        console.warn('[Notif]', e);
+        return false;
+      }
+    },
+
+    // ✅ Notification de rappel séance
+    async rappelSeance(nom, seance) {
+      return this.envoyer(
+        `💪 C'est l'heure ${nom} !`,
+        {
+          body:   `Séance ${seance} t'attend. Let's go ! 🔥`,
+          tag:    'rappel-seance',
+          duree:  10000
+        }
+      );
+    },
+
+    // ✅ Notification PR
+    async prBattu(exercice, poids, reps) {
+      return this.envoyer(
+        `🏆 NOUVEAU RECORD !`,
+        {
+          body:  `${exercice} : ${poids}kg × ${reps} reps ! 🎉`,
+          tag:   'pr',
+          duree: 8000
+        }
+      );
+    },
+
+    // ✅ Notification streak en danger
+    async streakEnDanger(jours) {
+      return this.envoyer(
+        `⚠️ Ton streak est en danger !`,
+        {
+          body:  `Plus que quelques heures pour maintenir ton streak de ${jours} jours 🔥`,
+          tag:   'streak',
+          duree: 15000
+        }
+      );
+    },
+
+    // ✅ Notification hydratation
+    async rappelHydratation() {
+      return this.envoyer(
+        `💧 N'oublie pas de t'hydrater !`,
+        {
+          body:  `Bois un verre d'eau maintenant. Ton corps te remerciera 💪`,
+          tag:   'eau',
+          duree: 5000
+        }
+      );
+    },
+
+    // ✅ Notification PR proche
+    async prProche(exercice, pct) {
+      return this.envoyer(
+        `🎯 PR en vue sur ${exercice} !`,
+        {
+          body:  `Tu es à ${pct}% de ton record. Pousse fort ! 💥`,
+          tag:   'pr-proche',
+          duree: 8000
+        }
+      );
+    },
+
+    // ✅ Notification conseil récupération
+    async conseilRecuperation(conseil) {
+      return this.envoyer(
+        `💡 Conseil récupération`,
+        {
+          body:  conseil,
+          tag:   'recuperation',
+          duree: 10000
+        }
+      );
+    },
+
+    // ✅ Programmer une notification différée (en millisecondes)
+    programmer(titre, options, delaiMs) {
+      setTimeout(() => {
+        this.envoyer(titre, options);
+      }, delaiMs);
+    },
+
+    // ✅ Rappel quotidien selon horaire
+    programmerRappelQuotidien(heure = 18, minute = 0) {
+      const maintenant = new Date();
+      const cible      = new Date();
+      cible.setHours(heure, minute, 0, 0);
+
+      // Si l'heure est déjà passée → demain
+      if (cible <= maintenant) {
+        cible.setDate(cible.getDate() + 1);
+      }
+
+      const delai = cible - maintenant;
+
+      setTimeout(() => {
+        this.envoyer(
+          `💪 PowerApp - Séance du soir !`,
+          {
+            body: `C'est l'heure de ton entraînement 🔥`,
+            tag:  'rappel-quotidien'
+          }
+        );
+      }, delai);
+    }
+  },
+
+  // ════════════════════════════════════════════════════════
+  // CONFETTI
   // ════════════════════════════════════════════════════════
   confetti(duree = 3000) {
     try {
       const canvas = document.getElementById('confetti-canvas');
       if (!canvas) return;
 
-      const ctx = canvas.getContext('2d');
-
+      const ctx    = canvas.getContext('2d');
       const resize = () => {
         canvas.width  = window.innerWidth;
         canvas.height = window.innerHeight;
       };
       resize();
 
-      // ✅ FIX — Observer resize pendant les confettis
       const resizeObs = new ResizeObserver(resize);
       resizeObs.observe(document.body);
 
@@ -473,7 +617,7 @@ const Utils = {
         const elapsed = Date.now() - debut;
         if (elapsed > duree) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-          resizeObs.disconnect(); // ✅ FIX — Nettoyer l'observer
+          resizeObs.disconnect();
           return;
         }
 
@@ -513,7 +657,7 @@ const Utils = {
   },
 
   // ════════════════════════════════════════════════════════
-  // EXPORT / IMPORT — ✅ FIX préfixe configurable
+  // EXPORT / IMPORT
   // ════════════════════════════════════════════════════════
   exporterJSON(prefixe = 'ft_') {
     try {
@@ -521,7 +665,6 @@ const Utils = {
 
       for (let i = 0; i < localStorage.length; i++) {
         const cle = localStorage.key(i);
-        // ✅ FIX — Si pas de préfixe, tout exporter
         if (prefixe && !cle?.startsWith(prefixe)) continue;
         try {
           data[cle] = JSON.parse(localStorage.getItem(cle));
@@ -531,7 +674,7 @@ const Utils = {
       }
 
       const export_data = {
-        version:   '3.0',
+        version:   '4.0',
         app:       'PowerApp',
         date:      this.aujourd_hui(),
         timestamp: Date.now(),
@@ -547,9 +690,7 @@ const Utils = {
       link.href     = URL.createObjectURL(blob);
       link.click();
 
-      // ✅ FIX — Libérer l'URL objet après usage
       setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-
       this.toast('📤 Données exportées !', 'success');
     } catch(e) {
       console.error('[Utils] Erreur export:', e);
@@ -561,9 +702,9 @@ const Utils = {
     try {
       if (!fichier) {
         return new Promise((resolve) => {
-          const input  = document.createElement('input');
-          input.type   = 'file';
-          input.accept = '.json';
+          const input    = document.createElement('input');
+          input.type     = 'file';
+          input.accept   = '.json';
           input.onchange = async (e) => {
             const f = e.target.files?.[0];
             if (f) {
@@ -614,9 +755,11 @@ const Utils = {
             } catch(e) {}
           });
 
-          this.toast(`✅ ${imported} données importées !`, 'success', 4000);
+          this.toast(
+            `✅ ${imported} données importées !`,
+            'success', 4000
+          );
           console.log(`[Utils] Import OK: ${imported} clés`);
-
           setTimeout(() => window.location.reload(), 1500);
           resolve(true);
 
@@ -656,7 +799,6 @@ const Utils = {
       canvas.height = H;
 
       ctx.clearRect(0, 0, W, H);
-
       if (!valeurs?.length) return;
 
       const color  = options.color  || this.COULEURS.indigo;
@@ -717,7 +859,6 @@ const Utils = {
       canvas.height = H;
 
       ctx.clearRect(0, 0, W, H);
-
       if (!series?.length) return;
 
       const padL = 40, padR = 12, padT = 16, padB = 24;
@@ -726,9 +867,9 @@ const Utils = {
       const n      = labels.length;
 
       const toutesValeurs = series.flatMap(s => s.valeurs || []);
-      const max = Math.max(...toutesValeurs, 1);
-      const min = Math.min(...toutesValeurs, 0);
-      const range = Math.max(max - min, 1);
+      const max    = Math.max(...toutesValeurs, 1);
+      const min    = Math.min(...toutesValeurs, 0);
+      const range  = Math.max(max - min, 1);
 
       ctx.strokeStyle = 'rgba(255,255,255,0.06)';
       ctx.lineWidth   = 1;
@@ -747,16 +888,13 @@ const Utils = {
         const val = Math.round(min + pct * range);
         const y   = padT + chartH - pct * chartH;
         const lbl = val >= 1000
-          ? `${(val/1000).toFixed(1)}T`
-          : `${val}`;
+          ? `${(val/1000).toFixed(1)}T` : `${val}`;
         ctx.fillText(lbl, padL - 4, y + 4);
       });
 
       const defaultColors = [
-        this.COULEURS.indigo,
-        this.COULEURS.mint,
-        this.COULEURS.lemon,
-        this.COULEURS.coral
+        this.COULEURS.indigo, this.COULEURS.mint,
+        this.COULEURS.lemon,  this.COULEURS.coral
       ];
 
       series.forEach((serie, si) => {
@@ -773,10 +911,14 @@ const Utils = {
           ctx.beginPath();
           ctx.moveTo(points[0].x, padT + chartH);
           points.forEach(p => ctx.lineTo(p.x, p.y));
-          ctx.lineTo(points[points.length-1].x, padT + chartH);
+          ctx.lineTo(
+            points[points.length-1].x, padT + chartH
+          );
           ctx.closePath();
 
-          const grad = ctx.createLinearGradient(0, padT, 0, padT + chartH);
+          const grad = ctx.createLinearGradient(
+            0, padT, 0, padT + chartH
+          );
           grad.addColorStop(0, color + '40');
           grad.addColorStop(1, color + '00');
           ctx.fillStyle = grad;
@@ -794,7 +936,9 @@ const Utils = {
           else {
             const prev = points[i-1];
             const cpx  = (prev.x + p.x) / 2;
-            ctx.bezierCurveTo(cpx, prev.y, cpx, p.y, p.x, p.y);
+            ctx.bezierCurveTo(
+              cpx, prev.y, cpx, p.y, p.x, p.y
+            );
           }
         });
         ctx.stroke();
@@ -811,8 +955,7 @@ const Utils = {
             ctx.textAlign = 'center';
             const v   = valeurs[i];
             const lbl = v >= 1000
-              ? `${(v/1000).toFixed(1)}T`
-              : `${v}`;
+              ? `${(v/1000).toFixed(1)}T` : `${v}`;
             ctx.fillText(lbl, p.x, p.y - 8);
           }
         });
@@ -850,20 +993,21 @@ const Utils = {
 
       segments.forEach(seg => {
         const sweep = (seg.val / total) * Math.PI * 2;
-
         ctx.beginPath();
         ctx.arc(cx, cy, rayon, angle, angle + sweep);
-        ctx.arc(cx, cy, rayon - epaisseur, angle + sweep, angle, true);
+        ctx.arc(
+          cx, cy, rayon - epaisseur,
+          angle + sweep, angle, true
+        );
         ctx.closePath();
         ctx.fillStyle = seg.color || '#4b4bf9';
         ctx.fill();
-
         angle += sweep + 0.02;
       });
 
       if (options.centre) {
         ctx.fillStyle    = options.centre.color || '#ffffff';
-        ctx.font         = `bold ${options.centre.size||22}px system-ui`;
+        ctx.font = `bold ${options.centre.size||22}px system-ui`;
         ctx.textAlign    = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(options.centre.texte, cx, cy);
@@ -894,7 +1038,6 @@ const Utils = {
         ctx.beginPath();
         ctx.strokeStyle = 'rgba(255,255,255,0.08)';
         ctx.lineWidth   = 1;
-
         for (let i = 0; i < n; i++) {
           const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
           const x = cx + Math.cos(angle) * r * pct;
@@ -936,7 +1079,6 @@ const Utils = {
         else ctx.lineTo(x, y);
       });
       ctx.closePath();
-
       ctx.fillStyle   = color + '33';
       ctx.fill();
       ctx.strokeStyle = color;
@@ -1046,8 +1188,6 @@ const Utils = {
   // ════════════════════════════════════════════════════════
   // DIVERS
   // ════════════════════════════════════════════════════════
-
-  // ✅ FIX — substr → substring
   genId(prefixe = 'id') {
     return `${prefixe}_${Date.now()}_${Math.random()
       .toString(36).substring(2, 8)}`;
@@ -1067,9 +1207,7 @@ const Utils = {
   clone(obj) {
     try {
       return JSON.parse(JSON.stringify(obj));
-    } catch(e) {
-      return obj;
-    }
+    } catch(e) { return obj; }
   },
 
   estMobile() {
@@ -1113,11 +1251,58 @@ const Utils = {
 
   clamp(val, min, max) {
     return Math.max(min, Math.min(max, val));
+  },
+
+  // ✅ NOUVEAU v4.0 — scrollToTop
+  scrollToTop(smooth = true) {
+    try {
+      const main = document.querySelector('.main-content')
+        || document.getElementById('app-content')
+        || window;
+      if (main === window) {
+        window.scrollTo({
+          top:      0,
+          behavior: smooth ? 'smooth' : 'auto'
+        });
+      } else {
+        main.scrollTo({
+          top:      0,
+          behavior: smooth ? 'smooth' : 'auto'
+        });
+      }
+    } catch(e) {
+      window.scrollTo(0, 0);
+    }
+  },
+
+  // ✅ NOUVEAU v4.0 — Utilitaire PWA install
+  pwa: {
+    _promptInstall: null,
+
+    init() {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        this._promptInstall = e;
+        console.log('[PWA] Install prompt intercepted');
+      });
+    },
+
+    peutInstaller() {
+      return !!this._promptInstall;
+    },
+
+    async installer() {
+      if (!this._promptInstall) return false;
+      this._promptInstall.prompt();
+      const result = await this._promptInstall.userChoice;
+      this._promptInstall = null;
+      return result.outcome === 'accepted';
+    }
   }
 };
 
 // ════════════════════════════════════════════════════════════
-// TIMER REPOS (global)
+// TIMER REPOS
 // ════════════════════════════════════════════════════════════
 const timerRepos = {
   _interval: null,
@@ -1128,12 +1313,10 @@ const timerRepos = {
 
   demarrer(secondes, onTick = null, onFin = null) {
     this.arreter();
-
     this._restant = secondes;
     this._actif   = true;
     this._onTick  = onTick;
     this._onFin   = onFin;
-
     this._afficherTimer(secondes);
 
     this._interval = setInterval(() => {
@@ -1182,7 +1365,7 @@ const timerRepos = {
         background:var(--fd-indigo);
         color:white;
         padding:12px 20px;
-        border-radius:var(--radius-full, 99px);
+        border-radius:var(--radius-full,99px);
         font-size:1.1rem;font-weight:800;
         box-shadow:0 4px 20px rgba(75,75,249,0.5);
         display:flex;align-items:center;gap:8px;
@@ -1192,7 +1375,6 @@ const timerRepos = {
       el.onclick = () => this.arreter();
       document.body.appendChild(el);
     }
-
     el.innerHTML = `
       💤 <span id="timer-display">
         ${Utils.formatDureeMin(secondes)}
@@ -1213,69 +1395,66 @@ const timerRepos = {
     }
   },
 
-  // Dans timerRepos — remplacer jouerSon() et _jouerSonSynth()
+  jouerSon(type = 'beep') {
+    try {
+      const config = Utils.storage.get('ft_notifs_config', {});
+      if (config.son === false) return;
 
-jouerSon(type = 'beep') {
-  try {
-    const config = Utils.storage.get('ft_notifs_config', {});
-    if (config.son === false) return;
+      // ✅ Priorité 1 — Module Sounds.js
+      if (window.Sounds) {
+        window.Sounds.jouer(type);
+        return;
+      }
 
-    // ✅ Priorité 1 — Module Sounds (synthèse directe)
-    if (window.Sounds) {
-      window.Sounds.jouer(type);
-      return;
-    }
+      // ✅ Priorité 2 — Fichiers .mp3
+      const sons = {
+        beep: './assets/sounds/beep.mp3',
+        pr:   './assets/sounds/pr.mp3',
+        rest: './assets/sounds/rest.mp3',
+        go:   './assets/sounds/beep.mp3',
+        bip:  './assets/sounds/beep.mp3'
+      };
 
-    // ✅ Priorité 2 — Fichiers .mp3 si disponibles
-    const sons = {
-      beep: './assets/sounds/beep.mp3',
-      pr:   './assets/sounds/pr.mp3',
-      rest: './assets/sounds/rest.mp3',
-      go:   './assets/sounds/beep.mp3',  // ✅ Alias — Circuit.js appelle 'go'
-      bip:  './assets/sounds/beep.mp3'   // ✅ Alias — Circuit.js appelle 'bip'
-    };
+      const audio  = new Audio(sons[type] || sons.beep);
+      audio.volume = 0.5;
+      audio.play().catch(() => this._jouerSonSynth(type));
 
-    const audio  = new Audio(sons[type] || sons.beep);
-    audio.volume = 0.5;
-    audio.play().catch(() => this._jouerSonSynth(type));
+    } catch(e) {}
+  },
 
-  } catch(e) {}
-},
+  _jouerSonSynth(type) {
+    try {
+      const ctx  = new (window.AudioContext
+        || window.webkitAudioContext)();
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
 
-_jouerSonSynth(type) {
-  // Fallback minimal si Sounds.js non chargé
-  try {
-    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
 
-    osc.connect(gain);
-    gain.connect(ctx.destination);
+      const configs = {
+        beep: { freq:880, dur:.12, type:'sine'   },
+        pr:   { freq:523, dur:.4,  type:'square' },
+        rest: { freq:440, dur:.2,  type:'sine'   },
+        go:   { freq:660, dur:.15, type:'sine'   },
+        bip:  { freq:880, dur:.08, type:'sine'   }
+      };
 
-    const configs = {
-      beep: { freq:880, dur:.12, type:'sine'   },
-      pr:   { freq:523, dur:.4,  type:'square' },
-      rest: { freq:440, dur:.2,  type:'sine'   },
-      go:   { freq:660, dur:.15, type:'sine'   }, // ✅ Circuit go
-      bip:  { freq:880, dur:.08, type:'sine'   }  // ✅ Circuit bip
-    };
-
-    const cfg     = configs[type] || configs.beep;
-    osc.frequency.setValueAtTime(cfg.freq, ctx.currentTime);
-    osc.type = cfg.type;
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(
-      0.001, ctx.currentTime + cfg.dur
-    );
-
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + cfg.dur);
-  } catch(e) {}
-}
+      const cfg     = configs[type] || configs.beep;
+      osc.frequency.setValueAtTime(cfg.freq, ctx.currentTime);
+      osc.type = cfg.type;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(
+        0.001, ctx.currentTime + cfg.dur
+      );
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + cfg.dur);
+    } catch(e) {}
+  }
 };
 
 // ════════════════════════════════════════════════════════════
-// INJECTION CSS ANIMATIONS — ✅ FIX doublon slideDown supprimé
+// CSS ANIMATIONS — ✅ v4.0 enrichi
 // ════════════════════════════════════════════════════════════
 (function _injecterAnimations() {
   const css = `
@@ -1296,17 +1475,39 @@ _jouerSonSynth(type) {
       to   { opacity:1 }
     }
     @keyframes bounceIn {
-      0%   { transform:scale(0); opacity:0  }
-      70%  { transform:scale(1.1)           }
-      100% { transform:scale(1); opacity:1  }
+      0%   { transform:scale(0);   opacity:0 }
+      70%  { transform:scale(1.1)            }
+      100% { transform:scale(1);   opacity:1 }
     }
     @keyframes pulse {
-      0%,100% { opacity:1  }
-      50%     { opacity:.5 }
+      0%,100% { opacity:1   }
+      50%     { opacity:.5  }
     }
     @keyframes slideUp {
       from { transform:translateY(20px); opacity:0 }
       to   { transform:translateY(0);    opacity:1 }
+    }
+    @keyframes slideDown {
+      from { transform:translateY(-20px); opacity:0 }
+      to   { transform:translateY(0);     opacity:1 }
+    }
+    @keyframes splashLoad {
+      0%   { width:0%    }
+      80%  { width:90%   }
+      100% { width:100%  }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% center }
+      100% { background-position: 200%  center }
+    }
+    @keyframes zoomIn {
+      from { transform:scale(.8); opacity:0 }
+      to   { transform:scale(1);  opacity:1 }
+    }
+    @keyframes floatUp {
+      0%   { transform:translateY(0)   }
+      50%  { transform:translateY(-8px)}
+      100% { transform:translateY(0)   }
     }
   `;
 
@@ -1315,7 +1516,10 @@ _jouerSonSynth(type) {
   document.head.appendChild(style);
 })();
 
+// ✅ Init PWA install listener
+Utils.pwa.init();
+
 window.Utils      = Utils;
 window.timerRepos = timerRepos;
 
-console.log('✅ Utils.js v3.0 chargé');
+console.log('✅ Utils.js v4.0 chargé — Notifications PWA + Animations enrichies');
