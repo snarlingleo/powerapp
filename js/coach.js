@@ -1,6 +1,11 @@
 /* ============================================================
-   FitTracker Pro — Coach IA v4.1 CORRIGÉ
+   PowerApp — Coach IA v5.0
    Messages + Chat + Analyse + Programme IA Auto-généré
+   + Genre / Lieu / Muscles onboarding
+   + Message post-séance enrichi
+   + Suggestion remplacement exercice
+   + Heatmap musculaire dans chat
+   + Blessures actives v4.0
    ============================================================ */
 
 const Coach = {
@@ -21,6 +26,26 @@ const Coach = {
     return h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
   },
 
+  // ✅ NOUVEAU v5.0 — Récupérer profil onboarding
+  _getProfilOnboarding() {
+    try {
+      return Utils.storage.get('ft_profil_onboarding', {
+        genre:          'homme',
+        lieu:           'salle',
+        muscles_cibles: [],
+        objectif:       'forme',
+        niveau:         'intermediaire',
+        nom:            'Athlète'
+      });
+    } catch(e) {
+      return {
+        genre:'homme', lieu:'salle',
+        muscles_cibles:[], objectif:'forme',
+        niveau:'intermediaire', nom:'Athlète'
+      };
+    }
+  },
+
   // ════════════════════════════════════════════════════════
   // MESSAGE DU JOUR
   // ════════════════════════════════════════════════════════
@@ -30,6 +55,8 @@ const Coach = {
     let infos  = { phase:{ nom:'Reprise', emoji:'💡' } };
     let streak = { count:0, max:0 };
     let nom = 'Athlète', total = 0;
+    const profil = this._getProfilOnboarding();
+    const genre  = profil.genre || 'homme';
 
     try { humeur  = Tracker.getHumeur();                  } catch(e) {}
     try { fatigue = Tracker.getFatigue();                 } catch(e) {}
@@ -40,24 +67,47 @@ const Coach = {
     try { nom     = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
     try { total   = Tracker.getTotalSeances();            } catch(e) {}
 
+    // ✅ NOUVEAU — Message post-séance du jour
+    try {
+      const seanceDuJour = Tracker.getSeanceDuJour();
+      if (seanceDuJour?.complete) {
+        const prs = seanceDuJour.prs || [];
+        if (prs.length > 0) {
+          const ex = window.EXERCICES?.[prs[0].exerciceRef];
+          return {
+            type: 'pr', emoji: '🏆',
+            message: `INCROYABLE ${nom} ! Tu as battu ton record sur ${ex?.nom || prs[0].exerciceRef} — ${prs[0].poids}kg × ${prs[0].reps} ! ${prs.length > 1 ? `Et ${prs.length - 1} autre(s) PR ce soir !` : ''} 🎉`
+          };
+        }
+        return {
+          type: 'seance_faite', emoji: '✅',
+          message: `Séance terminée ${nom} ! ${seanceDuJour.volumeTotal ? `${Utils.formatVolume(seanceDuJour.volumeTotal)} de volume aujourd'hui.` : ''} Récupère bien 💪`
+        };
+      }
+    } catch(e) {}
+
     if (absence === -1 || total === 0) {
-      return {
-        type:'bienvenue', emoji:'👋',
-        message: Utils.random([
-          `Bienvenue ${nom} ! C'est ta première séance — profites-en pour trouver tes sensations.`,
-          `Hey ${nom} ! Prêt pour l'aventure ? Ta première séance commence ici.`,
-          `${nom}, bienvenue dans PowerApp ! Aujourd'hui marque le début de quelque chose de grand.`
-        ])
-      };
+      const msgs = genre === 'femme' ? [
+        `Bienvenue ${nom} ! C'est ta première séance — prends le temps de trouver tes sensations. 🌸`,
+        `Hey ${nom} ! Prête pour l'aventure ? Ta première séance commence ici. 💪`,
+        `${nom}, bienvenue dans PowerApp ! Aujourd'hui marque le début de quelque chose d'exceptionnel. ✨`
+      ] : [
+        `Bienvenue ${nom} ! C'est ta première séance — profites-en pour trouver tes sensations.`,
+        `Hey ${nom} ! Prêt pour l'aventure ? Ta première séance commence ici.`,
+        `${nom}, bienvenue dans PowerApp ! Aujourd'hui marque le début de quelque chose de grand.`
+      ];
+      return { type:'bienvenue', emoji:'👋', message:Utils.random(msgs) };
     }
 
     if (absence >= 7) {
       return {
         type:'reprise', emoji:'🌱',
-        message: Utils.random([
+        message: Utils.random(genre === 'femme' ? [
+          `Bonne reprise ${nom} ! Peu importe la pause — ce qui compte c'est d'être là. -20% sur les charges. 🌸`,
+          `Te revoilà ${nom} ! On ne juge pas les pauses, on célèbre les retours. Commence doucement. 💪`
+        ] : [
           `Bonne reprise ${nom} ! Peu importe la pause — ce qui compte c'est d'être là. -20% sur les charges.`,
-          `Te revoilà ${nom} ! On ne juge pas les pauses, on célèbre les retours. Commence doucement.`,
-          `${nom} est de retour ! La vraie force c'est de revenir. -20% sur les charges aujourd'hui.`
+          `Te revoilà ${nom} ! On ne juge pas les pauses, on célèbre les retours. Commence doucement.`
         ])
       };
     }
@@ -83,7 +133,7 @@ const Coach = {
       return {
         type:'fatigue', emoji:'😴',
         message: Utils.random([
-          `Tu te sens épuisé ${nom} — écoute ton corps : technique parfaite sur charges modérées.`,
+          `Tu te sens épuisé${genre === 'femme' ? 'e' : ''} ${nom} — écoute ton corps : technique parfaite sur charges modérées.`,
           `Fatigue détectée ${nom}. Charges à -20%, concentration sur la qualité.`
         ])
       };
@@ -94,7 +144,7 @@ const Coach = {
         type:'motivation', emoji:'💡',
         message: Utils.random([
           `Pas dans ton assiette ${nom} ? Les meilleures séances arrivent parfois quand on s'y attend le moins.`,
-          `${nom}, les champions s'entraînent aussi quand ils n'en ont pas envie. C'est là que la différence se fait.`
+          `${nom}, les champion${genre === 'femme' ? 'nes' : 's'} s'entraînent aussi quand ils n'en ont pas envie. C'est là que la différence se fait.`
         ])
       };
     }
@@ -125,6 +175,24 @@ const Coach = {
       };
     }
 
+    // ✅ NOUVEAU — Message adapté muscles ciblés
+    const muscles = profil.muscles_cibles || [];
+    if (muscles.length > 0) {
+      const labels = {
+        pectoraux:'pectoraux', deltoides:'épaules',
+        biceps:'biceps', triceps:'triceps',
+        abdominaux:'abdos', quadriceps:'quadriceps',
+        dorsal:'dos', fessiers:'fessiers',
+        ischio:'ischio-jambiers', mollets:'mollets'
+      };
+      const musclesNoms = muscles.slice(0,2)
+        .map(m => labels[m] || m).join(' et ');
+      return {
+        type:'muscles_cibles', emoji:'🎯',
+        message: `Aujourd'hui ${nom}, on attaque ${musclesNoms} ! Focus sur tes zones prioritaires. 💪`
+      };
+    }
+
     const msgs = {
       'Reprise':      [`Phase Reprise ${nom} : la technique prime sur tout.`],
       'Construction': [`Phase Construction ${nom} : cherche à dépasser le volume de la semaine dernière.`],
@@ -150,6 +218,7 @@ const Coach = {
     let rpe = 0, fatigue = null, humeur = null;
     let prs = {}, phase = { phase:{ nom:'Reprise' } };
     let volume = 0;
+    const profil = this._getProfilOnboarding();
 
     try { nom     = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
     try { seances = Tracker.getTotalSeances();             } catch(e) {}
@@ -172,22 +241,40 @@ const Coach = {
       humeur:         humeur?.humeur || 'non renseignée',
       phase:          phase?.phase?.nom || 'Reprise',
       volume:         Utils.formatVolume(volume),
-      nbPRs:          Object.keys(prs).length
+      nbPRs:          Object.keys(prs).length,
+      // ✅ NOUVEAU v5.0 — Contexte onboarding
+      genre:          profil.genre          || 'homme',
+      lieu:           profil.lieu           || 'salle',
+      muscles:        profil.muscles_cibles || [],
+      objectif:       profil.objectif       || 'forme',
+      niveau:         profil.niveau         || 'intermediaire'
     };
+
+    // ✅ NOUVEAU — Détecter intention "remplacer exercice"
+    if (q => q.includes('remplace') || q.includes('alternative') ||
+         q.includes('substitut') || q.includes('à la place')) {
+      if (question.toLowerCase().includes('remplace')
+          || question.toLowerCase().includes('alternative')
+          || question.toLowerCase().includes('substitut')
+          || question.toLowerCase().includes('à la place')) {
+        return this._raisonnerRemplacement(
+          question.toLowerCase(), ctx
+        );
+      }
+    }
 
     if (question.toLowerCase().includes('génère') ||
         question.toLowerCase().includes('crée') ||
         question.toLowerCase().includes('nouveau programme') ||
         question.toLowerCase().includes('programme ia') ||
         question.toLowerCase().includes('générer')) {
-      // ✅ FIX — Naviguer directement vers le questionnaire
       setTimeout(() => {
         Coach.ProgrammeIA._modeQuestionnaire = true;
         Coach.ProgrammeIA._etapeActuelle     = 0;
         Coach.ProgrammeIA._reponses          = {};
         naviguer('adaptatif');
       }, 800);
-      return `Je lance le questionnaire pour toi ${nom} ! 🧠\n\nRéponds aux 7 questions et ton programme sur mesure sera généré en 2 secondes !`;
+      return `Je lance le questionnaire pour toi ${nom} ! 🧠\n\nRéponds aux questions et ton programme sur mesure sera généré instantanément !`;
     }
 
     const reponse = this._raisonnerIA(
@@ -205,9 +292,40 @@ const Coach = {
     return reponse;
   },
 
-  _raisonnerIA(q, ctx, prs = {}) {
-    const nom = ctx.nom;
+  // ✅ NOUVEAU v5.0 — Raisonnement remplacement exercice
+  _raisonnerRemplacement(q, ctx) {
+    const nom  = ctx.nom;
+    const lieu = ctx.lieu || 'salle';
 
+    // Essayer de détecter l'exercice mentionné
+    const exoMentionne = Object.entries(window.EXERCICES || {})
+      .find(([,ex]) => q.includes(ex.nom.toLowerCase()));
+
+    if (exoMentionne) {
+      const [ref, exo] = exoMentionne;
+      try {
+        const similaires = window.ExercicesFilter
+          ?.getSimilaires(ref, lieu) || [];
+        if (similaires.length > 0) {
+          const liste = similaires.slice(0,4)
+            .map(s => `  • ${s.emoji} ${s.nom}`)
+            .join('\n');
+          return `Alternatives pour **${exo.nom}** (${lieu}) ${nom} :\n\n${liste}\n\nTous ciblent le même muscle. 💪`;
+        }
+      } catch(e) {}
+      return `Je n'ai pas trouvé d'alternatives disponibles pour ${exo.nom} ${nom}. Essaie de préciser ton équipement.`;
+    }
+
+    return `Quel exercice veux-tu remplacer ${nom} ? Précise le nom et je te propose des alternatives adaptées à ${lieu === 'salle' ? 'la salle' : lieu === 'maison' ? 'la maison' : 'l\'extérieur'} ! 💪`;
+  },
+
+  _raisonnerIA(q, ctx, prs = {}) {
+    const nom    = ctx.nom;
+    const genre  = ctx.genre  || 'homme';
+    const lieu   = ctx.lieu   || 'salle';
+    const muscles = ctx.muscles || [];
+
+    // ✅ PRs / Records
     if (q.includes('pr') || q.includes('record') ||
         q.includes('max') || q.includes('meilleur')) {
       const top = Object.entries(prs)
@@ -223,6 +341,7 @@ const Coach = {
       return `Tes meilleurs records ${nom} 🏆\n\n${top.join('\n')}\n\n${ctx.nbPRs} records au total 💪`;
     }
 
+    // ✅ Fatigue / Récupération
     if (q.includes('fatigu') || q.includes('récup') ||
         q.includes('repos')  || q.includes('douleur') ||
         q.includes('mal')    || q.includes('épuisé')) {
@@ -232,6 +351,7 @@ const Coach = {
       return `La récupération est la moitié de l'entraînement ${nom} :\n\n  • 48h entre groupes musculaires\n  • 7-9h de sommeil\n  • Hydratation : 35ml/kg/jour\n  • Protéines : 1.6-2.2g/kg\n\nTon corps se construit au repos 💤`;
     }
 
+    // ✅ Programme / Séance du jour
     if (q.includes('programme') || q.includes('plan') ||
         q.includes('séance')    || q.includes('aujourd') ||
         q.includes('faire')     || q.includes('entraîn')) {
@@ -242,29 +362,54 @@ const Coach = {
         'Peak':         '🏆 Charges maximales — semaine des records !',
         'Décharge':     '😴 Charges légères 55%. Récupération et technique.'
       };
-      return `Tu es en phase **${ctx.phase}** ${nom}.\n\n${phaseMsg[ctx.phase]||phaseMsg['Reprise']}\n\nVolume cette semaine : ${ctx.volume}\nStreak : ${ctx.streak} jours 🔥`;
+
+      // ✅ NOUVEAU — Contexte muscles ciblés
+      const musclesCtx = muscles.length > 0
+        ? `\n\nMuscles ciblés : ${muscles.join(', ')}`
+        : '';
+
+      return `Tu es en phase **${ctx.phase}** ${nom}.\n\n${phaseMsg[ctx.phase]||phaseMsg['Reprise']}${musclesCtx}\n\nVolume cette semaine : ${ctx.volume}\nStreak : ${ctx.streak} jours 🔥\nLieu : ${lieu === 'salle' ? '🏋️ Salle' : lieu === 'maison' ? '🏠 Maison' : '🌳 Dehors'}`;
     }
 
+    // ✅ Nutrition — adaptée genre + objectif
     if (q.includes('manger')   || q.includes('nutrition') ||
         q.includes('protéine') || q.includes('calorie')   ||
         q.includes('régime')   || q.includes('nourriture')) {
       let poids = 80;
       try { poids = Tracker.getProfil().poids || 80; } catch(e) {}
-      const prot = Math.round(poids * 2);
-      const cal  = Math.round(poids * 35);
+
+      // ✅ Ajustement selon genre
+      const facteurGenre = genre === 'femme' ? 0.85 : 1;
+      const prot = Math.round(poids * 2 * facteurGenre);
+      const cal  = Math.round(poids * (genre === 'femme' ? 30 : 35));
       const eau  = (poids * 0.035).toFixed(1);
-      return `Recommandations pour toi ${nom} (${poids}kg) 🥗\n\n  • Protéines : ${prot}g/jour\n  • Calories : ~${cal} kcal/jour\n  • Eau : ${eau}L minimum\n  • Repas 2-3h avant séance\n  • Post-séance : prot + gluc dans 30min 🎯`;
+
+      const objMsg = {
+        prise_masse: `\n  • Surplus : +300kcal/jour`,
+        perte_poids: `\n  • Déficit : -300kcal/jour`,
+        seche:       `\n  • Déficit : -400kcal/jour, glucides bas`,
+        force:       `\n  • Légère surplus : +200kcal`,
+        endurance:   `\n  • Glucides hauts : 5-7g/kg`
+      }[ctx.objectif] || '';
+
+      return `Recommandations pour toi ${nom} (${poids}kg${genre === 'femme' ? ' 🌸' : ''}) 🥗\n\n  • Protéines : ${prot}g/jour\n  • Calories : ~${cal} kcal/jour${objMsg}\n  • Eau : ${eau}L minimum\n  • Repas 2-3h avant séance\n  • Post-séance : prot + gluc dans 30min 🎯`;
     }
 
+    // ✅ Motivation
     if (q.includes('motiv')   || q.includes('envie')    ||
         q.includes('abandon') || q.includes('dur')      ||
         q.includes('difficile')|| q.includes('arrêt')) {
-      return Utils.random([
+      const msgs = genre === 'femme' ? [
+        `${nom}, ${ctx.seancesTotales} séances derrière toi. La discipline ne faiblit jamais. 🌸\n\n"Le seul mauvais entraînement est celui qui n'a pas eu lieu."`,
+        `Les jours difficiles font les athlètes durables ${nom}. Une séance à 50% vaut mieux que zéro.\n\nStreak de ${ctx.streak} jours — tu n'es pas du genre à abandonner. 💪`
+      ] : [
         `${nom}, ${ctx.seancesTotales} séances derrière toi. La discipline ne faiblit jamais.\n\n"Le seul mauvais entraînement est celui qui n'a pas eu lieu."`,
         `Les jours difficiles font les athlètes durables ${nom}. Une séance à 50% vaut mieux que zéro.\n\nStreak de ${ctx.streak} jours — tu n'es pas du genre à abandonner.`
-      ]);
+      ];
+      return Utils.random(msgs);
     }
 
+    // ✅ Streak
     if (q.includes('streak') || q.includes('consécutif') ||
         q.includes('régularité')) {
       if (ctx.streak === 0)
@@ -276,20 +421,96 @@ const Coach = {
       return `Ton streak : **${ctx.streak} jours** 🔥\n\nC'est ${qualif} ${nom} ! Continue 💪`;
     }
 
+    // ✅ NOUVEAU v5.0 — Muscles / Heatmap
+    if (q.includes('muscle')   || q.includes('heatmap') ||
+        q.includes('volume')   || q.includes('répartition') ||
+        q.includes('travaill') || q.includes('cibl')) {
+      try {
+        const volumeParMuscle = Tracker.getVolumeParMuscle(7);
+        if (volumeParMuscle.length > 0) {
+          const top3 = volumeParMuscle.slice(0,3)
+            .map(m => `  • ${m.muscle} : ${m.pourcentage}% d'intensité (${m.intensite})`);
+          const negliges = volumeParMuscle
+            .filter(m => m.intensite === 'faible').slice(0,2)
+            .map(m => `  • ${m.muscle}`);
+          let msg = `Analyse musculaire cette semaine ${nom} 💪\n\nPlus travaillés :\n${top3.join('\n')}`;
+          if (negliges.length > 0) {
+            msg += `\n\nÀ ne pas négliger :\n${negliges.join('\n')}`;
+          }
+          if (muscles.length > 0) {
+            msg += `\n\n🎯 Tes zones prioritaires : ${muscles.join(', ')}`;
+          }
+          return msg;
+        }
+      } catch(e) {}
+      return `Fais quelques séances pour voir l'analyse musculaire ${nom} ! Je pourrai te dire quels muscles sont les plus travaillés. 💪`;
+    }
+
+    // ✅ NOUVEAU v5.0 — Surcharge / Blessure
+    if (q.includes('surcharge') || q.includes('blessure') ||
+        q.includes('éviter')    || q.includes('danger')) {
+      try {
+        const surcharge = Tracker.getSurchargeMusculaire();
+        const blessures = Tracker.getBlessuresActives();
+
+        let msg = '';
+
+        if (surcharge.length > 0) {
+          const alertes = surcharge.map(s =>
+            `  ⚠️ ${s.muscle} : ${s.conseil}`
+          ).join('\n');
+          msg += `Surcharge musculaire détectée ${nom} :\n\n${alertes}\n\n`;
+        }
+
+        if (blessures.length > 0) {
+          const bMsg = blessures.map(b =>
+            `  🚫 ${b.zone} (${b.severite})\n    Éviter : ${(b.exercicesAEviter||[]).slice(0,3).join(', ')}\n    OK : ${(b.alternativesOK||[]).slice(0,2).join(', ')}`
+          ).join('\n');
+          msg += `Blessures actives :\n\n${bMsg}`;
+        }
+
+        if (!msg) {
+          return `Aucune surcharge ni blessure active détectée ${nom}. Tu peux y aller à fond ! 💪`;
+        }
+
+        return msg.trim();
+      } catch(e) {}
+      return `Je n'ai pas assez de données pour analyser les risques ${nom}. Fais quelques séances et enregistre tes blessures éventuelles.`;
+    }
+
+    // ✅ NOUVEAU v5.0 — Lieu d'entraînement
+    if (q.includes('maison') || q.includes('salle') ||
+        q.includes('dehors') || q.includes('extérieur') ||
+        q.includes('équipement')) {
+      try {
+        const exosDispo = window.ExercicesFilter
+          ?.parLieu(lieu) || {};
+        const nbExos    = Object.keys(exosDispo).length;
+        const lieuLabel = lieu === 'salle' ? '🏋️ Salle'
+                        : lieu === 'maison' ? '🏠 Maison'
+                        : '🌳 Extérieur';
+        return `Pour ton lieu d'entraînement : ${lieuLabel} ${nom}\n\n  • ${nbExos} exercices disponibles\n  • Programme adapté à ton équipement\n\nVeux-tu que je génère un programme spécial ${lieuLabel} ? Dis "génère un programme" ! 🎯`;
+      } catch(e) {}
+    }
+
+    // ✅ Bonjour / Accueil
     if (q.includes('bonjour') || q.includes('salut') ||
         q.includes('hello')   || q.includes('hey')   ||
         q.includes('coucou')  || q.includes('bonsoir')) {
-      return `${this._salutation()} ${nom} ! 👋\n\nJe suis ton Coach IA PowerApp.\n\nJe peux t'aider avec :\n  💪 Tes records\n  📅 Séance du jour\n  🥗 Nutrition\n  😴 Fatigue\n  🔥 Motivation\n  🧠 Générer un programme\n\nDe quoi as-tu besoin ? 🎯`;
+      const lieuLabel = lieu === 'salle' ? '🏋️ salle'
+                      : lieu === 'maison' ? '🏠 maison'
+                      : '🌳 dehors';
+      return `${this._salutation()} ${nom} ! ${genre === 'femme' ? '🌸' : '👋'}\n\nJe suis ton Coach IA PowerApp.\n\nJe peux t'aider avec :\n  💪 Tes records\n  📅 Séance du jour (${lieuLabel})\n  🥗 Nutrition\n  😴 Fatigue\n  🔥 Motivation\n  💪 Muscles ciblés\n  🧠 Générer un programme\n\nDe quoi as-tu besoin ? 🎯`;
     }
 
     return Utils.random([
-      `${nom} — je peux t'aider sur :\n  💪 Records / PRs\n  📈 Volume / Programme\n  😴 Récupération\n  🥗 Nutrition\n  🔥 Motivation\n  🧠 Générer un programme IA\n\nPrécise ! 🎯`,
+      `${nom} — je peux t'aider sur :\n  💪 Records / PRs\n  📈 Volume / Programme\n  😴 Récupération\n  🥗 Nutrition\n  🔥 Motivation\n  💪 Muscles ciblés\n  🧠 Générer un programme IA\n\nPrécise ! 🎯`,
       `Pour te donner les meilleurs conseils ${nom}, dis-moi ce que tu cherches : force, volume, récupération, nutrition ou programme ?`
     ]);
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ PROGRAMME IA — GÉNÉRATEUR COMPLET CORRIGÉ
+  // PROGRAMME IA
   // ════════════════════════════════════════════════════════
   ProgrammeIA: {
 
@@ -302,11 +523,11 @@ const Coach = {
         titre: '🎯 Quel est ton objectif principal ?',
         type:  'choix_unique',
         options: [
-          { val:'prise_masse', label:'💪 Prise de masse', desc:'Grossir et muscler'       },
-          { val:'seche',       label:'🔥 Sèche',          desc:'Perdre du gras'           },
-          { val:'force',       label:'🏋️ Force pure',      desc:'Soulever plus lourd'      },
-          { val:'forme',       label:'✨ Forme générale',  desc:'Rester en bonne santé'    },
-          { val:'endurance',   label:'🏃 Endurance',       desc:'Cardio et résistance'     }
+          { val:'prise_masse', label:'💪 Prise de masse', desc:'Grossir et muscler'    },
+          { val:'seche',       label:'🔥 Sèche',          desc:'Perdre du gras'        },
+          { val:'force',       label:'🏋️ Force pure',      desc:'Soulever plus lourd'  },
+          { val:'forme',       label:'✨ Forme générale',  desc:'Rester en bonne santé'},
+          { val:'endurance',   label:'🏃 Endurance',       desc:'Cardio et résistance' }
         ]
       },
       {
@@ -314,9 +535,9 @@ const Coach = {
         titre: '📊 Quel est ton niveau ?',
         type:  'choix_unique',
         options: [
-          { val:'debutant',      label:'🌱 Débutant',      desc:'Moins de 6 mois' },
-          { val:'intermediaire', label:'💪 Intermédiaire', desc:'6 mois — 2 ans'  },
-          { val:'avance',        label:'🔥 Avancé',        desc:'Plus de 2 ans'   }
+          { val:'debutant',      label:'🌱 Débutant',      desc:'Moins de 6 mois'},
+          { val:'intermediaire', label:'💪 Intermédiaire', desc:'6 mois — 2 ans' },
+          { val:'avance',        label:'🔥 Avancé',        desc:'Plus de 2 ans'  }
         ]
       },
       {
@@ -374,45 +595,28 @@ const Coach = {
       }
     ],
 
-    // ✅ FIX — State sur window pour persistance entre renders
-    get _etapeActuelle() {
-      return window._piaEtape || 0;
-    },
-    set _etapeActuelle(v) {
-      window._piaEtape = v;
-    },
+    get _etapeActuelle() { return window._piaEtape || 0; },
+    set _etapeActuelle(v) { window._piaEtape = v; },
 
     get _reponses() {
-      return window._piaReponses || (window._piaReponses = {});
+      return window._piaReponses
+        || (window._piaReponses = {});
     },
-    set _reponses(v) {
-      window._piaReponses = v;
-    },
+    set _reponses(v) { window._piaReponses = v; },
 
-    get _modeQuestionnaire() {
-      return window._piaModeQ || false;
-    },
-    set _modeQuestionnaire(v) {
-      window._piaModeQ = v;
-    },
+    get _modeQuestionnaire() { return window._piaModeQ || false; },
+    set _modeQuestionnaire(v) { window._piaModeQ = v; },
 
-    getConfig() {
-      return Utils.storage.get(this.CLE, null);
-    },
-
-    getGenere() {
-      return Utils.storage.get(this.CLE_GENERE, null);
-    },
+    getConfig()  { return Utils.storage.get(this.CLE, null);        },
+    getGenere()  { return Utils.storage.get(this.CLE_GENERE, null); },
 
     sauvegarderConfig(config) {
       Utils.storage.set(this.CLE, config);
     },
-
     sauvegarderGenere(programme) {
       Utils.storage.set(this.CLE_GENERE, programme);
     },
 
-    // ✅ Helper — trouver le container actif
     _getContainer() {
       return document.getElementById('page-adaptatif')
         || document.getElementById('stats-content')
@@ -420,7 +624,7 @@ const Coach = {
     },
 
     // ════════════════════════════════════════════════════
-    // ✅ GÉNÉRATION DU PROGRAMME
+    // GÉNÉRATION
     // ════════════════════════════════════════════════════
     generer(reponses) {
       const {
@@ -436,13 +640,23 @@ const Coach = {
       const nbJours  = parseInt(jours);
       const dureeMin = parseInt(duree);
 
+      // ✅ NOUVEAU v5.0 — Récupérer genre + lieu onboarding
+      let genre = 'homme', lieu = 'salle';
+      try {
+        const profil = Utils.storage.get(
+          'ft_profil_onboarding', {}
+        );
+        genre = profil.genre || 'homme';
+        lieu  = profil.lieu  || 'salle';
+      } catch(e) {}
+
       const styleChoisi = style === 'auto'
-        ? this._choisirStyleAuto(objectif, nbJours, niveau)
+        ? this._choisirStyleAuto(objectif, nbJours, niveau, genre)
         : style;
 
       const seances = this._genererSeances(
         styleChoisi, objectif, niveau,
-        nbJours, dureeMin, equipement
+        nbJours, dureeMin, equipement, genre, lieu
       );
 
       const planning = this._genererPlanning(
@@ -450,7 +664,7 @@ const Coach = {
       );
 
       const conseils = this._genererConseils(
-        objectif, niveau, styleChoisi
+        objectif, niveau, styleChoisi, genre
       );
 
       const programme = {
@@ -460,53 +674,50 @@ const Coach = {
         style:        styleChoisi,
         styleLabel:   this._styleLabel(styleChoisi),
         objectif, niveau, nbJours, dureeMin,
+        genre, lieu,
         seances, planning, conseils,
-        version:      'IA v1.1'
+        version:      'IA v2.0'
       };
 
       this.sauvegarderConfig(reponses);
       this.sauvegarderGenere(programme);
-
-      // ✅ FIX BUG 2 — Enregistrer les séances générées
       this._enregistrerSeances(seances);
-
-      // ✅ Appliquer le planning
       this._appliquerPlanning(planning);
+
+      // ✅ NOUVEAU — Appliquer planning genre/lieu
+      try {
+        Programme.appliquerPlanningGenre(genre, lieu);
+      } catch(e) {}
 
       return programme;
     },
 
-    // ✅ FIX BUG 2 — Nouvelle fonction : enregistre les séances
     _enregistrerSeances(seances) {
       try {
-        // Dédupliquer par id
         const uniques = [...new Map(
           seances.map(s => [s.id, s])
         ).values()];
-
-        // Récupérer les séances custom existantes
         const customs = Utils.storage.get('ft_seances_custom', {});
-
-        // Ajouter chaque séance générée
         uniques.forEach(seance => {
           customs[seance.id] = {
             ...seance,
-            custom:      true,
-            ia:          true,
+            custom:       true,
+            ia:           true,
             dateCreation: Utils.aujourd_hui()
           };
         });
-
         Utils.storage.set('ft_seances_custom', customs);
-        console.log(
-          `[ProgrammeIA] ${uniques.length} séances enregistrées ✅`
-        );
+        console.log(`[ProgrammeIA] ${uniques.length} séances enregistrées ✅`);
       } catch(e) {
-        console.error('[ProgrammeIA] Erreur enregistrement séances:', e);
+        console.error('[ProgrammeIA] Erreur enregistrement:', e);
       }
     },
 
-    _choisirStyleAuto(objectif, nbJours, niveau) {
+    // ✅ NOUVEAU v5.0 — Prend en compte genre
+    _choisirStyleAuto(objectif, nbJours, niveau, genre = 'homme') {
+      // Femme → Lower focus si peu de jours
+      if (genre === 'femme' && nbJours <= 3) return 'full_body';
+      if (genre === 'femme' && nbJours === 4) return 'upper_lower';
       if (nbJours <= 3)  return 'full_body';
       if (nbJours === 4) return objectif === 'force'
         ? 'upper_lower' : 'ppl';
@@ -523,33 +734,36 @@ const Coach = {
     },
 
     // ════════════════════════════════════════════════════
-    // ✅ GÉNÉRATION SÉANCES
+    // GÉNÉRATION SÉANCES — avec genre + lieu
     // ════════════════════════════════════════════════════
     _genererSeances(style, objectif, niveau,
-                    nbJours, duree, equipement) {
+                    nbJours, duree, equipement,
+                    genre = 'homme', lieu = 'salle') {
       const params = {
-  debutant: {
-    series:3, repsForce:'8-10',
-    repsVol:'12-15', repsEnd:'15-20', repos:60
-  },
-  intermediaire: {
-    series:4, repsForce:'5-8',
-    repsVol:'8-12',  repsEnd:'12-15', repos:75
-  },
-  avance: {
-    series:5, repsForce:'3-6',
-    repsVol:'6-10',  repsEnd:'10-15', repos:90
-  }
-      }[niveau] || {
-        series:4, repsForce:'6-8',
-        repsVol:'8-12', repsEnd:'12-15', repos:90
-      };
+        debutant:      { series:3, repsForce:'8-10', repsVol:'12-15', repsEnd:'15-20', repos:60  },
+        intermediaire: { series:4, repsForce:'5-8',  repsVol:'8-12',  repsEnd:'12-15', repos:75  },
+        avance:        { series:5, repsForce:'3-6',  repsVol:'6-10',  repsEnd:'10-15', repos:90  }
+      }[niveau] || { series:4, repsForce:'6-8', repsVol:'8-12', repsEnd:'12-15', repos:90 };
 
       const reps = objectif === 'force'     ? params.repsForce
                  : objectif === 'endurance' ? params.repsEnd
                  :                            params.repsVol;
       const s = params.series;
       const r = params.repos;
+
+      // ✅ NOUVEAU v5.0 — Séances femme spécifiques
+      if (genre === 'femme') {
+        return this._seancesFemme(
+          objectif, niveau, nbJours, s, reps, r, duree, equipement, lieu
+        );
+      }
+
+      // ✅ NOUVEAU v5.0 — Séances maison/dehors
+      if (lieu === 'maison' || lieu === 'dehors') {
+        return this._seancesMaison(
+          objectif, niveau, nbJours, s, reps, r, duree
+        );
+      }
 
       if (style === 'full_body') {
         return this._seancesFullBody(
@@ -566,114 +780,223 @@ const Coach = {
       );
     },
 
-    // ════════════════════════════════════════════════════
-    // ✅ PUSH / PULL / LEGS
-    // ════════════════════════════════════════════════════
-    _seancesPPL(objectif, niveau, nbJours,
-                s, reps, r, duree, equip) {
-
-      const push = {
-        id:            'ia_push',
-        nom:           'Push — Pectoraux · Épaules · Triceps',
-        emoji:         '⬆️',
-        muscles:       ['Pectoraux','Épaules','Triceps'],
+    // ✅ NOUVEAU v5.0 — Séances FEMME
+    _seancesFemme(objectif, niveau, nbJours,
+                  s, reps, r, duree, equipement, lieu) {
+      const lower = {
+        id: 'ia_lower_femme',
+        nom: '🍑 Lower Body — Fessiers & Jambes',
+        emoji: '🍑',
+        muscles: ['Fessiers','Quadriceps','Ischio-jambiers'],
         duree_estimee: duree,
         exercices: this._filtrerExos([
-          { ref:'bench_press',        series:s,   reps:reps,    repos:90 },
-{ ref:'incline_halteres',   series:s-1, reps:reps,    repos:75 },
-{ ref:'dev_militaire',      series:s-1, reps:reps,    repos:75 },
-{ ref:'elev_laterales',     series:s,   reps:'12-15', repos:45 },
-{ ref:'ext_triceps_poulie', series:s-1, reps:'12',    repos:45 },
-{ ref:'dips_triceps',       series:s-1, reps:'échec', repos:45 },
-{ ref:'planche',            series:3,   reps:'45-60s',repos:30 },
-{ ref:'crunch_machine',     series:3,   reps:'15',    repos:30 }
-        ], equip, duree)
+          { ref:'hip_thrust',       series:s,   reps:reps,    repos:75 },
+          { ref:'fentes_bulgares',  series:s-1, reps:'12/j',  repos:75 },
+          { ref:'squat_poids_corps',series:s-1, reps:'15-20', repos:60 },
+          { ref:'donkey_kick',      series:s-1, reps:'15/j',  repos:45 },
+          { ref:'hip_thrust_sol',   series:s-1, reps:'20',    repos:45 },
+          { ref:'clamshell',        series:s-1, reps:'15/j',  repos:45 },
+          { ref:'planche',          series:3,   reps:'30s',   repos:30 },
+          { ref:'crunch',           series:3,   reps:'20',    repos:30 }
+        ], equipement, duree)
+      };
+
+      const upper = {
+        id: 'ia_upper_femme',
+        nom: '💪 Upper Body Féminin',
+        emoji: '💪',
+        muscles: ['Épaules','Dos','Bras'],
+        duree_estimee: duree,
+        exercices: this._filtrerExos([
+          { ref:'dev_militaire',  series:s-1, reps:reps,    repos:75 },
+          { ref:'elev_laterales', series:s-1, reps:'15',    repos:60 },
+          { ref:'inverted_row',   series:s-1, reps:'12',    repos:75 },
+          { ref:'curl_halteres',  series:s-1, reps:'15',    repos:60 },
+          { ref:'diamond_pushup', series:s-1, reps:'12',    repos:60 },
+          { ref:'planche',        series:3,   reps:'30-45s',repos:30 },
+          { ref:'russian_twist',  series:3,   reps:'20',    repos:30 }
+        ], equipement, duree)
+      };
+
+      const core = {
+        id: 'ia_core_femme',
+        nom: '🔥 Core & Galbe',
+        emoji: '🔥',
+        muscles: ['Core','Abdominaux'],
+        duree_estimee: Math.min(duree, 45),
+        exercices: this._filtrerExos([
+          { ref:'planche',         series:4, reps:'30-45s',repos:45 },
+          { ref:'crunch',          series:3, reps:'20',    repos:45 },
+          { ref:'russian_twist',   series:3, reps:'20',    repos:45 },
+          { ref:'side_plank',      series:3, reps:'30s/c', repos:45 },
+          { ref:'mountain_climbers',series:3,reps:'20',    repos:45 },
+          { ref:'hip_thrust_sol',  series:3, reps:'20',    repos:45 }
+        ], equipement, duree)
+      };
+
+      if (nbJours === 3) return [lower, upper, lower];
+      if (nbJours === 4) return [lower, upper, lower, core];
+      if (nbJours === 5) return [lower, upper, lower, core, upper];
+      return [lower, upper, lower, core, upper, lower];
+    },
+
+    // ✅ NOUVEAU v5.0 — Séances MAISON / DEHORS
+    _seancesMaison(objectif, niveau, nbJours,
+                   s, reps, r, duree) {
+      const push = {
+        id: 'ia_push_maison',
+        nom: '🏠 Push Maison — Poussée',
+        emoji: '⬆️',
+        muscles: ['Pectoraux','Épaules','Triceps'],
+        duree_estimee: duree,
+        exercices: [
+          { ref:'pompes',          series:s,   reps:reps,    repos:75 },
+          { ref:'pompes_declined', series:s-1, reps:'12',    repos:75 },
+          { ref:'diamond_pushup',  series:s-1, reps:'12',    repos:60 },
+          { ref:'pike_pushup',     series:s-1, reps:'12',    repos:60 },
+          { ref:'dips_triceps',    series:s-1, reps:'max',   repos:60 },
+          { ref:'planche',         series:3,   reps:'45-60s',repos:30 },
+          { ref:'crunch',          series:3,   reps:'20',    repos:30 }
+        ]
       };
 
       const pull = {
-        id:            'ia_pull',
-        nom:           'Pull — Dos · Biceps · Épaules Arr.',
-        emoji:         '⬇️',
-        muscles:       ['Dos','Biceps','Épaules Postérieures'],
+        id: 'ia_pull_maison',
+        nom: '🏠 Pull Maison — Tirage',
+        emoji: '⬇️',
+        muscles: ['Dos','Biceps'],
         duree_estimee: duree,
-        exercices: this._filtrerExos([
-          { ref:'tractions',     series:s,   reps:reps,    repos:90 },
-{ ref:'rowing_barre',  series:s,   reps:reps,    repos:90 },
-{ ref:'lat_pulldown',  series:s-1, reps:'10-12', repos:75 },
-{ ref:'face_pull',     series:s-1, reps:'15',    repos:45 },
-{ ref:'curl_halteres', series:s-1, reps:'12',    repos:45 },
-{ ref:'curl_marteau',  series:s-1, reps:'12',    repos:45 },
-{ ref:'releve_jambes', series:3,   reps:'12',    repos:30 },
-{ ref:'russian_twist', series:3,   reps:'20',    repos:30 }
-        ], equip, duree)
+        exercices: [
+          { ref:'tractions',    series:s,   reps:reps,  repos:90 },
+          { ref:'inverted_row', series:s-1, reps:'12',  repos:75 },
+          { ref:'superman',     series:s-1, reps:'15',  repos:60 },
+          { ref:'bird_dog',     series:s-1, reps:'12/c',repos:60 },
+          { ref:'curl_halteres',series:s-1, reps:'15',  repos:60 },
+          { ref:'planche',      series:3,   reps:'45s', repos:30 }
+        ]
       };
 
       const legs = {
-        id:            'ia_legs',
-        nom:           'Legs — Quadriceps · Ischio · Fessiers',
-        emoji:         '🦵',
-        muscles:       ['Quadriceps','Ischio-jambiers','Fessiers','Mollets'],
+        id: 'ia_legs_maison',
+        nom: '🏠 Legs Maison — Jambes',
+        emoji: '🦵',
+        muscles: ['Quadriceps','Fessiers','Ischio-jambiers'],
         duree_estimee: duree,
-        exercices: this._filtrerExos([
-          { ref:'squat',         series:s,   reps:reps,    repos:120 },
-{ ref:'presse_cuisses',series:s-1, reps:'10-12', repos:90  },
-{ ref:'fentes',        series:s-1, reps:'12/j',  repos:75  },
-{ ref:'leg_curl',      series:s-1, reps:'12',    repos:60  },
-{ ref:'hip_thrust',    series:s-1, reps:'12',    repos:75  },
-{ ref:'mollets',       series:s,   reps:'15-20', repos:45  },
-{ ref:'planche',       series:3,   reps:'45-60s',repos:30  },
-{ ref:'releve_jambes', series:3,   reps:'12',    repos:30  }
-        ], equip, duree)
+        exercices: [
+          { ref:'squat_poids_corps',series:s,   reps:'20',   repos:60 },
+          { ref:'fentes_bulgares',  series:s-1, reps:'12/j', repos:75 },
+          { ref:'hip_thrust_sol',   series:s-1, reps:'20',   repos:60 },
+          { ref:'donkey_kick',      series:s-1, reps:'15/j', repos:45 },
+          { ref:'squat_saute',      series:s-1, reps:'15',   repos:60 },
+          { ref:'nordic_curl',      series:s-1, reps:'5-8',  repos:90 }
+        ]
       };
 
       if (nbJours === 3) return [push, pull, legs];
-      if (nbJours === 4) return [push, pull, legs, {
-        ...push,
-        id:  'ia_push_b',
-        nom: 'Push B — Variation'
-      }];
+      if (nbJours === 4) return [push, pull, legs, push];
       if (nbJours === 5) return [push, pull, legs, push, pull];
       return [push, pull, legs, push, pull, legs];
     },
 
     // ════════════════════════════════════════════════════
-    // ✅ FULL BODY
+    // PUSH / PULL / LEGS
+    // ════════════════════════════════════════════════════
+    _seancesPPL(objectif, niveau, nbJours,
+                s, reps, r, duree, equip) {
+      const push = {
+        id:'ia_push', nom:'Push — Pectoraux · Épaules · Triceps',
+        emoji:'⬆️',
+        muscles:['Pectoraux','Épaules','Triceps'],
+        duree_estimee:duree,
+        exercices: this._filtrerExos([
+          {ref:'bench_press',        series:s,   reps:reps,    repos:90},
+          {ref:'incline_halteres',   series:s-1, reps:reps,    repos:75},
+          {ref:'dev_militaire',      series:s-1, reps:reps,    repos:75},
+          {ref:'elev_laterales',     series:s,   reps:'12-15', repos:45},
+          {ref:'ext_triceps_poulie', series:s-1, reps:'12',    repos:45},
+          {ref:'dips_triceps',       series:s-1, reps:'échec', repos:45},
+          {ref:'planche',            series:3,   reps:'45-60s',repos:30},
+          {ref:'crunch_machine',     series:3,   reps:'15',    repos:30}
+        ], equip, duree)
+      };
+
+      const pull = {
+        id:'ia_pull', nom:'Pull — Dos · Biceps · Épaules Arr.',
+        emoji:'⬇️',
+        muscles:['Dos','Biceps','Épaules Postérieures'],
+        duree_estimee:duree,
+        exercices: this._filtrerExos([
+          {ref:'tractions',    series:s,   reps:reps,    repos:90},
+          {ref:'rowing_barre', series:s,   reps:reps,    repos:90},
+          {ref:'lat_pulldown', series:s-1, reps:'10-12', repos:75},
+          {ref:'face_pull',    series:s-1, reps:'15',    repos:45},
+          {ref:'curl_halteres',series:s-1, reps:'12',    repos:45},
+          {ref:'curl_marteau', series:s-1, reps:'12',    repos:45},
+          {ref:'releve_jambes',series:3,   reps:'12',    repos:30},
+          {ref:'russian_twist',series:3,   reps:'20',    repos:30}
+        ], equip, duree)
+      };
+
+      const legs = {
+        id:'ia_legs', nom:'Legs — Quadriceps · Ischio · Fessiers',
+        emoji:'🦵',
+        muscles:['Quadriceps','Ischio-jambiers','Fessiers','Mollets'],
+        duree_estimee:duree,
+        exercices: this._filtrerExos([
+          {ref:'squat',         series:s,   reps:reps,    repos:120},
+          {ref:'presse_cuisses',series:s-1, reps:'10-12', repos:90 },
+          {ref:'fentes',        series:s-1, reps:'12/j',  repos:75 },
+          {ref:'leg_curl',      series:s-1, reps:'12',    repos:60 },
+          {ref:'hip_thrust',    series:s-1, reps:'12',    repos:75 },
+          {ref:'mollets',       series:s,   reps:'15-20', repos:45 },
+          {ref:'planche',       series:3,   reps:'45-60s',repos:30 },
+          {ref:'releve_jambes', series:3,   reps:'12',    repos:30 }
+        ], equip, duree)
+      };
+
+      if (nbJours === 3) return [push, pull, legs];
+      if (nbJours === 4) return [push, pull, legs,
+        {...push, id:'ia_push_b', nom:'Push B — Variation'}];
+      if (nbJours === 5) return [push, pull, legs, push, pull];
+      return [push, pull, legs, push, pull, legs];
+    },
+
+    // ════════════════════════════════════════════════════
+    // FULL BODY
     // ════════════════════════════════════════════════════
     _seancesFullBody(objectif, niveau, nbJours,
                      s, reps, r, duree, equip) {
       const fbA = {
-  id:            'ia_fba',
-  nom:           'Full Body A',
-  emoji:         '🔄',
-  muscles:       ['Full Body','Force'],
-  duree_estimee: duree,
-  exercices: this._filtrerExos([
-    { ref:'squat',          series:s-1, reps:reps,    repos:120 },
-    { ref:'bench_press',    series:s-1, reps:reps,    repos:90  },
-    { ref:'rowing_barre',   series:s-1, reps:reps,    repos:90  },
-    { ref:'dev_militaire',  series:s-2, reps:reps,    repos:75  },
-    { ref:'curl_halteres',  series:s-2, reps:'12',    repos:45  },
-    { ref:'planche',        series:3,   reps:'45-60s',repos:30  },
-    { ref:'crunch_machine', series:3,   reps:'15',    repos:30  }
-  ], equip, duree)
-};
+        id:'ia_fba', nom:'Full Body A',
+        emoji:'🔄',
+        muscles:['Full Body','Force'],
+        duree_estimee:duree,
+        exercices: this._filtrerExos([
+          {ref:'squat',          series:s-1, reps:reps,    repos:120},
+          {ref:'bench_press',    series:s-1, reps:reps,    repos:90 },
+          {ref:'rowing_barre',   series:s-1, reps:reps,    repos:90 },
+          {ref:'dev_militaire',  series:s-2, reps:reps,    repos:75 },
+          {ref:'curl_halteres',  series:s-2, reps:'12',    repos:45 },
+          {ref:'planche',        series:3,   reps:'45-60s',repos:30 },
+          {ref:'crunch_machine', series:3,   reps:'15',    repos:30 }
+        ], equip, duree)
+      };
 
-const fbB = {
-  id:            'ia_fbb',
-  nom:           'Full Body B',
-  emoji:         '🔄',
-  muscles:       ['Full Body','Volume'],
-  duree_estimee: duree,
-  exercices: this._filtrerExos([
-    { ref:'soulevé_terre',   series:s-1, reps:reps,    repos:120 },
-    { ref:'incline_halteres',series:s-1, reps:reps,    repos:90  },
-    { ref:'tractions',       series:s-1, reps:'max',   repos:90  },
-    { ref:'elev_laterales',  series:s-1, reps:'12-15', repos:45  },
-    { ref:'leg_curl',        series:s-2, reps:'12',    repos:60  },
-    { ref:'releve_jambes',   series:3,   reps:'12',    repos:30  },
-    { ref:'russian_twist',   series:3,   reps:'20',    repos:30  }
-  ], equip, duree)
-};
+      const fbB = {
+        id:'ia_fbb', nom:'Full Body B',
+        emoji:'🔄',
+        muscles:['Full Body','Volume'],
+        duree_estimee:duree,
+        exercices: this._filtrerExos([
+          {ref:'soulevé_terre',    series:s-1, reps:reps,    repos:120},
+          {ref:'incline_halteres', series:s-1, reps:reps,    repos:90 },
+          {ref:'tractions',        series:s-1, reps:'max',   repos:90 },
+          {ref:'elev_laterales',   series:s-1, reps:'12-15', repos:45 },
+          {ref:'leg_curl',         series:s-2, reps:'12',    repos:60 },
+          {ref:'releve_jambes',    series:3,   reps:'12',    repos:30 },
+          {ref:'russian_twist',    series:3,   reps:'20',    repos:30 }
+        ], equip, duree)
+      };
 
       if (nbJours === 3) return [fbA, fbB, fbA];
       if (nbJours === 4) return [fbA, fbB, fbA, fbB];
@@ -681,45 +1004,43 @@ const fbB = {
     },
 
     // ════════════════════════════════════════════════════
-    // ✅ UPPER / LOWER
+    // UPPER / LOWER
     // ════════════════════════════════════════════════════
     _seancesUpperLower(objectif, niveau, nbJours,
                        s, reps, r, duree, equip) {
       const upper = {
-  id:            'ia_upper',
-  nom:           'Upper — Haut du corps',
-  emoji:         '💪',
-  muscles:       ['Pectoraux','Dos','Épaules','Bras'],
-  duree_estimee: duree,
-  exercices: this._filtrerExos([
-    { ref:'bench_press',        series:s-1, reps:reps,    repos:90  },
-    { ref:'rowing_barre',       series:s-1, reps:reps,    repos:90  },
-    { ref:'dev_militaire',      series:s-1, reps:reps,    repos:75  },
-    { ref:'tractions',          series:s-1, reps:'max',   repos:90  },
-    { ref:'curl_halteres',      series:s-2, reps:'12',    repos:45  },
-    { ref:'ext_triceps_poulie', series:s-2, reps:'12',    repos:45  },
-    { ref:'planche',            series:3,   reps:'45-60s',repos:30  },
-    { ref:'russian_twist',      series:3,   reps:'20',    repos:30  }
-  ], equip, duree)
-};
+        id:'ia_upper', nom:'Upper — Haut du corps',
+        emoji:'💪',
+        muscles:['Pectoraux','Dos','Épaules','Bras'],
+        duree_estimee:duree,
+        exercices: this._filtrerExos([
+          {ref:'bench_press',        series:s-1, reps:reps,    repos:90 },
+          {ref:'rowing_barre',       series:s-1, reps:reps,    repos:90 },
+          {ref:'dev_militaire',      series:s-1, reps:reps,    repos:75 },
+          {ref:'tractions',          series:s-1, reps:'max',   repos:90 },
+          {ref:'curl_halteres',      series:s-2, reps:'12',    repos:45 },
+          {ref:'ext_triceps_poulie', series:s-2, reps:'12',    repos:45 },
+          {ref:'planche',            series:3,   reps:'45-60s',repos:30 },
+          {ref:'russian_twist',      series:3,   reps:'20',    repos:30 }
+        ], equip, duree)
+      };
 
-const lower = {
-  id:            'ia_lower',
-  nom:           'Lower — Bas du corps',
-  emoji:         '🦵',
-  muscles:       ['Quadriceps','Ischio-jambiers','Fessiers','Mollets'],
-  duree_estimee: duree,
-  exercices: this._filtrerExos([
-    { ref:'squat',          series:s,   reps:reps,    repos:120 },
-    { ref:'soulevé_terre',  series:s-1, reps:reps,    repos:120 },
-    { ref:'presse_cuisses', series:s-1, reps:'10-12', repos:90  },
-    { ref:'fentes',         series:s-1, reps:'12/j',  repos:75  },
-    { ref:'hip_thrust',     series:s-1, reps:'12',    repos:75  },
-    { ref:'mollets',        series:s,   reps:'15-20', repos:45  },
-    { ref:'releve_jambes',  series:3,   reps:'12',    repos:30  },
-    { ref:'crunch_machine', series:3,   reps:'15',    repos:30  }
-  ], equip, duree)
-};
+      const lower = {
+        id:'ia_lower', nom:'Lower — Bas du corps',
+        emoji:'🦵',
+        muscles:['Quadriceps','Ischio-jambiers','Fessiers','Mollets'],
+        duree_estimee:duree,
+        exercices: this._filtrerExos([
+          {ref:'squat',          series:s,   reps:reps,    repos:120},
+          {ref:'soulevé_terre',  series:s-1, reps:reps,    repos:120},
+          {ref:'presse_cuisses', series:s-1, reps:'10-12', repos:90 },
+          {ref:'fentes',         series:s-1, reps:'12/j',  repos:75 },
+          {ref:'hip_thrust',     series:s-1, reps:'12',    repos:75 },
+          {ref:'mollets',        series:s,   reps:'15-20', repos:45 },
+          {ref:'releve_jambes',  series:3,   reps:'12',    repos:30 },
+          {ref:'crunch_machine', series:3,   reps:'15',    repos:30 }
+        ], equip, duree)
+      };
 
       if (nbJours === 4) return [upper, lower, upper, lower];
       if (nbJours === 5) return [upper, lower, upper, lower, upper];
@@ -727,7 +1048,7 @@ const lower = {
     },
 
     // ════════════════════════════════════════════════════
-    // ✅ FILTRER selon équipement + durée
+    // FILTRER selon équipement + durée
     // ════════════════════════════════════════════════════
     _filtrerExos(exercices, equipement, duree) {
       const maxExos = duree <= 45 ? 5
@@ -757,27 +1078,41 @@ const lower = {
         hip_thrust:          ['barre','halteres'],
         tractions:           ['poids_corps'],
         dips_triceps:        ['poids_corps'],
-        dips:                ['poids_corps'],
         pompes:              ['poids_corps'],
         planche:             ['poids_corps'],
         releve_jambes:       ['poids_corps'],
         hollow_body:         ['poids_corps'],
         russian_twist:       ['poids_corps','halteres'],
         fentes:              ['halteres','poids_corps'],
-        mollets:             ['poids_corps','machines']
+        mollets:             ['poids_corps','machines'],
+        // ✅ NOUVEAU — Exercices maison
+        pompes_declined:     ['poids_corps'],
+        diamond_pushup:      ['poids_corps'],
+        pike_pushup:         ['poids_corps'],
+        squat_poids_corps:   ['poids_corps'],
+        fentes_bulgares:     ['poids_corps'],
+        hip_thrust_sol:      ['poids_corps'],
+        donkey_kick:         ['poids_corps'],
+        clamshell:           ['poids_corps'],
+        squat_saute:         ['poids_corps'],
+        superman:            ['poids_corps'],
+        bird_dog:            ['poids_corps'],
+        inverted_row:        ['poids_corps'],
+        crunch:              ['poids_corps'],
+        mountain_climbers_core:['poids_corps']
       };
 
       const filtres = exercices.filter(ex => {
         const requis = necessiteEquip[ex.ref];
         if (!requis) return true;
-        return requis.some(eq => equipement.includes(eq));
+        return requis.some(eq => (equipement||[]).includes(eq));
       });
 
       return filtres.slice(0, maxExos);
     },
 
     // ════════════════════════════════════════════════════
-    // ✅ GÉNÉRER PLANNING SEMAINE
+    // PLANNING
     // ════════════════════════════════════════════════════
     _genererPlanning(seances, nbJours, joursSpecifiques) {
       const planning = Array(7).fill(null).map((_, i) => ({
@@ -808,9 +1143,6 @@ const lower = {
       return planning;
     },
 
-    // ════════════════════════════════════════════════════
-    // ✅ APPLIQUER DANS L'APP
-    // ════════════════════════════════════════════════════
     _appliquerPlanning(planning) {
       try {
         Programme.sauvegarderPlanning(planning.map(j => ({
@@ -825,9 +1157,9 @@ const lower = {
     },
 
     // ════════════════════════════════════════════════════
-    // ✅ CONSEILS PERSONNALISÉS
+    // ✅ CONSEILS — avec genre
     // ════════════════════════════════════════════════════
-    _genererConseils(objectif, niveau, style) {
+    _genererConseils(objectif, niveau, style, genre = 'homme') {
       const base = [
         '💧 Hydratation : boire 35ml/kg/jour minimum',
         '😴 Sommeil : 7-9h par nuit pour une récupération optimale',
@@ -848,7 +1180,7 @@ const lower = {
         force: [
           '🏋️ Priorité aux mouvements composés : squat, bench, soulevé',
           '⏱ Repos longs : 2-5 min entre les séries lourdes',
-          '📈 Programme de périodisation : varie les charges et les reps'
+          '📈 Périodisation : varie les charges et les reps'
         ],
         forme: [
           '🎯 Consistance > Intensité — mieux vaut 3 séances régulières',
@@ -868,21 +1200,30 @@ const lower = {
         avance:        ['⚡ Intégrez des techniques avancées : supersets, drop sets']
       };
 
+      // ✅ NOUVEAU — Conseils spécifiques femme
+      const parGenre = genre === 'femme' ? [
+        '🌸 Adapte l\'intensité selon ton cycle hormonal',
+        '🍑 Les exercices unilatéraux (fentes, kickbacks) sont excellents pour le galbe',
+        '💪 N\'aie pas peur de soulever lourd — ça ne rend pas "trop musclée" !'
+      ] : [
+        '💪 La testostérone favorise la récupération — profites-en !',
+        '📈 Le sommeil est crucial pour la synthèse protéique'
+      ];
+
       return [
         ...base,
         ...(parObjectif[objectif] || []),
-        ...(parNiveau[niveau]     || [])
+        ...(parNiveau[niveau]     || []),
+        ...parGenre
       ];
     },
 
     // ════════════════════════════════════════════════════
-    // ✅ RENDER — Point d'entrée
+    // RENDER
     // ════════════════════════════════════════════════════
     render(container) {
       if (!container) return;
-
       const programmeExistant = this.getGenere();
-
       if (programmeExistant && !this._modeQuestionnaire) {
         this._renderProgrammeGenere(container, programmeExistant);
       } else {
@@ -890,19 +1231,12 @@ const lower = {
       }
     },
 
-    // ════════════════════════════════════════════════════
-    // ✅ QUESTIONNAIRE — Render
-    // ════════════════════════════════════════════════════
     _renderQuestionnaire(container) {
       const etape   = this.ETAPES[this._etapeActuelle];
       const total   = this.ETAPES.length;
-      const pctProg = Math.round(
-        (this._etapeActuelle / total) * 100
-      );
+      const pctProg = Math.round((this._etapeActuelle / total) * 100);
 
       container.innerHTML = `
-
-        <!-- Header -->
         <div class="card mb-md"
              style="background:linear-gradient(135deg,
                     rgba(75,75,249,0.2),rgba(75,75,249,0.05));
@@ -911,16 +1245,12 @@ const lower = {
                       justify-content:space-between;margin-bottom:8px">
             <div>
               <div style="font-size:1rem;font-weight:800">
-                🧠 Programme IA
-              </div>
+                🧠 Programme IA</div>
               <div style="font-size:.72rem;color:var(--text-muted)">
-                Étape ${this._etapeActuelle + 1} / ${total}
-              </div>
+                Étape ${this._etapeActuelle + 1} / ${total}</div>
             </div>
             <div style="font-size:.78rem;font-weight:700;
-                        color:var(--fd-indigo)">
-              ${pctProg}%
-            </div>
+                        color:var(--fd-indigo)">${pctProg}%</div>
           </div>
           <div style="height:6px;background:rgba(255,255,255,0.08);
                       border-radius:99px;overflow:hidden">
@@ -931,7 +1261,6 @@ const lower = {
           </div>
         </div>
 
-        <!-- Question -->
         <div class="card mb-md">
           <div style="font-size:.6rem;font-weight:700;
                       text-transform:uppercase;letter-spacing:.1em;
@@ -948,7 +1277,6 @@ const lower = {
           ${this._renderOptionsEtape(etape)}
         </div>
 
-        <!-- Navigation -->
         <div style="display:grid;
                     grid-template-columns:${this._etapeActuelle > 0
                       ? '1fr 2fr' : '1fr'};gap:8px">
@@ -958,8 +1286,7 @@ const lower = {
                     style="font-size:.85rem">← Retour</button>` : ''}
           <button onclick="Coach.ProgrammeIA._etapeSuivante()"
                   class="btn-primary"
-                  style="font-size:.85rem"
-                  id="btn-suivant-pia">
+                  style="font-size:.85rem">
             ${this._etapeActuelle === total - 1
               ? '🧠 Générer mon programme !'
               : 'Suivant →'}
@@ -985,9 +1312,7 @@ const lower = {
         return `
           <div style="display:flex;flex-direction:column;gap:8px">
             ${etape.options.map(opt => `
-              <button onclick="Coach.ProgrammeIA
-                        ._selectionnerChoix(
-                          '${etape.id}','${opt.val}')"
+              <button onclick="Coach.ProgrammeIA._selectionnerChoix('${etape.id}','${opt.val}')"
                       style="display:flex;align-items:center;
                              gap:12px;padding:12px 16px;
                              background:${rep === opt.val
@@ -1000,20 +1325,16 @@ const lower = {
                              cursor:pointer;text-align:left;
                              transition:all .2s;width:100%">
                 <div style="font-size:1.1rem;flex-shrink:0">
-                  ${opt.label.split(' ')[0]}
-                </div>
+                  ${opt.label.split(' ')[0]}</div>
                 <div style="flex:1">
                   <div style="font-size:.85rem;font-weight:700;
                               color:${rep === opt.val
                                 ? 'var(--fd-indigo)'
                                 : 'var(--text-primary)'}">
-                    ${opt.label}
-                  </div>
+                    ${opt.label}</div>
                   ${opt.desc ? `
-                    <div style="font-size:.65rem;
-                                color:var(--text-muted);
-                                margin-top:1px">${opt.desc}</div>`
-                  : ''}
+                    <div style="font-size:.65rem;color:var(--text-muted);
+                                margin-top:1px">${opt.desc}</div>` : ''}
                 </div>
                 ${rep === opt.val ? `
                   <div style="width:20px;height:20px;
@@ -1035,9 +1356,7 @@ const lower = {
             ${etape.options.map(opt => {
               const actif = reps.includes(opt.val);
               return `
-                <button onclick="Coach.ProgrammeIA
-                          ._toggleChoixMultiple(
-                            '${etape.id}','${opt.val}')"
+                <button onclick="Coach.ProgrammeIA._toggleChoixMultiple('${etape.id}','${opt.val}')"
                         style="padding:12px 8px;text-align:center;
                                background:${actif
                                  ? 'rgba(75,75,249,0.2)'
@@ -1048,19 +1367,15 @@ const lower = {
                                border-radius:var(--radius-lg);
                                cursor:pointer;transition:all .2s">
                   <div style="font-size:1.2rem;margin-bottom:4px">
-                    ${opt.label.split(' ')[0]}
-                  </div>
+                    ${opt.label.split(' ')[0]}</div>
                   <div style="font-size:.75rem;font-weight:600;
                               color:${actif
                                 ? 'var(--fd-indigo)'
                                 : 'var(--text-primary)'}">
-                    ${opt.label.split(' ').slice(1).join(' ')}
-                  </div>
+                    ${opt.label.split(' ').slice(1).join(' ')}</div>
                   ${actif ? `
                     <div style="margin-top:4px;font-size:.65rem;
-                                color:var(--fd-mint)">
-                      ✓ Sélectionné
-                    </div>` : ''}
+                                color:var(--fd-mint)">✓ Sélectionné</div>` : ''}
                 </button>`;
             }).join('')}
           </div>
@@ -1074,20 +1389,18 @@ const lower = {
       if (etape.type === 'jours_semaine') {
         const reps = this._reponses[etape.id] || [];
         const jours = [
-          { idx:0, label:'Lun' }, { idx:1, label:'Mar' },
-          { idx:2, label:'Mer' }, { idx:3, label:'Jeu' },
-          { idx:4, label:'Ven' }, { idx:5, label:'Sam' },
-          { idx:6, label:'Dim' }
+          {idx:0,label:'Lun'},{idx:1,label:'Mar'},
+          {idx:2,label:'Mer'},{idx:3,label:'Jeu'},
+          {idx:4,label:'Ven'},{idx:5,label:'Sam'},
+          {idx:6,label:'Dim'}
         ];
         return `
           <div style="display:grid;
-                      grid-template-columns:repeat(7,1fr);
-                      gap:5px;margin-top:8px">
+                      grid-template-columns:repeat(7,1fr);gap:5px">
             ${jours.map(j => {
               const actif = reps.includes(j.idx);
               return `
-                <button onclick="Coach.ProgrammeIA
-                          ._toggleJour(${j.idx})"
+                <button onclick="Coach.ProgrammeIA._toggleJour(${j.idx})"
                         style="padding:10px 4px;text-align:center;
                                background:${actif
                                  ? 'var(--fd-indigo)'
@@ -1098,11 +1411,8 @@ const lower = {
                                border-radius:var(--radius-md);
                                cursor:pointer;transition:all .2s">
                   <div style="font-size:.68rem;font-weight:700;
-                              color:${actif
-                                ? 'white'
-                                : 'var(--text-muted)'}">
-                    ${j.label}
-                  </div>
+                              color:${actif ? 'white' : 'var(--text-muted)'}">
+                    ${j.label}</div>
                 </button>`;
             }).join('')}
           </div>
@@ -1115,7 +1425,6 @@ const lower = {
       return '';
     },
 
-    // ✅ FIX BUG 4 — Re-render correct
     _reRender() {
       const c = this._getContainer();
       if (c) this._renderQuestionnaire(c);
@@ -1127,31 +1436,24 @@ const lower = {
     },
 
     _toggleChoixMultiple(etapeId, val) {
-      if (!this._reponses[etapeId]) {
-        this._reponses[etapeId] = [];
-      }
+      if (!this._reponses[etapeId]) this._reponses[etapeId] = [];
       const arr = this._reponses[etapeId];
       const idx = arr.indexOf(val);
-      if (idx >= 0) arr.splice(idx, 1);
-      else          arr.push(val);
+      if (idx >= 0) arr.splice(idx, 1); else arr.push(val);
       this._reRender();
     },
 
     _toggleJour(jourIdx) {
       const id = this.ETAPES[this._etapeActuelle].id;
-      if (!this._reponses[id]) {
-        this._reponses[id] = [];
-      }
+      if (!this._reponses[id]) this._reponses[id] = [];
       const arr = this._reponses[id];
       const idx = arr.indexOf(jourIdx);
-      if (idx >= 0) arr.splice(idx, 1);
-      else          arr.push(jourIdx);
+      if (idx >= 0) arr.splice(idx, 1); else arr.push(jourIdx);
       this._reRender();
     },
 
     _etapeSuivante(passer = false) {
       const etape = this.ETAPES[this._etapeActuelle];
-
       if (!passer && !etape.optionnel) {
         const rep = this._reponses[etape.id];
         if (!rep || (Array.isArray(rep) && rep.length === 0)) {
@@ -1159,12 +1461,10 @@ const lower = {
           return;
         }
       }
-
       if (this._etapeActuelle >= this.ETAPES.length - 1) {
         this._lancerGeneration();
         return;
       }
-
       this._etapeActuelle++;
       this._reRender();
     },
@@ -1188,24 +1488,20 @@ const lower = {
                       animation:pulse 1s infinite">🧠</div>
           <div style="font-size:1.1rem;font-weight:800;
                       margin-bottom:var(--space-sm)">
-            Génération en cours...
-          </div>
+            Génération en cours...</div>
           <div style="font-size:.82rem;color:var(--text-muted);
                       margin-bottom:var(--space-xl)">
-            L'IA analyse ton profil et crée ton programme
-          </div>
+            L'IA analyse ton profil et crée ton programme</div>
           <div style="width:200px;height:4px;
                       background:var(--border-color);
                       border-radius:2px;overflow:hidden">
             <div style="height:100%;background:var(--fd-indigo);
                         border-radius:2px;
-                        animation:splashLoad 2s ease forwards">
-            </div>
+                        animation:splashLoad 2s ease forwards"></div>
           </div>
           <div style="margin-top:var(--space-lg);font-size:.72rem;
                       color:var(--text-muted)">
-            ${this._getMessageChargement()}
-          </div>
+            ${this._getMessageChargement()}</div>
         </div>`;
 
       setTimeout(() => {
@@ -1213,17 +1509,13 @@ const lower = {
           const programme = this.generer(this._reponses);
           this._modeQuestionnaire = false;
           this._etapeActuelle     = 0;
-
           const c = this._getContainer();
           if (c) this._renderProgrammeGenere(c, programme);
-
-          Utils.toast('🧠 Programme généré avec succès !',
-            'success', 3000);
+          Utils.toast('🧠 Programme généré !', 'success', 3000);
           Utils.confetti(2000);
-          try { Gamification.ajouterXP(100, 'programme_ia'); }
-          catch(e) {}
+          try { Gamification.ajouterXP(100, 'programme_ia'); } catch(e) {}
         } catch(e) {
-          console.error('[ProgrammeIA] Erreur génération:', e);
+          console.error('[ProgrammeIA] Erreur:', e);
           Utils.toast('❌ Erreur génération', 'error');
         }
       }, 2200);
@@ -1241,12 +1533,15 @@ const lower = {
     },
 
     // ════════════════════════════════════════════════════
-    // ✅ RENDER PROGRAMME GÉNÉRÉ
+    // RENDER PROGRAMME GÉNÉRÉ
     // ════════════════════════════════════════════════════
     _renderProgrammeGenere(container, prog) {
-      container.innerHTML = `
+      const genreLabel = prog.genre === 'femme' ? '👩 Femme' : '👨 Homme';
+      const lieuLabel  = prog.lieu === 'salle' ? '🏋️ Salle'
+                       : prog.lieu === 'maison' ? '🏠 Maison'
+                       : '🌳 Dehors';
 
-        <!-- Header programme -->
+      container.innerHTML = `
         <div class="card mb-md"
              style="background:linear-gradient(135deg,
                     rgba(75,75,249,0.25),rgba(139,240,187,0.08));
@@ -1254,39 +1549,29 @@ const lower = {
                     text-align:center;padding:20px">
           <div style="font-size:2rem;margin-bottom:8px">🧠</div>
           <div style="font-size:1.1rem;font-weight:800;
-                      margin-bottom:6px">
-            Ton programme IA
-          </div>
+                      margin-bottom:6px">Ton programme IA</div>
           <div style="display:flex;flex-wrap:wrap;gap:6px;
                       justify-content:center;margin-bottom:10px">
-            <span style="padding:4px 10px;
-                         background:rgba(75,75,249,0.2);
-                         border:1px solid rgba(75,75,249,0.3);
-                         border-radius:99px;font-size:.68rem;
-                         color:var(--fd-indigo);font-weight:700">
-              ${prog.styleLabel}
-            </span>
-            <span style="padding:4px 10px;
-                         background:rgba(139,240,187,0.1);
-                         border:1px solid rgba(139,240,187,0.2);
-                         border-radius:99px;font-size:.68rem;
-                         color:var(--fd-mint);font-weight:700">
-              ${prog.nbJours}j/semaine
-            </span>
-            <span style="padding:4px 10px;
-                         background:rgba(249,239,119,0.1);
-                         border:1px solid rgba(249,239,119,0.2);
-                         border-radius:99px;font-size:.68rem;
-                         color:var(--fd-lemon);font-weight:700">
-              ~${prog.dureeMin}min
-            </span>
+            ${[
+              {label:prog.styleLabel, color:'var(--fd-indigo)'  },
+              {label:`${prog.nbJours}j/sem`,color:'var(--fd-mint)'  },
+              {label:`~${prog.dureeMin}min`, color:'var(--fd-lemon)' },
+              {label:genreLabel,            color:'var(--fd-lavender)'},
+              {label:lieuLabel,             color:'var(--fd-coral)'  }
+            ].map(b => `
+              <span style="padding:4px 10px;
+                           background:${b.color}22;
+                           border:1px solid ${b.color}44;
+                           border-radius:99px;font-size:.68rem;
+                           color:${b.color};font-weight:700">
+                ${b.label}
+              </span>`).join('')}
           </div>
           <div style="font-size:.72rem;color:var(--text-muted)">
             Généré le ${prog.dateCreation}
           </div>
         </div>
 
-        <!-- Boutons action -->
         <div style="display:grid;grid-template-columns:1fr 1fr;
                     gap:8px;margin-bottom:14px">
           <button onclick="
@@ -1296,24 +1581,21 @@ const lower = {
               window._piaReponses = {};
               const c = Coach.ProgrammeIA._getContainer();
               if (c) Coach.ProgrammeIA._renderQuestionnaire(c);"
-                  class="btn-secondary"
-                  style="font-size:.75rem">
+                  class="btn-secondary" style="font-size:.75rem">
             🔄 Refaire
           </button>
           <button onclick="naviguer('training')"
-                  class="btn-primary"
-                  style="font-size:.75rem">
+                  class="btn-primary" style="font-size:.75rem">
             📅 Voir planning →
           </button>
         </div>
 
-        <!-- Planning semaine -->
+        <!-- Planning -->
         <div class="card mb-md">
           <div style="font-size:.6rem;font-weight:700;
                       text-transform:uppercase;letter-spacing:.1em;
                       color:var(--text-muted);margin-bottom:12px">
-            📅 Planning généré
-          </div>
+            📅 Planning généré</div>
           <div style="display:grid;
                       grid-template-columns:repeat(7,1fr);gap:4px">
             ${prog.planning.map(j => {
@@ -1331,95 +1613,72 @@ const lower = {
                   </div>
                   <div style="font-size:.5rem;color:var(--text-muted);
                               margin-top:3px;text-transform:uppercase;
-                              font-weight:600">
-                    ${j.label}
-                  </div>
+                              font-weight:600">${j.label}</div>
                 </div>`;
             }).join('')}
           </div>
         </div>
 
-        <!-- Séances détaillées -->
+        <!-- Séances -->
         <div style="font-size:.6rem;font-weight:700;
                     text-transform:uppercase;letter-spacing:.1em;
-                    color:var(--text-muted);margin:0 0 8px;
-                    display:flex;align-items:center;gap:8px">
-          💪 Séances générées
-          <div style="flex:1;height:1px;
-                      background:var(--border-color)"></div>
-        </div>
+                    color:var(--text-muted);margin:0 0 8px">
+          💪 Séances générées</div>
 
-        ${[...new Map(
-          prog.seances.map(s => [s.id, s])
-        ).values()].map(seance => `
+        ${[...new Map(prog.seances.map(s => [s.id, s])).values()]
+          .map(seance => `
           <div class="card mb-md">
             <div style="display:flex;align-items:center;
-                        justify-content:space-between;
-                        margin-bottom:10px">
+                        justify-content:space-between;margin-bottom:10px">
               <div>
                 <div style="font-size:.95rem;font-weight:800">
-                  ${seance.emoji} ${seance.nom}
-                </div>
-                <div style="font-size:.68rem;color:var(--text-muted);
-                            margin-top:2px">
+                  ${seance.emoji} ${seance.nom}</div>
+                <div style="font-size:.68rem;color:var(--text-muted)">
                   ~${seance.duree_estimee}min
-                  · ${seance.exercices.length} exercices
-                </div>
+                  · ${seance.exercices.length} exercices</div>
               </div>
-              <button onclick="naviguer('live',
-                        {seanceId:'${seance.id}'})"
+              <button onclick="naviguer('live',{seanceId:'${seance.id}'})"
                       class="btn-primary"
                       style="font-size:.72rem;
                              padding:var(--space-sm) var(--space-md)">
                 ▶ Start
               </button>
             </div>
-
             <div style="display:flex;flex-wrap:wrap;gap:4px;
                         margin-bottom:10px">
-              ${(seance.muscles || []).map(m => `
+              ${(seance.muscles||[]).map(m => `
                 <span style="padding:3px 8px;border-radius:99px;
                              font-size:.6rem;font-weight:700;
                              background:rgba(75,75,249,0.15);
                              color:var(--fd-lavender);
                              border:1px solid rgba(75,75,249,0.2)">
-                  ${m}
-                </span>`).join('')}
+                  ${m}</span>`).join('')}
             </div>
-
             ${seance.exercices.map(ex => {
-              const exoData =
-                (window.EXERCICES || {})[ex.ref] || {};
+              const exoData = (window.EXERCICES||{})[ex.ref] || {};
               return `
                 <div style="display:flex;align-items:center;
                             gap:8px;padding:7px 0;
                             border-bottom:1px solid var(--border-color)">
-                  <div style="width:26px;height:26px;
-                              border-radius:8px;
+                  <div style="width:26px;height:26px;border-radius:8px;
                               background:rgba(75,75,249,0.1);
                               border:1px solid rgba(75,75,249,0.2);
                               display:flex;align-items:center;
                               justify-content:center;
                               font-size:.8rem;flex-shrink:0">
-                    ${exoData.emoji || '💪'}
-                  </div>
+                    ${exoData.emoji || '💪'}</div>
                   <div style="flex:1">
                     <div style="font-size:.78rem;font-weight:700">
-                      ${exoData.nom || ex.ref}
-                    </div>
+                      ${exoData.nom || ex.ref}</div>
                     <div style="font-size:.6rem;color:var(--fd-mint)">
-                      ${exoData.muscle || ''}
-                    </div>
+                      ${exoData.muscle || ''}</div>
                   </div>
                   <div style="text-align:right;flex-shrink:0">
                     <div style="font-size:.72rem;font-weight:700;
                                 color:var(--fd-indigo)">
-                      ${ex.series}×${ex.reps}
-                    </div>
-                    <div style="font-size:.55rem;
-                                color:var(--text-muted)">
-                      ⏱ ${ex.repos}s
-                    </div>
+                      ${ex.series}×${ex.reps}</div>
+                    <div style="font-size:.55rem;color:var(--text-muted)">
+                      ⏱ ${ex.repos}s</div>
                   </div>
                 </div>`;
             }).join('')}
@@ -1432,26 +1691,23 @@ const lower = {
           <div style="font-size:.6rem;font-weight:700;
                       text-transform:uppercase;letter-spacing:.1em;
                       color:var(--fd-lavender);margin-bottom:10px">
-            💡 Conseils personnalisés
-          </div>
+            💡 Conseils personnalisés ${genreLabel}</div>
           ${prog.conseils.map(c => `
             <div style="display:flex;gap:8px;
                         align-items:flex-start;padding:6px 0;
-                        border-bottom:1px solid
-                          rgba(191,161,255,0.1)">
+                        border-bottom:1px solid rgba(191,161,255,0.1)">
               <div style="font-size:.8rem;line-height:1.5;
                           color:var(--text-secondary)">${c}</div>
             </div>`).join('')}
         </div>
 
-        <!-- Appliquer -->
         <div class="card mb-md"
              style="border-color:rgba(139,240,187,0.2);
                     background:rgba(139,240,187,0.05)">
           <div style="font-size:.82rem;color:var(--text-secondary);
                       margin-bottom:10px;line-height:1.5">
-            ✅ Ce programme a été appliqué à ton planning.
-            Tu peux démarrer tes séances directement depuis
+            ✅ Programme appliqué à ton planning.
+            Tu peux démarrer depuis
             <strong style="color:var(--fd-mint)">Programme</strong>.
           </div>
           <button onclick="naviguer('training')"
@@ -1464,7 +1720,7 @@ const lower = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ RENDER COACH TAB
+  // RENDER COACH TAB
   // ════════════════════════════════════════════════════════
   renderCoachTab(container) {
     if (!container) return;
@@ -1472,34 +1728,34 @@ const lower = {
     let msg      = { emoji:'💡', message:'Prêt pour la séance ?' };
     let analyse  = {
       seances:0, objectif:4, volume:0, rpe:0,
-      intensite:'🟢 Faible',
-      recommendation:'Continue !', deltaVolume:0
+      intensite:'🟢 Faible', recommendation:'Continue !', deltaVolume:0
     };
     let warmup   = [];
     let deload   = { oui:false };
-    let citation = {
-      texte:'La progression est un choix.',
-      auteur:'Anonyme'
-    };
+    let citation = { texte:'La progression est un choix.', auteur:'Anonyme' };
     let aEviter  = [];
     let nom      = 'Athlète';
+    const profil = this._getProfilOnboarding();
 
-    try { msg      = this.getMessageDuJour();             } catch(e) {}
-    try { analyse  = this.getAnalyseSemaine();            } catch(e) {}
-    try { warmup   = this.getWarmupDuJour();              } catch(e) {}
-    try { deload   = this.necessiteDeload();              } catch(e) {}
-    try { citation = this.getCitationDuJour();            } catch(e) {}
-    try { aEviter  = this.getExercicesAEviter();          } catch(e) {}
-    try { nom      = Tracker.getProfil().nom || 'Athlète';} catch(e) {}
+    try { msg      = this.getMessageDuJour();              } catch(e) {}
+    try { analyse  = this.getAnalyseSemaine();             } catch(e) {}
+    try { warmup   = this.getWarmupDuJour();               } catch(e) {}
+    try { deload   = this.necessiteDeload();               } catch(e) {}
+    try { citation = this.getCitationDuJour(profil.genre); } catch(e) {}
+    try { aEviter  = this.getExercicesAEviter();           } catch(e) {}
+    try { nom      = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+
+    // ✅ NOUVEAU v5.0 — Surcharge musculaire
+    let surcharge = [];
+    try { surcharge = Tracker.getSurchargeMusculaire(); } catch(e) {}
 
     container.innerHTML = `
 
-      <!-- ✅ BOUTON PROGRAMME IA -->
+      <!-- BOUTON PROGRAMME IA -->
       <div class="card mb-md"
            style="background:linear-gradient(135deg,
                   rgba(75,75,249,0.2),rgba(139,240,187,0.05));
-                  border-color:rgba(75,75,249,0.4);
-                  cursor:pointer"
+                  border-color:rgba(75,75,249,0.4);cursor:pointer"
            onclick="Coach.ProgrammeIA._modeQuestionnaire=false;
                     naviguer('adaptatif')">
         <div style="display:flex;align-items:center;gap:14px">
@@ -1510,13 +1766,11 @@ const lower = {
                       justify-content:center;font-size:1.8rem;
                       flex-shrink:0">🧠</div>
           <div style="flex:1">
-            <div style="font-size:.95rem;font-weight:800;
-                        margin-bottom:3px">
-              Programme IA Personnalisé
-            </div>
+            <div style="font-size:.95rem;font-weight:800;margin-bottom:3px">
+              Programme IA Personnalisé</div>
             <div style="font-size:.72rem;color:var(--text-muted)">
               ${this.ProgrammeIA.getGenere()
-                ? '✅ Programme actif — cliquer pour modifier'
+                ? `✅ Programme actif (${profil.genre === 'femme' ? 'Féminin' : 'Masculin'} · ${profil.lieu === 'salle' ? 'Salle' : profil.lieu === 'maison' ? 'Maison' : 'Dehors'})`
                 : 'Questionnaire · Génération automatique · Planning adapté'}
             </div>
           </div>
@@ -1524,24 +1778,37 @@ const lower = {
         </div>
       </div>
 
+      <!-- ✅ NOUVEAU — Surcharge musculaire -->
+      ${surcharge.length > 0 ? `
+        <div class="card mb-md"
+             style="border-color:var(--fd-coral);
+                    background:rgba(255,141,150,0.08)">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--fd-coral);margin-bottom:8px">
+            ⚠️ Surcharge musculaire détectée
+          </div>
+          ${surcharge.map(s => `
+            <div style="font-size:.78rem;color:var(--text-secondary);
+                        padding:4px 0;
+                        border-bottom:1px solid rgba(255,141,150,0.1)">
+              🔴 <strong>${s.muscle}</strong> — ${s.conseil}
+            </div>`).join('')}
+        </div>` : ''}
+
       <!-- Citation -->
       <div class="card mb-md"
            style="border-left:3px solid var(--fd-lemon);
                   background:rgba(249,239,119,0.06)">
         <div style="font-size:.72rem;font-weight:700;
                     text-transform:uppercase;letter-spacing:.08em;
-                    color:var(--fd-lemon);
-                    margin-bottom:var(--space-sm)">
-          💬 Citation du jour
-        </div>
+                    color:var(--fd-lemon);margin-bottom:var(--space-sm)">
+          💬 Citation du jour</div>
         <p style="font-size:.9rem;font-style:italic;
                   line-height:1.6;color:var(--text-primary)">
-          "${citation.texte}"
-        </p>
+          "${citation.texte}"</p>
         <p style="font-size:.72rem;color:var(--text-muted);
-                  margin-top:var(--space-xs)">
-          — ${citation.auteur}
-        </p>
+                  margin-top:var(--space-xs)">— ${citation.auteur}</p>
       </div>
 
       <!-- Message coach -->
@@ -1549,29 +1816,23 @@ const lower = {
            style="border-left:3px solid var(--fd-lavender)">
         <div style="font-size:.65rem;font-weight:700;
                     text-transform:uppercase;letter-spacing:.08em;
-                    color:var(--fd-lavender);
-                    margin-bottom:var(--space-sm)">
-          ${msg.emoji} Coach du jour
-        </div>
+                    color:var(--fd-lavender);margin-bottom:var(--space-sm)">
+          ${msg.emoji} Coach du jour</div>
         <p style="font-size:.88rem;color:var(--text-secondary);
-                  line-height:1.6;margin:0">
-          ${msg.message}
-        </p>
+                  line-height:1.6;margin:0">${msg.message}</p>
       </div>
 
-      <!-- Décharge recommandée -->
+      <!-- Décharge -->
       ${deload.oui ? `
         <div class="card mb-md"
              style="border-color:var(--fd-coral);
                     background:rgba(255,141,150,0.08)">
           <div class="card-label" style="color:var(--fd-coral)">
-            ⚠️ Décharge recommandée
-          </div>
+            ⚠️ Décharge recommandée</div>
           <p style="font-size:.88rem;margin-top:var(--space-sm);
                     color:var(--text-secondary)">
             ${deload.raison}.<br>
-            Réduis les charges de <strong>40%</strong>.
-          </p>
+            Réduis les charges de <strong>40%</strong>.</p>
         </div>` : ''}
 
       <!-- Exercices à éviter -->
@@ -1580,8 +1841,7 @@ const lower = {
              style="border-color:var(--fd-lemon);
                     background:rgba(249,239,119,0.06)">
           <div class="card-label" style="color:var(--fd-lemon)">
-            ⚠️ Exercices déconseillés
-          </div>
+            ⚠️ Exercices déconseillés</div>
           <div style="display:flex;flex-wrap:wrap;gap:var(--space-xs);
                       margin-top:var(--space-sm)">
             ${aEviter.map(ref => `
@@ -1596,33 +1856,24 @@ const lower = {
         <div class="card-label">📊 Analyse de la semaine</div>
         <div style="margin-top:var(--space-sm)">
           ${[
-            { label:'Séances',
-              val:`${analyse.seances}/${analyse.objectif}` },
-            { label:'Volume',
-              val:Utils.formatVolume(analyse.volume) },
-            { label:'RPE moyen',
-              val:analyse.rpe > 0 ? `${analyse.rpe}/10` : '—' },
-            { label:'Intensité',
-              val:analyse.intensite },
-            { label:'vs S-1',
-              val:`${(analyse.deltaVolume||0) >= 0 ? '+' : ''}${analyse.deltaVolume||0}%` }
+            {label:'Séances',    val:`${analyse.seances}/${analyse.objectif}`},
+            {label:'Volume',     val:Utils.formatVolume(analyse.volume)      },
+            {label:'RPE moyen',  val:analyse.rpe > 0 ? `${analyse.rpe}/10` : '—'},
+            {label:'Intensité',  val:analyse.intensite                       },
+            {label:'vs S-1',     val:`${(analyse.deltaVolume||0) >= 0 ? '+' : ''}${analyse.deltaVolume||0}%`}
           ].map(r => `
             <div class="score-row">
               <span class="score-row-label">${r.label}</span>
-              <span style="font-size:.85rem;font-weight:600">
-                ${r.val}
-              </span>
+              <span style="font-size:.85rem;font-weight:600">${r.val}</span>
             </div>`).join('')}
           <div class="progress-bar mt-md">
             <div class="progress-fill"
                  style="width:${Math.min(100, Math.round(
-                   (analyse.seances /
-                    Math.max(analyse.objectif, 1)) * 100
+                   (analyse.seances / Math.max(analyse.objectif,1)) * 100
                  ))}%"></div>
           </div>
         </div>
-        <div style="margin-top:var(--space-md);
-                    padding:var(--space-sm);
+        <div style="margin-top:var(--space-md);padding:var(--space-sm);
                     background:var(--fd-indigo-dim);
                     border-radius:var(--radius-sm)">
           <span style="font-size:.82rem;color:var(--fd-lavender)">
@@ -1636,34 +1887,35 @@ const lower = {
            style="border-color:var(--fd-indigo);
                   background:rgba(75,75,249,0.04)">
         <div class="card-label" style="color:var(--fd-indigo)">
-          🤖 Coach IA — Chat
-        </div>
+          🤖 Coach IA — Chat</div>
 
         <div style="display:flex;flex-wrap:wrap;gap:6px;
                     margin-top:var(--space-md);
                     margin-bottom:var(--space-md)">
           ${[
-            { label:'💪 Mes records',   q:'Mes records'          },
-            { label:'😴 Récupération',  q:'Récupération'         },
-            { label:'📈 Programme',     q:'Mon programme'        },
-            { label:'🥗 Nutrition',     q:'Nutrition'            },
-            { label:'🔥 Motivation',    q:'Motivation'           },
-            { label:'🧠 Programme IA',  q:'Générer un programme' }
+            {label:'💪 Mes records',    q:'Mes records'              },
+            {label:'😴 Récupération',   q:'Récupération'             },
+            {label:'📈 Programme',      q:'Mon programme'            },
+            {label:'🥗 Nutrition',      q:'Nutrition'                },
+            {label:'🔥 Motivation',     q:'Motivation'               },
+            {label:'💪 Mes muscles',    q:'Analyse mes muscles'      },
+            {label:'🔄 Remplacer exo',  q:'Remplace un exercice'     },
+            {label:'🧠 Programme IA',   q:'Générer un programme'     }
           ].map(s => `
             <button onclick="Coach._suggestionRapide('${s.q}')"
                     style="padding:6px 10px;border-radius:99px;
                            border:1px solid var(--fd-indigo);
                            background:rgba(75,75,249,0.12);
-                           color:var(--fd-lavender);
-                           font-size:.72rem;font-weight:600;
-                           cursor:pointer;white-space:nowrap">
+                           color:var(--fd-lavender);font-size:.72rem;
+                           font-weight:600;cursor:pointer;
+                           white-space:nowrap">
               ${s.label}
             </button>`).join('')}
         </div>
 
         <div id="coach-chat"
-             style="min-height:100px;max-height:360px;
-                    overflow-y:auto;margin-bottom:var(--space-md);
+             style="min-height:100px;max-height:360px;overflow-y:auto;
+                    margin-bottom:var(--space-md);
                     display:flex;flex-direction:column;
                     gap:var(--space-sm);padding:var(--space-xs)">
           ${this._historique.length === 0 ? `
@@ -1671,13 +1923,10 @@ const lower = {
                  style="text-align:center;padding:var(--space-lg);
                         color:var(--text-muted);font-size:.85rem;
                         line-height:1.8">
-              🤖 ${this._salutation()} ${nom} !<br><br>
-              Pose-moi une question ou clique
-              sur une suggestion 👆<br><br>
+              🤖 ${this._salutation()} ${nom} !${profil.genre === 'femme' ? ' 🌸' : ''}<br><br>
+              Pose-moi une question ou clique sur une suggestion 👆<br><br>
               💡 Clique sur
-              <strong style="color:var(--fd-indigo)">
-                🧠 Programme IA
-              </strong>
+              <strong style="color:var(--fd-indigo)">🧠 Programme IA</strong>
               pour générer ton programme !
             </div>` :
             this._historique.map(m => `
@@ -1693,8 +1942,7 @@ const lower = {
                             color:${m.role === 'user'
                               ? 'white' : 'var(--text-primary)'};
                             font-size:.85rem;line-height:1.6;
-                            white-space:pre-wrap;
-                            word-break:break-word">
+                            white-space:pre-wrap;word-break:break-word">
                   ${m.role === 'assistant' ? '🤖 ' : ''}${m.content}
                 </div>
               </div>`).join('')}
@@ -1727,8 +1975,7 @@ const lower = {
         ${(warmup||[]).length === 0 ? `
           <p style="color:var(--text-muted);text-align:center;
                     padding:var(--space-md);font-size:.85rem">
-            Aucun warm-up disponible
-          </p>` :
+            Aucun warm-up disponible</p>` :
           (warmup||[]).map((w, i) => `
             <div style="display:flex;align-items:center;
                         gap:var(--space-md);padding:var(--space-sm) 0;
@@ -1738,21 +1985,16 @@ const lower = {
                           display:flex;align-items:center;
                           justify-content:center;font-size:.75rem;
                           font-weight:700;color:var(--fd-indigo);
-                          flex-shrink:0">
-                ${i + 1}
-              </div>
+                          flex-shrink:0">${i + 1}</div>
               <div style="flex:1;min-width:0">
                 <div style="font-size:.88rem;font-weight:600">
-                  ${w.nom}
-                </div>
+                  ${w.nom}</div>
                 <div style="font-size:.72rem;color:var(--text-muted)">
-                  ${w.description}
-                </div>
+                  ${w.description}</div>
               </div>
               <div style="font-size:.78rem;color:var(--fd-mint);
                           font-weight:600;flex-shrink:0">
-                ${Utils.formatDuree(w.duree)}
-              </div>
+                ${Utils.formatDuree(w.duree)}</div>
             </div>`).join('')}
       </div>
     `;
@@ -1762,7 +2004,7 @@ const lower = {
   },
 
   // ════════════════════════════════════════════════════════
-  // CHAT ENVOI
+  // CHAT
   // ════════════════════════════════════════════════════════
   async _envoyerChat() {
     const input = document.getElementById('coach-input');
@@ -1785,9 +2027,7 @@ const lower = {
                   border-radius:16px 16px 4px 16px;
                   background:var(--fd-indigo);color:white;
                   font-size:.85rem;line-height:1.6;
-                  word-break:break-word">
-        ${question}
-      </div>`;
+                  word-break:break-word">${question}</div>`;
     chat.appendChild(bulleUser);
     chat.scrollTop = chat.scrollHeight;
 
@@ -1802,8 +2042,7 @@ const lower = {
                         border-top-color:var(--fd-indigo);
                         border-radius:50%;
                         animation:spin .8s linear infinite;
-                        vertical-align:middle;margin-left:4px">
-            </span>
+                        vertical-align:middle;margin-left:4px"></span>
       </div>`;
     chat.appendChild(bulleLoad);
     chat.scrollTop = chat.scrollHeight;
@@ -1844,47 +2083,50 @@ const lower = {
   },
 
   // ════════════════════════════════════════════════════════
-  // CITATIONS
+  // ✅ CITATIONS — avec genre
   // ════════════════════════════════════════════════════════
-  getCitationDuJour() {
+  getCitationDuJour(genre = 'homme') {
     const citations = [
-      { texte:"Le corps accomplit ce que l'esprit croit possible.",
-        auteur:"Napoleon Hill" },
-      { texte:"La douleur est temporaire. Abandonner dure toujours.",
-        auteur:"Lance Armstrong" },
-      { texte:"Chaque rep que tu fais change ton futur.",
-        auteur:"Anonyme" },
-      { texte:"La force vient d'une volonté indomptable.",
-        auteur:"Gandhi" },
-      { texte:"Le seul mauvais entraînement est celui qui n'a pas eu lieu.",
-        auteur:"Anonyme" },
-      { texte:"Tu n'as pas à être extrême, juste consistant.",
-        auteur:"Anonyme" },
-      { texte:"Les champions sont faits à la salle — reconnus ailleurs.",
-        auteur:"Joe Frazier" },
-      { texte:"Construis ton corps, construis ta confiance.",
-        auteur:"Anonyme" },
-      { texte:"Souffre maintenant et vis le reste de ta vie en champion.",
-        auteur:"Muhammad Ali" },
-      { texte:"La progression n'est pas un accident, c'est un choix.",
-        auteur:"Anonyme" },
-      { texte:"Les limites n'existent que dans l'esprit.",
-        auteur:"Arnold Schwarzenegger" },
-      { texte:"Ce que l'on fait en secret se voit en public.",
-        auteur:"Anonyme" },
-      { texte:"La discipline est le pont entre les objectifs et les résultats.",
-        auteur:"Jim Rohn" },
-      { texte:"Ton futur te remerciera pour les efforts d'aujourd'hui.",
-        auteur:"Anonyme" },
-      { texte:"Ne compte pas les jours, fais que les jours comptent.",
-        auteur:"Muhammad Ali" }
+      {texte:"Le corps accomplit ce que l'esprit croit possible.",
+       auteur:"Napoleon Hill"},
+      {texte:"La douleur est temporaire. Abandonner dure toujours.",
+       auteur:"Lance Armstrong"},
+      {texte:"Chaque rep que tu fais change ton futur.",
+       auteur:"Anonyme"},
+      {texte:"La force vient d'une volonté indomptable.",
+       auteur:"Gandhi"},
+      {texte:"Le seul mauvais entraînement est celui qui n'a pas eu lieu.",
+       auteur:"Anonyme"},
+      {texte:"Tu n'as pas à être extrême, juste consistant.",
+       auteur:"Anonyme"},
+      {texte:"Les champions sont faits à la salle — reconnus ailleurs.",
+       auteur:"Joe Frazier"},
+      {texte:"Construis ton corps, construis ta confiance.",
+       auteur:"Anonyme"},
+      {texte:"Souffre maintenant et vis le reste de ta vie en champion.",
+       auteur:"Muhammad Ali"},
+      {texte:"La progression n'est pas un accident, c'est un choix.",
+       auteur:"Anonyme"},
+      // ✅ NOUVEAU — Citations femme
+      {texte:"La force n'a pas de genre. Elle se construit, rep après rep.",
+       auteur:"Anonyme"},
+      {texte:"Les femmes qui soulèvent changent le monde — à commencer par elles-mêmes.",
+       auteur:"Anonyme"},
+      {texte:"Ton corps peut faire bien plus que tu ne le crois.",
+       auteur:"Anonyme"},
+      {texte:"Les limites n'existent que dans l'esprit.",
+       auteur:"Arnold Schwarzenegger"},
+      {texte:"La discipline est le pont entre les objectifs et les résultats.",
+       auteur:"Jim Rohn"},
+      {texte:"Ton futur te remerciera pour les efforts d'aujourd'hui.",
+       auteur:"Anonyme"}
     ];
     const idx = new Date().getDate() % citations.length;
     return citations[idx];
   },
 
   // ════════════════════════════════════════════════════════
-  // WARM-UP
+  // WARM-UP / ANALYSE / DELOAD / EXERCICES À ÉVITER
   // ════════════════════════════════════════════════════════
   getWarmupDuJour() {
     try {
@@ -1897,23 +2139,19 @@ const lower = {
     } catch(e) { return []; }
   },
 
-  // ════════════════════════════════════════════════════════
-  // ANALYSE SEMAINE
-  // ════════════════════════════════════════════════════════
   getAnalyseSemaine() {
     let volume = 0, seances = 0, rpe = 0;
     let objectif = 4, comp = { delta:0 };
 
-    try { volume   = Tracker.getVolumeSemaine();       } catch(e) {}
-    try { seances  = Tracker.getSeancesParSemaine();   } catch(e) {}
-    try { rpe      = Tracker.getRPEMoyen7Jours();      } catch(e) {}
+    try { volume   = Tracker.getVolumeSemaine();      } catch(e) {}
+    try { seances  = Tracker.getSeancesParSemaine();  } catch(e) {}
+    try { rpe      = Tracker.getRPEMoyen7Jours();     } catch(e) {}
     try { objectif = Utils.storage.get(
-      'ft_objectif_seances_semaine', 4);               } catch(e) {}
-    try { comp     = Tracker.getComparaisonSemaines(); } catch(e) {}
+      'ft_objectif_seances_semaine', 4);              } catch(e) {}
+    try { comp     = Tracker.getComparaisonSemaines();} catch(e) {}
 
     let intensite      = '🟢 Faible';
-    let recommendation =
-      'Augmente l\'intensité ou le volume cette semaine.';
+    let recommendation = 'Augmente l\'intensité ou le volume cette semaine.';
 
     if (rpe >= 9) {
       intensite      = '🔴 Très élevée';
@@ -1942,15 +2180,9 @@ const lower = {
       const pr    = Tracker.getPR(exerciceRef);
       const phase = Programme.getPhaseActuelle();
       if (!pr?.rm1) return null;
-      const charge = Math.round(
-        pr.rm1 * phase.intensite / 2.5
-      ) * 2.5;
-      return {
-        charge,
-        pourcentage: Math.round(phase.intensite * 100),
-        rm1:         pr.rm1,
-        phase:       phase.nom
-      };
+      const charge = Math.round(pr.rm1 * phase.intensite / 2.5) * 2.5;
+      return { charge, pourcentage:Math.round(phase.intensite * 100),
+               rm1:pr.rm1, phase:phase.nom };
     } catch(e) { return null; }
   },
 
@@ -1965,47 +2197,49 @@ const lower = {
       if ((fatigue?.niveau || 0) >= 3)
         return { oui:true, raison:'Fatigue déclarée maximale' };
       if (Programme.isDecharge?.())
-        return { oui:true,
-          raison:'Semaine de décharge planifiée (S16)' };
+        return { oui:true, raison:'Semaine de décharge planifiée (S16)' };
       return { oui:false };
     } catch(e) { return { oui:false }; }
   },
 
   getExercicesAEviter() {
     try {
-      const blessures = Tracker.getBlessures()
-        .filter(b => b.active);
-      const aEviter   = new Set();
-      const restrictions = {
-        'epaule':  ['dev_militaire','bench_press',
-                    'elev_laterales','dips'],
-        'genou':   ['squat','presse_cuisses',
-                    'fentes','leg_extension'],
-        'dos':     ['soulevé_terre','rowing_barre','squat'],
-        'coude':   ['curl_halteres','curl_barre',
-                    'ext_triceps_poulie'],
-        'poignet': ['bench_press','curl_barre'],
-        'cheville':['squat','fentes','mollets'],
-        'cou':     ['dev_militaire','rowing_barre'],
-        'épaule':  ['dev_militaire','bench_press',
-                    'elev_laterales','dips'],
-        'genoux':  ['squat','presse_cuisses',
-                    'fentes','leg_extension'],
-        'hanche':  ['squat','fentes','hip_thrust']
-      };
+      // ✅ NOUVEAU v5.0 — Utiliser getBlessuresActives
+      const blessures = Tracker.getBlessuresActives
+        ? Tracker.getBlessuresActives()
+        : Tracker.getBlessures().filter(b => b.active);
+
+      const aEviter = new Set();
+
       blessures.forEach(b => {
-        const zone = b.zone.toLowerCase();
-        Object.entries(restrictions).forEach(([k, exos]) => {
-          if (zone.includes(k)) exos.forEach(e => aEviter.add(e));
-        });
+        // ✅ Utiliser exercicesAEviter si disponible (v4.0)
+        if (b.exercicesAEviter?.length) {
+          b.exercicesAEviter.forEach(e => aEviter.add(e));
+        } else {
+          // Fallback restrictions
+          const restrictions = {
+            'epaule':   ['dev_militaire','bench_press','elev_laterales','dips'],
+            'genou':    ['squat','presse_cuisses','fentes','leg_extension'],
+            'dos':      ['soulevé_terre','rowing_barre','squat'],
+            'coude':    ['curl_halteres','curl_barre','ext_triceps_poulie'],
+            'poignet':  ['bench_press','curl_barre'],
+            'cheville': ['squat','fentes','mollets'],
+            'cou':      ['dev_militaire','rowing_barre'],
+            'hanche':   ['squat','fentes','hip_thrust']
+          };
+          const zone = b.zone?.toLowerCase() || '';
+          Object.entries(restrictions).forEach(([k, exos]) => {
+            if (zone.includes(k)) exos.forEach(e => aEviter.add(e));
+          });
+        }
       });
+
       return [...aEviter];
     } catch(e) { return []; }
   }
 };
 
-// ✅ Exposer globalement
 window.Coach       = Coach;
 window.ProgrammeIA = Coach.ProgrammeIA;
 
-console.log('✅ Coach IA v4.1 + Programme IA CORRIGÉ chargé');
+console.log('✅ Coach IA v5.0 chargé — Genre + Lieu + Muscles + Chat enrichi');
