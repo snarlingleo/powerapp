@@ -8060,6 +8060,9 @@ function _initObMuscleMap(musclesCibles) {
   if (!img) return;
 
   const doInit = () => {
+     if (typeof imageMapResize !== 'undefined') {
+      imageMapResize('#ob-image-map');
+    } 
     if (typeof $ === 'undefined' || !$.fn.maphilight) return;
 
     // Init maphilight
