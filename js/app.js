@@ -7882,37 +7882,43 @@ function _obModifierProgramme() {
 function _renderCorpsSVGOnboarding(musclesCibles) {
   const sel = new Set(musclesCibles);
 
-  const ZONES = {
-    // Avant
-    pectoraux:  { label:'Pectoraux',  couleur:'#4b4bf9', face:'avant' },
-    epaules:    { label:'Épaules',    couleur:'#bfa1ff', face:'deux'  },
-    biceps:     { label:'Biceps',     couleur:'#8bf0bb', face:'avant' },
-    abdos:      { label:'Abdos',      couleur:'#f9ef77', face:'avant' },
-    quadriceps: { label:'Quadriceps', couleur:'#ff8d96', face:'avant' },
-    // Arrière
-    dos:        { label:'Dos',        couleur:'#4b4bf9', face:'arriere'},
-    triceps:    { label:'Triceps',    couleur:'#bfa1ff', face:'arriere'},
-    trapeze:    { label:'Trapèzes',   couleur:'#8bf0bb', face:'arriere'},
-    fessiers:   { label:'Fessiers',   couleur:'#ff8d96', face:'arriere'},
-    ischio:     { label:'Ischio',     couleur:'#f9ef77', face:'arriere'},
-    mollets:    { label:'Mollets',    couleur:'#bfa1ff', face:'deux'  }
+  const CFG = {
+    pectoraux:  { label:'Pectoraux',        couleur:'#4b4bf9' },
+    deltoides:  { label:'Deltoïdes',        couleur:'#bfa1ff' },
+    biceps:     { label:'Biceps',           couleur:'#8bf0bb' },
+    avantbras:  { label:'Avant-bras',       couleur:'#8bf0bb' },
+    abdominaux: { label:'Abdominaux',       couleur:'#f9ef77' },
+    quadriceps: { label:'Quadriceps',       couleur:'#22c55e' },
+    trapeze:    { label:'Trapèzes',         couleur:'#8bf0bb' },
+    dorsal:     { label:'Grand Dorsal',     couleur:'#4b4bf9' },
+    lombaires:  { label:'Lombaires',        couleur:'#bfa1ff' },
+    fessiers:   { label:'Fessiers',         couleur:'#ff8d96' },
+    ischio:     { label:'Ischio-jambiers',  couleur:'#f9ef77' },
+    mollets:    { label:'Mollets',          couleur:'#bfa1ff' }
   };
 
-  function couleurZone(muscle, opacity = 0.5) {
-    if (!sel.has(muscle)) return 'rgba(255,255,255,0.07)';
-    return ZONES[muscle]?.couleur
-      ? ZONES[muscle].couleur + Math.round(opacity*255).toString(16).padStart(2,'0')
-      : 'rgba(75,75,249,0.5)';
-  }
-
-  function strokeZone(muscle) {
-    if (!sel.has(muscle)) return 'rgba(255,255,255,0.2)';
-    return ZONES[muscle]?.couleur || '#4b4bf9';
-  }
-
-  function onclick(muscle) {
-    return `_toggleMuscleOb('${muscle}')`;
-  }
+  // Chips des muscles sélectionnés
+  const chipsHTML = sel.size === 0 ? `
+    <span style="font-size:.72rem;color:var(--text-muted);
+                 font-style:italic">
+      Aucun muscle ciblé — programme complet
+    </span>` :
+    [...sel].map(m => {
+      const cfg = CFG[m];
+      if (!cfg) return '';
+      return `
+        <span onclick="_toggleMuscleOb('${m}')"
+              style="display:inline-flex;align-items:center;
+                     gap:5px;padding:5px 12px;
+                     background:${cfg.couleur}22;
+                     border:1px solid ${cfg.couleur}66;
+                     border-radius:99px;font-size:.68rem;
+                     font-weight:700;cursor:pointer;
+                     color:${cfg.couleur}">
+          ${cfg.label}
+          <span style="opacity:.6;font-size:.6rem">✕</span>
+        </span>`;
+    }).join('');
 
   return `
     <div style="text-align:center;margin-bottom:10px;
@@ -7922,363 +7928,76 @@ function _renderCorpsSVGOnboarding(musclesCibles) {
       Clique sur les zones à cibler
     </div>
 
-    <div style="display:flex;justify-content:center;
-                gap:16px;margin-bottom:14px">
-
-      <!-- FACE AVANT -->
-      <div style="text-align:center">
-        <div style="font-size:.62rem;color:var(--text-muted);
-                    margin-bottom:6px;font-weight:600">
-          AVANT
-        </div>
-        <svg viewBox="0 0 200 460"
-             style="width:145px;height:auto">
-
-          <!-- Tête -->
-          <ellipse cx="100" cy="36" rx="26" ry="30"
-                   fill="rgba(255,255,255,0.08)"
-                   stroke="rgba(255,255,255,0.2)"
-                   stroke-width="1.5"/>
-          <!-- Cou -->
-          <rect x="90" y="64" width="20" height="16"
-                rx="4"
-                fill="rgba(255,255,255,0.07)"
-                stroke="rgba(255,255,255,0.15)"
-                stroke-width="1"/>
-
-          <!-- ÉPAULES -->
-          <ellipse cx="62" cy="90" rx="22" ry="14"
-                   fill="${couleurZone('epaules')}"
-                   stroke="${strokeZone('epaules')}"
-                   stroke-width="2"
-                   style="cursor:pointer"
-                   onclick="${onclick('epaules')}"/>
-          <ellipse cx="138" cy="90" rx="22" ry="14"
-                   fill="${couleurZone('epaules')}"
-                   stroke="${strokeZone('epaules')}"
-                   stroke-width="2"
-                   style="cursor:pointer"
-                   onclick="${onclick('epaules')}"/>
-
-          <!-- PECTORAUX -->
-          <path d="M78 76 Q100 70 122 76 L126 118
-                   Q100 126 74 118 Z"
-                fill="${couleurZone('pectoraux')}"
-                stroke="${strokeZone('pectoraux')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('pectoraux')}"/>
-          <!-- Ligne pec -->
-          <line x1="100" y1="76" x2="100" y2="118"
-                stroke="rgba(255,255,255,0.08)"
-                stroke-width="1"/>
-
-          <!-- BICEPS -->
-          <rect x="38" y="84" width="20" height="76"
-                rx="10"
-                fill="${couleurZone('biceps')}"
-                stroke="${strokeZone('biceps')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('biceps')}"/>
-          <rect x="142" y="84" width="20" height="76"
-                rx="10"
-                fill="${couleurZone('biceps')}"
-                stroke="${strokeZone('biceps')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('biceps')}"/>
-
-          <!-- Avant-bras -->
-          <rect x="30" y="162" width="18" height="54"
-                rx="9"
-                fill="rgba(255,255,255,0.05)"
-                stroke="rgba(255,255,255,0.12)"
-                stroke-width="1.5"/>
-          <rect x="152" y="162" width="18" height="54"
-                rx="9"
-                fill="rgba(255,255,255,0.05)"
-                stroke="rgba(255,255,255,0.12)"
-                stroke-width="1.5"/>
-
-          <!-- ABDOMINAUX -->
-          <rect x="78" y="120" width="44" height="82"
-                rx="8"
-                fill="${couleurZone('abdos')}"
-                stroke="${strokeZone('abdos')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('abdos')}"/>
-          <!-- Grille abdos -->
-          <line x1="100" y1="124" x2="100" y2="198"
-                stroke="rgba(255,255,255,0.12)"
-                stroke-width="1"/>
-          <line x1="78" y1="145" x2="122" y2="145"
-                stroke="rgba(255,255,255,0.12)"
-                stroke-width="1"/>
-          <line x1="78" y1="165" x2="122" y2="165"
-                stroke="rgba(255,255,255,0.12)"
-                stroke-width="1"/>
-          <line x1="78" y1="183" x2="122" y2="183"
-                stroke="rgba(255,255,255,0.12)"
-                stroke-width="1"/>
-
-          <!-- Hanches -->
-          <path d="M74 200 Q100 195 126 200 L130 238
-                   Q100 244 70 238 Z"
-                fill="rgba(255,255,255,0.05)"
-                stroke="rgba(255,255,255,0.1)"
-                stroke-width="1"/>
-
-          <!-- QUADRICEPS -->
-          <path d="M74 236 Q88 230 98 236 L100 316
-                   Q88 322 74 316 Z"
-                fill="${couleurZone('quadriceps')}"
-                stroke="${strokeZone('quadriceps')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('quadriceps')}"/>
-          <path d="M102 236 Q112 230 126 236 L126 316
-                   Q112 322 100 316 Z"
-                fill="${couleurZone('quadriceps')}"
-                stroke="${strokeZone('quadriceps')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('quadriceps')}"/>
-
-          <!-- Genoux -->
-          <ellipse cx="87" cy="322" rx="16" ry="12"
-                   fill="rgba(255,255,255,0.05)"
-                   stroke="rgba(255,255,255,0.12)"
-                   stroke-width="1.5"/>
-          <ellipse cx="113" cy="322" rx="16" ry="12"
-                   fill="rgba(255,255,255,0.05)"
-                   stroke="rgba(255,255,255,0.12)"
-                   stroke-width="1.5"/>
-
-          <!-- MOLLETS avant -->
-          <rect x="76" y="336" width="22" height="74"
-                rx="11"
-                fill="${couleurZone('mollets')}"
-                stroke="${strokeZone('mollets')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('mollets')}"/>
-          <rect x="102" y="336" width="22" height="74"
-                rx="11"
-                fill="${couleurZone('mollets')}"
-                stroke="${strokeZone('mollets')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('mollets')}"/>
-
-          <!-- Pieds -->
-          <ellipse cx="87" cy="418" rx="14" ry="7"
-                   fill="rgba(255,255,255,0.05)"
-                   stroke="rgba(255,255,255,0.1)"
-                   stroke-width="1"/>
-          <ellipse cx="113" cy="418" rx="14" ry="7"
-                   fill="rgba(255,255,255,0.05)"
-                   stroke="rgba(255,255,255,0.1)"
-                   stroke-width="1"/>
-
-          <!-- Labels sélectionnés -->
-          ${sel.has('pectoraux') ? `<text x="100" y="102" text-anchor="middle" fill="${ZONES.pectoraux.couleur}" font-size="9" font-weight="800">PEC</text>` : ''}
-          ${sel.has('epaules')   ? `<text x="62" y="93" text-anchor="middle" fill="${ZONES.epaules.couleur}" font-size="8" font-weight="800">ÉP</text>` : ''}
-          ${sel.has('biceps')    ? `<text x="48" y="126" text-anchor="middle" fill="${ZONES.biceps.couleur}" font-size="8" font-weight="800">BI</text>` : ''}
-          ${sel.has('abdos')     ? `<text x="100" y="164" text-anchor="middle" fill="${ZONES.abdos.couleur}" font-size="9" font-weight="800">ABDOS</text>` : ''}
-          ${sel.has('quadriceps')? `<text x="100" y="278" text-anchor="middle" fill="${ZONES.quadriceps.couleur}" font-size="8" font-weight="800">QUAD</text>` : ''}
-          ${sel.has('mollets')   ? `<text x="100" y="376" text-anchor="middle" fill="${ZONES.mollets.couleur}" font-size="7" font-weight="800">MOL</text>` : ''}
-        </svg>
-      </div>
-
-      <!-- FACE ARRIÈRE -->
-      <div style="text-align:center">
-        <div style="font-size:.62rem;color:var(--text-muted);
-                    margin-bottom:6px;font-weight:600">
-          ARRIÈRE
-        </div>
-        <svg viewBox="0 0 200 460"
-             style="width:145px;height:auto">
-
-          <!-- Tête -->
-          <ellipse cx="100" cy="36" rx="26" ry="30"
-                   fill="rgba(255,255,255,0.08)"
-                   stroke="rgba(255,255,255,0.2)"
-                   stroke-width="1.5"/>
-          <!-- Cou -->
-          <rect x="90" y="64" width="20" height="16"
-                rx="4"
-                fill="rgba(255,255,255,0.07)"
-                stroke="rgba(255,255,255,0.15)"
-                stroke-width="1"/>
-
-          <!-- TRAPÈZE -->
-          <path d="M82 66 Q100 60 118 66 L124 94
-                   Q100 90 76 94 Z"
-                fill="${couleurZone('trapeze')}"
-                stroke="${strokeZone('trapeze')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('trapeze')}"/>
-
-          <!-- ÉPAULES arrière -->
-          <ellipse cx="62" cy="90" rx="22" ry="14"
-                   fill="${couleurZone('epaules')}"
-                   stroke="${strokeZone('epaules')}"
-                   stroke-width="2"
-                   style="cursor:pointer"
-                   onclick="${onclick('epaules')}"/>
-          <ellipse cx="138" cy="90" rx="22" ry="14"
-                   fill="${couleurZone('epaules')}"
-                   stroke="${strokeZone('epaules')}"
-                   stroke-width="2"
-                   style="cursor:pointer"
-                   onclick="${onclick('epaules')}"/>
-
-          <!-- DOS -->
-          <path d="M76 92 Q100 86 124 92 L128 196
-                   Q100 202 72 196 Z"
-                fill="${couleurZone('dos')}"
-                stroke="${strokeZone('dos')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('dos')}"/>
-          <!-- Lignes dos -->
-          <line x1="100" y1="92" x2="100" y2="196"
-                stroke="rgba(255,255,255,0.1)"
-                stroke-width="1"/>
-          <line x1="76" y1="140" x2="124" y2="140"
-                stroke="rgba(255,255,255,0.08)"
-                stroke-width="1"/>
-
-          <!-- TRICEPS -->
-          <rect x="38" y="84" width="20" height="76"
-                rx="10"
-                fill="${couleurZone('triceps')}"
-                stroke="${strokeZone('triceps')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('triceps')}"/>
-          <rect x="142" y="84" width="20" height="76"
-                rx="10"
-                fill="${couleurZone('triceps')}"
-                stroke="${strokeZone('triceps')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('triceps')}"/>
-
-          <!-- Avant-bras -->
-          <rect x="30" y="162" width="18" height="54"
-                rx="9"
-                fill="rgba(255,255,255,0.05)"
-                stroke="rgba(255,255,255,0.12)"
-                stroke-width="1.5"/>
-          <rect x="152" y="162" width="18" height="54"
-                rx="9"
-                fill="rgba(255,255,255,0.05)"
-                stroke="rgba(255,255,255,0.12)"
-                stroke-width="1.5"/>
-
-          <!-- FESSIERS -->
-          <path d="M72 198 Q100 192 128 198 L130 262
-                   Q100 268 70 262 Z"
-                fill="${couleurZone('fessiers')}"
-                stroke="${strokeZone('fessiers')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('fessiers')}"/>
-          <!-- Séparation fesses -->
-          <line x1="100" y1="200" x2="100" y2="260"
-                stroke="rgba(255,255,255,0.1)"
-                stroke-width="1"/>
-
-          <!-- ISCHIO-JAMBIERS -->
-          <path d="M74 260 Q88 254 98 260 L100 336
-                   Q88 342 74 336 Z"
-                fill="${couleurZone('ischio')}"
-                stroke="${strokeZone('ischio')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('ischio')}"/>
-          <path d="M102 260 Q112 254 126 260 L126 336
-                   Q112 342 100 336 Z"
-                fill="${couleurZone('ischio')}"
-                stroke="${strokeZone('ischio')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('ischio')}"/>
-
-          <!-- Genoux arrière -->
-          <ellipse cx="87" cy="342" rx="16" ry="12"
-                   fill="rgba(255,255,255,0.05)"
-                   stroke="rgba(255,255,255,0.12)"
-                   stroke-width="1.5"/>
-          <ellipse cx="113" cy="342" rx="16" ry="12"
-                   fill="rgba(255,255,255,0.05)"
-                   stroke="rgba(255,255,255,0.12)"
-                   stroke-width="1.5"/>
-
-          <!-- MOLLETS arrière -->
-          <rect x="76" y="356" width="22" height="68"
-                rx="11"
-                fill="${couleurZone('mollets')}"
-                stroke="${strokeZone('mollets')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('mollets')}"/>
-          <rect x="102" y="356" width="22" height="68"
-                rx="11"
-                fill="${couleurZone('mollets')}"
-                stroke="${strokeZone('mollets')}"
-                stroke-width="2"
-                style="cursor:pointer"
-                onclick="${onclick('mollets')}"/>
-
-          <!-- Pieds -->
-          <ellipse cx="87" cy="430" rx="14" ry="7"
-                   fill="rgba(255,255,255,0.05)"
-                   stroke="rgba(255,255,255,0.1)"
-                   stroke-width="1"/>
-          <ellipse cx="113" cy="430" rx="14" ry="7"
-                   fill="rgba(255,255,255,0.05)"
-                   stroke="rgba(255,255,255,0.1)"
-                   stroke-width="1"/>
-
-          <!-- Labels -->
-          ${sel.has('trapeze')  ? `<text x="100" y="82" text-anchor="middle" fill="${ZONES.trapeze.couleur}" font-size="8" font-weight="800">TRAP</text>` : ''}
-          ${sel.has('dos')      ? `<text x="100" y="148" text-anchor="middle" fill="${ZONES.dos.couleur}" font-size="9" font-weight="800">DOS</text>` : ''}
-          ${sel.has('triceps')  ? `<text x="48" y="126" text-anchor="middle" fill="${ZONES.triceps.couleur}" font-size="8" font-weight="800">TRI</text>` : ''}
-          ${sel.has('fessiers') ? `<text x="100" y="234" text-anchor="middle" fill="${ZONES.fessiers.couleur}" font-size="8" font-weight="800">FESS</text>` : ''}
-          ${sel.has('ischio')   ? `<text x="100" y="300" text-anchor="middle" fill="${ZONES.ischio.couleur}" font-size="7" font-weight="800">ISCHIO</text>` : ''}
-          ${sel.has('mollets')  ? `<text x="100" y="392" text-anchor="middle" fill="${ZONES.mollets.couleur}" font-size="7" font-weight="800">MOL</text>` : ''}
-        </svg>
-      </div>
+    <!-- IMAGE + MAP -->
+    <div style="position:relative;display:inline-block;
+                width:100%;text-align:center;
+                margin-bottom:12px">
+      <img id="ob-body-img"
+           src="Capture d'écran 2026-05-24 204800.png"
+           usemap="#ob-image-map"
+           style="max-width:100%;height:auto;
+                  border-radius:12px;display:inline-block;
+                  max-height:320px;object-fit:contain"
+           alt="Carte musculaire"/>
+      <canvas id="ob-muscle-canvas"
+              style="position:absolute;top:0;left:50%;
+                     transform:translateX(-50%);
+                     pointer-events:none;
+                     border-radius:12px">
+      </canvas>
     </div>
 
-    <!-- Chips muscles sélectionnés -->
+    <map name="ob-image-map" id="ob-image-map">
+      <area data-muscle="pectoraux" href="#" shape="poly"
+            coords="297,207,290,219,280,227,266,231,255,233,241,230,228,223,217,213,208,206,200,205,209,195,219,184,227,176,235,166,243,160,254,156,263,151,273,150,282,151,289,154,297,160,297,176,297,190">
+      <area data-muscle="pectoraux" href="#" shape="poly"
+            coords="298,206,303,216,310,224,321,229,336,234,351,232,362,227,373,221,381,212,390,204,397,204,385,194,375,185,367,175,358,165,349,158,337,152,323,149,309,153,299,160,297,182">
+      <area data-muscle="deltoides" href="#" shape="poly"
+            coords="175,209,182,186,191,165,201,156,214,151,227,148,240,148,255,152,245,160,235,167,227,178,219,190,211,195,203,204">
+      <area data-muscle="deltoides" href="#" shape="poly"
+            coords="423,212,408,205,395,202,384,194,373,183,363,170,349,158,339,152,352,147,365,147,380,148,395,156,407,168">
+      <area data-muscle="biceps" href="#" shape="poly"
+            coords="175,210,161,230,151,255,151,270,155,281,165,286,183,280,192,263,203,250,213,239,214,222,210,207">
+      <area data-muscle="biceps" href="#" shape="poly"
+            coords="422,212,433,230,442,249,444,264,443,280,429,286,415,280,404,266,395,253,385,242,381,226,381,214,396,206">
+      <area data-muscle="avantbras" href="#" shape="poly"
+            coords="177,282,167,305,157,321,143,335,131,349,117,359,111,368,97,365,92,358,99,343,112,311,123,287,136,273,147,263,150,257,150,273,159,285,168,287">
+      <area data-muscle="avantbras" href="#" shape="poly"
+            coords="502,357,493,337,486,319,476,295,465,279,445,256,445,269,445,281,433,285,416,280,430,304,436,316,441,323,447,334,456,340,464,348,475,358,484,367,492,370,499,366">
+      <area data-muscle="abdominaux" href="#" shape="poly"
+            coords="383,242,375,264,365,282,361,298,366,354,344,362,319,378,300,396,275,376,255,362,229,353,233,330,234,307,229,284,221,266,213,243,215,224,215,212,230,230,248,237,272,230,285,226,297,234,307,226,320,233,333,236,354,232,365,226,379,214">
+      <area data-muscle="quadriceps" href="#" shape="poly"
+            coords="229,356,223,395,217,430,211,471,210,508,215,545,219,562,226,566,237,566,242,580,254,588,267,577,271,564,274,540,279,520,284,502,293,476,295,455,295,440,285,432,279,416,273,396,265,380,248,364">
+      <area data-muscle="quadriceps" href="#" shape="poly"
+            coords="365,357,371,388,380,424,385,472,386,502,380,539,377,556,371,566,358,566,356,578,348,584,336,582,325,558,321,536,315,514,305,479,299,450,299,440,313,428,318,410,322,396,335,377,349,365">
+      <area data-muscle="trapeze" href="#" shape="poly"
+            coords="712,160,701,150,688,146,700,140,713,134,725,132,747,132,767,132,794,132,804,136,823,146,811,152,803,156,797,163,783,164,769,162,755,161,742,161,731,162,720,165">
+      <area data-muscle="dorsal" href="#" shape="poly"
+            coords="710,160,703,168,685,181,677,185,666,193,665,209,669,226,669,241,674,256,681,270,688,285,689,307,691,329,686,347,683,373,691,360,701,355,715,349,721,337,721,320,721,308,732,289,738,276,745,257,754,253,753,209,753,181,753,160,736,165,723,165">
+      <area data-muscle="dorsal" href="#" shape="poly"
+            coords="754,160,772,162,786,166,798,163,803,160,810,167,820,176,836,189,846,197,844,212,842,232,840,246,834,266,824,284,823,304,823,324,823,342,828,374,819,362,808,356,796,349,790,336,790,316,786,300,778,284,770,268,767,253,755,254">
+      <area data-muscle="lombaires" href="#" shape="poly"
+            coords="758,256,748,255,743,266,738,278,731,292,728,300,723,316,723,326,723,338,717,348,727,347,736,347,743,351,749,355,756,369,763,354,775,348,784,347,796,347,789,332,789,318,787,304,780,289,774,274,767,260,766,252">
+      <area data-muscle="fessiers" href="#" shape="poly"
+            coords="755,425,751,439,739,440,725,440,708,435,696,427,692,417,689,403,689,393,695,379,700,364,709,353,718,348,732,347,740,350,751,358,755,368">
+      <area data-muscle="fessiers" href="#" shape="poly"
+            coords="757,428,763,436,775,440,791,442,805,436,817,426,824,414,823,400,819,384,815,373,810,360,801,352,791,349,779,348,767,354,760,362,756,372">
+      <area data-muscle="ischio" href="#" shape="poly"
+            coords="755,431,752,461,745,488,739,515,732,541,727,570,720,585,708,588,703,571,700,553,695,569,685,579,675,566,669,535,666,509,667,477,668,450,673,422,678,399,683,385,679,375,687,365,703,354,697,373,691,386,689,400,691,422,701,434,715,441,737,441,747,439">
+      <area data-muscle="ischio" href="#" shape="poly"
+            coords="831,373,831,387,838,405,844,445,847,475,846,507,842,543,839,562,828,577,820,566,812,553,812,565,812,575,806,586,796,589,787,574,780,547,775,513,767,486,761,455,758,433,766,439,777,443,789,443,809,437,818,429,824,418,823,396,818,379,809,357">
+      <area data-muscle="mollets" href="#" shape="poly"
+            coords="668,614,659,630,659,644,659,664,659,684,667,694,673,695,682,686,687,674,691,686,697,695,707,696,714,682,715,669,716,651,713,638,707,626,697,626,687,628,678,617">
+      <area data-muscle="mollets" href="#" shape="poly"
+            coords="799,635,798,646,796,661,797,680,803,692,813,697,819,692,822,680,824,672,830,680,833,690,842,696,851,692,853,684,855,667,855,648,853,636,851,623,846,614,836,620,829,625,821,628,812,622,806,625">
+    </map>
+
+    <!-- Chips -->
     <div id="ob-muscles-chips"
-         style="display:flex;flex-wrap:wrap;
-                gap:6px;justify-content:center;
-                min-height:30px;margin-bottom:10px">
-      ${musclesCibles.length === 0 ? `
-        <span style="font-size:.72rem;
-                     color:var(--text-muted);
-                     font-style:italic">
-          Aucun muscle ciblé — programme complet
-        </span>` :
-        musclesCibles.map(m => `
-          <span onclick="_toggleMuscleOb('${m}')"
-                style="display:inline-flex;align-items:center;
-                       gap:5px;padding:5px 12px;
-                       background:${ZONES[m]?.couleur || '#4b4bf9'}22;
-                       border:1px solid ${ZONES[m]?.couleur || '#4b4bf9'}66;
-                       border-radius:99px;font-size:.68rem;
-                       font-weight:700;cursor:pointer;
-                       color:${ZONES[m]?.couleur || '#4b4bf9'}">
-            ${ZONES[m]?.label || m}
-            <span style="opacity:.6;font-size:.6rem">✕</span>
-          </span>`).join('')}
+         style="display:flex;flex-wrap:wrap;gap:6px;
+                justify-content:center;margin-bottom:10px;
+                min-height:30px">
+      ${chipsHTML}
     </div>
 
     <!-- Info -->
@@ -8303,13 +8022,90 @@ function _toggleMuscleOb(muscle) {
 
   window._obData.muscles_cibles = muscles;
 
-  // ✅ Re-render le SVG sans rechargement de page
+  // ✅ Re-render le composant
   const wrapper = document.getElementById('ob-muscles-wrapper');
   if (wrapper) {
     wrapper.innerHTML = _renderCorpsSVGOnboarding(muscles);
+    // ✅ Réinitialiser maphilight après re-render
+    _initObMuscleMap(muscles);
   }
 
   Utils.vibrer([20]);
+}
+
+// ✅ Init maphilight sur l'image onboarding
+function _initObMuscleMap(musclesCibles) {
+
+  const CFG = {
+    pectoraux:  { r:75,  g:75,  b:249 },
+    deltoides:  { r:191, g:161, b:255 },
+    biceps:     { r:139, g:240, b:187 },
+    avantbras:  { r:139, g:240, b:187 },
+    abdominaux: { r:249, g:239, b:119 },
+    quadriceps: { r:34,  g:197, b:94  },
+    trapeze:    { r:139, g:240, b:187 },
+    dorsal:     { r:75,  g:75,  b:249 },
+    lombaires:  { r:191, g:161, b:255 },
+    fessiers:   { r:255, g:141, b:150 },
+    ischio:     { r:249, g:239, b:119 },
+    mollets:    { r:191, g:161, b:255 }
+  };
+
+  function toHex(r,g,b) {
+    return [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+  }
+
+  // ✅ Attendre que l'image soit prête
+  const img = document.getElementById('ob-body-img');
+  if (!img) return;
+
+  const doInit = () => {
+    if (typeof $ === 'undefined' || !$.fn.maphilight) return;
+
+    // Init maphilight
+    $('#ob-body-img').maphilight({
+      fillColor:   '4b4bf9',
+      fillOpacity: 0.35,
+      stroke:      true,
+      strokeColor: '4b4bf9',
+      strokeWidth: 2,
+      fade:        true
+    });
+
+    // ✅ Couleur par muscle + alwaysOn si sélectionné
+    $('#ob-image-map area[data-muscle]').each(function() {
+      const m   = $(this).data('muscle');
+      const cfg = CFG[m];
+      if (!cfg) return;
+
+      const hex  = toHex(cfg.r, cfg.g, cfg.b);
+      const isOn = musclesCibles.includes(m);
+
+      $(this).data('maphilight', {
+        fillColor:   hex,
+        fillOpacity: isOn ? 0.5 : 0.35,
+        strokeColor: hex,
+        strokeWidth: isOn ? 3 : 2,
+        fade:        true,
+        alwaysOn:    isOn
+      });
+    });
+
+    // ✅ Forcer refresh
+    $('#ob-body-img').maphilight('options', {});
+
+    // ✅ Clic sur les zones
+    $('#ob-image-map area[data-muscle]').off('click').on('click', function(e) {
+      e.preventDefault();
+      _toggleMuscleOb($(this).data('muscle'));
+    });
+  };
+
+  if (img.complete && img.naturalWidth > 0) {
+    doInit();
+  } else {
+    img.onload = doInit;
+  }
 }
 // ════════════════════════════════════════════════════════════
 // ONBOARDING v2.0
@@ -8819,8 +8615,15 @@ if (etapeActuelle === 5) {
 
   const ob = document.getElementById('onboarding-screen');
   ob.innerHTML = _renderEtapeOnboarding(
-    etapeActuelle + 1, window._obData
-  );
+  etapeActuelle + 1, window._obData
+);
+
+// ✅ Init maphilight si on arrive sur l'étape 6
+if (etapeActuelle + 1 === 6) {
+  setTimeout(() => {
+    _initObMuscleMap(window._obData.muscles_cibles || []);
+  }, 200);
+}
 }
 
 function _renderEtapeOb(etape) {
