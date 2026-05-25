@@ -1,7 +1,9 @@
 /* ============================================================
-   FitTracker Pro — Notifications v3.0 CORRIGÉ + SMART
+   PowerApp — Notifications v4.0
    Rappels + Absence + Streak + PR + Motivation
    + Séance en cours + Surmenage + Milestone XP
+   + Hydratation + Surcharge musculaire
+   + Genre-aware + Interface settings
    ============================================================ */
 
 const Notifications = {
@@ -13,23 +15,28 @@ const Notifications = {
   // ════════════════════════════════════════════════════════
   getConfig() {
     return Utils.storage.get(this.CONFIG_CLE, {
-      active:           true,
-      rappelQuotidien:  true,
-      heureRappel:      '07:30',
-      absence1j:        true,
-      absence2j:        true,
-      absence5j:        true,
-      streakDanger:     true,
-      motivationMatin:  true,
-      prProche:         true,
-      semaineParf:      true,
-      ton:              'motivant',
-      son:              true,
-      vibration:        true,
-      finSeance:        true,
-      nouveauPR:        true,
-      trophee:          true,
-      decharge:         true
+      active:            true,
+      rappelQuotidien:   true,
+      heureRappel:       '07:30',
+      absence1j:         true,
+      absence2j:         true,
+      absence5j:         true,
+      streakDanger:      true,
+      motivationMatin:   true,
+      prProche:          true,
+      semaineParf:       true,
+      ton:               'motivant',
+      son:               true,
+      vibration:         true,
+      finSeance:         true,
+      nouveauPR:         true,
+      trophee:           true,
+      decharge:          true,
+      // ✅ NOUVEAU v4.0
+      hydratation:       true,
+      surcharge:         true,
+      rappelHydratation: '10:00',
+      hydratationFreq:   2     // toutes les 2h
     });
   },
 
@@ -87,14 +94,11 @@ const Notifications = {
       if ('serviceWorker' in navigator) {
         const sw = await navigator.serviceWorker.ready;
         await sw.showNotification(titre, {
-          body: message,
-          ...defauts,
-          ...options
+          body: message, ...defauts, ...options
         });
       } else {
         new Notification(titre, {
-          body: message,
-          icon: defauts.icon
+          body: message, icon: defauts.icon
         });
       }
     } catch(e) {
@@ -103,10 +107,20 @@ const Notifications = {
   },
 
   // ════════════════════════════════════════════════════════
-  // MESSAGES PAR TON
+  // MESSAGES PAR TON — ✅ v4.0 genre-aware
   // ════════════════════════════════════════════════════════
   getMessage(type, contexte = {}) {
-    const ton = this.getConfig().ton;
+    const config = this.getConfig();
+    const ton    = config.ton;
+
+    // ✅ NOUVEAU v4.0 — Récupérer genre onboarding
+    let genre = 'homme';
+    try {
+      genre = Utils.storage.get(
+        'ft_profil_onboarding', {}
+      ).genre || 'homme';
+    } catch(e) {}
+
     const {
       jours  = 0,
       streak = 0,
@@ -115,12 +129,16 @@ const Notifications = {
       seance = ''
     } = contexte;
 
+    // ✅ Suffixe genre pour messages
+    const e = genre === 'femme' ? 'e' : '';
+    const champion = genre === 'femme' ? 'championne' : 'champion';
+
     const messages = {
       absence_1: {
         motivant: [
           `Hé ${nom} ! T'as oublié quelque chose à la salle... tes muscles ! 💪`,
           `Un jour de repos c'est bien. Deux c'est une excuse. 😏`,
-          `Ta prochaine séance s'impatiente Champ ! Tu viens ? 🏋️`
+          `Ta prochaine séance s'impatiente ${champion} ! Tu viens ? 🏋️`
         ],
         doux: [
           `Coucou ${nom} 😊 Tu nous manques ! La salle t'attend.`,
@@ -159,7 +177,7 @@ const Notifications = {
         doux: [
           `${nom}, on ne juge pas. On repart simplement. Doucement 🌟`,
           `${jours} jours de pause, et alors ? Ce qui compte c'est de reprendre 💫`,
-          `Chaque grand athlète a eu des pauses. L'important c'est de revenir 🌸`
+          `Chaque grand${e} athlète a eu des pauses. L'important c'est de revenir 🌸`
         ],
         severe: [
           `${jours} JOURS ${nom}. C'est inacceptable. On repart maintenant.`,
@@ -191,13 +209,13 @@ const Notifications = {
           `C'est parti ${nom} ! Aujourd'hui on bat des records ! 🏆`
         ],
         doux: [
-          `Bonjour ${nom} 😊 Prêt pour ta séance du jour ?`,
+          `Bonjour ${nom} 😊 Prêt${e} pour ta séance du jour ?`,
           `Belle journée pour s'entraîner ${nom} ! Tu vas assurer 🌟`,
           `Coucou ${nom} ! Ta séance est planifiée. Bonne chance 💫`
         ],
         severe: [
           `${nom}. Séance du jour. Pas d'excuse. On y va. 🔥`,
-          `La salle t'attend ${nom}. Tu es attendu. Présent ? ⚡`,
+          `La salle t'attend ${nom}. Tu es attendu${e}. Présent${e} ? ⚡`,
           `JOUR D'ENTRAÎNEMENT ${nom}. DEBOUT. SALLE. MAINTENANT. 💥`
         ]
       },
@@ -208,7 +226,7 @@ const Notifications = {
           `Semaine parfaite ${nom} ! C'est comme ça qu'on construit un physique ! 💪`
         ],
         doux: [
-          `Bravo ${nom} ! Semaine complète ! Tu peux être fier 🌟`,
+          `Bravo ${nom} ! Semaine complète ! Tu peux être fièr${e} 🌟`,
           `Quelle belle semaine ${nom} ! Continue, tu es sur la bonne voie 💫`,
           `Semaine parfaite ! Tu le mérites vraiment ${nom} ✨`
         ],
@@ -244,10 +262,10 @@ const Notifications = {
         doux: [
           `Bravo ${nom} ! Séance terminée, profite de ta récupération 🌟`,
           `Belle séance ${nom} ! Ton corps te remerciera 💫`,
-          `Fière de toi ${nom} ! Séance accomplie ✨`
+          `Fièr${e} de toi ${nom} ! Séance accomplie ✨`
         ],
         severe: [
-          `Séance faite. Bien. La suivante est dans X jours. Prépare-toi.`,
+          `Séance faite. Bien. La suivante est dans quelques jours. Prépare-toi.`,
           `C'était pas parfait mais c'était fait. Améliore demain. 🎯`,
           `Séance terminée. Récupère. La prochaine doit être meilleure. 🔥`
         ]
@@ -267,6 +285,42 @@ const Notifications = {
           `DÉCHARGE. -40% charges. Pas de négociation. C'est planifié. 🎯`,
           `Semaine légère IMPOSÉE. Récupère pour mieux exploser ensuite. ⚡`,
           `DÉCHARGE OBLIGATOIRE. Ignorer = surmenage = régression. Obéis. 💥`
+        ]
+      },
+      // ✅ NOUVEAU v4.0 — Messages hydratation
+      hydratation: {
+        motivant: [
+          `💧 ${nom} ! N'oublie pas de t'hydrater. Ton corps te remerciera !`,
+          `💧 Pause hydratation ${nom} ! Un verre d'eau = meilleure performance.`,
+          `💧 Ta bouteille, c'est ton meilleur équipement ${nom} ! Tu l'utilises ? 😄`
+        ],
+        doux: [
+          `💧 Coucou ${nom} ! Pense à boire de l'eau 🌟`,
+          `💧 Hydratation = récupération. Un verre maintenant ? 💫`,
+          `💧 Petite pensée pour ton hydratation ${nom} ✨`
+        ],
+        severe: [
+          `💧 ${nom}. EAU. MAINTENANT. La déshydratation nuit aux performances.`,
+          `HYDRATATION ${nom}. Si tu ne bois pas, tu régresseras. Un verre. VITE.`,
+          `💧 BOIS DE L'EAU ${nom}. C'est non négociable. 🔥`
+        ]
+      },
+      // ✅ NOUVEAU v4.0 — Messages surcharge musculaire
+      surcharge: {
+        motivant: [
+          `⚠️ ${nom} ! Attention à la surcharge. Ton corps demande du repos.`,
+          `⚠️ Surcharge détectée ! Une séance légère ou un jour off serait parfait.`,
+          `⚠️ Tes muscles travaillent trop ${nom}. Récupération = progression ! 💪`
+        ],
+        doux: [
+          `${nom}, ton corps montre des signes de fatigue. Prends soin de toi 🌟`,
+          `Surcharge musculaire détectée. Un jour de repos est une bonne idée 💫`,
+          `${nom}, écoute ton corps. Il sait ce dont il a besoin ✨`
+        ],
+        severe: [
+          `SURCHARGE ${nom}. REPOS IMPOSÉ. Sinon blessure garantie. 🔥`,
+          `Ton corps crie stop. Écoute-le. REPOS MAINTENANT. ⚡`,
+          `SURMENAGE MUSCULAIRE. UN JOUR DE REPOS. PAS DE NÉGOCIATION. 💥`
         ]
       }
     };
@@ -364,7 +418,9 @@ const Notifications = {
     const config = this.getConfig();
     if (!config.active || !config.motivationMatin) return;
 
-    let citation = { texte:'La progression est un choix.', auteur:'Anonyme' };
+    let citation = {
+      texte:'La progression est un choix.', auteur:'Anonyme'
+    };
     try {
       if (typeof Coach !== 'undefined' && Coach.getCitationDuJour) {
         citation = Coach.getCitationDuJour();
@@ -412,7 +468,9 @@ const Notifications = {
 
     await this.envoyer(
       `⚠️ Streak en danger !`,
-      this.getMessage('streak_danger', { streak: streak.count, nom }),
+      this.getMessage('streak_danger', {
+        streak: streak.count, nom
+      }),
       {
         tag:     'streak-danger',
         vibrate: [300, 100, 300, 100, 300],
@@ -426,9 +484,13 @@ const Notifications = {
     if (!config.active || !config.semaineParf) return;
 
     let objectif = 4, seances = 0, nom = 'Athlète';
-    try { objectif = Utils.storage.get('ft_objectif_seances_semaine', 4); } catch(e) {}
-    try { seances  = Tracker.getSeancesParSemaine();                       } catch(e) {}
-    try { nom      = Tracker.getProfil().nom || 'Athlète';                 } catch(e) {}
+    try {
+      objectif = Utils.storage.get(
+        'ft_objectif_seances_semaine', 4
+      );
+    } catch(e) {}
+    try { seances  = Tracker.getSeancesParSemaine();        } catch(e) {}
+    try { nom      = Tracker.getProfil().nom || 'Athlète';  } catch(e) {}
 
     if (seances < objectif) return;
 
@@ -480,11 +542,9 @@ const Notifications = {
     let nom = 'Athlète';
     try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
 
-    const msgFin = this.getMessage('fin_seance', { nom });
-
     await this.envoyer(
       `✅ Séance terminée !`,
-      `${seanceNom} — ${Utils.formatDuree(duree)} · ${Utils.formatVolume(volume)} · ${msgFin}`,
+      `${seanceNom} — ${Utils.formatDuree(duree)} · ${Utils.formatVolume(volume)} · ${this.getMessage('fin_seance', { nom })}`,
       {
         tag:     'fin-seance',
         vibrate: [100, 50, 100],
@@ -520,41 +580,157 @@ const Notifications = {
     const config = this.getConfig();
     if (!config.active || !config.prProche) return;
 
-    let prs = {}, seance = null, nom = 'Athlète';
-    try { prs    = Tracker.getAllPRs();                } catch(e) {}
-    try { seance = Programme.getProchaineSeance();     } catch(e) {}
-    try { nom    = Tracker.getProfil().nom||'Athlète'; } catch(e) {}
-    if (!seance) return;
+    // ✅ NOUVEAU v4.0 — Utiliser Tracker.getPRsProches()
+    let alertes = [];
+    try {
+      // Récupérer séance active si existe
+      const seanceDuJour = Tracker.getSeanceDuJour?.();
+      const seanceId     = seanceDuJour?.id || null;
+      alertes = Tracker.getPRsProches(seanceId);
+    } catch(e) {}
 
-    for (const exRef of (seance.exercices || [])) {
-      const refStr = exRef?.ref || exRef;
-      const pr     = prs[refStr];
-      if (!pr?.rm1) continue;
+    // Fallback ancien système
+    if (!alertes.length) {
+      try {
+        const prs    = Tracker.getAllPRs();
+        const seance = Programme.getProchaineSeance();
+        if (!seance) return;
 
-      let phase = { intensite:0.75 };
-      try { phase = Programme.getPhaseActuelle(); } catch(e) {}
+        let nom = 'Athlète';
+        try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
 
-      const chargeObj = Math.round(pr.rm1 * phase.intensite);
-      const diff      = pr.rm1 - chargeObj;
+        let phase = { intensite:0.75 };
+        try { phase = Programme.getPhaseActuelle(); } catch(e) {}
 
-      if (diff <= 5 && diff >= 0) {
-        const ex = (window.EXERCICES||{})[refStr] || {};
-        await this.envoyer(
-          `📈 PR en vue !`,
-          this.getMessage('pr_proche', { nom, pr: ex.nom||refStr }),
-          {
-            tag:     `pr-proche-${refStr}`,
-            actions: [{ action:'go', title:'🏆 Je vise le PR !' }]
+        for (const exRef of (seance.exercices || [])) {
+          const refStr = exRef?.ref || exRef;
+          const pr     = prs[refStr];
+          if (!pr?.rm1) continue;
+
+          const chargeObj = Math.round(pr.rm1 * phase.intensite);
+          const diff      = pr.rm1 - chargeObj;
+
+          if (diff <= 5 && diff >= 0) {
+            const ex = (window.EXERCICES||{})[refStr] || {};
+            await this.envoyer(
+              `📈 PR en vue !`,
+              this.getMessage('pr_proche', {
+                nom, pr: ex.nom||refStr
+              }),
+              {
+                tag:     `pr-proche-${refStr}`,
+                actions: [{
+                  action:'go',
+                  title: '🏆 Je vise le PR !'
+                }]
+              }
+            );
+            break;
           }
-        );
-        break;
-      }
+        }
+        return;
+      } catch(e) {}
     }
+
+    if (!alertes.length) return;
+
+    let nom = 'Athlète';
+    try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+
+    // Envoyer la plus proche
+    const alerte = alertes[0];
+    await this.envoyer(
+      `📈 PR en vue sur ${alerte.nom} !`,
+      this.getMessage('pr_proche', { nom, pr: alerte.nom }),
+      {
+        tag:     `pr-proche-${alerte.exerciceRef}`,
+        actions: [{ action:'go', title:'🏆 Je vise le PR !' }]
+      }
+    );
   },
 
-  // ════════════════════════════════════════════════════════
-  // ✅ NOUVEAU — Séance en cours depuis trop longtemps
-  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v4.0 — Rappel hydratation
+  async verifierHydratation() {
+    const config = this.getConfig();
+    if (!config.active || !config.hydratation) return;
+
+    const heure = Utils.heureActuelle();
+    if (heure < 8 || heure > 21) return;
+
+    // Vérifier si objectif atteint
+    let eauObj = 2.5, eauActuelle = 0;
+    try {
+      const obj = Utils.storage.get('ft_nutrition_objectifs', {});
+      eauObj = obj.eau || 2.5;
+    } catch(e) {}
+    try {
+      const cleEau = `ft_nutrition_eau_${Utils.aujourd_hui()}`;
+      eauActuelle  = Utils.storage.get(cleEau, 0);
+    } catch(e) {}
+
+    // Objectif hydratation déjà atteint → pas de rappel
+    if (eauActuelle >= eauObj * 1000 * 0.9) return;
+
+    // Vérifier si déjà notifié cette heure
+    const cle = `ft_notif_eau_${Utils.aujourd_hui()}_${heure}`;
+    if (Utils.storage.get(cle, false)) return;
+
+    // Fréquence : toutes les N heures
+    const freq = config.hydratationFreq || 2;
+    if (heure % freq !== 0) return;
+
+    let nom = 'Athlète';
+    try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+
+    const reste = ((eauObj * 1000) - eauActuelle) / 1000;
+
+    await this.envoyer(
+      `💧 Rappel hydratation`,
+      this.getMessage('hydratation', { nom })
+        + ` Encore ${reste.toFixed(1)}L pour ton objectif.`,
+      {
+        tag:     'hydratation',
+        actions: [{ action:'eau', title:'💧 Boire 250ml' }]
+      }
+    );
+
+    Utils.storage.set(cle, true);
+  },
+
+  // ✅ NOUVEAU v4.0 — Surcharge musculaire
+  async verifierSurchargeMusculaire() {
+    const config = this.getConfig();
+    if (!config.active || !config.surcharge) return;
+
+    const cle = `ft_notif_surcharge_${Utils.aujourd_hui()}`;
+    if (Utils.storage.get(cle, false)) return;
+
+    let alertes = [];
+    try { alertes = Tracker.getSurchargeMusculaire(); } catch(e) {}
+    if (!alertes.length) return;
+
+    let nom = 'Athlète';
+    try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+
+    const muscles = alertes.slice(0,2)
+      .map(a => a.muscle).join(', ');
+
+    await this.envoyer(
+      `⚠️ Surcharge musculaire !`,
+      `${this.getMessage('surcharge', { nom })} Zones : ${muscles}`,
+      {
+        tag:     'surcharge',
+        vibrate: [200, 100, 200],
+        actions: [
+          { action:'stats',  title:'📊 Voir analyse' },
+          { action:'repos',  title:'😴 Repos demain' }
+        ]
+      }
+    );
+
+    Utils.storage.set(cle, true);
+  },
+
   async _verifierSeanceEnCours() {
     try {
       const config = this.getConfig();
@@ -573,12 +749,13 @@ const Notifications = {
           let nom = 'Athlète';
           try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
 
-          const cle2 = 'ft_notif_seance_longue_' + Utils.aujourd_hui();
+          const cle2 = 'ft_notif_seance_longue_'
+            + Utils.aujourd_hui();
           if (Utils.storage.get(cle2, false)) return;
 
           await this.envoyer(
             '⏱️ Séance longue !',
-            `${nom}, ta séance dure depuis ${dureeMin} minutes. Pense à terminer pour que tes stats soient enregistrées !`,
+            `${nom}, ta séance dure depuis ${dureeMin} minutes. Pense à terminer pour enregistrer tes stats !`,
             { tag:'seance-longue' }
           );
 
@@ -617,6 +794,9 @@ const Notifications = {
         await this.notifierDecharge();
       }
     } catch(e) {}
+
+    // ✅ NOUVEAU v4.0
+    await this.verifierSurchargeMusculaire();
   },
 
   // ════════════════════════════════════════════════════════
@@ -637,6 +817,7 @@ const Notifications = {
       const heure   = now.getHours();
       const minutes = now.getMinutes();
 
+      // Rappel quotidien
       if (heure === heureConf && minutes === minConf
           && config.rappelQuotidien) {
         const cle = 'ft_rappel_' + Utils.aujourd_hui();
@@ -646,6 +827,7 @@ const Notifications = {
         }
       }
 
+      // Motivation matin
       const minuteMotiv = (minConf + 30) % 60;
       const heureMotiv  = minConf + 30 >= 60
         ? heureConf + 1 : heureConf;
@@ -658,37 +840,45 @@ const Notifications = {
         }
       }
 
+      // Absence (toutes les 2h)
       if (minutes === 0 && heure % 2 === 0
           && heure >= 8 && heure <= 20) {
         await this.verifierAbsenceEtNotifier();
       }
 
+      // Streak danger (soir)
       if (heure >= 18 && heure <= 22 && minutes === 30) {
         await this.verifierStreakDanger();
       }
 
+      // PR proches (midi)
       if (heure === 12 && minutes === 0) {
         await this.verifierPRsProches();
       }
 
+      // Semaine parfaite (21h)
       if (heure === 21 && minutes === 0) {
         await this.verifierSemaineParf();
       }
 
-      // ✅ Vérifications smart
+      // Surmenage + XP (22h)
       if (heure === 22 && minutes === 0) {
         await this.verifierSurmenage();
         await this.verifierMilestoneXP();
+        // ✅ NOUVEAU v4.0
+        await this.verifierSurchargeMusculaire();
       }
 
+      // Rappels personnalisés (10h)
       if (heure === 10 && minutes === 0) {
         await this.envoyerRappelPersonnalise();
         await this.notifierComeback();
       }
 
-      // ✅ Vérifier séance en cours toutes les heures
+      // ✅ NOUVEAU v4.0 — Hydratation (toutes les heures)
       if (minutes === 0) {
         await this._verifierSeanceEnCours();
+        await this.verifierHydratation();
       }
 
     }, 60 * 1000);
@@ -737,26 +927,28 @@ const Notifications = {
     const autorisee = await this.demanderPermission();
     if (autorisee) {
       this.planifierRappels();
-      setTimeout(() => this.verifierAuLancement(),  4000);
-      setTimeout(() => this._analyserRoutine(),      8000);
-      // ✅ AJOUT — vérifier séance en cours au démarrage
+      setTimeout(() => this.verifierAuLancement(),    4000);
+      setTimeout(() => this._analyserRoutine(),        8000);
       setTimeout(() => this._verifierSeanceEnCours(), 12000);
-      console.log('✅ Notifications v3.0 + Smart initialisées');
+      console.log('✅ Notifications v4.0 initialisées');
     } else {
       console.log('[Notifs] Permissions non accordées');
     }
   },
 
   // ════════════════════════════════════════════════════════
-  // NOTIFICATIONS INTELLIGENTES
+  // SMART IA
   // ════════════════════════════════════════════════════════
+  // ✅ FIX v4.0 — _analyserRoutine sans s.heureDebut
   _analyserRoutine() {
     try {
-      const hist   = Tracker.getHistoriqueSeances(30);
-      const heures = hist.map(s => {
-        const h = s.heureDebut || '18:00';
-        return parseInt(h.split(':')[0]);
-      }).filter(h => !isNaN(h));
+      const hist = Tracker.getHistoriqueSeances(30);
+
+      // ✅ FIX — Utiliser timestamp debut au lieu de heureDebut
+      const heures = hist
+        .filter(s => s.debut)
+        .map(s => new Date(s.debut).getHours())
+        .filter(h => !isNaN(h) && h >= 5 && h <= 23);
 
       if (heures.length < 3) return;
 
@@ -781,7 +973,7 @@ const Notifications = {
 
   async verifierSurmenage() {
     try {
-      const config = this.getConfig();
+      const config  = this.getConfig();
       if (!config.active) return;
 
       const hist    = Tracker.getHistoriqueSeances(7);
@@ -854,8 +1046,7 @@ const Notifications = {
       const cle = 'ft_rappel_perso_' + Utils.aujourd_hui();
       if (Utils.storage.get(cle, false)) return;
 
-      let nom    = 'Athlète';
-      let seance = null;
+      let nom = 'Athlète', seance = null;
       try { nom    = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
       try { seance = Programme.getSeanceduJour();           } catch(e) {}
 
@@ -895,8 +1086,7 @@ const Notifications = {
       const vientDeRevenir = Utils.storage.get('ft_comeback', false);
       if (!vientDeRevenir) return;
 
-      let nom   = 'Athlète';
-      let jours = 7;
+      let nom = 'Athlète', jours = 7;
       try { nom   = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
       try { jours = Tracker.getJoursAbsence();             } catch(e) {}
 
@@ -914,16 +1104,306 @@ const Notifications = {
     } catch(e) {}
   },
 
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v4.0 — RENDER PAGE PARAMÈTRES
+  // ════════════════════════════════════════════════════════
+  renderPage(container) {
+    if (!container) return;
+
+    const config = this.getConfig();
+    const perm   = this.estAutorisee();
+
+    container.innerHTML = `
+
+      <!-- Permission status -->
+      <div style="padding:14px 16px;
+                  background:${perm
+                    ? 'rgba(139,240,187,0.08)'
+                    : 'rgba(255,141,150,0.08)'};
+                  border:1px solid ${perm
+                    ? 'rgba(139,240,187,0.25)'
+                    : 'rgba(255,141,150,0.25)'};
+                  border-radius:var(--radius-xl);
+                  margin-bottom:14px;
+                  display:flex;align-items:center;gap:12px">
+        <div style="font-size:1.5rem">
+          ${perm ? '✅' : '🔔'}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:.82rem;font-weight:700">
+            ${perm
+              ? 'Notifications autorisées'
+              : 'Notifications non autorisées'}
+          </div>
+          <div style="font-size:.65rem;color:var(--text-muted)">
+            ${perm
+              ? 'Tu recevras tes rappels et alertes'
+              : 'Active les notifications pour ne rien manquer'}
+          </div>
+        </div>
+        ${!perm ? `
+          <button onclick="Notifications.demanderPermission()
+            .then(ok => {
+              if(ok) { Utils.toast('✅ Notifications activées!','success'); Notifications.renderPage(this.closest('.page') || document.getElementById('page-notifications')); }
+              else Utils.toast('❌ Refusé dans les paramètres','error');
+            })"
+                  class="btn-primary"
+                  style="font-size:.72rem;flex-shrink:0">
+            Activer
+          </button>` : ''}
+      </div>
+
+      <!-- Active / Inactive global -->
+      <div style="background:rgba(255,255,255,0.03);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-xl);
+                  padding:16px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;
+                    justify-content:space-between">
+          <div>
+            <div style="font-size:.88rem;font-weight:700">
+              🔔 Notifications PowerApp
+            </div>
+            <div style="font-size:.65rem;color:var(--text-muted);
+                        margin-top:2px">
+              Activer / désactiver toutes les notifications
+            </div>
+          </div>
+          ${this._renderToggle('active', config.active)}
+        </div>
+      </div>
+
+      <!-- TON -->
+      <div style="background:rgba(255,255,255,0.03);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-xl);
+                  padding:16px;margin-bottom:14px">
+        <div style="font-size:.6rem;font-weight:700;
+                    text-transform:uppercase;letter-spacing:.1em;
+                    color:var(--text-muted);margin-bottom:10px">
+          💬 Ton des messages
+        </div>
+        <div style="display:grid;
+                    grid-template-columns:repeat(3,1fr);gap:6px">
+          ${['motivant','doux','severe'].map(ton => `
+            <button onclick="Notifications.sauvegarderConfig({ton:'${ton}'});
+                            document.querySelectorAll('.btn-ton')
+                              .forEach(b=>{
+                                b.style.background='rgba(255,255,255,0.04)';
+                                b.style.borderColor='rgba(255,255,255,0.1)';
+                              });
+                            this.style.background='rgba(75,75,249,0.2)';
+                            this.style.borderColor='var(--fd-indigo)';
+                            Utils.toast('Ton ${ton} sélectionné','success',1500)"
+                    class="btn-ton"
+                    style="padding:10px 6px;text-align:center;
+                           background:${config.ton === ton
+                             ? 'rgba(75,75,249,0.2)'
+                             : 'rgba(255,255,255,0.04)'};
+                           border:1px solid ${config.ton === ton
+                             ? 'var(--fd-indigo)'
+                             : 'rgba(255,255,255,0.1)'};
+                           border-radius:var(--radius-md);
+                           cursor:pointer">
+              <div style="font-size:1rem;margin-bottom:3px">
+                ${ton === 'motivant' ? '🔥'
+                : ton === 'doux'     ? '🌸'
+                : '⚡'}
+              </div>
+              <div style="font-size:.68rem;font-weight:700;
+                          color:${config.ton === ton
+                            ? 'var(--fd-indigo)'
+                            : 'var(--text-muted)'}">
+                ${ton === 'motivant' ? 'Motivant'
+                : ton === 'doux'     ? 'Doux'
+                : 'Sévère'}
+              </div>
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <!-- HEURE RAPPEL -->
+      <div style="background:rgba(255,255,255,0.03);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-xl);
+                  padding:16px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;
+                    justify-content:space-between">
+          <div>
+            <div style="font-size:.82rem;font-weight:700">
+              🕐 Heure du rappel quotidien
+            </div>
+            <div style="font-size:.65rem;color:var(--text-muted)">
+              Adapté automatiquement selon tes habitudes
+            </div>
+          </div>
+          <input type="time"
+                 value="${config.heureRappel || '07:30'}"
+                 onchange="Notifications.sauvegarderConfig(
+                   {heureRappel:this.value});
+                   Utils.toast('⏰ Heure mise à jour','success',1500)"
+                 style="padding:8px;background:var(--bg-input);
+                        border:1px solid var(--border-color);
+                        border-radius:var(--radius-md);
+                        color:var(--text-primary);font-size:.82rem"/>
+        </div>
+      </div>
+
+      <!-- TYPES DE NOTIFS -->
+      <div style="background:rgba(255,255,255,0.03);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-xl);
+                  padding:16px;margin-bottom:14px">
+        <div style="font-size:.6rem;font-weight:700;
+                    text-transform:uppercase;letter-spacing:.1em;
+                    color:var(--text-muted);margin-bottom:12px">
+          📋 Types de notifications
+        </div>
+        ${[
+          { cle:'rappelQuotidien',  label:'🌅 Rappel quotidien',      desc:'Séance du jour'           },
+          { cle:'absence1j',        label:'💪 Absence 1 jour',        desc:'Si tu n\'as pas traîné'   },
+          { cle:'absence2j',        label:'🔥 Absence 2 jours',       desc:'Relance urgente'          },
+          { cle:'absence5j',        label:'😢 Absence longue',        desc:'5+ jours sans séance'     },
+          { cle:'streakDanger',     label:'⚠️ Streak en danger',      desc:'Fin de journée'           },
+          { cle:'motivationMatin',  label:'🌟 Motivation matin',      desc:'Citation du jour'         },
+          { cle:'prProche',         label:'📈 PR en vue',             desc:'Record accessible'        },
+          { cle:'nouveauPR',        label:'🏆 Nouveau PR',            desc:'Record battu'             },
+          { cle:'finSeance',        label:'✅ Fin de séance',         desc:'Résumé post-séance'       },
+          { cle:'semaineParf',      label:'🏆 Semaine parfaite',      desc:'Objectif semaine atteint' },
+          { cle:'decharge',         label:'😴 Semaine de décharge',   desc:'Rappel décharge'          },
+          { cle:'hydratation',      label:'💧 Rappel hydratation',    desc:'Toutes les 2h'            },
+          { cle:'surcharge',        label:'⚠️ Surcharge musculaire',  desc:'Alerte récupération'      }
+        ].map(n => `
+          <div style="display:flex;align-items:center;
+                      justify-content:space-between;
+                      padding:8px 0;
+                      border-bottom:1px solid
+                        rgba(255,255,255,0.06)">
+            <div style="flex:1">
+              <div style="font-size:.82rem;font-weight:600">
+                ${n.label}</div>
+              <div style="font-size:.6rem;color:var(--text-muted)">
+                ${n.desc}</div>
+            </div>
+            ${this._renderToggle(n.cle, config[n.cle])}
+          </div>`).join('')}
+      </div>
+
+      <!-- SON + VIBRATION -->
+      <div style="background:rgba(255,255,255,0.03);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-xl);
+                  padding:16px;margin-bottom:14px">
+        <div style="font-size:.6rem;font-weight:700;
+                    text-transform:uppercase;letter-spacing:.1em;
+                    color:var(--text-muted);margin-bottom:12px">
+          🔊 Son & Vibration
+        </div>
+        ${[
+          { cle:'son',       label:'🔊 Son',       desc:'Sons de notification' },
+          { cle:'vibration', label:'📳 Vibration', desc:'Retour haptique'      }
+        ].map(n => `
+          <div style="display:flex;align-items:center;
+                      justify-content:space-between;
+                      padding:8px 0;
+                      border-bottom:1px solid rgba(255,255,255,0.06)">
+            <div style="flex:1">
+              <div style="font-size:.82rem;font-weight:600">
+                ${n.label}</div>
+              <div style="font-size:.6rem;color:var(--text-muted)">
+                ${n.desc}</div>
+            </div>
+            ${this._renderToggle(n.cle, config[n.cle])}
+          </div>`).join('')}
+      </div>
+
+      <!-- ACTIONS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;
+                  gap:8px;margin-bottom:14px">
+        <button onclick="Notifications.tester()"
+                class="btn-secondary" style="font-size:.82rem">
+          🔔 Tester
+        </button>
+        <button onclick="Notifications._resetNotifsJour();
+                         Utils.toast('✅ Réinitialisé','success')"
+                class="btn-secondary" style="font-size:.82rem">
+          🔄 Reset aujourd'hui
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div style="background:rgba(255,255,255,0.03);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-xl);
+                  padding:14px">
+        <div style="font-size:.6rem;font-weight:700;
+                    text-transform:uppercase;letter-spacing:.1em;
+                    color:var(--text-muted);margin-bottom:8px">
+          📊 Statut aujourd'hui
+        </div>
+        ${Object.entries(this.getStatsDuJour()).map(([k,v]) => `
+          <div style="display:flex;justify-content:space-between;
+                      padding:4px 0;font-size:.72rem">
+            <span style="color:var(--text-muted)">${k}</span>
+            <span style="color:${v
+              ? 'var(--fd-mint)' : 'var(--text-muted)'}">
+              ${v ? '✅ Envoyé' : '⏳ En attente'}
+            </span>
+          </div>`).join('')}
+      </div>
+    `;
+  },
+
+  // ✅ Helper toggle switch
+  _renderToggle(cle, valeur) {
+    return `
+      <div onclick="(() => {
+               const v = !${valeur};
+               Notifications.sauvegarderConfig({${cle}: v});
+               Utils.toast(v ? '✅ Activé' : '❌ Désactivé', 'success', 1000);
+               const p = this.closest('[id*=notif]') || this.closest('.page');
+               if(p) Notifications.renderPage(p);
+             })()"
+           style="position:relative;width:48px;height:26px;
+                  cursor:pointer;flex-shrink:0">
+        <div style="position:absolute;inset:0;
+                    background:${valeur
+                      ? 'var(--fd-indigo)'
+                      : 'rgba(255,255,255,0.1)'};
+                    border:2px solid ${valeur
+                      ? 'var(--fd-indigo)'
+                      : 'rgba(255,255,255,0.2)'};
+                    border-radius:99px;
+                    transition:all .25s">
+        </div>
+        <div style="position:absolute;top:50%;
+                    left:${valeur ? '24px' : '2px'};
+                    transform:translateY(-50%);
+                    width:18px;height:18px;
+                    background:${valeur
+                      ? 'white' : 'rgba(255,255,255,0.4)'};
+                    border-radius:50%;
+                    transition:left .25s;
+                    pointer-events:none">
+        </div>
+      </div>
+    `;
+  },
+
+  // ════════════════════════════════════════════════════════
+  // UTILITAIRES
+  // ════════════════════════════════════════════════════════
   getStatsDuJour() {
     const today = Utils.aujourd_hui();
     const stats = {};
     [
       'ft_rappel_', 'ft_motiv_',
       'ft_verif_pr_', 'ft_notif_semaine_parf_',
-      'ft_notif_decharge_'
+      'ft_notif_decharge_', 'ft_notif_surcharge_'
     ].forEach(cle => {
-      stats[cle.replace('ft_','').replace('_','')] =
-        Utils.storage.get(cle + today, false);
+      stats[
+        cle.replace('ft_','').replace(/_/g,' ').trim()
+      ] = Utils.storage.get(cle + today, false);
     });
     return stats;
   },
@@ -933,11 +1413,11 @@ const Notifications = {
     [
       'ft_rappel_', 'ft_motiv_',
       'ft_verif_pr_', 'ft_notif_semaine_parf_',
-      'ft_notif_decharge_'
+      'ft_notif_decharge_', 'ft_notif_surcharge_'
     ].forEach(cle => Utils.storage.remove(cle + today));
     Utils.toast('Notifs du jour réinitialisées', 'info');
   }
 };
 
 window.Notifications = Notifications;
-console.log('✅ Notifications v3.0 + Smart chargé');
+console.log('✅ Notifications v4.0 chargé — Hydratation + Surcharge + Genre-aware + Interface');
