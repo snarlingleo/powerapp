@@ -1,7 +1,10 @@
 /* ============================================================
-   PowerApp — Nutrition.js v2.1 FINAL
+   PowerApp — Nutrition.js v3.0
    Journal + Recettes + Objectifs + Stats + Hydratation
-   Migration v1.0 → v2.1 automatique
+   + Recettes adaptées genre + objectif + muscles
+   + Objectifs nutritionnels genre-aware
+   + Score nutrition
+   + Suggestions repas ciblés
    ============================================================ */
 
 'use strict';
@@ -205,13 +208,19 @@ const ALIMENTS_DB = {
 };
 
 // ════════════════════════════════════════════════════════════
-// BASE DE DONNÉES RECETTES (15 recettes)
+// BASE DE DONNÉES RECETTES — ✅ v3.0 enrichie (genre + objectif)
 // ════════════════════════════════════════════════════════════
 const RECETTES_DB = [
+
+  // ══════════════════════════════════════
+  // RECETTES UNIVERSELLES
+  // ══════════════════════════════════════
   {
     id:'bowl_post_seance', nom:'Bowl post-séance',
     emoji:'🥣', categorie:'post_seance', moment:'post_seance',
     temps:10,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','forme','force'],
     description:'Récupération optimale après l\'entraînement',
     tags:['post-séance','protéines','rapide'],
     ingredients:[
@@ -226,6 +235,8 @@ const RECETTES_DB = [
     id:'omelette_musculation', nom:'Omelette musculation',
     emoji:'🍳', categorie:'petit_dejeuner', moment:'matin',
     temps:15,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','force','forme'],
     description:'Petit-déjeuner riche en protéines',
     tags:['matin','protéines','œufs'],
     ingredients:[
@@ -240,6 +251,8 @@ const RECETTES_DB = [
     id:'riz_poulet_legumes', nom:'Riz poulet légumes',
     emoji:'🍱', categorie:'dejeuner', moment:'dejeuner',
     temps:25,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','forme','force','endurance'],
     description:'Le classique de la musculation — équilibré',
     tags:['déjeuner','équilibré','classique'],
     ingredients:[
@@ -254,6 +267,8 @@ const RECETTES_DB = [
     id:'smoothie_proteine', nom:'Smoothie protéiné',
     emoji:'🥤', categorie:'post_seance', moment:'post_seance',
     temps:5,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','forme','force'],
     description:'Récupération express — prêt en 5 minutes',
     tags:['rapide','post-séance','liquide'],
     ingredients:[
@@ -267,6 +282,8 @@ const RECETTES_DB = [
     id:'salade_thon_quinoa', nom:'Salade thon quinoa',
     emoji:'🥗', categorie:'dejeuner', moment:'dejeuner',
     temps:15,
+    genre:['homme','femme'],
+    objectifs:['seche','perte_poids','forme'],
     description:'Légère et très protéinée — parfaite pour la sèche',
     tags:['sèche','léger','déjeuner'],
     ingredients:[
@@ -282,6 +299,8 @@ const RECETTES_DB = [
     id:'pancakes_avoine', nom:'Pancakes avoine',
     emoji:'🥞', categorie:'petit_dejeuner', moment:'matin',
     temps:20,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','endurance','force'],
     description:'Petit-déjeuner énergie pour les grosses séances',
     tags:['matin','énergie','volume'],
     ingredients:[
@@ -295,6 +314,8 @@ const RECETTES_DB = [
     id:'bowl_patate_douce', nom:'Bowl patate douce & poulet',
     emoji:'🍠', categorie:'dejeuner', moment:'dejeuner',
     temps:30,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','force','endurance'],
     description:'Prise de masse — glucides complexes + protéines',
     tags:['prise de masse','déjeuner','volume'],
     ingredients:[
@@ -308,6 +329,8 @@ const RECETTES_DB = [
     id:'cottage_fruits', nom:'Cottage cheese & fruits',
     emoji:'🧀', categorie:'collation', moment:'collation',
     temps:3,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','forme','force'],
     description:'Collation protéinée — parfaite avant de dormir',
     tags:['collation','soir','caséine'],
     ingredients:[
@@ -321,6 +344,8 @@ const RECETTES_DB = [
     id:'pates_bolo_sport', nom:'Pâtes bolognaise sport',
     emoji:'🍝', categorie:'diner', moment:'diner',
     temps:30,
+    genre:['homme'],
+    objectifs:['prise_masse','force','endurance'],
     description:'Repas du soir riche pour la récupération',
     tags:['dîner','masse','pâtes'],
     ingredients:[
@@ -334,6 +359,8 @@ const RECETTES_DB = [
     id:'saumon_riz', nom:'Saumon & riz complet',
     emoji:'🐠', categorie:'diner', moment:'diner',
     temps:25,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','forme','force','seche'],
     description:'Oméga-3 + glucides complexes — récupération nocturne',
     tags:['dîner','récupération','oméga-3'],
     ingredients:[
@@ -347,6 +374,8 @@ const RECETTES_DB = [
     id:'wrap_poulet', nom:'Wrap poulet avocat',
     emoji:'🌯', categorie:'dejeuner', moment:'dejeuner',
     temps:10,
+    genre:['homme','femme'],
+    objectifs:['forme','seche','perte_poids'],
     description:'Repas rapide et équilibré — idéal au bureau',
     tags:['rapide','déjeuner','bureau'],
     ingredients:[
@@ -361,6 +390,8 @@ const RECETTES_DB = [
     id:'pre_seance', nom:'Repas pré-séance',
     emoji:'⚡', categorie:'pre_seance', moment:'pre_seance',
     temps:10,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','force','endurance','forme'],
     description:'Énergie optimale 2h avant l\'entraînement',
     tags:['pré-séance','énergie','timing'],
     ingredients:[
@@ -373,6 +404,8 @@ const RECETTES_DB = [
     id:'overnight_oats', nom:'Overnight oats',
     emoji:'🌙', categorie:'petit_dejeuner', moment:'matin',
     temps:5,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','forme','endurance'],
     description:'Préparer la veille — petit-déjeuner parfait',
     tags:['matin','préparation','masse'],
     ingredients:[
@@ -387,6 +420,8 @@ const RECETTES_DB = [
     id:'tofu_wok', nom:'Wok tofu légumes',
     emoji:'🥢', categorie:'diner', moment:'diner',
     temps:20,
+    genre:['homme','femme'],
+    objectifs:['forme','seche','perte_poids'],
     description:'Option végétarienne haute en protéines',
     tags:['végétarien','dîner','légumes'],
     ingredients:[
@@ -401,6 +436,8 @@ const RECETTES_DB = [
     id:'snack_muscu', nom:'Snack musculation',
     emoji:'💪', categorie:'collation', moment:'collation',
     temps:2,
+    genre:['homme','femme'],
+    objectifs:['prise_masse','force','forme'],
     description:'Collation rapide entre les repas',
     tags:['collation','rapide','protéines'],
     ingredients:[
@@ -408,34 +445,263 @@ const RECETTES_DB = [
       { ref:'fromage_blanc',   qte:150 },
       { ref:'amandes',         qte:20  }
     ]
+  },
+
+  // ✅ NOUVEAU v3.0 — Recettes FEMME spécifiques
+  {
+    id:'bowl_acai_femme', nom:'Bowl açaï & fruits',
+    emoji:'🫐', categorie:'petit_dejeuner', moment:'matin',
+    temps:8,
+    genre:['femme'],
+    objectifs:['forme','seche','perte_poids'],
+    description:'Antioxydants + énergie — parfait pour les femmes actives',
+    tags:['matin','femme','antioxydants','léger'],
+    ingredients:[
+      { ref:'myrtilles',     qte:150 },
+      { ref:'fraises',       qte:100 },
+      { ref:'banane',        qte:80  },
+      { ref:'yaourt_grec',   qte:150 },
+      { ref:'amandes',       qte:20  }
+    ]
+  },
+  {
+    id:'poulet_citron_salade', nom:'Poulet citron & salade fraîche',
+    emoji:'🍋', categorie:'dejeuner', moment:'dejeuner',
+    temps:15,
+    genre:['femme'],
+    objectifs:['seche','perte_poids','forme'],
+    description:'Léger, frais et protéiné — idéal pour la sèche féminine',
+    tags:['déjeuner','femme','léger','sèche'],
+    ingredients:[
+      { ref:'poulet_grillee', qte:130 },
+      { ref:'salade',         qte:120 },
+      { ref:'tomate',         qte:100 },
+      { ref:'concombre',      qte:80  },
+      { ref:'avocat',         qte:60  },
+      { ref:'huile_olive',    qte:8   }
+    ]
+  },
+  {
+    id:'curry_pois_chiches', nom:'Curry pois chiches & légumes',
+    emoji:'🍲', categorie:'diner', moment:'diner',
+    temps:25,
+    genre:['femme'],
+    objectifs:['forme','seche','perte_poids'],
+    description:'Dîner végétarien équilibré, riche en fibres',
+    tags:['dîner','femme','végétarien','équilibré'],
+    ingredients:[
+      { ref:'lentilles',   qte:150 },
+      { ref:'tomate',      qte:150 },
+      { ref:'courgette',   qte:100 },
+      { ref:'epinards',    qte:80  },
+      { ref:'huile_olive', qte:8   }
+    ]
+  },
+  {
+    id:'smoothie_collagene', nom:'Smoothie collagène & fruits',
+    emoji:'🌸', categorie:'collation', moment:'collation',
+    temps:5,
+    genre:['femme'],
+    objectifs:['forme','seche','perte_poids'],
+    description:'Collation féminine — peau, cheveux et récupération',
+    tags:['collation','femme','beauté','léger'],
+    ingredients:[
+      { ref:'fraises',       qte:150 },
+      { ref:'myrtilles',     qte:80  },
+      { ref:'fromage_blanc', qte:150 },
+      { ref:'orange',        qte:100 }
+    ]
+  },
+  {
+    id:'bowl_fessiers', nom:'Bowl galbe fessiers',
+    emoji:'🍑', categorie:'post_seance', moment:'post_seance',
+    temps:12,
+    genre:['femme'],
+    objectifs:['prise_masse','forme','force'],
+    description:'Récupération après Lower Body — idéal pour les fessiers',
+    tags:['post-séance','femme','fessiers','galbe'],
+    ingredients:[
+      { ref:'yaourt_grec',    qte:200 },
+      { ref:'patate_douce',   qte:120 },
+      { ref:'poulet_grillee', qte:100 },
+      { ref:'myrtilles',      qte:60  }
+    ]
+  },
+  {
+    id:'salade_saumon_avoc', nom:'Salade saumon avocat',
+    emoji:'🥗', categorie:'dejeuner', moment:'dejeuner',
+    temps:12,
+    genre:['femme'],
+    objectifs:['seche','forme','perte_poids'],
+    description:'Oméga-3 + bons lipides — beauté et performance',
+    tags:['déjeuner','femme','oméga-3','sèche'],
+    ingredients:[
+      { ref:'saumon',      qte:150 },
+      { ref:'salade',      qte:120 },
+      { ref:'avocat',      qte:80  },
+      { ref:'tomate',      qte:100 },
+      { ref:'concombre',   qte:80  },
+      { ref:'huile_olive', qte:8   }
+    ]
+  },
+
+  // ✅ NOUVEAU v3.0 — Recettes HOMME spécifiques (volume/force)
+  {
+    id:'steak_patate_brocoli', nom:'Steak + patate douce + brocoli',
+    emoji:'🥩', categorie:'diner', moment:'diner',
+    temps:25,
+    genre:['homme'],
+    objectifs:['prise_masse','force'],
+    description:'Repas de force — maximum protéines et glucides',
+    tags:['dîner','homme','force','volume'],
+    ingredients:[
+      { ref:'boeuf_hache',  qte:200 },
+      { ref:'patate_douce', qte:250 },
+      { ref:'brocoli',      qte:150 },
+      { ref:'huile_olive',  qte:12  }
+    ]
+  },
+  {
+    id:'shake_prise_masse', nom:'Shake prise de masse',
+    emoji:'💪', categorie:'post_seance', moment:'post_seance',
+    temps:3,
+    genre:['homme'],
+    objectifs:['prise_masse','force'],
+    description:'Shake hypercalorique pour maximiser la prise de masse',
+    tags:['post-séance','homme','masse','shake'],
+    ingredients:[
+      { ref:'whey',             qte:60  },
+      { ref:'avoine',           qte:80  },
+      { ref:'banane',           qte:150 },
+      { ref:'beurre_cacahuete', qte:30  },
+      { ref:'fromage_blanc',    qte:150 }
+    ]
+  },
+  {
+    id:'riz_thon_masse', nom:'Riz thon masse',
+    emoji:'🍚', categorie:'dejeuner', moment:'dejeuner',
+    temps:15,
+    genre:['homme'],
+    objectifs:['prise_masse','force'],
+    description:'Repas haute densité nutritionnelle — prise de masse',
+    tags:['déjeuner','homme','masse','simple'],
+    ingredients:[
+      { ref:'riz_blanc',   qte:250 },
+      { ref:'thon_boite',  qte:200 },
+      { ref:'huile_olive', qte:15  },
+      { ref:'tomate',      qte:150 },
+      { ref:'epinards',    qte:80  }
+    ]
+  },
+
+  // ✅ NOUVEAU v3.0 — Recettes SÈCHE universelles
+  {
+    id:'poulet_vapeur_legumes', nom:'Poulet vapeur & légumes',
+    emoji:'🥦', categorie:'diner', moment:'diner',
+    temps:20,
+    genre:['homme','femme'],
+    objectifs:['seche','perte_poids'],
+    description:'Minimum calories, maximum protéines',
+    tags:['dîner','sèche','léger','protéines'],
+    ingredients:[
+      { ref:'poulet_grillee', qte:180 },
+      { ref:'brocoli',        qte:200 },
+      { ref:'courgette',      qte:150 },
+      { ref:'tomate',         qte:100 }
+    ]
+  },
+  {
+    id:'omelette_blancs', nom:'Omelette blancs d\'œufs',
+    emoji:'🍳', categorie:'petit_dejeuner', moment:'matin',
+    temps:10,
+    genre:['homme','femme'],
+    objectifs:['seche','perte_poids'],
+    description:'Moins de lipides, plus de protéines — sèche active',
+    tags:['matin','sèche','léger'],
+    ingredients:[
+      { ref:'blanc_oeuf', qte:300 },
+      { ref:'epinards',   qte:100 },
+      { ref:'tomate',     qte:100 }
+    ]
+  },
+
+  // ✅ NOUVEAU v3.0 — Recettes ENDURANCE
+  {
+    id:'pasta_pre_race', nom:'Pasta pré-compétition',
+    emoji:'🍝', categorie:'pre_seance', moment:'pre_seance',
+    temps:20,
+    genre:['homme','femme'],
+    objectifs:['endurance'],
+    description:'Charge glucidique avant effort prolongé',
+    tags:['pré-séance','endurance','glucides','énergie'],
+    ingredients:[
+      { ref:'pates',          qte:250 },
+      { ref:'poulet_grillee', qte:120 },
+      { ref:'tomate',         qte:150 },
+      { ref:'huile_olive',    qte:10  }
+    ]
+  },
+  {
+    id:'porridge_banane', nom:'Porridge banane & miel',
+    emoji:'🌾', categorie:'petit_dejeuner', moment:'matin',
+    temps:8,
+    genre:['homme','femme'],
+    objectifs:['endurance','forme'],
+    description:'Énergie longue durée — parfait pour cardio',
+    tags:['matin','endurance','énergie','cardio'],
+    ingredients:[
+      { ref:'avoine',        qte:100 },
+      { ref:'banane',        qte:120 },
+      { ref:'yaourt_grec',   qte:100 },
+      { ref:'myrtilles',     qte:50  }
+    ]
   }
 ];
 
 // ════════════════════════════════════════════════════════════
-// MODULE NUTRITION v2.1
+// MODULE NUTRITION v3.0
 // ════════════════════════════════════════════════════════════
 const Nutrition = {
 
-  // ─── Clés storage ───────────────────────────────────────
   CLE_JOURNAL:   'ft_nutrition_journal',
   CLE_OBJECTIFS: 'ft_nutrition_objectifs',
   CLE_EAU:       'ft_nutrition_eau',
   CLE_CUSTOMS:   'ft_nutrition_customs',
 
-  // ─── State ──────────────────────────────────────────────
-  _ongletActif:   'dashboard',
-  _filtreRecette: 'tous',
-  _alimentChoisi: null,
+  _ongletActif:    'dashboard',
+  _filtreRecette:  'tous',
+  _alimentChoisi:  null,
   _chartInstances: {},
 
   // ════════════════════════════════════════════════════════
-  // ✅ MIGRATION v1.0 → v2.1
+  // ✅ NOUVEAU v3.0 — Récupérer profil onboarding
+  // ════════════════════════════════════════════════════════
+  _getProfilOnboarding() {
+    try {
+      return Utils.storage.get('ft_profil_onboarding', {
+        genre:          'homme',
+        objectif:       'forme',
+        muscles_cibles: [],
+        niveau:         'intermediaire'
+      });
+    } catch(e) {
+      return {
+        genre:'homme', objectif:'forme',
+        muscles_cibles:[], niveau:'intermediaire'
+      };
+    }
+  },
+
+  // ════════════════════════════════════════════════════════
+  // MIGRATION v1 → v2
   // ════════════════════════════════════════════════════════
   _migrerDonneesV1() {
     try {
       for (let i = 0; i < 60; i++) {
         const date     = Utils.ajouterJours(Utils.aujourd_hui(), -i);
-        const ancienne = Utils.storage.get(`ft_nutrition_${date}`, null);
+        const ancienne = Utils.storage.get(
+          `ft_nutrition_${date}`, null
+        );
 
         if (ancienne?.repas?.length) {
           const cleNew    = `${this.CLE_JOURNAL}_${date}`;
@@ -444,27 +710,23 @@ const Nutrition = {
           if (!dejaMigre) {
             const entrees = ancienne.repas.map(r => ({
               id:     r.id?.toString() || Date.now().toString(),
-              ref:    r.ref || 'custom',
-              nom:    r.nom || 'Aliment',
+              ref:    r.ref   || 'custom',
+              nom:    r.nom   || 'Aliment',
               emoji:  r.emoji || '🍽️',
               unite:  'g',
               qte:    r.quantite || 100,
-              moment: r.repas || 'dejeuner',
-              cal:    r.cal   || 0,
-              prot:   r.prot  || 0,
-              gluc:   r.gluc  || 0,
-              lip:    r.lip   || 0,
+              moment: r.repas    || 'dejeuner',
+              cal:    r.cal      || 0,
+              prot:   r.prot     || 0,
+              gluc:   r.gluc     || 0,
+              lip:    r.lip      || 0,
               date,
-              heure:  r.heure || '12:00'
+              heure:  r.heure    || '12:00'
             }));
             Utils.storage.set(cleNew, entrees);
-            console.log(
-              `[Nutrition] Migré ${entrees.length} entrées du ${date}`
-            );
           }
         }
 
-        // Migrer l'eau
         if (ancienne?.eau) {
           const cleEau = `${this.CLE_EAU}_${date}`;
           if (!Utils.storage.get(cleEau, null)) {
@@ -478,49 +740,112 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ RENDER PRINCIPAL
+  // ✅ NOUVEAU v3.0 — Recettes adaptées genre + objectif
+  // ════════════════════════════════════════════════════════
+  getRecettesAdaptees(genre = null, objectif = null, limite = 6) {
+    const profil   = this._getProfilOnboarding();
+    const g        = genre   || profil.genre   || 'homme';
+    const obj      = objectif || profil.objectif || 'forme';
+
+    return RECETTES_DB
+      .filter(r => {
+        const genreOK = !r.genre
+          || r.genre.includes(g)
+          || r.genre.includes('tous');
+        const objOK   = !r.objectifs
+          || r.objectifs.includes(obj)
+          || r.objectifs.includes('forme');
+        return genreOK && objOK;
+      })
+      .sort((a,b) => {
+        // Prioriser les recettes exactement pour ce genre + objectif
+        const scoreA = (a.genre?.includes(g) ? 1 : 0)
+          + (a.objectifs?.includes(obj) ? 1 : 0);
+        const scoreB = (b.genre?.includes(g) ? 1 : 0)
+          + (b.objectifs?.includes(obj) ? 1 : 0);
+        return scoreB - scoreA;
+      })
+      .slice(0, limite);
+  },
+
+  // ✅ NOUVEAU v3.0 — Suggestion repas selon muscles ciblés
+  getSuggestionRepasMusculaire(muscles = []) {
+    if (!muscles.length) return null;
+
+    // Muscles qui nécessitent protéines élevées
+    const musclesForce = [
+      'pectoraux','dorsal','quadriceps','fessiers'
+    ];
+    const musclesCardio = ['abdominaux','mollets','ischio'];
+
+    const needsProtein = muscles.some(m =>
+      musclesForce.includes(m)
+    );
+    const needsCarbs   = muscles.some(m =>
+      musclesCardio.includes(m)
+    );
+
+    if (needsProtein) {
+      // Suggérer recette haute protéine
+      return RECETTES_DB.find(r =>
+        r.id === 'riz_poulet_legumes'
+        || r.id === 'bowl_patate_douce'
+      );
+    }
+    if (needsCarbs) {
+      return RECETTES_DB.find(r =>
+        r.id === 'pre_seance'
+        || r.id === 'porridge_banane'
+      );
+    }
+
+    return RECETTES_DB.find(r => r.id === 'salade_thon_quinoa');
+  },
+
+  // ════════════════════════════════════════════════════════
+  // RENDER PRINCIPAL
   // ════════════════════════════════════════════════════════
   render(container) {
     if (!container) return;
 
-    // Migration auto au premier render
     this._migrerDonneesV1();
 
-    // Détruire les charts existants
     Object.values(this._chartInstances).forEach(c => {
       try { c.destroy(); } catch(e) {}
     });
     this._chartInstances = {};
 
+    const profil    = this._getProfilOnboarding();
+    const genre     = profil.genre    || 'homme';
+    const objectif  = profil.objectif || 'forme';
+    const genreIcon = genre === 'femme' ? '🌸' : '💪';
+
     container.innerHTML = `
       <!-- Onglets -->
       <div class="tabs-container mb-md"
            style="display:grid;
-                  grid-template-columns:repeat(5,1fr);
-                  gap:4px">
+                  grid-template-columns:repeat(5,1fr);gap:4px">
         ${[
-          { id:'dashboard', label:'📊',    full:'Dashboard'  },
-          { id:'journal',   label:'📔',    full:'Journal'    },
-          { id:'recettes',  label:'🍽️',   full:'Recettes'   },
-          { id:'objectifs', label:'🎯',    full:'Objectifs'  },
-          { id:'stats',     label:'📈',    full:'Stats'      }
+          { id:'dashboard', label:'📊', full:'Dashboard' },
+          { id:'journal',   label:'📔', full:'Journal'   },
+          { id:'recettes',  label:'🍽️', full:'Recettes'  },
+          { id:'objectifs', label:'🎯', full:'Objectifs' },
+          { id:'stats',     label:'📈', full:'Stats'     }
         ].map(t => `
-          <button
-            onclick="Nutrition._changerOnglet('${t.id}')"
-            style="padding:8px 4px;
-                   font-size:.65rem;font-weight:700;
-                   text-align:center;cursor:pointer;
-                   border-radius:var(--radius-md);
-                   transition:all .2s;
-                   background:${this._ongletActif === t.id
-                     ? 'var(--fd-indigo)'
-                     : 'rgba(255,255,255,0.04)'};
-                   border:1px solid ${this._ongletActif === t.id
-                     ? 'var(--fd-indigo)'
-                     : 'rgba(255,255,255,0.08)'};
-                   color:${this._ongletActif === t.id
-                     ? 'white'
-                     : 'var(--text-muted)'}">
+          <button onclick="Nutrition._changerOnglet('${t.id}')"
+                  style="padding:8px 4px;font-size:.65rem;
+                         font-weight:700;text-align:center;
+                         cursor:pointer;
+                         border-radius:var(--radius-md);
+                         transition:all .2s;
+                         background:${this._ongletActif === t.id
+                           ? 'var(--fd-indigo)'
+                           : 'rgba(255,255,255,0.04)'};
+                         border:1px solid ${this._ongletActif === t.id
+                           ? 'var(--fd-indigo)'
+                           : 'rgba(255,255,255,0.08)'};
+                         color:${this._ongletActif === t.id
+                           ? 'white' : 'var(--text-muted)'}">
             <div style="font-size:1rem;margin-bottom:2px">
               ${t.label}
             </div>
@@ -552,34 +877,82 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ DASHBOARD
+  // DASHBOARD — ✅ v3.0 enrichi
   // ════════════════════════════════════════════════════════
   _rendreDashboard(container) {
     const totaux = this.getTotauxJournal();
     const obj    = this.getObjectifs();
     const eau    = this.getEau();
     const eauObj = obj.eau * 1000;
+    const profil = this._getProfilOnboarding();
+    const genre  = profil.genre    || 'homme';
+    const muscles = profil.muscles_cibles || [];
 
     const pcts = {
       cal:  Math.min(100, Math.round((totaux.cal  / Math.max(obj.calories,  1)) * 100)),
       prot: Math.min(100, Math.round((totaux.prot / Math.max(obj.proteines, 1)) * 100)),
       gluc: Math.min(100, Math.round((totaux.gluc / Math.max(obj.glucides,  1)) * 100)),
       lip:  Math.min(100, Math.round((totaux.lip  / Math.max(obj.lipides,   1)) * 100)),
-      eau:  Math.min(100, Math.round((eau          / Math.max(eauObj,        1)) * 100))
+      eau:  Math.min(100, Math.round((eau         / Math.max(eauObj,        1)) * 100))
     };
 
     const surplus = totaux.cal - obj.calories;
 
-    // Suggestion post-séance
+    // ✅ NOUVEAU v3.0 — Score nutrition
+    const scoreNutri = this._calculerScoreNutrition(
+      totaux, obj, eau
+    );
+
+    // ✅ Suggestion post-séance adaptée
     let postSeance = null;
     try {
       const seanceAuj = Tracker.getSeanceDuJour?.();
       if (seanceAuj?.series?.length > 0) {
-        postSeance = RECETTES_DB.find(r => r.moment === 'post_seance');
+        // Suggestion selon muscles ciblés
+        if (muscles.length > 0) {
+          postSeance = this.getSuggestionRepasMusculaire(muscles)
+            || RECETTES_DB.find(r => r.moment === 'post_seance');
+        } else {
+          postSeance = genre === 'femme'
+            ? RECETTES_DB.find(r => r.id === 'bowl_fessiers')
+              || RECETTES_DB.find(r => r.moment === 'post_seance')
+            : RECETTES_DB.find(r => r.moment === 'post_seance');
+        }
       }
     } catch(e) {}
 
+    // ✅ NOUVEAU v3.0 — Recettes recommandées adaptées
+    const recettesRecommandees = this.getRecettesAdaptees(
+      genre, profil.objectif, 3
+    );
+
     container.innerHTML = `
+
+      <!-- Score nutrition v3.0 -->
+      ${scoreNutri.score > 0 ? `
+        <div style="background:rgba(75,75,249,0.08);
+                    border:1px solid rgba(75,75,249,0.2);
+                    border-left:3px solid var(--fd-indigo);
+                    border-radius:var(--radius-xl);
+                    padding:12px 14px;margin-bottom:14px;
+                    display:flex;align-items:center;gap:12px">
+          <div style="font-size:1.8rem;font-weight:900;
+                      color:${scoreNutri.score >= 80
+                        ? 'var(--fd-mint)'
+                        : scoreNutri.score >= 60
+                          ? 'var(--fd-lemon)' : 'var(--fd-coral)'}">
+            ${scoreNutri.score}
+          </div>
+          <div style="flex:1">
+            <div style="font-size:.72rem;font-weight:700;
+                        color:var(--fd-indigo)">
+              📊 Score nutrition</div>
+            <div style="font-size:.65rem;
+                        color:var(--text-muted)">
+              ${scoreNutri.message}</div>
+          </div>
+          <div style="font-size:1.2rem">${scoreNutri.emoji}</div>
+        </div>` : ''}
 
       <!-- Résumé calories -->
       <div style="background:linear-gradient(135deg,
@@ -602,6 +975,7 @@ const Nutrition = {
               ${new Date().toLocaleDateString('fr-FR',{
                 weekday:'long',day:'numeric',month:'long'
               })}
+              ${genre === 'femme' ? ' 🌸' : ''}
             </div>
           </div>
           <div style="text-align:right">
@@ -624,33 +998,29 @@ const Nutrition = {
           </div>
         </div>
 
-        <!-- Barre calories principale -->
         <div style="height:8px;background:rgba(255,255,255,0.06);
                     border-radius:99px;overflow:hidden;
                     margin-bottom:14px">
           <div style="height:100%;width:${pcts.cal}%;
                       background:${pcts.cal >= 110
-                        ? 'var(--fd-coral)'
-                        : 'var(--fd-indigo)'};
+                        ? 'var(--fd-coral)' : 'var(--fd-indigo)'};
                       border-radius:99px;
                       transition:width 1s ease">
           </div>
         </div>
 
-        <!-- 3 macros -->
         <div style="display:grid;
-                    grid-template-columns:repeat(3,1fr);
-                    gap:8px">
+                    grid-template-columns:repeat(3,1fr);gap:8px">
           ${[
             { label:'Protéines', val:totaux.prot,
-              obj:obj.proteines, pct:pcts.prot,
-              color:'var(--fd-coral)',   unite:'g', emoji:'💪' },
+              obj:obj.proteines,  pct:pcts.prot,
+              color:'var(--fd-coral)',    unite:'g', emoji:'💪' },
             { label:'Glucides',  val:totaux.gluc,
-              obj:obj.glucides,  pct:pcts.gluc,
-              color:'var(--fd-lemon)',   unite:'g', emoji:'⚡' },
+              obj:obj.glucides,   pct:pcts.gluc,
+              color:'var(--fd-lemon)',    unite:'g', emoji:'⚡' },
             { label:'Lipides',   val:totaux.lip,
-              obj:obj.lipides,   pct:pcts.lip,
-              color:'var(--fd-lavender)',unite:'g', emoji:'🥑' }
+              obj:obj.lipides,    pct:pcts.lip,
+              color:'var(--fd-lavender)', unite:'g', emoji:'🥑' }
           ].map(m => `
             <div style="text-align:center;padding:10px 6px;
                         background:rgba(255,255,255,0.04);
@@ -702,14 +1072,13 @@ const Nutrition = {
             </div>
             <div style="font-size:1.3rem;font-weight:800;
                         color:var(--fd-indigo);margin-top:3px">
-              ${(eau / 1000).toFixed(2)}L
+              ${(eau/1000).toFixed(2)}L
               <span style="font-size:.7rem;color:var(--text-muted);
                            font-weight:400">
                 / ${obj.eau}L
               </span>
             </div>
           </div>
-          <!-- Cercle SVG -->
           <svg width="64" height="64" viewBox="0 0 64 64">
             <circle cx="32" cy="32" r="26"
                     fill="none"
@@ -723,17 +1092,12 @@ const Nutrition = {
                     stroke-dasharray="${Math.round(163.4*(pcts.eau/100))} 163.4"
                     transform="rotate(-90 32 32)"
                     style="transition:stroke-dasharray .8s ease"/>
-            <text x="32" y="36"
-                  text-anchor="middle"
-                  fill="var(--fd-indigo)"
-                  font-size="11"
-                  font-weight="800">
-              ${pcts.eau}%
-            </text>
+            <text x="32" y="36" text-anchor="middle"
+                  fill="var(--fd-indigo)" font-size="11"
+                  font-weight="800">${pcts.eau}%</text>
           </svg>
         </div>
 
-        <!-- Barre eau -->
         <div style="height:7px;background:rgba(75,75,249,0.1);
                     border-radius:99px;overflow:hidden;
                     margin-bottom:12px">
@@ -744,15 +1108,13 @@ const Nutrition = {
           </div>
         </div>
 
-        <!-- Boutons eau -->
         <div style="display:grid;
-                    grid-template-columns:repeat(4,1fr);
-                    gap:6px">
+                    grid-template-columns:repeat(4,1fr);gap:6px">
           ${[
-            { ml:150,  label:'+150', icon:'🥛' },
-            { ml:250,  label:'+250', icon:'🥤' },
-            { ml:500,  label:'+500', icon:'💧' },
-            { ml:1000, label:'+1L',  icon:'🍶' }
+            {ml:150,  label:'+150', icon:'🥛'},
+            {ml:250,  label:'+250', icon:'🥤'},
+            {ml:500,  label:'+500', icon:'💧'},
+            {ml:1000, label:'+1L',  icon:'🍶'}
           ].map(b => `
             <button onclick="Nutrition._ajouterEau(${b.ml})"
                     style="padding:8px 4px;text-align:center;
@@ -786,18 +1148,18 @@ const Nutrition = {
           </div>`}
       </div>
 
-      <!-- Suggestion post-séance -->
+      <!-- Suggestion post-séance adaptée genre -->
       ${postSeance ? `
         <div style="background:rgba(139,240,187,0.07);
                     border:1px solid rgba(139,240,187,0.25);
                     border-radius:var(--radius-xl);
-                    padding:14px;margin-bottom:14px;
-                    cursor:pointer"
+                    padding:14px;margin-bottom:14px;cursor:pointer"
              onclick="Nutrition._voirRecette('${postSeance.id}')">
           <div style="font-size:.6rem;font-weight:700;
                       text-transform:uppercase;letter-spacing:.1em;
                       color:var(--fd-mint);margin-bottom:6px">
             ⚡ Suggestion post-séance
+            ${genre === 'femme' ? '🌸' : ''}
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:1.8rem">${postSeance.emoji}</span>
@@ -814,6 +1176,50 @@ const Nutrition = {
             <div style="color:var(--fd-mint);font-size:1.2rem">›</div>
           </div>
         </div>` : ''}
+
+      <!-- ✅ NOUVEAU v3.0 — Recettes recommandées adaptées -->
+      <div style="background:rgba(255,255,255,0.03);
+                  border:1px solid rgba(255,255,255,0.07);
+                  border-radius:var(--radius-xl);
+                  padding:14px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;
+                    justify-content:space-between;
+                    margin-bottom:10px">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--text-muted)">
+            🍽️ Recettes pour toi
+            ${genre === 'femme' ? '🌸' : '💪'}
+          </div>
+          <button onclick="Nutrition._changerOnglet('recettes')"
+                  style="background:none;border:none;
+                         font-size:.68rem;color:var(--fd-indigo);
+                         cursor:pointer;font-weight:600">
+            Voir tout →
+          </button>
+        </div>
+        ${recettesRecommandees.map(r => {
+          const macros = this._calculerMacrosRecette(r);
+          return `
+            <div onclick="Nutrition._voirRecette('${r.id}')"
+                 style="display:flex;align-items:center;gap:10px;
+                        padding:8px 0;
+                        border-bottom:1px solid var(--border-color);
+                        cursor:pointer">
+              <span style="font-size:1.3rem">${r.emoji}</span>
+              <div style="flex:1">
+                <div style="font-size:.82rem;font-weight:600">
+                  ${r.nom}
+                </div>
+                <div style="font-size:.6rem;color:var(--text-muted)">
+                  ⏱ ${r.temps}min · ${macros.prot}g prot
+                  · ${macros.cal} kcal
+                </div>
+              </div>
+              <span style="color:var(--fd-indigo)">›</span>
+            </div>`;
+        }).join('')}
+      </div>
 
       <!-- Dernières entrées -->
       <div style="background:rgba(255,255,255,0.03);
@@ -838,13 +1244,52 @@ const Nutrition = {
         ${this._renderDernieresEntrees()}
       </div>
 
-      <!-- Bouton ajouter -->
       <button onclick="Nutrition._ouvrirAjoutAliment()"
               class="btn-primary"
               style="width:100%;font-size:.88rem">
         ➕ Ajouter un aliment
       </button>
     `;
+  },
+
+  // ✅ NOUVEAU v3.0 — Score nutrition
+  _calculerScoreNutrition(totaux, obj, eau) {
+    if (totaux.cal === 0) return { score:0, emoji:'', message:'' };
+
+    const pctCal  = (totaux.cal  / Math.max(obj.calories,  1)) * 100;
+    const pctProt = (totaux.prot / Math.max(obj.proteines, 1)) * 100;
+    const pctEau  = (eau         / Math.max(obj.eau * 1000, 1)) * 100;
+
+    let score = 0;
+
+    // Calories (40 pts)
+    if (pctCal >= 85 && pctCal <= 115) score += 40;
+    else if (pctCal >= 70 && pctCal <= 130) score += 25;
+    else score += 10;
+
+    // Protéines (35 pts) — le plus important
+    if (pctProt >= 90) score += 35;
+    else if (pctProt >= 70) score += 20;
+    else score += 5;
+
+    // Hydratation (25 pts)
+    if (pctEau >= 90) score += 25;
+    else if (pctEau >= 60) score += 15;
+    else score += 5;
+
+    const s = Math.min(100, score);
+
+    return {
+      score: s,
+      emoji: s >= 80 ? '🌟' : s >= 60 ? '👍' : '📊',
+      message: s >= 80
+        ? 'Excellente journée nutritionnelle !'
+        : s >= 60
+          ? 'Bonne nutrition — continue !'
+          : pctProt < 70
+            ? `⚠️ Protéines insuffisantes — encore ${Math.round(obj.proteines - totaux.prot)}g`
+            : `Augmente ton apport pour atteindre tes objectifs`
+    };
   },
 
   _renderDernieresEntrees() {
@@ -889,7 +1334,7 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ JOURNAL
+  // JOURNAL
   // ════════════════════════════════════════════════════════
   _rendreJournal(container) {
     const journal = this._getJournal();
@@ -905,7 +1350,6 @@ const Nutrition = {
     ];
 
     container.innerHTML = `
-
       <!-- Totaux -->
       <div style="background:rgba(255,255,255,0.04);
                   border:1px solid rgba(255,255,255,0.08);
@@ -914,16 +1358,13 @@ const Nutrition = {
         <div style="display:flex;justify-content:space-between;
                     align-items:center;margin-bottom:10px">
           <div style="font-size:.88rem;font-weight:800">
-            Total du jour
-          </div>
+            Total du jour</div>
           <div style="font-size:1rem;font-weight:800;
                       color:var(--fd-lemon)">
-            ${Math.round(totaux.cal)} kcal
-          </div>
+            ${Math.round(totaux.cal)} kcal</div>
         </div>
         <div style="display:grid;
-                    grid-template-columns:repeat(3,1fr);
-                    gap:8px">
+                    grid-template-columns:repeat(3,1fr);gap:8px">
           ${[
             { label:'Prot.', val:totaux.prot,
               obj:obj.proteines, color:'var(--fd-coral)'   },
@@ -932,36 +1373,31 @@ const Nutrition = {
             { label:'Lip.',  val:totaux.lip,
               obj:obj.lipides,   color:'var(--fd-lavender)'}
           ].map(m => {
-            const pct = Math.min(100,
-              Math.round((m.val/Math.max(m.obj,1))*100));
+            const pct = Math.min(100, Math.round(
+              (m.val / Math.max(m.obj,1)) * 100
+            ));
             return `
               <div>
-                <div style="display:flex;
-                            justify-content:space-between;
+                <div style="display:flex;justify-content:space-between;
                             margin-bottom:3px">
                   <span style="font-size:.6rem;
-                               color:var(--text-muted)">
-                    ${m.label}
-                  </span>
+                               color:var(--text-muted)">${m.label}</span>
                   <span style="font-size:.6rem;font-weight:700;
                                color:${m.color}">
-                    ${Math.round(m.val)}g
-                  </span>
+                    ${Math.round(m.val)}g</span>
                 </div>
                 <div style="height:4px;
                             background:rgba(255,255,255,0.06);
                             border-radius:99px;overflow:hidden">
                   <div style="height:100%;width:${pct}%;
                               background:${m.color};
-                              border-radius:99px">
-                  </div>
+                              border-radius:99px"></div>
                 </div>
               </div>`;
           }).join('')}
         </div>
       </div>
 
-      <!-- Bouton ajouter -->
       <button onclick="Nutrition._ouvrirAjoutAliment()"
               class="btn-primary"
               style="width:100%;margin-bottom:14px;
@@ -992,10 +1428,8 @@ const Nutrition = {
               <div style="font-size:.72rem;font-weight:700;
                           color:var(--text-muted);
                           display:flex;align-items:center;gap:6px">
-                <div style="width:3px;height:12px;
-                            border-radius:99px;
-                            background:var(--fd-indigo)">
-                </div>
+                <div style="width:3px;height:12px;border-radius:99px;
+                            background:var(--fd-indigo)"></div>
                 ${moment.label}
               </div>
               <div style="font-size:.65rem;color:var(--text-muted)">
@@ -1005,7 +1439,8 @@ const Nutrition = {
             </div>
             ${entrees.map(e => {
               const ali = ALIMENTS_DB[e.ref] || {
-                nom: e.nom || e.ref, emoji: e.emoji || '🍽️'
+                nom:   e.nom   || e.ref,
+                emoji: e.emoji || '🍽️'
               };
               return `
                 <div style="display:flex;align-items:center;
@@ -1019,15 +1454,12 @@ const Nutrition = {
                   </span>
                   <div style="flex:1;min-width:0">
                     <div style="font-size:.82rem;font-weight:700;
-                                overflow:hidden;
-                                text-overflow:ellipsis;
+                                overflow:hidden;text-overflow:ellipsis;
                                 white-space:nowrap">
                       ${ali.nom || e.nom}
                     </div>
-                    <div style="font-size:.6rem;
-                                color:var(--text-muted);
-                                margin-top:1px">
-                      ${e.qte || e.quantite || 100}${e.unite||'g'}
+                    <div style="font-size:.6rem;color:var(--text-muted)">
+                      ${e.qte || e.quantite || 100}${e.unite || 'g'}
                       · P:${Math.round(e.prot||0)}g
                       · G:${Math.round(e.gluc||0)}g
                       · L:${Math.round(e.lip||0)}g
@@ -1036,16 +1468,12 @@ const Nutrition = {
                   <div style="text-align:right;flex-shrink:0">
                     <div style="font-size:.82rem;font-weight:800;
                                 color:var(--fd-lemon)">
-                      ${Math.round(e.cal||0)}
-                    </div>
+                      ${Math.round(e.cal||0)}</div>
                     <div style="font-size:.55rem;
-                                color:var(--text-muted)">
-                      kcal
-                    </div>
+                                color:var(--text-muted)">kcal</div>
                   </div>
                   <button onclick="Nutrition._supprimerEntree('${e.id}')"
-                          style="width:28px;height:28px;
-                                 flex-shrink:0;
+                          style="width:28px;height:28px;flex-shrink:0;
                                  background:rgba(255,141,150,0.1);
                                  border:1px solid rgba(255,141,150,0.2);
                                  border-radius:50%;
@@ -1062,18 +1490,15 @@ const Nutrition = {
         <div style="text-align:center;padding:32px 16px;
                     color:var(--text-muted)">
           <div style="font-size:2.5rem;margin-bottom:8px">📔</div>
-          <div style="font-size:.88rem">
-            Aucune entrée aujourd'hui
-          </div>
+          <div style="font-size:.88rem">Aucune entrée aujourd'hui</div>
           <div style="font-size:.72rem;margin-top:4px">
-            Clique sur ➕ pour commencer
-          </div>
+            Clique sur ➕ pour commencer</div>
         </div>` : ''}
     `;
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ MODALE AJOUT ALIMENT
+  // MODALE AJOUT ALIMENT
   // ════════════════════════════════════════════════════════
   _ouvrirAjoutAliment(momentPrefere = 'dejeuner') {
     const modal   = document.getElementById('modal-info');
@@ -1088,8 +1513,6 @@ const Nutrition = {
                     margin-bottom:12px">
           ➕ Ajouter un aliment
         </div>
-
-        <!-- Mode liste / manuel -->
         <div style="display:grid;grid-template-columns:1fr 1fr;
                     gap:6px;margin-bottom:14px">
           <button id="btn-mode-liste"
@@ -1112,8 +1535,6 @@ const Nutrition = {
             ✏️ Manuel
           </button>
         </div>
-
-        <!-- Moment -->
         <div style="margin-bottom:12px">
           <div style="font-size:.65rem;color:var(--text-muted);
                       margin-bottom:6px;font-weight:600">
@@ -1127,26 +1548,21 @@ const Nutrition = {
               { id:'diner',       label:'🌙 Dîner'      },
               { id:'post_seance', label:'⚡ Post-séance' }
             ].map(m => `
-              <button onclick="Nutrition._selectMoment(
-                        '${m.id}',this)"
+              <button onclick="Nutrition._selectMoment('${m.id}',this)"
                       id="moment-${m.id}"
                       style="padding:5px 10px;font-size:.65rem;
                              font-weight:600;cursor:pointer;
                              border-radius:var(--radius-full);
                              background:${m.id === momentPrefere
-                               ? 'rgba(75,75,249,0.2)'
-                               : 'var(--bg-input)'};
+                               ? 'rgba(75,75,249,0.2)' : 'var(--bg-input)'};
                              border:1px solid ${m.id === momentPrefere
-                               ? 'var(--fd-indigo)'
-                               : 'var(--border-color)'};
+                               ? 'var(--fd-indigo)' : 'var(--border-color)'};
                              color:${m.id === momentPrefere
-                               ? 'var(--fd-indigo)'
-                               : 'var(--text-muted)'}">
+                               ? 'var(--fd-indigo)' : 'var(--text-muted)'}">
                 ${m.label}
               </button>`).join('')}
           </div>
         </div>
-
         <div id="ajout-content"></div>
       </div>
     `;
@@ -1172,26 +1588,25 @@ const Nutrition = {
   },
 
   _modeAjout(mode) {
-    const c = document.getElementById('ajout-content');
+    const c       = document.getElementById('ajout-content');
+    const btnL    = document.getElementById('btn-mode-liste');
+    const btnM    = document.getElementById('btn-mode-manuel');
     if (!c) return;
 
-    const btnListe  = document.getElementById('btn-mode-liste');
-    const btnManuel = document.getElementById('btn-mode-manuel');
-
-    if (btnListe) {
-      btnListe.style.background = mode === 'liste'
+    if (btnL) {
+      btnL.style.background = mode === 'liste'
         ? 'var(--fd-indigo)' : 'var(--bg-input)';
-      btnListe.style.color = mode === 'liste'
+      btnL.style.color = mode === 'liste'
         ? 'white' : 'var(--text-muted)';
-      btnListe.style.border = mode === 'liste'
+      btnL.style.border = mode === 'liste'
         ? 'none' : '1px solid var(--border-color)';
     }
-    if (btnManuel) {
-      btnManuel.style.background = mode === 'manuel'
+    if (btnM) {
+      btnM.style.background = mode === 'manuel'
         ? 'var(--fd-indigo)' : 'var(--bg-input)';
-      btnManuel.style.color = mode === 'manuel'
+      btnM.style.color = mode === 'manuel'
         ? 'white' : 'var(--text-muted)';
-      btnManuel.style.border = mode === 'manuel'
+      btnM.style.border = mode === 'manuel'
         ? 'none' : '1px solid var(--border-color)';
     }
 
@@ -1208,8 +1623,8 @@ const Nutrition = {
                         color:var(--text-primary);
                         font-size:.82rem;outline:none"/>
           <span style="position:absolute;left:12px;top:50%;
-                       transform:translateY(-50%);
-                       font-size:.9rem">🔍</span>
+                       transform:translateY(-50%);font-size:.9rem">
+            🔍</span>
         </div>
         <div id="liste-aliments"
              style="max-height:300px;overflow-y:auto">
@@ -1226,8 +1641,8 @@ const Nutrition = {
                    placeholder="ex: Mon repas maison"
                    autocomplete="off"/>
           </div>
-          <div style="display:grid;
-                      grid-template-columns:1fr 1fr;gap:8px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;
+                      gap:8px">
             <div>
               <div style="font-size:.65rem;color:var(--text-muted);
                           margin-bottom:4px">Calories *</div>
@@ -1271,9 +1686,7 @@ const Nutrition = {
   _renderListeAlimentsModal(recherche) {
     const q = (recherche || '').toLowerCase().trim();
     const aliments = Object.entries(ALIMENTS_DB)
-      .filter(([, ali]) =>
-        !q || ali.nom.toLowerCase().includes(q)
-      );
+      .filter(([, ali]) => !q || ali.nom.toLowerCase().includes(q));
 
     if (!aliments.length) return `
       <div style="text-align:center;padding:20px;
@@ -1290,13 +1703,10 @@ const Nutrition = {
            onmouseenter="this.style.background=
              'rgba(75,75,249,0.06)'"
            onmouseleave="this.style.background='transparent'">
-        <span style="font-size:1.2rem;flex-shrink:0">
-          ${ali.emoji}
-        </span>
+        <span style="font-size:1.2rem;flex-shrink:0">${ali.emoji}</span>
         <div style="flex:1;min-width:0">
           <div style="font-size:.82rem;font-weight:700">
-            ${ali.nom}
-          </div>
+            ${ali.nom}</div>
           <div style="font-size:.6rem;color:var(--text-muted)">
             ${ali.cal}kcal · P:${ali.prot}g · G:${ali.gluc}g
             · L:${ali.lip}g / ${ali.portion}${ali.unite}
@@ -1308,8 +1718,7 @@ const Nutrition = {
 
   _rechercherAliment(val) {
     const liste = document.getElementById('liste-aliments');
-    if (liste) liste.innerHTML =
-      this._renderListeAlimentsModal(val);
+    if (liste) liste.innerHTML = this._renderListeAlimentsModal(val);
   },
 
   _selectionnerAliment(ref) {
@@ -1330,8 +1739,7 @@ const Nutrition = {
           <span style="font-size:1.8rem">${ali.emoji}</span>
           <div>
             <div style="font-size:.9rem;font-weight:800">
-              ${ali.nom}
-            </div>
+              ${ali.nom}</div>
             <div style="font-size:.62rem;color:var(--text-muted)">
               Pour ${ali.portion}${ali.unite} :
               ${ali.cal}kcal · P:${ali.prot}g
@@ -1340,7 +1748,6 @@ const Nutrition = {
           </div>
         </div>
 
-        <!-- Quantité -->
         <div style="margin-bottom:12px">
           <div style="font-size:.65rem;color:var(--text-muted);
                       margin-bottom:6px;font-weight:600">
@@ -1378,7 +1785,6 @@ const Nutrition = {
           </div>
         </div>
 
-        <!-- Aperçu macros -->
         <div id="apercu-macros"
              style="display:grid;
                     grid-template-columns:repeat(4,1fr);
@@ -1389,8 +1795,7 @@ const Nutrition = {
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;
-                  gap:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <button onclick="Nutrition._modeAjout('liste')"
                 class="btn-secondary" style="font-size:.82rem">
           ← Retour
@@ -1414,7 +1819,7 @@ const Nutrition = {
   },
 
   _updateApercuMacros(ref, qte) {
-    const ali = ALIMENTS_DB[ref];
+    const ali    = ALIMENTS_DB[ref];
     if (!ali) return;
     const apercu = document.getElementById('apercu-macros');
     if (apercu) apercu.innerHTML =
@@ -1438,8 +1843,7 @@ const Nutrition = {
                     color:${m.color}">${m.val}</div>
         <div style="font-size:.5rem;color:var(--text-muted);
                     text-transform:uppercase;margin-top:1px">
-          ${m.label}
-        </div>
+          ${m.label}</div>
       </div>`).join('');
   },
 
@@ -1453,32 +1857,29 @@ const Nutrition = {
     const ratio  = qte / ali.portion;
 
     const entree = {
-      id:     Date.now().toString(),
+      id:    Date.now().toString(),
       ref,
-      nom:    ali.nom,
-      emoji:  ali.emoji,
-      unite:  ali.unite,
+      nom:   ali.nom,
+      emoji: ali.emoji,
+      unite: ali.unite,
       qte,
       moment,
-      cal:    Math.round(ali.cal  * ratio * 10) / 10,
-      prot:   Math.round(ali.prot * ratio * 10) / 10,
-      gluc:   Math.round(ali.gluc * ratio * 10) / 10,
-      lip:    Math.round(ali.lip  * ratio * 10) / 10,
-      date:   Utils.aujourd_hui(),
-      heure:  new Date().toLocaleTimeString('fr-FR',{
+      cal:   Math.round(ali.cal  * ratio * 10) / 10,
+      prot:  Math.round(ali.prot * ratio * 10) / 10,
+      gluc:  Math.round(ali.gluc * ratio * 10) / 10,
+      lip:   Math.round(ali.lip  * ratio * 10) / 10,
+      date:  Utils.aujourd_hui(),
+      heure: new Date().toLocaleTimeString('fr-FR',{
         hour:'2-digit', minute:'2-digit'
       })
     };
 
     this._ajouterEntreeJournal(entree);
-
     try { Gamification.ajouterXP(5, 'nutrition_log'); } catch(e) {}
 
-    document.getElementById('modal-info')
-      ?.classList.add('hidden');
+    document.getElementById('modal-info')?.classList.add('hidden');
     Utils.toast(`✅ ${ali.nom} ajouté !`, 'success', 1500);
     Utils.vibrerSuccess();
-
     this._alimentChoisi = null;
 
     const p = document.getElementById('page-nutrition');
@@ -1486,12 +1887,18 @@ const Nutrition = {
   },
 
   _ajouterManuel() {
-    const nom  = document.getElementById('manuel-nom')?.value?.trim();
-    const cal  = parseFloat(document.getElementById('manuel-cal')?.value)  || 0;
-    const prot = parseFloat(document.getElementById('manuel-prot')?.value) || 0;
-    const gluc = parseFloat(document.getElementById('manuel-gluc')?.value) || 0;
-    const lip  = parseFloat(document.getElementById('manuel-lip')?.value)  || 0;
-    const qte  = parseFloat(document.getElementById('manuel-qte')?.value)  || 100;
+    const nom  = document.getElementById('manuel-nom')
+      ?.value?.trim();
+    const cal  = parseFloat(
+      document.getElementById('manuel-cal')?.value)  || 0;
+    const prot = parseFloat(
+      document.getElementById('manuel-prot')?.value) || 0;
+    const gluc = parseFloat(
+      document.getElementById('manuel-gluc')?.value) || 0;
+    const lip  = parseFloat(
+      document.getElementById('manuel-lip')?.value)  || 0;
+    const qte  = parseFloat(
+      document.getElementById('manuel-qte')?.value)  || 100;
 
     if (!nom) { Utils.toast('Entre le nom !', 'error'); return; }
     if (!cal) { Utils.toast('Entre les calories !', 'error'); return; }
@@ -1520,8 +1927,7 @@ const Nutrition = {
     this._ajouterEntreeJournal(entree);
     try { Gamification.ajouterXP(5, 'nutrition_log'); } catch(e) {}
 
-    document.getElementById('modal-info')
-      ?.classList.add('hidden');
+    document.getElementById('modal-info')?.classList.add('hidden');
     Utils.toast(`✅ ${nom} ajouté !`, 'success', 1500);
     Utils.vibrerSuccess();
 
@@ -1530,27 +1936,36 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ RECETTES
+  // RECETTES — ✅ v3.0 filtre genre + objectif
   // ════════════════════════════════════════════════════════
   _rendreRecettes(container) {
+    const profil  = this._getProfilOnboarding();
+    const genre   = profil.genre    || 'homme';
+    const objectif = profil.objectif || 'forme';
+
     const filtres = [
-      { id:'tous',          label:'Tous'          },
-      { id:'petit_dejeuner',label:'🌅 Matin'      },
-      { id:'dejeuner',      label:'☀️ Déjeuner'   },
-      { id:'collation',     label:'🍎 Collation'  },
-      { id:'diner',         label:'🌙 Dîner'      },
-      { id:'post_seance',   label:'⚡ Post-séance' },
-      { id:'pre_seance',    label:'🎯 Pré-séance'  }
+      { id:'tous',          label:'Tous'                          },
+      { id:'genre_adapte',  label:`${genre === 'femme' ? '🌸' : '💪'} Pour moi` },
+      { id:'petit_dejeuner',label:'🌅 Matin'                     },
+      { id:'dejeuner',      label:'☀️ Déjeuner'                  },
+      { id:'collation',     label:'🍎 Collation'                 },
+      { id:'diner',         label:'🌙 Dîner'                     },
+      { id:'post_seance',   label:'⚡ Post-séance'                },
+      { id:'pre_seance',    label:'🎯 Pré-séance'                 }
     ];
 
-    const recettesFiltrees = this._filtreRecette === 'tous'
-      ? RECETTES_DB
-      : RECETTES_DB.filter(
-          r => r.categorie === this._filtreRecette
-        );
+    let recettesFiltrees;
+    if (this._filtreRecette === 'genre_adapte') {
+      recettesFiltrees = this.getRecettesAdaptees(genre, objectif, 20);
+    } else if (this._filtreRecette === 'tous') {
+      recettesFiltrees = RECETTES_DB;
+    } else {
+      recettesFiltrees = RECETTES_DB.filter(
+        r => r.categorie === this._filtreRecette
+      );
+    }
 
     container.innerHTML = `
-      <!-- Filtres -->
       <div class="muscle-filter-row mb-md">
         ${filtres.map(f => `
           <button class="muscle-filter-btn ${
@@ -1560,10 +1975,14 @@ const Nutrition = {
           </button>`).join('')}
       </div>
 
-      <!-- Liste recettes -->
       <div style="display:flex;flex-direction:column;gap:10px">
         ${recettesFiltrees.map(recette => {
           const macros = this._calculerMacrosRecette(recette);
+          const estFemme = recette.genre?.length === 1
+            && recette.genre[0] === 'femme';
+          const estHomme = recette.genre?.length === 1
+            && recette.genre[0] === 'homme';
+
           return `
             <div onclick="Nutrition._voirRecette('${recette.id}')"
                  style="background:rgba(255,255,255,0.04);
@@ -1578,15 +1997,29 @@ const Nutrition = {
               <div style="display:flex;align-items:center;
                           gap:12px;margin-bottom:10px">
                 <span style="font-size:2rem;flex-shrink:0">
-                  ${recette.emoji}
-                </span>
+                  ${recette.emoji}</span>
                 <div style="flex:1">
                   <div style="font-size:.9rem;font-weight:800;
                               margin-bottom:2px">
                     ${recette.nom}
+                    <!-- Badge genre -->
+                    ${estFemme
+                      ? `<span style="font-size:.55rem;padding:1px 5px;
+                                     background:rgba(255,141,150,0.15);
+                                     border:1px solid rgba(255,141,150,0.3);
+                                     border-radius:99px;
+                                     color:var(--fd-coral);
+                                     margin-left:4px">🌸</span>`
+                      : estHomme
+                        ? `<span style="font-size:.55rem;padding:1px 5px;
+                                       background:rgba(75,75,249,0.15);
+                                       border:1px solid rgba(75,75,249,0.3);
+                                       border-radius:99px;
+                                       color:var(--fd-lavender);
+                                       margin-left:4px">💪</span>`
+                        : ''}
                   </div>
-                  <div style="font-size:.65rem;
-                              color:var(--text-muted)">
+                  <div style="font-size:.65rem;color:var(--text-muted)">
                     ⏱ ${recette.temps} min
                     · ${recette.ingredients.length} ingrédients
                   </div>
@@ -1594,24 +2027,22 @@ const Nutrition = {
                 <div style="text-align:right;flex-shrink:0">
                   <div style="font-size:.95rem;font-weight:800;
                               color:var(--fd-lemon)">
-                    ${macros.cal}
-                  </div>
+                    ${macros.cal}</div>
                   <div style="font-size:.55rem;
                               color:var(--text-muted)">kcal</div>
                 </div>
               </div>
 
-              <!-- Barres macros -->
               <div style="display:grid;
                           grid-template-columns:repeat(3,1fr);
                           gap:6px">
                 ${[
                   { l:'P', val:macros.prot,
-                    color:'var(--fd-coral)',   max:50  },
+                    color:'var(--fd-coral)',    max:50  },
                   { l:'G', val:macros.gluc,
-                    color:'var(--fd-indigo)',  max:100 },
+                    color:'var(--fd-indigo)',   max:100 },
                   { l:'L', val:macros.lip,
-                    color:'var(--fd-lavender)',max:50  }
+                    color:'var(--fd-lavender)', max:50  }
                 ].map(m => `
                   <div>
                     <div style="display:flex;
@@ -1619,21 +2050,17 @@ const Nutrition = {
                                 margin-bottom:2px">
                       <span style="font-size:.55rem;
                                    color:${m.color};
-                                   font-weight:700">
-                        ${m.l}
-                      </span>
+                                   font-weight:700">${m.l}</span>
                       <span style="font-size:.55rem;
                                    color:var(--text-muted)">
-                        ${m.val}g
-                      </span>
+                        ${m.val}g</span>
                     </div>
                     <div style="height:3px;
                                 background:rgba(255,255,255,0.06);
                                 border-radius:99px;overflow:hidden">
                       <div style="height:100%;
                                   width:${Math.min(100,
-                                    Math.round((m.val/m.max)*100)
-                                  )}%;
+                                    Math.round((m.val/m.max)*100))}%;
                                   background:${m.color};
                                   border-radius:99px">
                       </div>
@@ -1641,7 +2068,6 @@ const Nutrition = {
                   </div>`).join('')}
               </div>
 
-              <!-- Tags -->
               <div style="display:flex;flex-wrap:wrap;gap:4px;
                           margin-top:8px">
                 ${recette.tags.map(tag => `
@@ -1650,8 +2076,7 @@ const Nutrition = {
                                border:1px solid rgba(75,75,249,0.15);
                                border-radius:99px;font-size:.58rem;
                                color:var(--fd-lavender)">
-                    ${tag}
-                  </span>`).join('')}
+                    ${tag}</span>`).join('')}
               </div>
             </div>`;
         }).join('')}
@@ -1678,23 +2103,17 @@ const Nutrition = {
 
     content.innerHTML = `
       <div style="padding:var(--space-md)">
-        <!-- Hero -->
-        <div style="text-align:center;padding:16px 0;
-                    margin-bottom:14px">
+        <div style="text-align:center;padding:16px 0;margin-bottom:14px">
           <div style="font-size:3rem;margin-bottom:6px">
-            ${recette.emoji}
-          </div>
-          <div style="font-size:1.1rem;font-weight:800;
-                      margin-bottom:4px">
-            ${recette.nom}
-          </div>
+            ${recette.emoji}</div>
+          <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">
+            ${recette.nom}</div>
           <div style="font-size:.72rem;color:var(--text-muted)">
             ⏱ ${recette.temps} min
             · ${recette.ingredients.length} ingrédients
           </div>
         </div>
 
-        <!-- Description -->
         <div style="padding:10px 14px;
                     background:rgba(191,161,255,0.06);
                     border:1px solid rgba(191,161,255,0.15);
@@ -1704,7 +2123,6 @@ const Nutrition = {
           💡 ${recette.description}
         </div>
 
-        <!-- Macros avec barres -->
         <div style="background:rgba(255,255,255,0.04);
                     border:1px solid rgba(255,255,255,0.08);
                     border-radius:var(--radius-lg);
@@ -1716,41 +2134,34 @@ const Nutrition = {
           </div>
           <div style="text-align:center;margin-bottom:12px">
             <div style="font-size:2rem;font-weight:800;
-                        color:var(--fd-lemon)">
-              ${macros.cal}
-            </div>
+                        color:var(--fd-lemon)">${macros.cal}</div>
             <div style="font-size:.65rem;color:var(--text-muted)">
               kcal · ${Math.round(
-                (macros.cal/Math.max(obj.calories,1))*100
+                (macros.cal / Math.max(obj.calories,1)) * 100
               )}% de ton objectif
             </div>
           </div>
           ${[
             { label:'Protéines', val:macros.prot,
-              obj:obj.proteines, color:'var(--fd-coral)',
-              emoji:'💪' },
+              obj:obj.proteines, color:'var(--fd-coral)',    emoji:'💪' },
             { label:'Glucides',  val:macros.gluc,
-              obj:obj.glucides,  color:'var(--fd-indigo)',
-              emoji:'⚡' },
+              obj:obj.glucides,  color:'var(--fd-indigo)',   emoji:'⚡' },
             { label:'Lipides',   val:macros.lip,
-              obj:obj.lipides,   color:'var(--fd-lavender)',
-              emoji:'🥑' }
+              obj:obj.lipides,   color:'var(--fd-lavender)', emoji:'🥑' }
           ].map(m => {
-            const pct = Math.min(100,
-              Math.round((m.val/Math.max(m.obj,1))*100));
+            const pct = Math.min(100, Math.round(
+              (m.val / Math.max(m.obj,1)) * 100
+            ));
             return `
               <div style="margin-bottom:10px">
-                <div style="display:flex;
-                            justify-content:space-between;
+                <div style="display:flex;justify-content:space-between;
                             margin-bottom:4px">
                   <span style="font-size:.72rem;font-weight:700;
                                color:${m.color}">
-                    ${m.emoji} ${m.label}
-                  </span>
+                    ${m.emoji} ${m.label}</span>
                   <span style="font-size:.72rem;
                                color:var(--text-muted)">
-                    ${m.val}g / ${m.obj}g
-                  </span>
+                    ${m.val}g / ${m.obj}g</span>
                 </div>
                 <div style="height:5px;
                             background:rgba(255,255,255,0.06);
@@ -1765,7 +2176,6 @@ const Nutrition = {
           }).join('')}
         </div>
 
-        <!-- Ingrédients -->
         <div style="margin-bottom:14px">
           <div style="font-size:.6rem;font-weight:700;
                       text-transform:uppercase;letter-spacing:.1em;
@@ -1777,16 +2187,14 @@ const Nutrition = {
             if (!ali) return '';
             const ratio = ing.qte / ali.portion;
             return `
-              <div style="display:flex;align-items:center;
-                          gap:10px;padding:8px 0;
+              <div style="display:flex;align-items:center;gap:10px;
+                          padding:8px 0;
                           border-bottom:1px solid var(--border-color)">
                 <span style="font-size:1.1rem;flex-shrink:0">
-                  ${ali.emoji}
-                </span>
+                  ${ali.emoji}</span>
                 <div style="flex:1">
                   <div style="font-size:.82rem;font-weight:600">
-                    ${ali.nom}
-                  </div>
+                    ${ali.nom}</div>
                   <div style="font-size:.6rem;color:var(--text-muted)">
                     P:${Math.round(ali.prot*ratio)}g
                     · G:${Math.round(ali.gluc*ratio)}g
@@ -1801,9 +2209,7 @@ const Nutrition = {
           }).join('')}
         </div>
 
-        <!-- Actions -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;
-                    gap:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <button onclick="Nutrition._loggerRecette('${recette.id}')"
                   class="btn-primary" style="font-size:.82rem">
             📔 Logger
@@ -1851,8 +2257,7 @@ const Nutrition = {
     this._ajouterEntreeJournal(entree);
     try { Gamification.ajouterXP(10, 'recette_log'); } catch(e) {}
 
-    document.getElementById('modal-info')
-      ?.classList.add('hidden');
+    document.getElementById('modal-info')?.classList.add('hidden');
     Utils.toast(
       `✅ ${recette.nom} ajouté au journal !`,
       'success', 2000
@@ -1876,26 +2281,37 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ OBJECTIFS
+  // OBJECTIFS — ✅ v3.0 genre-aware
   // ════════════════════════════════════════════════════════
   _rendreObjectifs(container) {
     const obj    = this.getObjectifs();
-    const profil = (() => {
+    const profil = this._getProfilOnboarding();
+    const profilTracker = (() => {
       try { return Tracker.getProfil(); }
       catch(e) { return { poids:80, objectif:'forme' }; }
     })();
-    const auto = this._calculerObjectifsAuto(profil);
+
+    const auto = this._calculerObjectifsAuto({
+      ...profilTracker,
+      genre:   profil.genre   || 'homme',
+      objectif: profil.objectif || profilTracker.objectif || 'forme'
+    });
+
+    const genreLabel = profil.genre === 'femme' ? '🌸 Femme' : '💪 Homme';
 
     container.innerHTML = `
-      <!-- Objectifs actuels -->
       <div class="card mb-md"
            style="background:linear-gradient(135deg,
                   rgba(75,75,249,0.15),rgba(75,75,249,0.05));
                   border-color:rgba(75,75,249,0.3)">
         <div style="font-size:.6rem;font-weight:700;
                     text-transform:uppercase;letter-spacing:.1em;
-                    color:var(--fd-indigo);margin-bottom:12px">
+                    color:var(--fd-indigo);margin-bottom:4px">
           🎯 Tes objectifs nutritionnels
+        </div>
+        <div style="font-size:.65rem;color:var(--text-muted);
+                    margin-bottom:12px">
+          ${genreLabel} · ${profil.objectif || 'forme'}
         </div>
         ${[
           { label:'Calories',  val:obj.calories,
@@ -1914,8 +2330,9 @@ const Nutrition = {
             auto:auto.eau,       color:'var(--fd-indigo)',
             emoji:'💧', unite:'L'   }
         ].map(m => {
-          const pct = Math.min(100,
-            Math.round((m.val/Math.max(m.auto,1))*100));
+          const pct = Math.min(100, Math.round(
+            (m.val/Math.max(m.auto,1))*100
+          ));
           return `
             <div style="margin-bottom:12px">
               <div style="display:flex;align-items:center;
@@ -1929,8 +2346,7 @@ const Nutrition = {
                   <span style="font-size:.82rem;font-weight:800">
                     ${m.val}${m.unite}
                   </span>
-                  <span style="font-size:.6rem;
-                               color:var(--text-muted);
+                  <span style="font-size:.6rem;color:var(--text-muted);
                                margin-left:4px">
                     (auto: ${m.auto}${m.unite})
                   </span>
@@ -1949,7 +2365,6 @@ const Nutrition = {
         }).join('')}
       </div>
 
-      <!-- Personnaliser -->
       <div class="card mb-md">
         <div style="font-size:.6rem;font-weight:700;
                     text-transform:uppercase;letter-spacing:.1em;
@@ -1958,19 +2373,13 @@ const Nutrition = {
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           ${[
-            { id:'calories',  label:'🔥 Calories (kcal)',
-              val:obj.calories                         },
-            { id:'proteines', label:'💪 Protéines (g)',
-              val:obj.proteines                        },
-            { id:'glucides',  label:'⚡ Glucides (g)',
-              val:obj.glucides                         },
-            { id:'lipides',   label:'🥑 Lipides (g)',
-              val:obj.lipides                          },
-            { id:'eau',       label:'💧 Eau (L)',
-              val:obj.eau                              }
+            { id:'calories',  label:'🔥 Calories (kcal)', val:obj.calories  },
+            { id:'proteines', label:'💪 Protéines (g)',    val:obj.proteines },
+            { id:'glucides',  label:'⚡ Glucides (g)',     val:obj.glucides  },
+            { id:'lipides',   label:'🥑 Lipides (g)',      val:obj.lipides   },
+            { id:'eau',       label:'💧 Eau (L)',          val:obj.eau       }
           ].map(f => `
-            <div style="display:flex;align-items:center;
-                        gap:10px">
+            <div style="display:flex;align-items:center;gap:10px">
               <label style="font-size:.75rem;font-weight:600;
                             color:var(--text-muted);
                             min-width:140px;flex-shrink:0">
@@ -1994,7 +2403,6 @@ const Nutrition = {
         </div>
       </div>
 
-      <!-- Info calcul -->
       <div style="padding:12px 14px;
                   background:rgba(191,161,255,0.06);
                   border:1px solid rgba(191,161,255,0.15);
@@ -2002,39 +2410,51 @@ const Nutrition = {
                   font-size:.72rem;color:rgba(191,161,255,0.8);
                   line-height:1.6">
         🧮 Calcul auto basé sur :
-        <strong>${profil.poids || 80}kg</strong>
+        <strong>${profilTracker.poids || 80}kg</strong>
+        · ${genreLabel}
         · objectif <strong>${profil.objectif || 'forme'}</strong>
         · TDEE estimé <strong>${auto.tdee} kcal</strong>
       </div>
     `;
   },
 
+  // ✅ v3.0 — _calculerObjectifsAuto genre-aware
   _calculerObjectifsAuto(profil) {
     const poids    = profil.poids    || 80;
     const taille   = profil.taille   || 175;
     const objectif = profil.objectif || 'forme';
+    const genre    = profil.genre    || 'homme';
 
-    // Harris-Benedict
-    const bmr  = (10 * poids) + (6.25 * taille) - (5 * 25) + 5;
-    const tdee  = Math.round(bmr * 1.55);
+    // ✅ Harris-Benedict selon genre
+    let bmr;
+    if (genre === 'femme') {
+      bmr = (10 * poids) + (6.25 * taille) - (5 * 25) - 161;
+    } else {
+      bmr = (10 * poids) + (6.25 * taille) - (5 * 25) + 5;
+    }
+
+    const tdee = Math.round(bmr * 1.55);
 
     const surplus = {
-      prise_masse: +400,
-      seche:       -500,
-      force:       +200,
+      prise_masse: genre === 'femme' ? +300 : +400,
+      seche:       genre === 'femme' ? -400 : -500,
+      force:       genre === 'femme' ? +150 : +200,
       endurance:   -100,
-      perte_poids: -400,
+      perte_poids: genre === 'femme' ? -350 : -400,
       forme:        0
     }[objectif] || 0;
 
     const calories = tdee + surplus;
 
+    // ✅ Protéines ajustées genre
+    const facteurProt = genre === 'femme' ? 1.8 : 2.0;
+
     return {
       tdee,
       calories:  Math.round(calories),
-      proteines: Math.round(poids * 2),
-      glucides:  Math.round((calories * 0.45) / 4),
-      lipides:   Math.round((calories * 0.25) / 9),
+      proteines: Math.round(poids * facteurProt),
+      glucides:  Math.round((calories * (genre === 'femme' ? 0.40 : 0.45)) / 4),
+      lipides:   Math.round((calories * (genre === 'femme' ? 0.30 : 0.25)) / 9),
       eau:       parseFloat((poids * 0.035).toFixed(1))
     };
   },
@@ -2055,7 +2475,6 @@ const Nutrition = {
     Utils.storage.set(this.CLE_OBJECTIFS, obj);
     Utils.toast('✅ Objectifs sauvegardés !', 'success');
     Utils.vibrerSuccess();
-
     const c = document.getElementById('nutrition-content');
     if (c) this._rendreObjectifs(c);
   },
@@ -2064,7 +2483,13 @@ const Nutrition = {
     let profil = { poids:80, objectif:'forme' };
     try { profil = Tracker.getProfil(); } catch(e) {}
 
-    const auto = this._calculerObjectifsAuto(profil);
+    const profilOb = this._getProfilOnboarding();
+    const auto = this._calculerObjectifsAuto({
+      ...profil,
+      genre:    profilOb.genre    || 'homme',
+      objectif: profilOb.objectif || profil.objectif || 'forme'
+    });
+
     Utils.storage.set(this.CLE_OBJECTIFS, {
       calories:  auto.calories,
       proteines: auto.proteines,
@@ -2073,41 +2498,77 @@ const Nutrition = {
       eau:       auto.eau
     });
     Utils.toast('🔄 Objectifs réinitialisés !', 'success');
-
     const c = document.getElementById('nutrition-content');
     if (c) this._rendreObjectifs(c);
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ STATS — Graphiques 7 jours (depuis v1.0)
+  // STATS — ✅ v3.0 score nutrition + genre
   // ════════════════════════════════════════════════════════
   _rendreStats(container) {
-    const hist    = this._getHistoriqueNutrition(7);
-    const obj     = this.getObjectifs();
-    const totaux  = this.getTotauxJournal();
-    const eau     = this.getEau();
+    const hist   = this._getHistoriqueNutrition(7);
+    const obj    = this.getObjectifs();
+    const totaux = this.getTotauxJournal();
+    const eau    = this.getEau();
+    const profil = this._getProfilOnboarding();
+    const genre  = profil.genre || 'homme';
+
+    // ✅ Score nutrition moyen semaine
+    const scoreMoyen = hist.length > 0
+      ? Math.round(
+          hist.reduce((a, h) => {
+            const s = this._calculerScoreNutrition(h, obj, h.eau);
+            return a + s.score;
+          }, 0) / hist.length
+        )
+      : 0;
 
     container.innerHTML = `
+
+      <!-- Score nutrition semaine -->
+      ${scoreMoyen > 0 ? `
+        <div style="background:rgba(75,75,249,0.08);
+                    border:1px solid rgba(75,75,249,0.2);
+                    border-radius:var(--radius-xl);
+                    padding:14px;margin-bottom:14px;
+                    display:flex;align-items:center;gap:12px">
+          <div style="font-size:2rem;font-weight:900;
+                      color:${scoreMoyen >= 80
+                        ? 'var(--fd-mint)'
+                        : scoreMoyen >= 60
+                          ? 'var(--fd-lemon)' : 'var(--fd-coral)'}">
+            ${scoreMoyen}
+          </div>
+          <div>
+            <div style="font-size:.75rem;font-weight:700;
+                        color:var(--fd-indigo)">
+              Score nutrition moyen — 7 jours</div>
+            <div style="font-size:.65rem;color:var(--text-muted)">
+              ${genre === 'femme' ? '🌸 Programme féminin' : '💪 Programme masculin'}
+              · Objectif ${profil.objectif || 'forme'}
+            </div>
+          </div>
+        </div>` : ''}
 
       <!-- Résumé semaine -->
       <div style="display:grid;grid-template-columns:repeat(2,1fr);
                   gap:8px;margin-bottom:14px">
         ${[
           { label:'Moy. calories',
-            val:`${Math.round(hist.reduce((a,h) => a+h.cal,0) /
-              Math.max(hist.length,1))} kcal`,
+            val:`${Math.round(hist.reduce((a,h) => a+h.cal,0)
+              / Math.max(hist.length,1))} kcal`,
             color:'var(--fd-lemon)', emoji:'🔥' },
           { label:'Moy. protéines',
-            val:`${Math.round(hist.reduce((a,h) => a+h.prot,0) /
-              Math.max(hist.length,1))}g`,
+            val:`${Math.round(hist.reduce((a,h) => a+h.prot,0)
+              / Math.max(hist.length,1))}g`,
             color:'var(--fd-coral)', emoji:'💪' },
           { label:'Moy. glucides',
-            val:`${Math.round(hist.reduce((a,h) => a+h.gluc,0) /
-              Math.max(hist.length,1))}g`,
+            val:`${Math.round(hist.reduce((a,h) => a+h.gluc,0)
+              / Math.max(hist.length,1))}g`,
             color:'var(--fd-indigo)', emoji:'⚡' },
           { label:'Moy. lipides',
-            val:`${Math.round(hist.reduce((a,h) => a+h.lip,0) /
-              Math.max(hist.length,1))}g`,
+            val:`${Math.round(hist.reduce((a,h) => a+h.lip,0)
+              / Math.max(hist.length,1))}g`,
             color:'var(--fd-lavender)', emoji:'🥑' }
         ].map(s => `
           <div style="background:rgba(255,255,255,0.04);
@@ -2115,17 +2576,13 @@ const Nutrition = {
                       border-radius:var(--radius-lg);
                       padding:12px;text-align:center">
             <div style="font-size:.6rem;color:var(--text-muted);
-                        margin-bottom:4px">
-              ${s.emoji} ${s.label}
-            </div>
+                        margin-bottom:4px">${s.emoji} ${s.label}</div>
             <div style="font-size:.95rem;font-weight:800;
-                        color:${s.color}">
-              ${s.val}
-            </div>
+                        color:${s.color}">${s.val}</div>
           </div>`).join('')}
       </div>
 
-      <!-- Graphique calories -->
+      <!-- Graphiques -->
       ${hist.length > 1 ? `
         <div style="background:rgba(255,255,255,0.04);
                     border:1px solid rgba(255,255,255,0.08);
@@ -2138,13 +2595,11 @@ const Nutrition = {
                       justify-content:space-between">
             <span>🔥 Calories — 7 jours</span>
             <span style="color:var(--fd-lemon)">
-              Obj: ${obj.calories} kcal
-            </span>
+              Obj: ${obj.calories} kcal</span>
           </div>
           <canvas id="chart-nutri-cal" height="150"></canvas>
         </div>
 
-        <!-- Graphique protéines -->
         <div style="background:rgba(255,255,255,0.04);
                     border:1px solid rgba(255,255,255,0.08);
                     border-radius:var(--radius-xl);
@@ -2156,13 +2611,11 @@ const Nutrition = {
                       justify-content:space-between">
             <span>💪 Protéines — 7 jours</span>
             <span style="color:var(--fd-coral)">
-              Obj: ${obj.proteines}g
-            </span>
+              Obj: ${obj.proteines}g</span>
           </div>
           <canvas id="chart-nutri-prot" height="130"></canvas>
         </div>
 
-        <!-- Graphique hydratation -->
         <div style="background:rgba(255,255,255,0.04);
                     border:1px solid rgba(255,255,255,0.08);
                     border-radius:var(--radius-xl);
@@ -2174,8 +2627,7 @@ const Nutrition = {
                       justify-content:space-between">
             <span>💧 Hydratation — 7 jours</span>
             <span style="color:var(--fd-indigo)">
-              Obj: ${obj.eau}L/j
-            </span>
+              Obj: ${obj.eau}L/j</span>
           </div>
           <canvas id="chart-nutri-eau" height="130"></canvas>
         </div>` : `
@@ -2185,12 +2637,11 @@ const Nutrition = {
           <div style="font-size:.88rem">
             Pas encore assez de données<br>
             <span style="font-size:.72rem">
-              Continue à logger tes repas !
-            </span>
+              Continue à logger tes repas !</span>
           </div>
         </div>`}
 
-      <!-- Tableau récap semaine -->
+      <!-- Tableau récap -->
       ${hist.length > 0 ? `
         <div style="background:rgba(255,255,255,0.04);
                     border:1px solid rgba(255,255,255,0.08);
@@ -2200,8 +2651,7 @@ const Nutrition = {
           <div style="font-size:.6rem;font-weight:700;
                       text-transform:uppercase;letter-spacing:.1em;
                       color:var(--text-muted);margin-bottom:12px">
-            📅 Récap semaine
-          </div>
+            📅 Récap semaine</div>
           <table style="width:100%;border-collapse:collapse;
                         font-size:.72rem;min-width:320px">
             <thead>
@@ -2229,41 +2679,32 @@ const Nutrition = {
               ${hist.map(h => `
                 <tr style="border-top:1px solid var(--border-color)">
                   <td style="padding:6px 8px;font-weight:600">
-                    ${h.label}
-                  </td>
+                    ${h.label}</td>
                   <td style="text-align:right;padding:6px 8px;
                              color:${h.cal >= obj.calories * 0.9
-                               ? 'var(--fd-mint)'
-                               : 'var(--text-muted)'}">
-                    ${Math.round(h.cal)}
-                  </td>
+                               ? 'var(--fd-mint)' : 'var(--text-muted)'}">
+                    ${Math.round(h.cal)}</td>
                   <td style="text-align:right;padding:6px 8px;
                              color:${h.prot >= obj.proteines * 0.9
-                               ? 'var(--fd-mint)'
-                               : 'var(--text-muted)'}">
-                    ${Math.round(h.prot)}g
-                  </td>
+                               ? 'var(--fd-mint)' : 'var(--text-muted)'}">
+                    ${Math.round(h.prot)}g</td>
                   <td style="text-align:right;padding:6px 8px;
                              color:var(--text-muted)">
-                    ${Math.round(h.gluc)}g
-                  </td>
+                    ${Math.round(h.gluc)}g</td>
                   <td style="text-align:right;padding:6px 8px;
                              color:var(--text-muted)">
-                    ${Math.round(h.lip)}g
-                  </td>
+                    ${Math.round(h.lip)}g</td>
                   <td style="text-align:right;padding:6px 8px;
                              color:var(--fd-indigo)">
-                    ${(h.eau/1000).toFixed(1)}L
-                  </td>
+                    ${(h.eau/1000).toFixed(1)}L</td>
                 </tr>`).join('')}
             </tbody>
           </table>
         </div>` : ''}
     `;
 
-    // ✅ Charts Chart.js
     requestAnimationFrame(() => {
-      const optionsCommunes = {
+      const opts = {
         responsive:  true,
         plugins:     { legend:{ display:false } },
         scales: {
@@ -2278,7 +2719,6 @@ const Nutrition = {
         }
       };
 
-      // Graphique calories
       const cc = document.getElementById('chart-nutri-cal');
       if (cc && typeof Chart !== 'undefined' && hist.length > 1) {
         try {
@@ -2302,11 +2742,11 @@ const Nutrition = {
               }]
             },
             options: {
-              ...optionsCommunes,
+              ...opts,
               scales: {
-                ...optionsCommunes.scales,
+                ...opts.scales,
                 y: {
-                  ...optionsCommunes.scales.y,
+                  ...opts.scales.y,
                   suggestedMax: Math.max(
                     obj.calories * 1.2,
                     ...hist.map(h => h.cal)
@@ -2318,7 +2758,6 @@ const Nutrition = {
         } catch(e) {}
       }
 
-      // Graphique protéines
       const cp = document.getElementById('chart-nutri-prot');
       if (cp && typeof Chart !== 'undefined' && hist.length > 1) {
         try {
@@ -2340,12 +2779,11 @@ const Nutrition = {
                 fill:                true
               }]
             },
-            options: optionsCommunes
+            options: opts
           });
         } catch(e) {}
       }
 
-      // Graphique hydratation
       const ce = document.getElementById('chart-nutri-eau');
       if (ce && typeof Chart !== 'undefined' && hist.length > 1) {
         try {
@@ -2371,14 +2809,14 @@ const Nutrition = {
               }]
             },
             options: {
-              ...optionsCommunes,
+              ...opts,
               scales: {
-                ...optionsCommunes.scales,
+                ...opts.scales,
                 y: {
-                  ...optionsCommunes.scales.y,
+                  ...opts.scales.y,
                   suggestedMax: obj.eau * 1.5,
                   ticks: {
-                    ...optionsCommunes.scales.y.ticks,
+                    ...opts.scales.y.ticks,
                     callback: v => `${v}L`
                   }
                 }
@@ -2391,7 +2829,7 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ DONNÉES
+  // DONNÉES
   // ════════════════════════════════════════════════════════
   _getJournal(date = null) {
     const d   = date || Utils.aujourd_hui();
@@ -2411,7 +2849,6 @@ const Nutrition = {
     const journal = this._getJournal().filter(e => e.id !== id);
     Utils.storage.set(cle, journal);
     Utils.toast('🗑️ Entrée supprimée', 'info', 1200);
-
     const c = document.getElementById('nutrition-content');
     if (c) this._rendreJournal(c);
   },
@@ -2436,35 +2873,36 @@ const Nutrition = {
     );
     Utils.vibrerSuccess();
 
-    // Objectif atteint ?
-    if (nouveau >= obj.eau * 1000 &&
-        actuel  <  obj.eau * 1000) {
+    if (nouveau >= obj.eau * 1000 && actuel < obj.eau * 1000) {
       setTimeout(() => {
         Utils.toast(
-          '🎉 Objectif hydratation atteint !',
-          'success', 3000
+          '🎉 Objectif hydratation atteint !', 'success', 3000
         );
         try { Gamification.ajouterXP(20, 'hydratation'); }
         catch(e) {}
       }, 500);
     }
 
-    // Refresh dashboard
     if (this._ongletActif === 'dashboard') {
       const p = document.getElementById('page-nutrition');
       if (p) this.render(p);
     }
   },
 
-  // ✅ Compatibilité app.js (widget home)
-  _ajouterEauRapide(ml) {
-    this._ajouterEau(ml);
-  },
+  _ajouterEauRapide(ml) { this._ajouterEau(ml); },
 
   getObjectifs() {
-    let profil = { poids:80, objectif:'forme' };
-    try { profil = Tracker.getProfil(); } catch(e) {}
-    const auto = this._calculerObjectifsAuto(profil);
+    // ✅ v3.0 — Utilise profil onboarding pour le calcul auto
+    let profilTracker = { poids:80, objectif:'forme' };
+    try { profilTracker = Tracker.getProfil(); } catch(e) {}
+
+    const profilOb = this._getProfilOnboarding();
+    const auto = this._calculerObjectifsAuto({
+      ...profilTracker,
+      genre:    profilOb.genre    || 'homme',
+      objectif: profilOb.objectif || profilTracker.objectif || 'forme'
+    });
+
     return Utils.storage.get(this.CLE_OBJECTIFS, {
       calories:  auto.calories,
       proteines: auto.proteines,
@@ -2475,12 +2913,15 @@ const Nutrition = {
   },
 
   getTotauxJournal(date = null) {
-    return this._getJournal(date).reduce((totaux, e) => ({
-      cal:  totaux.cal  + (e.cal  || 0),
-      prot: totaux.prot + (e.prot || 0),
-      gluc: totaux.gluc + (e.gluc || 0),
-      lip:  totaux.lip  + (e.lip  || 0)
-    }), { cal:0, prot:0, gluc:0, lip:0 });
+    return this._getJournal(date).reduce(
+      (totaux, e) => ({
+        cal:  totaux.cal  + (e.cal  || 0),
+        prot: totaux.prot + (e.prot || 0),
+        gluc: totaux.gluc + (e.gluc || 0),
+        lip:  totaux.lip  + (e.lip  || 0)
+      }),
+      { cal:0, prot:0, gluc:0, lip:0 }
+    );
   },
 
   _getHistoriqueNutrition(jours = 7) {
@@ -2489,7 +2930,6 @@ const Nutrition = {
       const date   = Utils.ajouterJours(Utils.aujourd_hui(), -i);
       const totaux = this.getTotauxJournal(date);
       const eau    = this.getEau(date);
-
       hist.push({
         date,
         label: Utils.formatDateCourt
@@ -2514,8 +2954,8 @@ window.ALIMENTS_DB = ALIMENTS_DB;
 window.RECETTES_DB = RECETTES_DB;
 
 console.log(
-  `✅ Nutrition v2.1 chargé — ` +
+  `✅ Nutrition v3.0 chargé — ` +
   `${Object.keys(ALIMENTS_DB).length} aliments, ` +
-  `${RECETTES_DB.length} recettes, ` +
-  `migration v1→v2 auto ✅`
+  `${RECETTES_DB.length} recettes ` +
+  `(homme + femme + objectifs adaptatifs) ✅`
 );
