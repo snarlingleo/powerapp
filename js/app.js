@@ -7453,14 +7453,28 @@ document.addEventListener('visibilitychange', () => {
 // ════════════════════════════════════════════════════════════
 
 function _renderPropositionProgramme(data) {
+
+  // ✅ DEBUG — voir ce qui arrive
+  console.log('[Coach IA] Data reçue:', {
+    muscles:   data.muscles_cibles,
+    objectif:  data.objectif,
+    genre:     data.genre,
+    lieu:      data.lieu,
+    niveau:    data.niveau
+  });
+
+  const muscles      = data.muscles_cibles || [];
+  const corpsComplet = muscles.length === 0;
+
+  console.log('[Coach IA] Corps complet:', corpsComplet);
+  console.log('[Coach IA] Muscles:', muscles);
+   
   const objectif  = data.objectif  || 'forme';
   const niveau    = data.niveau    || 'intermediaire';
   const nom       = data.nom       || 'Athlète';
   const genre     = data.genre     || 'homme';
   const lieu      = data.lieu      || 'salle';
-  const muscles   = data.muscles_cibles || [];
-  const corpsComplet = muscles.length === 0;
-
+  
   const nbJoursParNiveau = {
     debutant: 3, intermediaire: 4, avance: 5
   };
@@ -8118,13 +8132,22 @@ function _renderCorpsSVGOnboarding(musclesCibles) {
 
 // ✅ Toggle muscle dans l'onboarding
 function _toggleMuscleOb(muscle) {
-  const muscles = window._obData.muscles_cibles || [];
+   // ✅ S'assurer que muscles_cibles existe
+  if (!window._obData.muscles_cibles) {
+    window._obData.muscles_cibles = [];
+  }
+  const muscles = window._obData.muscles_cibles;
   const idx     = muscles.indexOf(muscle);
 
-  if (idx === -1) muscles.push(muscle);
-  else            muscles.splice(idx, 1);
+  if (idx === -1) {
+    muscles.push(muscle);
+  } else {
+    muscles.splice(idx, 1);
+  }
 
   window._obData.muscles_cibles = muscles;
+  // ✅ Log pour debug
+  console.log('[Ob] Muscles:', window._obData.muscles_cibles); 
 
   // ✅ Re-render le composant
   const wrapper = document.getElementById('ob-muscles-wrapper');
@@ -8711,15 +8734,16 @@ if (etapeActuelle === 5) {
 }
 
   // ── Étape 6 — Corps SVG ──────────────────────────────
-  // Récupérer les muscles sélectionnés depuis Profil.js
-  if (etapeActuelle === 6) {
-    try {
-      window._obData.muscles_cibles =
-        Profil.get().muscles_cibles || [];
-    } catch(e) {
-      window._obData.muscles_cibles = [];
-    }
-  }
+// ✅ FIX — Les muscles sont déjà dans window._obData
+// via _toggleMuscleOb → pas besoin de récupérer depuis Profil
+if (etapeActuelle === 6) {
+  // window._obData.muscles_cibles est déjà à jour
+  // grâce à _toggleMuscleOb() appelé à chaque clic
+  console.log(
+    '[Ob] Muscles ciblés:',
+    window._obData.muscles_cibles
+  );
+}
 
   const ob = document.getElementById('onboarding-screen');
   ob.innerHTML = _renderEtapeOnboarding(
