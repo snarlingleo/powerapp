@@ -7449,47 +7449,89 @@ document.addEventListener('visibilitychange', () => {
 }
 
 // ════════════════════════════════════════════════════════════
-// ✅ ONBOARDING — Proposition programme Coach IA
-// ════════════════════════════════════════════════════════════
-// ════════════════════════════════════════════════════════════
 // ✅ ONBOARDING v2.0 — Complet avec corps SVG
 // ════════════════════════════════════════════════════════════
 
 function _renderPropositionProgramme(data) {
-  const objectif = data.objectif || 'forme';
-  const niveau   = data.niveau   || 'intermediaire';
-  const nom      = data.nom      || 'Athlète';
+  const objectif  = data.objectif  || 'forme';
+  const niveau    = data.niveau    || 'intermediaire';
+  const nom       = data.nom       || 'Athlète';
+  const genre     = data.genre     || 'homme';
+  const lieu      = data.lieu      || 'salle';
+  const muscles   = data.muscles_cibles || [];
+  const corpsComplet = muscles.length === 0;
 
   const nbJoursParNiveau = {
     debutant: 3, intermediaire: 4, avance: 5
   };
   const nbJours = nbJoursParNiveau[niveau] || 4;
 
+  // ✅ Style selon muscles ciblés
   const styleChoix = (() => {
-    if (nbJours <= 3) return 'full_body';
-    if (objectif === 'force') return 'upper_lower';
-    if (nbJours >= 5) return 'ppl';
-    return 'ppl';
+    if (corpsComplet) {
+      if (nbJours <= 3) return 'full_body';
+      if (objectif === 'force') return 'upper_lower';
+      if (nbJours >= 5) return 'ppl';
+      return 'ppl';
+    }
+    // Muscles ciblés → programme spécialisé
+    const hasPush = muscles.some(m =>
+      ['pectoraux','deltoides','triceps'].includes(m));
+    const hasPull = muscles.some(m =>
+      ['dorsal','biceps','trapeze'].includes(m));
+    const hasLegs = muscles.some(m =>
+      ['quadriceps','fessiers','ischio','mollets'].includes(m));
+    const hasCore = muscles.some(m =>
+      ['abdominaux','lombaires'].includes(m));
+
+    if (hasPush && hasPull && hasLegs) return 'ppl';
+    if (hasPush && hasPull) return 'upper_lower';
+    if (hasLegs && genre === 'femme') return 'lower_focus';
+    if (hasPush) return 'push_focus';
+    if (hasPull) return 'pull_focus';
+    if (hasLegs) return 'legs_focus';
+    if (hasCore) return 'core_focus';
+    return 'full_body';
   })();
 
   const styleLabel = {
-    ppl: 'Push / Pull / Legs',
-    full_body: 'Full Body',
-    upper_lower: 'Upper / Lower'
-  }[styleChoix];
+    ppl:          'Push / Pull / Legs',
+    full_body:    'Full Body',
+    upper_lower:  'Upper / Lower',
+    lower_focus:  'Lower Body Focus',
+    push_focus:   'Push Focus',
+    pull_focus:   'Pull Focus',
+    legs_focus:   'Legs Focus',
+    core_focus:   'Core & Gainage'
+  }[styleChoix] || 'Full Body';
 
   const planning = _genererPlanningDepuisAujourdhui(
     styleChoix, nbJours, objectif
   );
 
   window._obProgrammePropose = {
-    objectif, niveau, nbJours,
+    objectif, niveau, nbJours, genre, lieu,
+    muscles_cibles: muscles,
     style: styleChoix,
     jours_specifiques: planning.map(p => p.jour),
-    equipement: ['barre','halteres','machines',
-                 'cables','poids_corps','rack'],
+    equipement: lieu === 'salle'
+      ? ['barre','halteres','machines','cables','rack']
+      : lieu === 'maison'
+        ? ['halteres','elastiques','poids_corps']
+        : ['poids_corps','elastiques'],
     duree: niveau === 'debutant' ? '60' : '75'
   };
+
+  // ✅ Message Coach IA personnalisé
+  const msgCoach = _genererMessageCoach(
+    nom, genre, objectif, muscles,
+    corpsComplet, styleLabel, nbJours, lieu
+  );
+
+  // ✅ Séances adaptées
+  const seancesAdaptees = _getSeancesAdaptees(
+    styleChoix, objectif, niveau, genre, lieu, muscles
+  );
 
   const objectifLabel = {
     prise_masse: '💪 Prise de masse',
@@ -7510,37 +7552,28 @@ function _renderPropositionProgramme(data) {
     salle:  '🏋️ Salle',
     maison: '🏠 Maison',
     dehors: '🌳 Dehors'
-  }[data.lieu || 'salle'] || '🏋️ Salle';
+  }[lieu] || '🏋️ Salle';
 
-  const genreLabel = data.genre === 'femme'
-    ? '👩 Femme' : '👨 Homme';
-
-  const messages = {
-    prise_masse: `Pour ta prise de masse, je te recommande un programme ${styleLabel} sur ${nbJours} jours. Priorité aux charges lourdes et aux exercices composés.`,
-    perte_poids: `Pour perdre du gras tout en gardant le muscle, un programme ${styleLabel} sur ${nbJours} jours est idéal.`,
-    seche:       `Pour ta sèche, le ${styleLabel} sur ${nbJours} jours maximise la dépense calorique.`,
-    force:       `Pour développer ta force, l'${styleLabel} sur ${nbJours} jours avec charges lourdes est optimal.`,
-    endurance:   `Pour ton endurance, le ${styleLabel} sur ${nbJours} jours avec reps élevées est parfait.`,
-    forme:       `Pour ta forme générale, le ${styleLabel} sur ${nbJours} jours est l'approche la plus équilibrée.`
-  }[objectif] || `Programme ${styleLabel} adapté.`;
+  const genreLabel = genre === 'femme' ? '👩 Femme' : '👨 Homme';
 
   const labels = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 
-  // ✅ Calcul nutrition depuis Profil.js
+  // ✅ Nutrition adaptée genre + objectif
   let nut = { calories:2000, proteines:150, glucides:200, lipides:65, eau:2.5 };
   try {
     nut = Profil.calculerNutrition({
       poids:    data.poids    || 75,
       taille:   data.taille   || 175,
       age:      data.age      || 25,
-      genre:    data.genre    || 'homme',
-      objectif: data.objectif || 'forme',
-      niveau:   data.niveau   || 'intermediaire'
+      genre, objectif, niveau
     });
   } catch(e) {}
 
+  // ✅ Recettes adaptées
+  const recettes = _getRecettesAdaptees(genre, objectif);
+
   return `
-    <!-- Message Coach -->
+    <!-- Message Coach IA -->
     <div style="background:rgba(75,75,249,0.08);
                 border:1px solid rgba(75,75,249,0.2);
                 border-left:3px solid var(--fd-indigo);
@@ -7549,18 +7582,16 @@ function _renderPropositionProgramme(data) {
       <div style="font-size:.6rem;font-weight:700;
                   text-transform:uppercase;letter-spacing:.1em;
                   color:var(--fd-indigo);margin-bottom:6px">
-        🤖 Coach IA — Analyse de ton profil
+        🤖 Coach IA — Programme personnalisé
       </div>
       <p style="font-size:.82rem;color:var(--text-secondary);
                 line-height:1.6;margin:0">
-        Salut <strong style="color:white">${nom}</strong> !
-        ${messages}
+        ${msgCoach}
       </p>
     </div>
 
-    <!-- Badges profil -->
-    <div style="display:flex;flex-wrap:wrap;gap:6px;
-                margin-bottom:14px">
+    <!-- Badges -->
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
       ${[
         { label: genreLabel,    color:'var(--fd-lavender)' },
         { label: niveauLabel,   color:'var(--fd-indigo)'   },
@@ -7576,6 +7607,32 @@ function _renderPropositionProgramme(data) {
                      font-weight:700;color:${b.color}">
           ${b.label}
         </span>`).join('')}
+      ${muscles.length > 0 ? muscles.map(m => {
+        const cfg = {
+          pectoraux:'#4b4bf9', deltoides:'#bfa1ff',
+          biceps:'#8bf0bb',    triceps:'#ff8d96',
+          abdominaux:'#f9ef77',quadriceps:'#22c55e',
+          dorsal:'#4b4bf9',    fessiers:'#ff8d96',
+          ischio:'#f9ef77',    mollets:'#bfa1ff',
+          trapeze:'#8bf0bb',   lombaires:'#bfa1ff',
+          avantbras:'#8bf0bb'
+        }[m] || '#4b4bf9';
+        return `
+          <span style="padding:4px 10px;
+                       background:${cfg}22;
+                       border:1px solid ${cfg}66;
+                       border-radius:99px;font-size:.65rem;
+                       font-weight:700;color:${cfg}">
+            🎯 ${m}
+          </span>`;
+      }).join('') : `
+        <span style="padding:4px 10px;
+                     background:rgba(139,240,187,0.1);
+                     border:1px solid rgba(139,240,187,0.3);
+                     border-radius:99px;font-size:.65rem;
+                     font-weight:700;color:var(--fd-mint)">
+          🔄 Corps complet
+        </span>`}
     </div>
 
     <!-- Planning -->
@@ -7585,20 +7642,14 @@ function _renderPropositionProgramme(data) {
                 padding:14px;margin-bottom:14px">
       <div style="font-size:.6rem;font-weight:700;
                   text-transform:uppercase;letter-spacing:.1em;
-                  color:var(--text-muted);margin-bottom:12px;
-                  display:flex;align-items:center;gap:6px">
-        <div style="width:6px;height:6px;border-radius:50%;
-                    background:var(--fd-mint);
-                    box-shadow:0 0 6px var(--fd-mint)"></div>
+                  color:var(--text-muted);margin-bottom:12px">
         📅 Planning — commence aujourd'hui
       </div>
-      <div style="display:grid;
-                  grid-template-columns:repeat(7,1fr);gap:4px">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
         ${planning.map(j => `
           <div style="display:flex;flex-direction:column;
                       align-items:center;gap:4px">
-            <div style="width:36px;height:36px;
-                        border-radius:10px;
+            <div style="width:36px;height:36px;border-radius:10px;
                         display:flex;align-items:center;
                         justify-content:center;
                         font-size:.75rem;font-weight:700;
@@ -7607,8 +7658,7 @@ function _renderPropositionProgramme(data) {
                           : j.seanceEmoji
                             ? 'background:rgba(75,75,249,0.2);border:1px solid rgba(75,75,249,0.3);color:var(--fd-lavender)'
                             : 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text-muted)'}">
-              ${j.estAujourdhui ? '▶'
-                : j.seanceEmoji ? j.seanceEmoji : '😴'}
+              ${j.estAujourdhui ? '▶' : j.seanceEmoji ? j.seanceEmoji : '😴'}
             </div>
             <div style="font-size:.48rem;color:var(--text-muted);
                         text-transform:uppercase;font-weight:600">
@@ -7618,7 +7668,49 @@ function _renderPropositionProgramme(data) {
       </div>
     </div>
 
-    <!-- Nutrition prévisionnelle -->
+    <!-- Séances adaptées -->
+    <div style="font-size:.6rem;font-weight:700;
+                text-transform:uppercase;letter-spacing:.1em;
+                color:var(--text-muted);margin-bottom:8px">
+      💪 Séances de ton programme
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+      ${seancesAdaptees.map(s => `
+        <div style="background:rgba(255,255,255,0.03);
+                    border:1px solid rgba(255,255,255,0.07);
+                    border-radius:var(--radius-md);
+                    padding:10px 12px">
+          <div style="display:flex;align-items:center;
+                      gap:10px;margin-bottom:6px">
+            <span style="font-size:1.3rem">${s.emoji}</span>
+            <div style="flex:1">
+              <div style="font-size:.82rem;font-weight:700">
+                ${s.nom}
+              </div>
+              <div style="font-size:.6rem;color:var(--text-muted)">
+                ${s.muscles} · ~${s.duree}min
+              </div>
+            </div>
+            <div style="font-size:.6rem;color:var(--fd-indigo);
+                        font-weight:700;text-align:right">
+              ${s.lieu === 'maison' ? '🏠' : s.lieu === 'dehors' ? '🌳' : '🏋️'}
+            </div>
+          </div>
+          <!-- Exercices -->
+          <div style="display:flex;flex-wrap:wrap;gap:4px">
+            ${s.exercices.map(ex => `
+              <span style="padding:2px 8px;font-size:.58rem;
+                           background:rgba(75,75,249,0.1);
+                           border:1px solid rgba(75,75,249,0.2);
+                           border-radius:99px;
+                           color:var(--fd-lavender)">
+                ${ex}
+              </span>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Nutrition adaptée -->
     <div style="background:rgba(255,255,255,0.03);
                 border:1px solid rgba(255,255,255,0.08);
                 border-radius:var(--radius-lg);
@@ -7626,26 +7718,57 @@ function _renderPropositionProgramme(data) {
       <div style="font-size:.6rem;font-weight:700;
                   text-transform:uppercase;letter-spacing:.1em;
                   color:var(--text-muted);margin-bottom:10px">
-        🥗 Nutrition recommandée
+        🥗 Nutrition — ${genreLabel} · ${objectifLabel}
       </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);
-                  gap:6px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+                  margin-bottom:10px">
         ${[
-          { label:'Kcal',  val:nut.calories,  color:'var(--fd-lemon)'    },
-          { label:'Prot.', val:`${nut.proteines}g`, color:'var(--fd-coral)'    },
-          { label:'Gluc.', val:`${nut.glucides}g`,  color:'var(--fd-mint)'     },
-          { label:'Lip.',  val:`${nut.lipides}g`,   color:'var(--fd-lavender)' }
+          { label:'Kcal',  val:nut.calories,       color:'var(--fd-lemon)'    },
+          { label:'Prot.', val:`${nut.proteines}g`, color:'var(--fd-coral)'   },
+          { label:'Gluc.', val:`${nut.glucides}g`,  color:'var(--fd-mint)'    },
+          { label:'Lip.',  val:`${nut.lipides}g`,   color:'var(--fd-lavender)'}
         ].map(n => `
           <div style="text-align:center;padding:8px 4px;
                       background:${n.color}11;
                       border:1px solid ${n.color}33;
                       border-radius:var(--radius-md)">
-            <div style="font-size:.82rem;font-weight:800;
-                        color:${n.color}">
+            <div style="font-size:.82rem;font-weight:800;color:${n.color}">
               ${n.val}
             </div>
-            <div style="font-size:.52rem;color:var(--text-muted);
-                        margin-top:2px">${n.label}</div>
+            <div style="font-size:.52rem;color:var(--text-muted);margin-top:2px">
+              ${n.label}
+            </div>
+          </div>`).join('')}
+      </div>
+      <!-- Recettes suggérées -->
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.08em;
+                  color:var(--text-muted);margin-bottom:6px">
+        🍽️ Recettes suggérées
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        ${recettes.map(r => `
+          <div style="display:flex;align-items:center;gap:8px;
+                      padding:8px 10px;
+                      background:rgba(255,255,255,0.03);
+                      border:1px solid rgba(255,255,255,0.06);
+                      border-radius:var(--radius-sm)">
+            <span style="font-size:1.1rem">${r.emoji}</span>
+            <div style="flex:1">
+              <div style="font-size:.75rem;font-weight:700">
+                ${r.nom}
+              </div>
+              <div style="font-size:.58rem;color:var(--text-muted)">
+                ${r.macros}
+              </div>
+            </div>
+            <span style="font-size:.6rem;padding:2px 7px;
+                         background:${r.color}22;
+                         border:1px solid ${r.color}44;
+                         border-radius:99px;color:${r.color};
+                         font-weight:700">
+              ${r.moment}
+            </span>
           </div>`).join('')}
       </div>
       <div style="margin-top:8px;text-align:center;
@@ -7654,40 +7777,8 @@ function _renderPropositionProgramme(data) {
       </div>
     </div>
 
-    <!-- Séances -->
-    <div style="font-size:.6rem;font-weight:700;
-                text-transform:uppercase;letter-spacing:.1em;
-                color:var(--text-muted);margin-bottom:8px">
-      💪 Séances incluses
-    </div>
-    <div style="display:flex;flex-direction:column;
-                gap:6px;margin-bottom:14px">
-      ${_getSeancesPourStyle(styleChoix, objectif, niveau)
-        .map(s => `
-          <div style="display:flex;align-items:center;
-                      gap:10px;padding:10px 12px;
-                      background:rgba(255,255,255,0.03);
-                      border:1px solid rgba(255,255,255,0.07);
-                      border-radius:var(--radius-md)">
-            <span style="font-size:1.3rem">${s.emoji}</span>
-            <div style="flex:1">
-              <div style="font-size:.82rem;font-weight:700">
-                ${s.nom}
-              </div>
-              <div style="font-size:.6rem;color:var(--text-muted)">
-                ${s.muscles}
-              </div>
-            </div>
-            <div style="font-size:.65rem;color:var(--fd-indigo);
-                        font-weight:700">
-              ~${s.duree}min
-            </div>
-          </div>`).join('')}
-    </div>
-
     <!-- Boutons -->
-    <div style="display:grid;grid-template-columns:1fr 2fr;
-                gap:8px">
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
       <button onclick="_obModifierProgramme()"
               style="padding:10px;
                      background:rgba(255,255,255,0.06);
