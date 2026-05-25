@@ -1,11 +1,16 @@
 /* ============================================================
-   FitTracker Pro — Programme v3.0 CORRIGÉ
+   PowerApp — Programme v4.0
    Exercices + Séances + Cycles + Planning custom
    + Supersets + Décharge auto + Progression intelligente
+   + Exercices maison/extérieur
+   + Séances femme spécifiques
+   + Filtre équipement
+   + Remplacement exercice Live
+   + Génération programme depuis onboarding
    ============================================================ */
 
 // ════════════════════════════════════════════════════════════
-// BIBLIOTHÈQUE EXERCICES — Liens YouTube tous vérifiés ✅
+// BIBLIOTHÈQUE EXERCICES
 // ════════════════════════════════════════════════════════════
 const EXERCICES = {
 
@@ -17,6 +22,7 @@ const EXERCICES = {
     muscles_sec:['Triceps','Épaules'],
     groupe:'push',
     equipement:'Barre olympique + Banc plat',
+    lieux:['salle'],
     emoji:'💪', difficulte:2,
     youtube:'rT7DgCr-3pg',
     description:'Allongé sur le banc, prise légèrement plus large que les épaules.',
@@ -27,16 +33,18 @@ const EXERCICES = {
     muscles_sec:['Épaules','Triceps'],
     groupe:'push',
     equipement:'Haltères + Banc incliné 30-45°',
+    lieux:['salle','maison'],
     emoji:'💪', difficulte:2,
     youtube:'DbFgADa2PL8',
     description:'Banc incliné à 30-45°, haltères en pronation.',
-    conseils:['Angle 30-45° maximum','Amplitude complète','Contrôle total en descente','Ne pas trop monter l\'inclinaison']
+    conseils:['Angle 30-45° maximum','Amplitude complète','Contrôle total en descente']
   },
   chest_press_machine: {
     nom:'Chest Press Machine', muscle:'Pectoraux',
     muscles_sec:['Triceps'],
     groupe:'push',
     equipement:'Machine Chest Press',
+    lieux:['salle'],
     emoji:'🤖', difficulte:1,
     youtube:'taI4XduLpTk',
     description:'Machine guidée.',
@@ -47,6 +55,7 @@ const EXERCICES = {
     muscles_sec:[],
     groupe:'push',
     equipement:'Câble crossover',
+    lieux:['salle'],
     emoji:'🔄', difficulte:2,
     youtube:'eozdVDA78K0',
     description:'Câbles en position haute.',
@@ -57,16 +66,18 @@ const EXERCICES = {
     muscles_sec:['Épaules'],
     groupe:'push',
     equipement:'Barres parallèles',
+    lieux:['salle','dehors'],
     emoji:'⬇️', difficulte:3,
     youtube:'yN6Q1UI_xkE',
     description:'Se pencher légèrement en avant pour cibler les pectoraux.',
-    conseils:['Pencher = pectoraux, droit = triceps','Contrôle total en descente','Pas d\'à-coup dans le bas']
+    conseils:['Pencher = pectoraux, droit = triceps','Contrôle total en descente']
   },
   pompes: {
     nom:'Pompes', muscle:'Pectoraux',
     muscles_sec:['Triceps','Épaules','Core'],
     groupe:'push',
     equipement:'Poids du corps',
+    lieux:['salle','maison','dehors'],
     emoji:'⬆️', difficulte:1,
     youtube:'IODxDxX7oi4',
     description:'Mains légèrement plus larges que les épaules.',
@@ -77,16 +88,18 @@ const EXERCICES = {
     muscles_sec:['Triceps'],
     groupe:'push',
     equipement:'Barre + Banc décliné',
+    lieux:['salle'],
     emoji:'📉', difficulte:2,
     youtube:'LfyQTdaGQiY',
     description:'Banc décliné, ciblage des pectoraux inférieurs.',
-    conseils:['Angle 15-30° maximum','Pieds bien calés','Contrôle en descente','Ne pas rebondir']
+    conseils:['Angle 15-30° maximum','Pieds bien calés','Contrôle en descente']
   },
   cable_fly: {
     nom:'Cable Fly bas', muscle:'Pectoraux',
     muscles_sec:[],
     groupe:'push',
     equipement:'Câble poulie basse',
+    lieux:['salle'],
     emoji:'🦋', difficulte:2,
     youtube:'eozdVDA78K0',
     description:'Câbles en position basse, mouvement vers le haut.',
@@ -97,6 +110,7 @@ const EXERCICES = {
     muscles_sec:['Épaules','Triceps'],
     groupe:'push',
     equipement:'Banc ou chaise',
+    lieux:['maison','dehors'],
     emoji:'🔼', difficulte:2,
     youtube:'ktbBHQfBFhY',
     description:'Pieds surélevés pour cibler les pectoraux supérieurs.',
@@ -111,6 +125,7 @@ const EXERCICES = {
     muscles_sec:['Biceps','Rhomboïdes'],
     groupe:'pull',
     equipement:'Barre de traction',
+    lieux:['salle','maison','dehors'],
     emoji:'🔗', difficulte:3,
     youtube:'eGo4IYlbE5g',
     description:'Prise pronation légèrement plus large que les épaules.',
@@ -121,6 +136,7 @@ const EXERCICES = {
     muscles_sec:['Biceps','Trapèzes'],
     groupe:'pull',
     equipement:'Barre olympique',
+    lieux:['salle'],
     emoji:'🔗', difficulte:3,
     youtube:'6FZHhZMqDgg',
     description:'Dos parallèle au sol, prise pronation.',
@@ -131,6 +147,7 @@ const EXERCICES = {
     muscles_sec:['Biceps'],
     groupe:'pull',
     equipement:'Lat Pulldown',
+    lieux:['salle'],
     emoji:'⬇️', difficulte:1,
     youtube:'CAwf7n6Luuc',
     description:'Prise large, tirer la barre vers le haut de la poitrine.',
@@ -141,6 +158,7 @@ const EXERCICES = {
     muscles_sec:['Biceps','Rhomboïdes'],
     groupe:'pull',
     equipement:'Machine Rowing',
+    lieux:['salle'],
     emoji:'🤖', difficulte:1,
     youtube:'GZbfZ033f74',
     description:'Dos droit, tirer les poignées vers le ventre.',
@@ -151,60 +169,100 @@ const EXERCICES = {
     muscles_sec:['Fessiers','Ischio-jambiers','Dos','Trapèzes'],
     groupe:'pull',
     equipement:'Barre olympique',
+    lieux:['salle'],
     emoji:'🏋️', difficulte:4,
     youtube:'op9kVnSso6Q',
     description:'Pieds largeur des hanches, barre contre les tibias.',
-    conseils:['Dos NEUTRE — jamais arrondi','Barre proche du corps','Pousser le sol','Inspirez avant la montée']
+    conseils:['Dos NEUTRE — jamais arrondi','Barre proche du corps','Pousser le sol']
   },
   pullover: {
     nom:'Pull-over haltère', muscle:'Grand Dorsal',
     muscles_sec:['Pectoraux'],
     groupe:'pull',
     equipement:'Haltère + Banc plat',
+    lieux:['salle','maison'],
     emoji:'🔄', difficulte:2,
     youtube:'FK2SqQxNRmA',
     description:'Allongé, haltère tenu à deux mains.',
-    conseils:['Légère flexion du coude','Ne pas descendre trop bas','Amplitude progressive']
+    conseils:['Légère flexion du coude','Ne pas descendre trop bas']
   },
   rack_pull: {
     nom:'Rack Pull', muscle:'Dos / Trapèzes',
     muscles_sec:['Fessiers','Ischio-jambiers'],
     groupe:'pull',
     equipement:'Rack + Barre olympique',
+    lieux:['salle'],
     emoji:'🏗️', difficulte:3,
     youtube:'A3pJQxbkbME',
-    description:'Soulevé de terre partiel depuis un rack, focus dos et trapèzes.',
-    conseils:['Barre au niveau des genoux','Dos parfaitement neutre','Mouvement contrôlé','Charges plus lourdes qu\'un deadlift']
+    description:'Soulevé de terre partiel depuis un rack.',
+    conseils:['Barre au niveau des genoux','Dos parfaitement neutre']
   },
   pendlay_row: {
     nom:'Pendlay Row', muscle:'Dos Moyen',
     muscles_sec:['Biceps','Trapèzes'],
     groupe:'pull',
     equipement:'Barre olympique',
+    lieux:['salle'],
     emoji:'⚡', difficulte:3,
     youtube:'Hg1lMfCHBCE',
     description:'Rowing explosif depuis le sol, dos horizontal.',
-    conseils:['Barre revient au sol à chaque rep','Tirage explosif','Dos strictement horizontal','Coudes à 45°']
+    conseils:['Barre revient au sol à chaque rep','Tirage explosif']
   },
   tbar_row: {
     nom:'T-Bar Row', muscle:'Dos Moyen / Épaisseur',
     muscles_sec:['Biceps','Rhomboïdes'],
     groupe:'pull',
     equipement:'T-Bar ou Landmine',
+    lieux:['salle'],
     emoji:'🔱', difficulte:3,
     youtube:'T3N-TO4rALo',
     description:'Rowing avec barre fixée à une extrémité.',
-    conseils:['Poitrine sur le support','Amplitude complète','Serrer les omoplates','Dos neutre']
+    conseils:['Poitrine sur le support','Amplitude complète']
   },
   chin_up: {
     nom:'Chin-up (supination)', muscle:'Grand Dorsal / Biceps',
     muscles_sec:['Biceps','Rhomboïdes'],
     groupe:'pull',
     equipement:'Barre de traction',
+    lieux:['salle','maison','dehors'],
     emoji:'🔝', difficulte:3,
     youtube:'2TsmXD6JPBU',
     description:'Tractions prise supination (paumes vers soi).',
-    conseils:['Prise supination légèrement moins large que les épaules','Biceps fortement sollicités','Descente complète','Pas d\'à-coup']
+    conseils:['Prise supination','Biceps fortement sollicités','Descente complète']
+  },
+  // ✅ NOUVEAU — Exercices maison/extérieur dos
+  superman: {
+    nom:'Superman', muscle:'Lombaires',
+    muscles_sec:['Fessiers','Dos'],
+    groupe:'pull',
+    equipement:'Tapis',
+    lieux:['maison','dehors'],
+    emoji:'🦸', difficulte:1,
+    youtube:'cc3pxPGtFkQ',
+    description:'Allongé face au sol, lever bras et jambes simultanément.',
+    conseils:['Contrôle total','Tenir 2s en haut','Respirer normalement']
+  },
+  bird_dog: {
+    nom:'Bird Dog', muscle:'Lombaires / Core',
+    muscles_sec:['Fessiers','Épaules'],
+    groupe:'pull',
+    equipement:'Tapis',
+    lieux:['maison','dehors'],
+    emoji:'🐕', difficulte:1,
+    youtube:'wiFNA3sqjCA',
+    description:'À quatre pattes, étendre bras et jambe opposés.',
+    conseils:['Dos plat','Mouvement lent','Équilibre du bassin']
+  },
+  inverted_row: {
+    nom:'Inverted Row', muscle:'Dos Moyen',
+    muscles_sec:['Biceps'],
+    groupe:'pull',
+    equipement:'Barre basse ou table',
+    lieux:['maison','dehors'],
+    emoji:'⬆️', difficulte:2,
+    youtube:'pvLVBc9RDNQ',
+    description:'Allongé sous une barre, tirer la poitrine vers la barre.',
+    conseils:['Corps rigide','Amplitude complète','Serrer les omoplates']
   },
 
   // ══════════════════════════════════════════
@@ -215,6 +273,7 @@ const EXERCICES = {
     muscles_sec:['Triceps','Trapèzes'],
     groupe:'push',
     equipement:'Haltères ou Barre',
+    lieux:['salle','maison'],
     emoji:'💪', difficulte:3,
     youtube:'CnBmiBqp-AI',
     description:'Debout ou assis, pousser au-dessus de la tête.',
@@ -225,70 +284,89 @@ const EXERCICES = {
     muscles_sec:[],
     groupe:'push',
     equipement:'Haltères',
+    lieux:['salle','maison'],
     emoji:'🦅', difficulte:1,
     youtube:'kDqklk1ZESo',
     description:'Bras légèrement fléchis, lever à hauteur d\'épaule.',
-    conseils:['Ne pas hausser les épaules','Coudes légèrement fléchis','Contrôle en descente']
+    conseils:['Ne pas hausser les épaules','Coudes légèrement fléchis']
   },
   shoulder_press_machine: {
     nom:'Shoulder Press Machine', muscle:'Épaules',
     muscles_sec:['Triceps'],
     groupe:'push',
     equipement:'Machine Épaules',
+    lieux:['salle'],
     emoji:'🤖', difficulte:1,
     youtube:'6Z15_WdXmVw',
     description:'Machine guidée.',
-    conseils:['Régler la hauteur du siège','Pas de verrouillage brutal','Expirer en poussant']
+    conseils:['Régler la hauteur du siège','Pas de verrouillage brutal']
   },
   face_pull: {
     nom:'Face Pull', muscle:'Deltoïdes Postérieurs',
     muscles_sec:['Trapèzes','Rhomboïdes'],
     groupe:'pull',
     equipement:'Câble poulie haute + corde',
+    lieux:['salle'],
     emoji:'🔄', difficulte:2,
     youtube:'HSoHeSt2VWo',
     description:'Câble à hauteur du visage.',
-    conseils:['Coudes à hauteur des épaules','Rotation externe en fin','Léger poids, focus technique']
+    conseils:['Coudes à hauteur des épaules','Rotation externe en fin']
   },
   oiseau: {
     nom:'Oiseau', muscle:'Deltoïdes Postérieurs',
     muscles_sec:['Rhomboïdes'],
     groupe:'pull',
     equipement:'Haltères',
+    lieux:['salle','maison'],
     emoji:'🦢', difficulte:2,
     youtube:'sOiBHj9MEFQ',
     description:'Penché en avant dos plat.',
-    conseils:['Dos plat et horizontal','Mouvement lent','Coudes légèrement fléchis']
+    conseils:['Dos plat et horizontal','Mouvement lent']
   },
   arnold_press: {
     nom:'Arnold Press', muscle:'Épaules (3 faisceaux)',
     muscles_sec:['Triceps'],
     groupe:'push',
     equipement:'Haltères',
+    lieux:['salle','maison'],
     emoji:'🌀', difficulte:2,
     youtube:'vj2w851ZHRM',
     description:'Rotation des paumes de dedans vers dehors pendant le press.',
-    conseils:['Rotation fluide et contrôlée','Pas de compensation du dos','Amplitude maximale','Amplitude plus complète qu\'un press classique']
+    conseils:['Rotation fluide et contrôlée','Pas de compensation du dos']
   },
   upright_row: {
     nom:'Rowing vertical', muscle:'Trapèzes / Épaules',
     muscles_sec:['Deltoïdes Latéraux'],
     groupe:'pull',
     equipement:'Barre ou Haltères',
+    lieux:['salle','maison'],
     emoji:'⬆️', difficulte:2,
     youtube:'UcrJ2WBIXeg',
     description:'Tirer la barre vers le menton, coudes vers le haut.',
-    conseils:['Prise légèrement plus étroite que les épaules','Coudes au-dessus des poignets','Ne pas monter trop haut','Mouvement contrôlé']
+    conseils:['Prise légèrement plus étroite que les épaules']
   },
   shrug: {
     nom:'Shrug / Haussement épaules', muscle:'Trapèzes',
     muscles_sec:[],
     groupe:'pull',
     equipement:'Haltères ou Barre',
+    lieux:['salle','maison'],
     emoji:'🤷', difficulte:1,
     youtube:'g6qbq4Lf1FI',
     description:'Hausser les épaules vers les oreilles avec charge.',
-    conseils:['Mouvement vertical uniquement','Tenir 1s en position haute','Ne pas faire de rotation','Descente lente']
+    conseils:['Mouvement vertical uniquement','Tenir 1s en position haute']
+  },
+  // ✅ NOUVEAU — Pike push-up (maison/dehors)
+  pike_pushup: {
+    nom:'Pike Push-up', muscle:'Épaules',
+    muscles_sec:['Triceps'],
+    groupe:'push',
+    equipement:'Poids du corps',
+    lieux:['maison','dehors'],
+    emoji:'🔺', difficulte:2,
+    youtube:'pkBG8lU4W3Y',
+    description:'Position en V inversé, fléchir les coudes pour toucher le sol.',
+    conseils:['Hanches hautes','Tête entre les bras','Amplitude maximale']
   },
 
   // ══════════════════════════════════════════
@@ -299,6 +377,7 @@ const EXERCICES = {
     muscles_sec:['Avant-bras'],
     groupe:'pull',
     equipement:'Haltères',
+    lieux:['salle','maison'],
     emoji:'💪', difficulte:1,
     youtube:'sAq_ocpS3zY',
     description:'Coudes fixés contre le corps.',
@@ -309,16 +388,18 @@ const EXERCICES = {
     muscles_sec:['Avant-bras'],
     groupe:'pull',
     equipement:'Barre EZ',
+    lieux:['salle'],
     emoji:'💪', difficulte:1,
     youtube:'kwG2ipFRgfo',
     description:'Barre EZ pour protéger les poignets.',
-    conseils:['Pas de balancement','Coudes fixes','Prise EZ plus confortable']
+    conseils:['Pas de balancement','Coudes fixes']
   },
   curl_marteau: {
     nom:'Curl marteau', muscle:'Brachial',
     muscles_sec:['Biceps','Avant-bras'],
     groupe:'pull',
     equipement:'Haltères',
+    lieux:['salle','maison'],
     emoji:'🔨', difficulte:1,
     youtube:'zC3nLlEvin4',
     description:'Prise neutre (pouces vers le haut).',
@@ -329,30 +410,33 @@ const EXERCICES = {
     muscles_sec:[],
     groupe:'pull',
     equipement:'Machine Curl',
+    lieux:['salle'],
     emoji:'🤖', difficulte:1,
     youtube:'fIWP-FRFNU0',
     description:'Machine guidée, isolation parfaite.',
-    conseils:['Bras bien collés au pupitre','Amplitude complète','Squeeze fort en haut']
+    conseils:['Bras bien collés au pupitre','Amplitude complète']
   },
   spider_curl: {
     nom:'Spider Curl', muscle:'Biceps (pic)',
     muscles_sec:['Avant-bras'],
     groupe:'pull',
     equipement:'Banc incliné + Haltères ou Barre EZ',
+    lieux:['salle'],
     emoji:'🕷️', difficulte:2,
     youtube:'owGFGBSVpAk',
-    description:'Allongé face contre banc incliné, curl strict sans balancement.',
-    conseils:['Poitrine collée au banc','Isolation maximale','Contrôle total','Squeeze fort en haut']
+    description:'Allongé face contre banc incliné, curl strict.',
+    conseils:['Poitrine collée au banc','Isolation maximale']
   },
   incline_curl: {
     nom:'Curl incliné', muscle:'Biceps (longue portion)',
     muscles_sec:['Avant-bras'],
     groupe:'pull',
     equipement:'Banc incliné + Haltères',
+    lieux:['salle'],
     emoji:'📐', difficulte:2,
     youtube:'kFVmW0OVSCA',
     description:'Assis sur banc incliné 45°, amplitude maximale.',
-    conseils:['Dos contre le banc','Bras tombent librement','Amplitude maximale','Mouvement lent']
+    conseils:['Dos contre le banc','Amplitude maximale','Mouvement lent']
   },
 
   // ══════════════════════════════════════════
@@ -363,120 +447,144 @@ const EXERCICES = {
     muscles_sec:[],
     groupe:'push',
     equipement:'Câble poulie haute + corde',
+    lieux:['salle'],
     emoji:'⬇️', difficulte:1,
     youtube:'vB5OHsJ3EME',
     description:'Coudes fixes contre le corps.',
-    conseils:['Coudes fixes','Extension complète','Écarter légèrement la corde en bas']
+    conseils:['Coudes fixes','Extension complète']
   },
   barre_front: {
     nom:'Barre au front', muscle:'Triceps',
     muscles_sec:[],
     groupe:'push',
     equipement:'Barre EZ + Banc plat',
+    lieux:['salle'],
     emoji:'💥', difficulte:2,
     youtube:'NIKnG_8szOQ',
     description:'Allongé, barre descend vers le front.',
-    conseils:['Coudes fixes','Contrôle total','Ne jamais toucher le front !']
+    conseils:['Coudes fixes','Contrôle total']
   },
   dips_triceps: {
     nom:'Dips triceps (banc)', muscle:'Triceps',
     muscles_sec:['Épaules'],
     groupe:'push',
     equipement:'Banc',
+    lieux:['salle','maison','dehors'],
     emoji:'⬇️', difficulte:1,
     youtube:'wjUmnZH528Y',
     description:'Mains sur le banc, corps proche.',
-    conseils:['Corps proche du banc','Coudes vers l\'arrière','Amplitude complète']
+    conseils:['Corps proche du banc','Coudes vers l\'arrière']
   },
   overhead_triceps_cable: {
     nom:'Extension overhead câble', muscle:'Triceps (longue portion)',
     muscles_sec:[],
     groupe:'push',
     equipement:'Câble poulie basse + corde',
+    lieux:['salle'],
     emoji:'🔼', difficulte:2,
     youtube:'1Tqf_befPyM',
     description:'Face à la poulie, extension au-dessus de la tête.',
-    conseils:['Coudes près des oreilles','Amplitude maximale','Core gainé','Mouvement lent']
+    conseils:['Coudes près des oreilles','Amplitude maximale']
   },
   close_grip_bench: {
     nom:'Développé serré', muscle:'Triceps',
     muscles_sec:['Pectoraux'],
     groupe:'push',
     equipement:'Barre olympique + Banc plat',
+    lieux:['salle'],
     emoji:'🤏', difficulte:2,
     youtube:'nEF0bv2FW94',
     description:'Développé couché prise serrée, focus triceps.',
-    conseils:['Prise légèrement plus étroite que les épaules','Coudes proches du corps','Contrôle en descente','Lockout complet']
+    conseils:['Prise légèrement plus étroite','Coudes proches du corps']
+  },
+  // ✅ NOUVEAU — Diamond push-up maison
+  diamond_pushup: {
+    nom:'Pompes diamant', muscle:'Triceps',
+    muscles_sec:['Pectoraux'],
+    groupe:'push',
+    equipement:'Poids du corps',
+    lieux:['maison','dehors'],
+    emoji:'💎', difficulte:2,
+    youtube:'J0DXGHByLaA',
+    description:'Pompes mains rapprochées en forme de diamant.',
+    conseils:['Coudes proches du corps','Amplitude complète','Corps rigide']
   },
 
   // ══════════════════════════════════════════
-  // JAMBES (11 exercices)
+  // JAMBES (13 exercices)
   // ══════════════════════════════════════════
   squat: {
     nom:'Squat', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Ischio-jambiers','Core'],
     groupe:'jambes',
     equipement:'Rack à squat + Barre',
+    lieux:['salle'],
     emoji:'🦵', difficulte:3,
     youtube:'ultWZbUMPL8',
     description:'Pieds largeur épaules ou légèrement plus larges.',
-    conseils:['Genoux dans l\'axe des pieds','Talons au sol','Dos droit','Profondeur ≥ parallèle']
+    conseils:['Genoux dans l\'axe des pieds','Talons au sol','Profondeur ≥ parallèle']
   },
   presse_cuisses: {
     nom:'Presse à cuisses', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Ischio-jambiers'],
     groupe:'jambes',
     equipement:'Machine Presse inclinée',
+    lieux:['salle'],
     emoji:'🤖', difficulte:1,
     youtube:'IZxyjW7SKSA',
     description:'Pieds à plat à largeur des épaules.',
-    conseils:['Ne pas décoller les fesses','Pieds à plat','Ne pas verrouiller en haut']
+    conseils:['Ne pas décoller les fesses','Pieds à plat']
   },
   fentes: {
     nom:'Fentes marchées', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Ischio-jambiers'],
     groupe:'jambes',
     equipement:'Haltères',
+    lieux:['salle','maison','dehors'],
     emoji:'🚶', difficulte:2,
     youtube:'QOVaHwm-Q6U',
     description:'Grand pas en avant, descendre le genou arrière.',
-    conseils:['Genou avant dans l\'axe','Torse droit','Contrôle de l\'équilibre']
+    conseils:['Genou avant dans l\'axe','Torse droit']
   },
   leg_curl: {
     nom:'Leg Curl couché', muscle:'Ischio-jambiers',
     muscles_sec:[],
     groupe:'jambes',
     equipement:'Machine Leg Curl',
+    lieux:['salle'],
     emoji:'🦵', difficulte:1,
     youtube:'ELOCsoDSmrg',
     description:'Allongé, fléchir les genoux.',
-    conseils:['Hanches collées','Amplitude complète','Pas d\'à-coup en haut']
+    conseils:['Hanches collées','Amplitude complète']
   },
   leg_extension: {
     nom:'Leg Extension', muscle:'Quadriceps',
     muscles_sec:[],
     groupe:'jambes',
     equipement:'Machine Leg Extension',
+    lieux:['salle'],
     emoji:'🦵', difficulte:1,
     youtube:'ljO4jkNWCKk',
     description:'Assis, étendre les jambes.',
-    conseils:['Pas de verrouillage brutal','Contrôle en descente','Squeeze en position haute']
+    conseils:['Pas de verrouillage brutal','Contrôle en descente']
   },
   mollets: {
     nom:'Mollets debout', muscle:'Mollets',
     muscles_sec:[],
     groupe:'jambes',
     equipement:'Machine Mollets / Smith Machine',
+    lieux:['salle'],
     emoji:'⬆️', difficulte:1,
     youtube:'gwLzBJYoWlA',
     description:'Monter sur la pointe des pieds.',
-    conseils:['Amplitude complète','Tenir 1s en position haute','Descente lente']
+    conseils:['Amplitude complète','Tenir 1s en position haute']
   },
   hip_thrust: {
     nom:'Hip Thrust', muscle:'Fessiers',
     muscles_sec:['Ischio-jambiers'],
     groupe:'jambes',
     equipement:'Barre + Banc',
+    lieux:['salle'],
     emoji:'🍑', difficulte:2,
     youtube:'SEdqd1n0cvg',
     description:'Dos contre le banc, barre sur les hanches.',
@@ -487,50 +595,122 @@ const EXERCICES = {
     muscles_sec:['Fessiers'],
     groupe:'jambes',
     equipement:'Machine Hack Squat',
+    lieux:['salle'],
     emoji:'🦿', difficulte:2,
     youtube:'uYumuL_G_V0',
-    description:'Machine guidée inclinée, excellente isolation quadriceps.',
-    conseils:['Pieds légèrement en avant','Dos plaqué contre le dossier','Profondeur maximale','Genoux dans l\'axe des pieds']
+    description:'Machine guidée inclinée.',
+    conseils:['Pieds légèrement en avant','Profondeur maximale']
   },
   goblet_squat: {
     nom:'Goblet Squat', muscle:'Quadriceps / Core',
     muscles_sec:['Fessiers','Core'],
     groupe:'jambes',
     equipement:'Haltère ou Kettlebell',
+    lieux:['salle','maison','dehors'],
     emoji:'🏆', difficulte:1,
     youtube:'MxsFDJCGFqU',
     description:'Squat avec haltère tenu contre la poitrine.',
-    conseils:['Haltère contre la poitrine','Coudes entre les genoux en bas','Idéal pour débutants','Talon au sol']
+    conseils:['Haltère contre la poitrine','Idéal pour débutants']
   },
   sumo_squat: {
     nom:'Sumo Squat / Deadlift', muscle:'Ischio-jambiers / Adducteurs',
     muscles_sec:['Fessiers','Quadriceps'],
     groupe:'jambes',
     equipement:'Barre ou Haltère',
+    lieux:['salle','maison'],
     emoji:'🥋', difficulte:2,
     youtube:'67oNKBXSBh0',
     description:'Pieds très écartés, orteils vers l\'extérieur.',
-    conseils:['Pieds à 45° vers l\'extérieur','Genoux dans l\'axe des pieds','Dos neutre','Hanches descendent directement vers le bas']
+    conseils:['Pieds à 45°','Genoux dans l\'axe','Dos neutre']
   },
   nordic_curl: {
     nom:'Nordic Curl', muscle:'Ischio-jambiers',
     muscles_sec:[],
     groupe:'jambes',
     equipement:'Partenaire ou fixation aux pieds',
+    lieux:['salle','maison','dehors'],
     emoji:'🎿', difficulte:4,
     youtube:'_OEsVZ12q_g',
-    description:'Pieds fixés, descendre le corps en avant en contrôlant.',
-    conseils:['Un des meilleurs exercices pour les ischio','Descente très lente','Utiliser les bras en fin de mouvement','Progresser doucement']
+    description:'Pieds fixés, descendre en contrôlant.',
+    conseils:['Descente très lente','Progresser doucement']
   },
   glute_kickback: {
     nom:'Glute Kickback câble', muscle:'Fessiers',
     muscles_sec:['Ischio-jambiers'],
     groupe:'jambes',
     equipement:'Câble + Cheville',
+    lieux:['salle'],
     emoji:'🦶', difficulte:1,
     youtube:'ex7TDaKBDnU',
     description:'Debout face au câble, extension de la jambe vers l\'arrière.',
-    conseils:['Core gainé','Jambe portante légèrement fléchie','Squeeze fessier en haut','Ne pas compenser avec le dos']
+    conseils:['Core gainé','Squeeze fessier en haut']
+  },
+  // ✅ NOUVEAU — Exercices femme / maison jambes
+  squat_poids_corps: {
+    nom:'Squat poids du corps', muscle:'Quadriceps',
+    muscles_sec:['Fessiers','Core'],
+    groupe:'jambes',
+    equipement:'Poids du corps',
+    lieux:['maison','dehors'],
+    emoji:'🦵', difficulte:1,
+    youtube:'aclHkVaku9U',
+    description:'Squat sans charge, parfait pour débuter.',
+    conseils:['Genoux dans l\'axe','Profondeur maximale']
+  },
+  fentes_bulgares: {
+    nom:'Fentes bulgares', muscle:'Quadriceps / Fessiers',
+    muscles_sec:['Ischio-jambiers'],
+    groupe:'jambes',
+    equipement:'Banc ou chaise',
+    lieux:['maison','dehors'],
+    emoji:'🏋️', difficulte:3,
+    youtube:'2C-uNgKwPLE',
+    description:'Pied arrière surélevé, fente profonde.',
+    conseils:['Genou avant dans l\'axe','Amplitude maximale','Core gainé']
+  },
+  hip_thrust_sol: {
+    nom:'Hip Thrust au sol', muscle:'Fessiers',
+    muscles_sec:['Ischio-jambiers'],
+    groupe:'jambes',
+    equipement:'Poids du corps',
+    lieux:['maison','dehors'],
+    emoji:'🍑', difficulte:1,
+    youtube:'kKKh0HQJ6zI',
+    description:'Allongé au sol, pousser les hanches vers le haut.',
+    conseils:['Squeeze fort en haut','Pieds à plat','Menton rentré']
+  },
+  donkey_kick: {
+    nom:'Donkey Kick', muscle:'Fessiers',
+    muscles_sec:['Lombaires'],
+    groupe:'jambes',
+    equipement:'Tapis',
+    lieux:['maison','dehors'],
+    emoji:'🦵', difficulte:1,
+    youtube:'SJ1Xuz9D-ZQ',
+    description:'À quatre pattes, lever la jambe vers le haut.',
+    conseils:['Dos plat','Squeeze fessier en haut','Contrôle']
+  },
+  clamshell: {
+    nom:'Clamshell', muscle:'Fessiers / Abducteurs',
+    muscles_sec:[],
+    groupe:'jambes',
+    equipement:'Tapis + Élastique',
+    lieux:['maison','dehors'],
+    emoji:'🐚', difficulte:1,
+    youtube:'MK_BaeTvPAo',
+    description:'Allongé sur le côté, ouvrir les genoux comme une palourde.',
+    conseils:['Élastique pour plus de résistance','Contrôle total','Hanches fixes']
+  },
+  squat_saute: {
+    nom:'Squat sauté', muscle:'Quadriceps',
+    muscles_sec:['Fessiers','Core'],
+    groupe:'jambes',
+    equipement:'Poids du corps',
+    lieux:['maison','dehors'],
+    emoji:'🦘', difficulte:2,
+    youtube:'CVaEhXotL7M',
+    description:'Squat avec saut explosif en haut.',
+    conseils:['Atterrissage doux','Amplitude complète','Explosivité']
   },
 
   // ══════════════════════════════════════════
@@ -541,70 +721,100 @@ const EXERCICES = {
     muscles_sec:['Épaules','Fessiers'],
     groupe:'abdos',
     equipement:'Tapis / Sol',
+    lieux:['salle','maison','dehors'],
     emoji:'━', difficulte:1,
     youtube:'pSHjTRCQxIw',
     description:'Corps en ligne droite, appui sur les avant-bras.',
-    conseils:['Dos parfaitement plat','Ne pas lever les fesses','Respirer normalement','Gainage actif']
+    conseils:['Dos parfaitement plat','Gainage actif']
   },
   crunch_machine: {
     nom:'Crunch machine', muscle:'Abdominaux',
     muscles_sec:[],
     groupe:'abdos',
     equipement:'Machine Abdos',
+    lieux:['salle'],
     emoji:'🤖', difficulte:1,
     youtube:'Xyd_fa5zoEU',
     description:'Flexion du tronc en expirant.',
-    conseils:['Expirer en fléchissant','Pas d\'élan','Amplitude contrôlée']
+    conseils:['Expirer en fléchissant','Pas d\'élan']
   },
   releve_jambes: {
     nom:'Relevé de jambes suspendu', muscle:'Abdominaux Bas',
     muscles_sec:['Hip Flexors'],
     groupe:'abdos',
     equipement:'Barre de traction',
+    lieux:['salle','dehors'],
     emoji:'⬆️', difficulte:3,
     youtube:'JB2oyawG9KQ',
     description:'Suspendu à la barre, lever les jambes.',
-    conseils:['Pas de balancement','Contrôle total','Rétroversion du bassin']
+    conseils:['Pas de balancement','Rétroversion du bassin']
   },
   russian_twist: {
     nom:'Russian Twist', muscle:'Obliques',
     muscles_sec:['Abdominaux'],
     groupe:'abdos',
     equipement:'Haltère / Médecine ball',
+    lieux:['salle','maison','dehors'],
     emoji:'🔄', difficulte:2,
     youtube:'wkD8rjkodUI',
     description:'Assis, tourner le tronc alternativement.',
-    conseils:['Talons au sol ou légèrement levés','Rotation depuis le tronc','Contrôle']
+    conseils:['Rotation depuis le tronc','Contrôle']
   },
   dragon_flag: {
     nom:'Dragon Flag', muscle:'Core Complet',
     muscles_sec:['Hip Flexors','Épaules'],
     groupe:'abdos',
     equipement:'Banc ou barre fixe',
+    lieux:['salle','maison','dehors'],
     emoji:'🐉', difficulte:5,
     youtube:'pvz7k5gOZAA',
-    description:'Allongé, maintenir le corps rigide et descendre lentement.',
-    conseils:['Un des exercices les plus difficiles','Corps parfaitement rigide','Descente très lente','Progression obligatoire']
+    description:'Corps rigide, descente lente.',
+    conseils:['Corps parfaitement rigide','Descente très lente']
   },
   hollow_body: {
     nom:'Hollow Body Hold', muscle:'Core Complet',
     muscles_sec:['Hip Flexors'],
     groupe:'abdos',
     equipement:'Tapis',
+    lieux:['maison','dehors'],
     emoji:'🍌', difficulte:2,
     youtube:'LlDNef_Ztsc',
-    description:'Position creuse maintenue au sol, bras et jambes tendus.',
-    conseils:['Bas du dos collé au sol','Bras tendus derrière la tête','Respirer normalement','Position de base de la gymnastique']
+    description:'Position creuse maintenue au sol.',
+    conseils:['Bas du dos collé au sol','Respirer normalement']
   },
   side_plank: {
     nom:'Planche latérale', muscle:'Obliques',
     muscles_sec:['Core','Épaules'],
     groupe:'abdos',
     equipement:'Tapis',
+    lieux:['salle','maison','dehors'],
     emoji:'📏', difficulte:2,
     youtube:'_rdfjFSFKMY',
-    description:'Appui sur un avant-bras, corps latéralement en ligne droite.',
-    conseils:['Hanches bien alignées','Ne pas laisser tomber les hanches','Respirer normalement','Maintenir la position']
+    description:'Appui sur un avant-bras, corps latéralement en ligne.',
+    conseils:['Hanches bien alignées','Respirer normalement']
+  },
+  // ✅ NOUVEAU — Crunch classique maison
+  crunch: {
+    nom:'Crunch', muscle:'Abdominaux',
+    muscles_sec:[],
+    groupe:'abdos',
+    equipement:'Tapis',
+    lieux:['maison','dehors'],
+    emoji:'🔥', difficulte:1,
+    youtube:'Xyd_fa5zoEU',
+    description:'Flexion partielle du tronc au sol.',
+    conseils:['Mains derrière la tête','Ne pas tirer le cou','Expirer en montant']
+  },
+  mountain_climbers_core: {
+    nom:'Mountain Climbers', muscle:'Core / Cardio',
+    muscles_sec:['Épaules','Hip Flexors'],
+    groupe:'abdos',
+    equipement:'Tapis',
+    lieux:['maison','dehors'],
+    emoji:'🧗', difficulte:2,
+    youtube:'nmwgirgXLYM',
+    description:'En position de pompes, genoux vers la poitrine.',
+    conseils:['Hanches basses','Corps rigide','Rythme rapide']
   },
 
   // ══════════════════════════════════════════
@@ -615,50 +825,55 @@ const EXERCICES = {
     muscles_sec:['Dos','Jambes','Bras'],
     groupe:'cardio',
     equipement:'Rameur',
+    lieux:['salle'],
     emoji:'🚣', difficulte:2,
     youtube:'H0r1YAFQbHs',
     description:'60% jambes / 30% dos / 10% bras.',
-    conseils:['Jambes d\'abord','Incliner le dos ensuite','Bras en dernier']
+    conseils:['Jambes d\'abord','Incliner le dos ensuite']
   },
   velo: {
     nom:'Vélo stationnaire', muscle:'Cardio / Jambes',
     muscles_sec:['Quadriceps','Mollets'],
     groupe:'cardio',
     equipement:'Vélo',
+    lieux:['salle'],
     emoji:'🚴', difficulte:1,
     youtube:'7OD8MNNOhqc',
     description:'Cardio low-impact.',
-    conseils:['Selle à hauteur de hanche','Résistance progressive','Cadence régulière']
+    conseils:['Selle à hauteur de hanche','Résistance progressive']
   },
   corde_a_sauter: {
     nom:'Corde à sauter', muscle:'Cardio / Mollets',
     muscles_sec:['Mollets','Épaules','Core'],
     groupe:'cardio',
     equipement:'Corde à sauter',
+    lieux:['maison','dehors'],
     emoji:'🪢', difficulte:2,
     youtube:'FJmRQ5iTXKE',
-    description:'Sauts rythmés à la corde, cardio intense.',
-    conseils:['Sur les pointes des pieds','Rotation des poignets uniquement','Commencer lentement','Maintenir un rythme régulier']
+    description:'Sauts rythmés à la corde.',
+    conseils:['Sur les pointes des pieds','Rotation des poignets uniquement']
   },
   burpees: {
     nom:'Burpees', muscle:'Full Body Cardio',
     muscles_sec:['Pectoraux','Quadriceps','Core'],
     groupe:'cardio',
     equipement:'Poids du corps',
+    lieux:['maison','dehors'],
     emoji:'💦', difficulte:3,
     youtube:'dZgVxmf6jkA',
     description:'Squat → planche → pompe → saut vertical.',
-    conseils:['Enchaîner les mouvements sans pause','Atterrissage doux','Corps rigide en planche','Sauter haut en finissant']
+    conseils:['Atterrissage doux','Corps rigide en planche']
   },
   mountain_climbers: {
     nom:'Mountain Climbers', muscle:'Core / Cardio',
     muscles_sec:['Épaules','Hip Flexors'],
     groupe:'cardio',
     equipement:'Tapis',
+    lieux:['maison','dehors'],
     emoji:'🧗', difficulte:2,
     youtube:'nmwgirgXLYM',
-    description:'En position de pompes, ramener les genoux alternativement vers la poitrine.',
-    conseils:['Hanches basses','Corps rigide','Rythme rapide','Respirer régulièrement']
+    description:'En position de pompes, genoux alternativement.',
+    conseils:['Hanches basses','Corps rigide','Rythme rapide']
   },
 
   // ══════════════════════════════════════════
@@ -669,50 +884,145 @@ const EXERCICES = {
     muscles_sec:['Épaules','Quadriceps','Dos'],
     groupe:'fullbody',
     equipement:'Barre ou Haltères',
+    lieux:['salle'],
     emoji:'🏅', difficulte:4,
     youtube:'Z0GpVMXFRaY',
-    description:'Soulever la barre de sol à l\'épaule puis au-dessus de la tête.',
-    conseils:['Apprentissage technique obligatoire','Explosivité dans le tirage','Core gainé pendant tout le mouvement','Commencer léger']
+    description:'De sol à l\'épaule puis au-dessus de la tête.',
+    conseils:['Apprentissage technique obligatoire','Commencer léger']
   },
   thruster: {
     nom:'Thruster', muscle:'Full Body',
     muscles_sec:['Quadriceps','Épaules','Triceps'],
     groupe:'fullbody',
     equipement:'Barre ou Haltères',
+    lieux:['salle'],
     emoji:'🚀', difficulte:3,
     youtube:'ioJ2PquEPos',
-    description:'Front squat enchaîné avec un développé en un seul mouvement.',
-    conseils:['Utiliser l\'élan du squat','Transition fluide','Core gainé','Excellent pour le HIIT']
+    description:'Front squat enchaîné avec développé.',
+    conseils:['Utiliser l\'élan du squat','Transition fluide']
   },
   kettlebell_swing: {
     nom:'Kettlebell Swing', muscle:'Chaîne postérieure',
     muscles_sec:['Fessiers','Ischio-jambiers','Core'],
     groupe:'fullbody',
     equipement:'Kettlebell',
+    lieux:['salle','maison'],
     emoji:'⚫', difficulte:2,
     youtube:'YSxHifyI6s8',
-    description:'Balancement du kettlebell avec extension explosive des hanches.',
-    conseils:['Mouvement des hanches (pas des bras)','Extension explosive','Dos neutre','Le poids doit monter jusqu\'à la hauteur des épaules']
+    description:'Balancement du kettlebell, extension explosive des hanches.',
+    conseils:['Mouvement des hanches (pas des bras)','Dos neutre']
   },
   turkish_getup: {
     nom:'Turkish Get-up', muscle:'Full Body / Core',
     muscles_sec:['Épaules','Core','Fessiers'],
     groupe:'fullbody',
     equipement:'Kettlebell ou Haltère',
+    lieux:['salle','maison'],
     emoji:'🧘', difficulte:4,
     youtube:'boB03MoZGAY',
-    description:'Se lever du sol à debout avec une charge tenue bras tendu.',
-    conseils:['Apprendre sans charge d\'abord','Regard sur la charge','Mouvement très lent','Chaque étape distincte']
+    description:'Se lever du sol à debout avec charge bras tendu.',
+    conseils:['Apprendre sans charge d\'abord','Mouvement très lent']
   }
 };
 
 // ════════════════════════════════════════════════════════════
-// SÉANCES DE BASE
+// ✅ NOUVEAU v4.0 — FILTRE EXERCICES
+// ════════════════════════════════════════════════════════════
+const ExercicesFilter = {
+
+  // Filtrer par lieu
+  parLieu(lieu) {
+    if (!lieu || lieu === 'tous') return EXERCICES;
+    return Object.fromEntries(
+      Object.entries(EXERCICES)
+        .filter(([,ex]) => ex.lieux?.includes(lieu))
+    );
+  },
+
+  // Filtrer par muscle
+  parMuscle(muscle) {
+    if (!muscle || muscle === 'tous') return EXERCICES;
+    const m = muscle.toLowerCase();
+    return Object.fromEntries(
+      Object.entries(EXERCICES)
+        .filter(([,ex]) =>
+          ex.muscle?.toLowerCase().includes(m)
+          || ex.muscles_sec?.some(ms =>
+              ms.toLowerCase().includes(m))
+        )
+    );
+  },
+
+  // Filtrer par groupe
+  parGroupe(groupe) {
+    if (!groupe || groupe === 'tous') return EXERCICES;
+    return Object.fromEntries(
+      Object.entries(EXERCICES)
+        .filter(([,ex]) => ex.groupe === groupe)
+    );
+  },
+
+  // ✅ Filtre combiné lieu + muscle + groupe
+  filtrer({ lieu, muscle, groupe, difficulteMax } = {}) {
+    return Object.fromEntries(
+      Object.entries(EXERCICES).filter(([,ex]) => {
+        if (lieu && lieu !== 'tous'
+            && !ex.lieux?.includes(lieu)) return false;
+        if (muscle && muscle !== 'tous'
+            && !ex.muscle?.toLowerCase()
+                .includes(muscle.toLowerCase())) return false;
+        if (groupe && groupe !== 'tous'
+            && ex.groupe !== groupe) return false;
+        if (difficulteMax
+            && (ex.difficulte||1) > difficulteMax) return false;
+        return true;
+      })
+    );
+  },
+
+  // ✅ NOUVEAU — Trouver exercice similaire (pour remplacer)
+  getSimilaires(ref, lieu = null) {
+    const exo = EXERCICES[ref];
+    if (!exo) return [];
+
+    return Object.entries(EXERCICES)
+      .filter(([key, ex]) => {
+        if (key === ref) return false;
+        // Même muscle principal OU même groupe
+        const memeMuscle = ex.muscle === exo.muscle;
+        const memeGroupe = ex.groupe === exo.groupe;
+        // Filtre lieu si spécifié
+        const lieuOK = !lieu || lieu === 'tous'
+          || ex.lieux?.includes(lieu);
+        return (memeMuscle || memeGroupe) && lieuOK;
+      })
+      .sort(([,a],[,b]) => {
+        // Prioriser même muscle exact
+        const aScore = a.muscle === exo.muscle ? 1 : 0;
+        const bScore = b.muscle === exo.muscle ? 1 : 0;
+        return bScore - aScore;
+      })
+      .slice(0, 5)
+      .map(([key, ex]) => ({
+        ref:   key,
+        nom:   ex.nom,
+        emoji: ex.emoji,
+        muscle: ex.muscle,
+        difficulte: ex.difficulte,
+        lieux: ex.lieux
+      }));
+  }
+};
+
+// ════════════════════════════════════════════════════════════
+// SÉANCES DE BASE — HOMME
 // ════════════════════════════════════════════════════════════
 const SEANCES_BASE = {
   pec_tri: {
     id:'pec_tri', nom:'Pectoraux + Triceps', emoji:'💪',
-    muscles:['Pectoraux','Triceps','Core'], duree_estimee:70,
+    muscles:['Pectoraux','Triceps','Core'],
+    genre:['homme','mixte'],
+    duree_estimee:70,
     exercices:[
       {ref:'bench_press',         series:4, reps:'8-10',  repos:90},
       {ref:'incline_halteres',    series:4, reps:'10',    repos:90},
@@ -720,7 +1030,6 @@ const SEANCES_BASE = {
       {ref:'ecarte_poulie',       series:3, reps:'12-15', repos:60},
       {ref:'ext_triceps_poulie',  series:3, reps:'12',    repos:60},
       {ref:'dips_triceps',        series:3, reps:'échec', repos:60},
-      // ✅ ABDOS FIN DE SÉANCE
       {ref:'planche',             series:3, reps:'45-60s',repos:45},
       {ref:'crunch_machine',      series:3, reps:'15',    repos:45},
       {ref:'russian_twist',       series:3, reps:'20',    repos:45}
@@ -728,7 +1037,9 @@ const SEANCES_BASE = {
   },
   dos_bi: {
     id:'dos_bi', nom:'Dos + Biceps', emoji:'🔗',
-    muscles:['Dos','Biceps','Core'], duree_estimee:70,
+    muscles:['Dos','Biceps','Core'],
+    genre:['homme','mixte'],
+    duree_estimee:70,
     exercices:[
       {ref:'tractions',      series:4, reps:'max',   repos:90},
       {ref:'rowing_barre',   series:4, reps:'8-10',  repos:90},
@@ -736,7 +1047,6 @@ const SEANCES_BASE = {
       {ref:'rowing_machine', series:3, reps:'12',    repos:75},
       {ref:'curl_halteres',  series:3, reps:'12',    repos:60},
       {ref:'curl_marteau',   series:3, reps:'12',    repos:60},
-      // ✅ ABDOS FIN DE SÉANCE
       {ref:'releve_jambes',  series:3, reps:'12-15', repos:45},
       {ref:'planche',        series:3, reps:'45-60s',repos:45},
       {ref:'hollow_body',    series:3, reps:'30s',   repos:45}
@@ -744,7 +1054,9 @@ const SEANCES_BASE = {
   },
   epaules_bras: {
     id:'epaules_bras', nom:'Épaules + Bras', emoji:'💪',
-    muscles:['Épaules','Biceps','Triceps','Core'], duree_estimee:70,
+    muscles:['Épaules','Biceps','Triceps','Core'],
+    genre:['homme','mixte'],
+    duree_estimee:70,
     exercices:[
       {ref:'dev_militaire',          series:4, reps:'8-10',  repos:90},
       {ref:'elev_laterales',         series:4, reps:'12-15', repos:60},
@@ -752,43 +1064,147 @@ const SEANCES_BASE = {
       {ref:'face_pull',              series:3, reps:'15',    repos:60},
       {ref:'curl_barre',             series:3, reps:'10',    repos:60},
       {ref:'barre_front',            series:3, reps:'10',    repos:60},
-      // ✅ ABDOS FIN DE SÉANCE
-      {ref:'russian_twist',  series:3, reps:'20',    repos:45},
-      {ref:'side_plank',     series:3, reps:'30s/c', repos:45},
-      {ref:'crunch_machine', series:3, reps:'15',    repos:45}
+      {ref:'russian_twist',          series:3, reps:'20',    repos:45},
+      {ref:'side_plank',             series:3, reps:'30s/c', repos:45},
+      {ref:'crunch_machine',         series:3, reps:'15',    repos:45}
     ]
   },
   jambes: {
     id:'jambes', nom:'Jambes + Fessiers', emoji:'🦵',
     muscles:['Quadriceps','Ischio-jambiers','Fessiers','Mollets','Core'],
+    genre:['homme','mixte'],
     duree_estimee:75,
     exercices:[
       {ref:'squat',          series:4, reps:'8-10',  repos:120},
-      {ref:'presse_cuisses', series:4, reps:'10-12', repos:90},
-      {ref:'fentes',         series:3, reps:'12/j',  repos:75},
-      {ref:'leg_curl',       series:3, reps:'12',    repos:75},
-      {ref:'leg_extension',  series:3, reps:'15',    repos:60},
-      {ref:'mollets',        series:4, reps:'15-20', repos:45},
-      // ✅ ABDOS FIN DE SÉANCE
-      {ref:'planche',        series:3, reps:'45-60s',repos:45},
-      {ref:'releve_jambes',  series:3, reps:'12',    repos:45},
-      {ref:'russian_twist',  series:3, reps:'20',    repos:45}
+      {ref:'presse_cuisses', series:4, reps:'10-12', repos:90 },
+      {ref:'fentes',         series:3, reps:'12/j',  repos:75 },
+      {ref:'leg_curl',       series:3, reps:'12',    repos:75 },
+      {ref:'leg_extension',  series:3, reps:'15',    repos:60 },
+      {ref:'mollets',        series:4, reps:'15-20', repos:45 },
+      {ref:'planche',        series:3, reps:'45-60s',repos:45 },
+      {ref:'releve_jambes',  series:3, reps:'12',    repos:45 },
+      {ref:'russian_twist',  series:3, reps:'20',    repos:45 }
     ]
   },
   full_body: {
     id:'full_body', nom:'Full Body + Gainage', emoji:'🔄',
-    muscles:['Full Body','Core'], duree_estimee:65,
+    muscles:['Full Body','Core'],
+    genre:['homme','femme','mixte'],
+    duree_estimee:65,
     exercices:[
       {ref:'soulevé_terre',  series:4, reps:'6-8',    repos:120},
-      {ref:'rowing_machine', series:3, reps:'12',     repos:75},
-      {ref:'planche',        series:3, reps:'45-60s', repos:60},
-      {ref:'releve_jambes',  series:3, reps:'12-15',  repos:60},
-      {ref:'russian_twist',  series:3, reps:'20',     repos:45},
-      {ref:'crunch_machine', series:3, reps:'15',     repos:45},
-      // ✅ ABDOS RENFORCÉS
-      {ref:'hollow_body',    series:3, reps:'30s',    repos:45},
-      {ref:'side_plank',     series:3, reps:'30s/c',  repos:45},
-      {ref:'dragon_flag',    series:3, reps:'5-8',    repos:60}
+      {ref:'rowing_machine', series:3, reps:'12',     repos:75 },
+      {ref:'planche',        series:3, reps:'45-60s', repos:60 },
+      {ref:'releve_jambes',  series:3, reps:'12-15',  repos:60 },
+      {ref:'russian_twist',  series:3, reps:'20',     repos:45 },
+      {ref:'crunch_machine', series:3, reps:'15',     repos:45 },
+      {ref:'hollow_body',    series:3, reps:'30s',    repos:45 },
+      {ref:'side_plank',     series:3, reps:'30s/c',  repos:45 },
+      {ref:'dragon_flag',    series:3, reps:'5-8',    repos:60 }
+    ]
+  },
+
+  // ✅ NOUVEAU v4.0 — SÉANCES FEMME SPÉCIFIQUES
+  lower_body_femme: {
+    id:'lower_body_femme', nom:'Lower Body 🍑', emoji:'🍑',
+    muscles:['Fessiers','Quadriceps','Ischio-jambiers','Mollets'],
+    genre:['femme'],
+    duree_estimee:60,
+    description:'Programme galbe et renforcement bas du corps',
+    exercices:[
+      {ref:'hip_thrust',       series:4, reps:'12-15', repos:75},
+      {ref:'fentes_bulgares',  series:3, reps:'12/j',  repos:75},
+      {ref:'squat_poids_corps',series:3, reps:'15-20', repos:60},
+      {ref:'donkey_kick',      series:3, reps:'15/j',  repos:45},
+      {ref:'clamshell',        series:3, reps:'15/j',  repos:45},
+      {ref:'hip_thrust_sol',   series:3, reps:'20',    repos:45},
+      {ref:'squat_saute',      series:3, reps:'15',    repos:60},
+      {ref:'planche',          series:3, reps:'30-45s',repos:45},
+      {ref:'crunch',           series:3, reps:'20',    repos:45}
+    ]
+  },
+  upper_body_femme: {
+    id:'upper_body_femme', nom:'Upper Body Féminin', emoji:'💪',
+    muscles:['Épaules','Dos','Bras'],
+    genre:['femme'],
+    duree_estimee:55,
+    description:'Renforcement haut du corps féminin',
+    exercices:[
+      {ref:'dev_militaire',    series:3, reps:'12',    repos:75},
+      {ref:'elev_laterales',   series:3, reps:'15',    repos:60},
+      {ref:'tractions',        series:3, reps:'max',   repos:90},
+      {ref:'inverted_row',     series:3, reps:'12',    repos:60},
+      {ref:'curl_halteres',    series:3, reps:'15',    repos:60},
+      {ref:'diamond_pushup',   series:3, reps:'12',    repos:60},
+      {ref:'planche',          series:3, reps:'30-45s',repos:45},
+      {ref:'side_plank',       series:3, reps:'30s/c', repos:45},
+      {ref:'russian_twist',    series:3, reps:'20',    repos:45}
+    ]
+  },
+  core_femme: {
+    id:'core_femme', nom:'Core & Galbe Féminin', emoji:'🔥',
+    muscles:['Abdominaux','Core','Obliques'],
+    genre:['femme'],
+    duree_estimee:45,
+    description:'Gainage et sculpture abdominale féminine',
+    exercices:[
+      {ref:'planche',          series:4, reps:'30-45s',repos:45},
+      {ref:'crunch',           series:3, reps:'20',    repos:45},
+      {ref:'russian_twist',    series:3, reps:'20',    repos:45},
+      {ref:'side_plank',       series:3, reps:'30s/c', repos:45},
+      {ref:'hollow_body',      series:3, reps:'20s',   repos:45},
+      {ref:'mountain_climbers',series:3, reps:'20',    repos:45},
+      {ref:'hip_thrust_sol',   series:3, reps:'20',    repos:45}
+    ]
+  },
+
+  // ✅ NOUVEAU v4.0 — SÉANCES MAISON
+  maison_push: {
+    id:'maison_push', nom:'Push Maison', emoji:'🏠',
+    muscles:['Pectoraux','Épaules','Triceps'],
+    genre:['homme','femme','mixte'],
+    lieu:['maison','dehors'],
+    duree_estimee:45,
+    exercices:[
+      {ref:'pompes',           series:4, reps:'max',   repos:75},
+      {ref:'pompes_declined',  series:3, reps:'12',    repos:75},
+      {ref:'diamond_pushup',   series:3, reps:'12',    repos:60},
+      {ref:'pike_pushup',      series:3, reps:'12',    repos:60},
+      {ref:'dips_triceps',     series:3, reps:'max',   repos:60},
+      {ref:'planche',          series:3, reps:'45-60s',repos:45},
+      {ref:'crunch',           series:3, reps:'20',    repos:45}
+    ]
+  },
+  maison_pull: {
+    id:'maison_pull', nom:'Pull Maison', emoji:'🏠',
+    muscles:['Dos','Biceps','Core'],
+    genre:['homme','femme','mixte'],
+    lieu:['maison','dehors'],
+    duree_estimee:45,
+    exercices:[
+      {ref:'tractions',        series:4, reps:'max',   repos:90},
+      {ref:'inverted_row',     series:3, reps:'12',    repos:75},
+      {ref:'superman',         series:3, reps:'15',    repos:60},
+      {ref:'bird_dog',         series:3, reps:'12/c',  repos:60},
+      {ref:'curl_halteres',    series:3, reps:'15',    repos:60},
+      {ref:'curl_marteau',     series:3, reps:'12',    repos:60},
+      {ref:'planche',          series:3, reps:'45s',   repos:45}
+    ]
+  },
+  maison_legs: {
+    id:'maison_legs', nom:'Jambes Maison', emoji:'🏠',
+    muscles:['Quadriceps','Fessiers','Ischio-jambiers'],
+    genre:['homme','femme','mixte'],
+    lieu:['maison','dehors'],
+    duree_estimee:45,
+    exercices:[
+      {ref:'squat_poids_corps',series:4, reps:'20',    repos:60},
+      {ref:'fentes_bulgares',  series:3, reps:'12/j',  repos:75},
+      {ref:'hip_thrust_sol',   series:3, reps:'20',    repos:60},
+      {ref:'donkey_kick',      series:3, reps:'15/j',  repos:45},
+      {ref:'squat_saute',      series:3, reps:'15',    repos:60},
+      {ref:'nordic_curl',      series:3, reps:'5-8',   repos:90},
+      {ref:'clamshell',        series:3, reps:'15/j',  repos:45}
     ]
   }
 };
@@ -804,6 +1220,28 @@ const PLANNING_SEMAINE_DEFAUT = [
   {jour:4, label:'VEN', seanceId:'jambes'       },
   {jour:5, label:'SAM', seanceId:'full_body'    },
   {jour:6, label:'DIM', seanceId:null           }
+];
+
+// ✅ NOUVEAU — Planning femme
+const PLANNING_FEMME_DEFAUT = [
+  {jour:0, label:'LUN', seanceId:'lower_body_femme'},
+  {jour:1, label:'MAR', seanceId:'upper_body_femme'},
+  {jour:2, label:'MER', seanceId:null              },
+  {jour:3, label:'JEU', seanceId:'lower_body_femme'},
+  {jour:4, label:'VEN', seanceId:'core_femme'      },
+  {jour:5, label:'SAM', seanceId:'full_body'        },
+  {jour:6, label:'DIM', seanceId:null              }
+];
+
+// ✅ NOUVEAU — Planning maison
+const PLANNING_MAISON_DEFAUT = [
+  {jour:0, label:'LUN', seanceId:'maison_push'},
+  {jour:1, label:'MAR', seanceId:'maison_pull'},
+  {jour:2, label:'MER', seanceId:null         },
+  {jour:3, label:'JEU', seanceId:'maison_legs'},
+  {jour:4, label:'VEN', seanceId:'maison_push'},
+  {jour:5, label:'SAM', seanceId:'full_body'  },
+  {jour:6, label:'DIM', seanceId:null         }
 ];
 
 let PLANNING_SEMAINE = (() => {
@@ -835,13 +1273,12 @@ const WARMUP = {
   dos_bi: [
     {nom:'Rameur',              duree:300, description:'5 min léger'       },
     {nom:'Rotations épaules',   duree:30,  description:'10 reps'           },
-    {nom:'Tractions assistées', duree:60,  description:'5 reps faciles'    },
-    {nom:'Rowing barre vide',   duree:60,  description:'15 reps, technique'}
+    {nom:'Tractions assistées', duree:60,  description:'5 reps faciles'    }
   ],
   epaules_bras: [
-    {nom:'Vélo',           duree:300, description:'5 min léger'           },
-    {nom:'Circles bras',   duree:30,  description:'10 reps chaque sens'   },
-    {nom:'Face pull léger',duree:60,  description:'15 reps, focus posture'}
+    {nom:'Vélo',            duree:300, description:'5 min léger'           },
+    {nom:'Circles bras',    duree:30,  description:'10 reps chaque sens'   },
+    {nom:'Face pull léger', duree:60,  description:'15 reps, focus posture'}
   ],
   jambes: [
     {nom:'Vélo stationnaire',    duree:300, description:'5 min'               },
@@ -853,6 +1290,38 @@ const WARMUP = {
     {nom:'Rameur',               duree:300, description:'5 min cadence modérée'},
     {nom:'Hip hinge barre vide', duree:60,  description:'10 reps, technique'   },
     {nom:'Squats poids du corps',duree:60,  description:'10 reps'              }
+  ],
+  // ✅ NOUVEAU — Warm-up femme/maison
+  lower_body_femme: [
+    {nom:'Marche rapide / Vélo', duree:300, description:'5 min'},
+    {nom:'Leg swing',            duree:30,  description:'10 reps chaque jambe'},
+    {nom:'Hip circles',          duree:30,  description:'10 reps chaque sens' },
+    {nom:'Squat poids du corps', duree:60,  description:'10 reps lentes'      }
+  ],
+  upper_body_femme: [
+    {nom:'Jumping jacks',      duree:120, description:'2 min'},
+    {nom:'Rotations épaules',  duree:30,  description:'10 reps chaque sens'},
+    {nom:'Pompes légères',     duree:60,  description:'10 reps faciles'    }
+  ],
+  core_femme: [
+    {nom:'Marche sur place',  duree:120, description:'2 min'},
+    {nom:'Cat-Cow stretch',   duree:60,  description:'10 reps'},
+    {nom:'Planche légère',    duree:30,  description:'15s'}
+  ],
+  maison_push: [
+    {nom:'Jumping jacks',  duree:120, description:'2 min'},
+    {nom:'Rotations bras', duree:30,  description:'10 reps'},
+    {nom:'Pompes légères', duree:60,  description:'10 reps'}
+  ],
+  maison_pull: [
+    {nom:'Jumping jacks',     duree:120, description:'2 min'},
+    {nom:'Rotations épaules', duree:30,  description:'10 reps'},
+    {nom:'Superman',          duree:30,  description:'10 reps'}
+  ],
+  maison_legs: [
+    {nom:'Marche rapide',     duree:300, description:'5 min'},
+    {nom:'Leg swing',         duree:30,  description:'10 reps'},
+    {nom:'Squat poids corps', duree:60,  description:'10 reps'}
   ]
 };
 
@@ -885,6 +1354,38 @@ const ETIREMENTS = {
     {nom:'Étirement dos complet', duree:45, gif:'🧘'},
     {nom:'Cat-Cow stretch',       duree:30, gif:'🧘'},
     {nom:'Étirement hip flexors', duree:45, gif:'🧘'}
+  ],
+  // ✅ NOUVEAU — Étirements femme/maison
+  lower_body_femme: [
+    {nom:'Pigeon pose fessiers',         duree:45, gif:'🧘'},
+    {nom:'Étirement ischio au sol',      duree:45, gif:'🧘'},
+    {nom:'Hip flexor stretch',           duree:30, gif:'🧘'},
+    {nom:'Étirement adducteurs (papillon)', duree:30, gif:'🧘'}
+  ],
+  upper_body_femme: [
+    {nom:'Étirement épaule croisée', duree:30, gif:'🧘'},
+    {nom:'Child pose',               duree:45, gif:'🧘'},
+    {nom:'Cat-Cow stretch',          duree:30, gif:'🧘'}
+  ],
+  core_femme: [
+    {nom:'Child pose',      duree:45, gif:'🧘'},
+    {nom:'Cat-Cow stretch', duree:30, gif:'🧘'},
+    {nom:'Cobra stretch',   duree:30, gif:'🧘'}
+  ],
+  maison_push: [
+    {nom:'Étirement pectoraux',  duree:30, gif:'🧘'},
+    {nom:'Étirement triceps',    duree:30, gif:'🧘'},
+    {nom:'Cobra stretch',        duree:30, gif:'🧘'}
+  ],
+  maison_pull: [
+    {nom:'Child pose',         duree:45, gif:'🧘'},
+    {nom:'Torsion assis',      duree:30, gif:'🧘'},
+    {nom:'Étirement biceps',   duree:30, gif:'🧘'}
+  ],
+  maison_legs: [
+    {nom:'Pigeon pose',                    duree:45, gif:'🧘'},
+    {nom:'Étirement quadriceps debout',    duree:30, gif:'🧘'},
+    {nom:'Étirement ischio',               duree:45, gif:'🧘'}
   ]
 };
 
@@ -893,27 +1394,39 @@ const ETIREMENTS = {
 // ════════════════════════════════════════════════════════════
 const SUPERSETS_RECOMMANDES = {
   pec_tri: [{
-    id:'ss_bench_dips', nom:'Superset Pec+Tri',
-    emoji:'⚡',
+    id:'ss_bench_dips', nom:'Superset Pec+Tri', emoji:'⚡',
     exercices:[
       {ref:'bench_press',  series:3, reps:'8',  repos:0 },
       {ref:'dips_triceps', series:3, reps:'12', repos:90}
     ]
   }],
   dos_bi: [{
-    id:'ss_pulldown_curl', nom:'Superset Dos+Bi',
-    emoji:'⚡',
+    id:'ss_pulldown_curl', nom:'Superset Dos+Bi', emoji:'⚡',
     exercices:[
       {ref:'lat_pulldown',  series:3, reps:'10', repos:0 },
       {ref:'curl_halteres', series:3, reps:'12', repos:90}
     ]
   }],
   epaules_bras: [{
-    id:'ss_lateral_facepull', nom:'Superset Épaules',
-    emoji:'⚡',
+    id:'ss_lateral_facepull', nom:'Superset Épaules', emoji:'⚡',
     exercices:[
       {ref:'elev_laterales', series:3, reps:'12', repos:0 },
       {ref:'face_pull',      series:3, reps:'15', repos:75}
+    ]
+  }],
+  // ✅ NOUVEAU — Supersets femme
+  lower_body_femme: [{
+    id:'ss_hipthrustdonkey', nom:'Superset Fessiers', emoji:'⚡',
+    exercices:[
+      {ref:'hip_thrust_sol', series:3, reps:'20', repos:0 },
+      {ref:'donkey_kick',    series:3, reps:'15', repos:75}
+    ]
+  }],
+  maison_push: [{
+    id:'ss_pompes_dips', nom:'Superset Push Maison', emoji:'⚡',
+    exercices:[
+      {ref:'pompes',       series:3, reps:'max', repos:0 },
+      {ref:'dips_triceps', series:3, reps:'max', repos:75}
     ]
   }]
 };
@@ -951,41 +1464,46 @@ const Programme = {
     const s    = this.getSemaineDansCycle();
     const mult = 1 + (this.getCycleActuel() - 1) * 0.05;
 
-    if (s <= 4) return {
-      nom:'Reprise', numero:1,
+    if (s <= 4)  return { nom:'Reprise',      numero:1,
       description:'Technique & Adaptation',
-      intensite: Math.min(0.65 * mult, 0.75),
-      couleur:'#8bf0bb', emoji:'🌱'
-    };
-    if (s <= 8) return {
-      nom:'Construction', numero:2,
+      intensite:Math.min(0.65 * mult, 0.75),
+      couleur:'#8bf0bb', emoji:'🌱' };
+    if (s <= 8)  return { nom:'Construction', numero:2,
       description:'Volume & Hypertrophie',
-      intensite: Math.min(0.75 * mult, 0.85),
-      couleur:'#4b4bf9', emoji:'🏗️'
-    };
-    if (s <= 12) return {
-      nom:'Intensité', numero:3,
+      intensite:Math.min(0.75 * mult, 0.85),
+      couleur:'#4b4bf9', emoji:'🏗️' };
+    if (s <= 12) return { nom:'Intensité',    numero:3,
       description:'Force & Records',
-      intensite: Math.min(0.85 * mult, 0.95),
-      couleur:'#bfa1ff', emoji:'💥'
-    };
-    if (s < 16) return {
-      nom:'Peak', numero:4,
+      intensite:Math.min(0.85 * mult, 0.95),
+      couleur:'#bfa1ff', emoji:'💥' };
+    if (s < 16)  return { nom:'Peak',         numero:4,
       description:'Records & Performance max',
-      intensite: Math.min(0.95 * mult, 1.0),
-      couleur:'#f9ef77', emoji:'🏆'
-    };
-    return {
-      nom:'Décharge', numero:4,
+      intensite:Math.min(0.95 * mult, 1.0),
+      couleur:'#f9ef77', emoji:'🏆' };
+    return { nom:'Décharge', numero:4,
       description:'Récupération active',
-      intensite: 0.55,
-      couleur:'#ff8d96', emoji:'😴', decharge:true
-    };
+      intensite:0.55,
+      couleur:'#ff8d96', emoji:'😴', decharge:true };
   },
 
   isDecharge() {
     return this.getSemaineDansCycle() === 16
       || this.getPhaseActuelle().decharge === true;
+  },
+
+  // ✅ NOUVEAU v4.0 — Décharge auto déclenchée
+  verifierDechargeAuto() {
+    const rpe7j      = window.Tracker?.getRPEMoyen7Jours() || 0;
+    const seances7j  = window.Tracker?.getSeancesParSemaine() || 0;
+    const dejaFait   = Utils.storage.get('ft_decharge_cette_semaine', false);
+
+    // ✅ Déclencher si RPE > 8.5 ou 6+ séances en 7 jours
+    if (!dejaFait && (rpe7j > 8.5 || seances7j >= 6)) {
+      Utils.storage.set('ft_decharge_cette_semaine', true);
+      return true;
+    }
+
+    return this.isDecharge();
   },
 
   getSeanceduJour(dateStr = null) {
@@ -998,12 +1516,22 @@ const Programme = {
       const seance = this._getSeanceById(planning.seanceId);
       if (!seance) return null;
 
+      // ✅ NOUVEAU — Adapter si décharge
+      const enDecharge = this.verifierDechargeAuto();
+
       return {
         ...Utils.clone(seance),
         dateStr: dateStr || Utils.aujourd_hui(),
         phase:   this.getPhaseActuelle(),
         semaine: this.getSemaineActuelle(),
-        cycle:   this.getCycleActuel()
+        cycle:   this.getCycleActuel(),
+        enDecharge,
+        // ✅ Réduire volume si décharge
+        exercices: enDecharge
+          ? (seance.exercices || [])
+              .slice(0, Math.ceil((seance.exercices?.length||0) * 0.6))
+              .map(ex => ({ ...ex, series: Math.max(2, (ex.series||3) - 1) }))
+          : seance.exercices
       };
     } catch(e) { return null; }
   },
@@ -1012,9 +1540,7 @@ const Programme = {
     for (let i = 1; i <= 7; i++) {
       const date   = Utils.ajouterJours(Utils.aujourd_hui(), i);
       const seance = this.getSeanceduJour(date);
-      if (seance) {
-        return { ...seance, dateStr:date, dansJours:i };
-      }
+      if (seance) return { ...seance, dateStr:date, dansJours:i };
     }
     return null;
   },
@@ -1022,8 +1548,7 @@ const Programme = {
   getSeancesSemaine(offset = 0) {
     try {
       const debut = Utils.ajouterJours(
-        Utils.debutSemaine(Utils.aujourd_hui()),
-        offset * 7
+        Utils.debutSemaine(Utils.aujourd_hui()), offset * 7
       );
       return PLANNING_SEMAINE.map(p => {
         const date = Utils.ajouterJours(debut, p.jour);
@@ -1043,7 +1568,6 @@ const Programme = {
     try {
       const seance = this._getSeanceById(seanceId);
       if (!seance) return null;
-
       const clone = Utils.clone(seance);
       return {
         ...clone,
@@ -1064,13 +1588,23 @@ const Programme = {
       const base       = Object.values(SEANCES_BASE);
       const customList = Object.values(customs);
       const ids        = new Set(base.map(s => s.id));
-      return [
-        ...base,
-        ...customList.filter(s => !ids.has(s.id))
-      ];
+      return [...base, ...customList.filter(s => !ids.has(s.id))];
     } catch(e) {
       return Object.values(SEANCES_BASE);
     }
+  },
+
+  // ✅ NOUVEAU v4.0 — Séances filtrées par genre et lieu
+  getSeancesParGenre(genre = 'homme') {
+    return Object.values(SEANCES_BASE).filter(s =>
+      !s.genre || s.genre.includes(genre) || s.genre.includes('mixte')
+    );
+  },
+
+  getSeancesParLieu(lieu = 'salle') {
+    return Object.values(SEANCES_BASE).filter(s =>
+      !s.lieu || s.lieu.includes(lieu)
+    );
   },
 
   getInfosProgramme() {
@@ -1081,8 +1615,7 @@ const Programme = {
       const phase       = this.getPhaseActuelle();
       const progression = Math.round((semaineC / 16) * 100);
       return {
-        semaine, cycle,
-        semaineInCycle: semaineC,
+        semaine, cycle, semaineInCycle:semaineC,
         phase, progression,
         label:    `Semaine ${semaine} · ${phase.nom}`,
         decharge: this.isDecharge()
@@ -1104,11 +1637,7 @@ const Programme = {
       const phase = this.getPhaseActuelle();
       const pr    = window.Tracker?.getPR(exerciceRef);
       if (!pr?.rm1) return null;
-
-      const charge = Math.round(
-        pr.rm1 * phase.intensite / 2.5
-      ) * 2.5;
-
+      const charge = Math.round(pr.rm1 * phase.intensite / 2.5) * 2.5;
       return {
         charge,
         pourcentage: Math.round(phase.intensite * 100),
@@ -1125,14 +1654,10 @@ const Programme = {
         `ft_supersets_custom_${seanceId}`, []
       );
       return [...ss, ...customSS];
-    } catch(e) {
-      return ss;
-    }
+    } catch(e) { return ss; }
   },
 
-  getPlanningActuel() {
-    return PLANNING_SEMAINE;
-  },
+  getPlanningActuel() { return PLANNING_SEMAINE; },
 
   sauvegarderPlanning(planning) {
     Utils.storage.set('ft_planning_custom', planning);
@@ -1146,13 +1671,27 @@ const Programme = {
     window.PLANNING_SEMAINE = PLANNING_SEMAINE;
   },
 
+  // ✅ NOUVEAU v4.0 — Appliquer planning par genre/lieu
+  appliquerPlanningGenre(genre, lieu = 'salle') {
+    let planning;
+
+    if (lieu === 'maison' || lieu === 'dehors') {
+      planning = [...PLANNING_MAISON_DEFAUT];
+    } else if (genre === 'femme') {
+      planning = [...PLANNING_FEMME_DEFAUT];
+    } else {
+      planning = [...PLANNING_SEMAINE_DEFAUT];
+    }
+
+    this.sauvegarderPlanning(planning);
+    return planning;
+  },
+
   estPlanningCustom() {
     return Utils.storage.get('ft_planning_custom', null) !== null;
   },
 
-  getSeancesCustom() {
-    return this._getSeancesCustom();
-  },
+  getSeancesCustom() { return this._getSeancesCustom(); },
 
   creerSeanceCustom(data) {
     const customs = this._getSeancesCustom();
@@ -1168,6 +1707,8 @@ const Programme = {
       nom:           data.nom           || 'Ma séance',
       emoji:         data.emoji         || '💪',
       muscles:       data.muscles       || [],
+      genre:         data.genre         || ['mixte'],
+      lieu:          data.lieu          || ['salle'],
       duree_estimee: data.duree_estimee || 60,
       exercices:     data.exercices     || [],
       custom:        true,
@@ -1181,7 +1722,6 @@ const Programme = {
   modifierSeanceCustom(id, data) {
     const customs = this._getSeancesCustom();
     if (!customs[id]) return false;
-
     customs[id] = {
       ...customs[id],
       nom:           data.nom           ?? customs[id].nom,
@@ -1190,7 +1730,6 @@ const Programme = {
       duree_estimee: data.duree_estimee ?? customs[id].duree_estimee,
       exercices:     data.exercices     ?? customs[id].exercices
     };
-
     this._saveSeancesCustom(customs);
     return true;
   },
@@ -1199,7 +1738,6 @@ const Programme = {
     const customs = this._getSeancesCustom();
     delete customs[id];
     this._saveSeancesCustom(customs);
-
     const planning = this.getPlanningActuel().map(p =>
       p.seanceId === id ? { ...p, seanceId:null } : p
     );
@@ -1245,11 +1783,9 @@ const Programme = {
       };
     } catch(e) {
       return {
-        totalSeancesBase: 5,
+        totalSeancesBase: Object.keys(SEANCES_BASE).length,
         totalExercices:   Object.keys(EXERCICES).length,
-        cycleActuel:      1,
-        semaineActuelle:  1,
-        progression:      0
+        cycleActuel: 1, semaineActuelle: 1, progression: 0
       };
     }
   }
@@ -1285,28 +1821,24 @@ const ProgrammeAdaptatif = {
         const hist = Tracker.getHistoriqueExercice(ref, 60);
         if (hist.length < 2) return;
 
-        const recents = hist.slice(0, 6);
-        const anciens = hist.slice(6, 12);
-
-        const moyRec = recents.reduce((a,h) => a + (h.rm1||0), 0)
-          / recents.length;
-        const moyAnc = anciens.length
+        const recents  = hist.slice(0, 6);
+        const anciens  = hist.slice(6, 12);
+        const moyRec   = recents.reduce(
+          (a,h) => a + (h.rm1||0), 0
+        ) / recents.length;
+        const moyAnc   = anciens.length
           ? anciens.reduce((a,h) => a + (h.rm1||0), 0) / anciens.length
           : moyRec;
-
         const delta    = moyRec - moyAnc;
         const tendance = delta > 2
           ? 'progression'
-          : delta < -2
-            ? 'regression'
-            : 'stagnation';
+          : delta < -2 ? 'regression' : 'stagnation';
 
         analyses[ref] = {
           ref,
           nom:     window.EXERCICES[ref]?.nom   || ref,
           emoji:   window.EXERCICES[ref]?.emoji || '💪',
-          tendance,
-          delta:   Math.round(delta * 10) / 10,
+          tendance, delta: Math.round(delta * 10) / 10,
           rm1:     prs[ref]?.rm1 || 0,
           rm1Moy:  Math.round(moyRec)
         };
@@ -1323,37 +1855,27 @@ const ProgrammeAdaptatif = {
 
     Object.values(analyses).forEach(a => {
       if (!a.rm1) return;
-
       if (a.tendance === 'progression' && config.augmentationAuto) {
         sugges.push({
-          ref:     a.ref,
-          nom:     a.nom,
-          emoji:   a.emoji,
-          type:    'hausse',
-          message: `+${config.pourcentageHausse}kg recommandé`,
-          delta:   config.pourcentageHausse,
-          color:   'var(--fd-mint)'
+          ref:a.ref, nom:a.nom, emoji:a.emoji,
+          type:'hausse',
+          message:`+${config.pourcentageHausse}kg recommandé`,
+          delta:config.pourcentageHausse, color:'var(--fd-mint)'
         });
       } else if (a.tendance === 'stagnation'
                  && config.detectionStagnation) {
         sugges.push({
-          ref:     a.ref,
-          nom:     a.nom,
-          emoji:   a.emoji,
-          type:    'variation',
-          message: 'Essaie une variation pour relancer la progression',
-          delta:   0,
-          color:   'var(--fd-lemon)'
+          ref:a.ref, nom:a.nom, emoji:a.emoji,
+          type:'variation',
+          message:'Essaie une variation pour relancer la progression',
+          delta:0, color:'var(--fd-lemon)'
         });
       } else if (a.tendance === 'regression') {
         sugges.push({
-          ref:     a.ref,
-          nom:     a.nom,
-          emoji:   a.emoji,
-          type:    'baisse',
-          message: '-5kg recommandé (signe de fatigue)',
-          delta:   -5,
-          color:   'var(--fd-coral)'
+          ref:a.ref, nom:a.nom, emoji:a.emoji,
+          type:'baisse',
+          message:'-5kg recommandé (signe de fatigue)',
+          delta:-5, color:'var(--fd-coral)'
         });
       }
     });
@@ -1363,39 +1885,39 @@ const ProgrammeAdaptatif = {
 
   detecterSurmenage() {
     try {
-      const seances  = Tracker.getHistoriqueSeances(14);
-      const rpes     = seances
+      const seances = Tracker.getHistoriqueSeances(14);
+      const rpes    = seances
         .filter(s => s.rpeMoyen)
         .map(s => s.rpeMoyen);
-
       if (rpes.length < 3) return false;
-
       const moyRPE   = rpes.reduce((a,b) => a+b, 0) / rpes.length;
       const seances7 = seances.filter(s => {
         const debut = Utils.ajouterJours(Utils.aujourd_hui(), -7);
         return s.date >= debut;
       }).length;
-
       return moyRPE > 8.5 || seances7 >= 6;
     } catch(e) { return false; }
   },
 
   getVariations(ref) {
-    const variations = {
-      bench_press:            ['incline_halteres','chest_press_machine','pompes'],
-      squat:                  ['presse_cuisses','fentes','hip_thrust'],
-      tractions:              ['lat_pulldown','rowing_barre','pullover'],
-      dev_militaire:          ['shoulder_press_machine','elev_laterales','oiseau'],
-      curl_halteres:          ['curl_barre','curl_marteau','curl_machine'],
-      rowing_barre:           ['rowing_machine','lat_pulldown','tractions'],
-      ext_triceps_poulie:     ['barre_front','dips_triceps'],
-      'soulevé_terre':        ['squat','hip_thrust','rack_pull']
-    };
-    return (variations[ref] || []).map(r => ({
-      ref:   r,
-      nom:   window.EXERCICES?.[r]?.nom   || r,
-      emoji: window.EXERCICES?.[r]?.emoji || '💪'
-    }));
+    // ✅ NOUVEAU — Utiliser ExercicesFilter pour les variations
+    const lieu = Utils.storage.get('ft_lieu_entrainement', null);
+    return ExercicesFilter.getSimilaires(ref, lieu);
+  },
+
+  // ✅ NOUVEAU v4.0 — Remplacer un exercice Live
+  getRemplacementsLive(ref, lieu = null) {
+    const lieuActuel = lieu
+      || Utils.storage.get('ft_lieu_entrainement', 'salle');
+    const similaires = ExercicesFilter.getSimilaires(ref, lieuActuel);
+
+    return similaires.map(s => ({
+      ...s,
+      raison: s.muscle === EXERCICES[ref]?.muscle
+        ? '🎯 Même muscle'
+        : '🔄 Même groupe musculaire',
+      disponible: !s.lieux || s.lieux.includes(lieuActuel)
+    })).filter(s => s.disponible);
   },
 
   render(container) {
@@ -1414,7 +1936,6 @@ const ProgrammeAdaptatif = {
       .filter(a => a.tendance === 'regression');
 
     container.innerHTML = `
-
       ${surmenage ? `
         <div class="card mb-md"
              style="border-color:var(--fd-coral);
@@ -1426,7 +1947,7 @@ const ProgrammeAdaptatif = {
                 Surmenage détecté !
               </div>
               <div style="font-size:.78rem;color:var(--text-muted)">
-                Ton RPE moyen est élevé ou tu t'entraînes trop souvent.
+                RPE élevé ou trop de séances cette semaine.
                 Prends 1-2 jours de repos.
               </div>
             </div>
@@ -1435,32 +1956,27 @@ const ProgrammeAdaptatif = {
 
       <div class="card mb-md"
            style="background:linear-gradient(135deg,
-                  rgba(75,75,249,0.15),
-                  rgba(139,240,187,0.05))">
-        <div class="card-label mb-md">🧠 Analyse de ta progression</div>
+                  rgba(75,75,249,0.15),rgba(139,240,187,0.05))">
+        <div class="card-label mb-md">🧠 Analyse progression</div>
         <div class="stats-grid">
           <div class="stat-card">
             <span class="stat-value" style="color:var(--fd-mint)">
-              ${progressions.length}
-            </span>
+              ${progressions.length}</span>
             <span class="stat-label">En hausse</span>
           </div>
           <div class="stat-card">
             <span class="stat-value" style="color:var(--fd-lemon)">
-              ${stagnations.length}
-            </span>
+              ${stagnations.length}</span>
             <span class="stat-label">Stagnation</span>
           </div>
           <div class="stat-card">
             <span class="stat-value" style="color:var(--fd-coral)">
-              ${regressions.length}
-            </span>
+              ${regressions.length}</span>
             <span class="stat-label">En baisse</span>
           </div>
           <div class="stat-card">
             <span class="stat-value" style="color:var(--fd-indigo)">
-              ${sugges.length}
-            </span>
+              ${sugges.length}</span>
             <span class="stat-label">Suggestions</span>
           </div>
         </div>
@@ -1476,12 +1992,9 @@ const ProgrammeAdaptatif = {
                 <span style="font-size:1.5rem">${s.emoji}</span>
                 <div>
                   <div style="font-weight:700;font-size:.9rem">
-                    ${s.nom}
-                  </div>
+                    ${s.nom}</div>
                   <div style="font-size:.72rem;color:${s.color};
-                              font-weight:600">
-                    ${s.message}
-                  </div>
+                              font-weight:600">${s.message}</div>
                 </div>
               </div>
               ${s.type === 'variation' ? `
@@ -1490,9 +2003,8 @@ const ProgrammeAdaptatif = {
                                background:${s.color}22;
                                border:1px solid ${s.color}44;
                                border-radius:var(--radius-full);
-                               color:${s.color};
-                               font-size:.68rem;font-weight:600;
-                               cursor:pointer">
+                               color:${s.color};font-size:.68rem;
+                               font-weight:600;cursor:pointer">
                   Voir →
                 </button>` : ''}
             </div>
@@ -1508,8 +2020,7 @@ const ProgrammeAdaptatif = {
 
       ${progressions.length > 0 ? `
         <div class="section-title">
-          📈 En progression (${progressions.length})
-        </div>
+          📈 En progression (${progressions.length})</div>
         ${progressions.map(a => `
           <div class="card mb-md"
                style="border-color:rgba(139,240,187,0.3)">
@@ -1517,25 +2028,21 @@ const ProgrammeAdaptatif = {
               <div style="display:flex;align-items:center;gap:8px">
                 <span>${a.emoji}</span>
                 <div style="font-size:.85rem;font-weight:600">
-                  ${a.nom}
-                </div>
+                  ${a.nom}</div>
               </div>
               <div style="text-align:right">
                 <div style="font-size:.82rem;font-weight:700;
                             color:var(--fd-mint)">
-                  +${a.delta}kg
-                </div>
+                  +${a.delta}kg</div>
                 <div style="font-size:.65rem;color:var(--text-muted)">
-                  sur les dernières séances
-                </div>
+                  dernières séances</div>
               </div>
             </div>
           </div>`).join('')}` : ''}
 
       ${stagnations.length > 0 ? `
         <div class="section-title">
-          ⏸ Stagnation (${stagnations.length})
-        </div>
+          ⏸ Stagnation (${stagnations.length})</div>
         ${stagnations.map(a => `
           <div class="card mb-md"
                style="border-color:rgba(249,239,119,0.3)">
@@ -1543,17 +2050,15 @@ const ProgrammeAdaptatif = {
               <div style="display:flex;align-items:center;gap:8px">
                 <span>${a.emoji}</span>
                 <div style="font-size:.85rem;font-weight:600">
-                  ${a.nom}
-                </div>
+                  ${a.nom}</div>
               </div>
               <button onclick="ProgrammeAdaptatif._voirVariations('${a.ref}')"
                       style="padding:4px 10px;
                              background:rgba(249,239,119,0.1);
                              border:1px solid rgba(249,239,119,0.3);
                              border-radius:var(--radius-full);
-                             color:var(--fd-lemon);
-                             font-size:.68rem;font-weight:600;
-                             cursor:pointer">
+                             color:var(--fd-lemon);font-size:.68rem;
+                             font-weight:600;cursor:pointer">
                 Variations →
               </button>
             </div>
@@ -1562,10 +2067,10 @@ const ProgrammeAdaptatif = {
       <div class="card mt-md">
         <div class="card-label mb-md">⚙️ Paramètres adaptatifs</div>
         ${[
-          { cle:'augmentationAuto',    label:'Augmentation auto des charges' },
-          { cle:'detectionStagnation', label:'Détection stagnation'          },
-          { cle:'variationsAuto',      label:'Suggestions de variations'     },
-          { cle:'surmenageProtection', label:'Protection surmenage'          }
+          {cle:'augmentationAuto',    label:'Augmentation auto des charges'},
+          {cle:'detectionStagnation', label:'Détection stagnation'         },
+          {cle:'variationsAuto',      label:'Suggestions de variations'    },
+          {cle:'surmenageProtection', label:'Protection surmenage'         }
         ].map(p => `
           <div class="score-row">
             <span class="score-row-label"
@@ -1589,8 +2094,7 @@ const ProgrammeAdaptatif = {
                           background:${config[p.cle]
                             ? 'white'
                             : 'rgba(255,255,255,0.4)'};
-                          border-radius:50%;
-                          transition:left .25s;
+                          border-radius:50%;transition:left .25s;
                           pointer-events:none">
               </div>
             </div>
@@ -1604,15 +2108,12 @@ const ProgrammeAdaptatif = {
   _voirVariations(ref) {
     const panel    = document.getElementById('variations-panel');
     if (!panel) return;
-
     const variations = this.getVariations(ref);
     const exo        = window.EXERCICES?.[ref];
-
     if (!variations.length) {
       Utils.toast('Pas de variation disponible', 'info');
       return;
     }
-
     panel.innerHTML = `
       <div class="card mt-md"
            style="border-color:var(--fd-lemon)">
@@ -1626,8 +2127,9 @@ const ProgrammeAdaptatif = {
             <span style="font-size:1.3rem">${v.emoji}</span>
             <div style="flex:1">
               <div style="font-weight:600;font-size:.88rem">
-                ${v.nom}
-              </div>
+                ${v.nom}</div>
+              <div style="font-size:.6rem;color:var(--text-muted)">
+                ${v.lieux?.join(' · ') || ''}</div>
             </div>
             <button onclick="naviguer('live')"
                     style="padding:4px 10px;
@@ -1646,7 +2148,6 @@ const ProgrammeAdaptatif = {
         </button>
       </div>
     `;
-
     panel.scrollIntoView({ behavior:'smooth' });
   },
 
@@ -1654,13 +2155,11 @@ const ProgrammeAdaptatif = {
     const config = Utils.storage.get(this.CLE, {});
     config[cle]  = val;
     Utils.storage.set(this.CLE, config);
-
     const container = document.getElementById('page-adaptatif')
       || document.getElementById('stats-content');
     if (container) this.render(container);
-
     Utils.toast(
-      `${val ? '✅' : '❌'} ${cle.replace(/([A-Z])/g, ' $1').toLowerCase()} ${val ? 'activé' : 'désactivé'}`,
+      `${val ? '✅' : '❌'} ${cle.replace(/([A-Z])/g,' $1').toLowerCase()} ${val ? 'activé' : 'désactivé'}`,
       'success', 1500
     );
   }
@@ -1675,14 +2174,17 @@ window.EXERCICES               = EXERCICES;
 window.SEANCES_BASE            = SEANCES_BASE;
 window.PLANNING_SEMAINE        = PLANNING_SEMAINE;
 window.PLANNING_SEMAINE_DEFAUT = PLANNING_SEMAINE_DEFAUT;
+window.PLANNING_FEMME_DEFAUT   = PLANNING_FEMME_DEFAUT;
+window.PLANNING_MAISON_DEFAUT  = PLANNING_MAISON_DEFAUT;
 window.WARMUP                  = WARMUP;
 window.ETIREMENTS              = ETIREMENTS;
 window.SUPERSETS_RECOMMANDES   = SUPERSETS_RECOMMANDES;
 window.Programme               = Programme;
+window.ExercicesFilter         = ExercicesFilter;
 
 console.log(
-  `✅ Programme v3.1 chargé — ` +
+  `✅ Programme v4.0 chargé — ` +
   `${Object.keys(EXERCICES).length} exercices, ` +
-  `${Object.keys(SEANCES_BASE).length} séances de base — ` +
-  `YouTube ✅ tous vérifiés`
+  `${Object.keys(SEANCES_BASE).length} séances ` +
+  `(homme + femme + maison)`
 );
