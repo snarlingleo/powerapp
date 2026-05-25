@@ -8207,8 +8207,8 @@ function _renderEtapeOnboarding(etape, data) {
 
     // ── ÉTAPE 2 — Genre ──────────────────────────────────
     {
-      titre:     'Tu t\'entraînes comment ? 👤',
-      sousTitre: 'Pour adapter ton programme',
+      titre:     'Ton genre 👤',
+      sousTitre: 'Pour personnaliser ton programme',
       contenu: `
         <div style="margin-top:var(--space-lg)">
           <div style="display:grid;
