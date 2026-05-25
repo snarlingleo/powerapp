@@ -8872,6 +8872,410 @@ function _terminerOb() {
     window.location.reload();
   }
 }
+function _genererMessageCoach(nom, genre, objectif, muscles,
+                               corpsComplet, styleLabel, nbJours, lieu) {
+  const prenom = nom || 'Athlète';
+  const g = genre === 'femme';
+
+  const lieuMsg = {
+    salle:  'en salle',
+    maison: 'à la maison',
+    dehors: 'en extérieur'
+  }[lieu] || 'en salle';
+
+  // ✅ Corps complet
+  if (corpsComplet) {
+    const msgs = {
+      prise_masse: `Salut ${prenom} ! Pour ta prise de masse ${lieuMsg}, je t'ai concocté un programme ${styleLabel} sur ${nbJours} jours. On va maximiser le volume et les charges progressives. Let's go ! 💪`,
+      perte_poids: `Salut ${prenom} ! Pour perdre du gras ${lieuMsg} tout en gardant le muscle, le ${styleLabel} sur ${nbJours} jours est parfait. Cardio + force = combo gagnant ! 🔥`,
+      seche:       `Salut ${prenom} ! Pour ta sèche ${lieuMsg}, le ${styleLabel} sur ${nbJours} jours va maximiser ta dépense calorique. On garde les charges hautes ! ⚡`,
+      force:       `Salut ${prenom} ! Pour développer ta force ${lieuMsg}, l'${styleLabel} sur ${nbJours} jours avec charges lourdes est optimal. Concentre-toi sur les grands mouvements ! 🏋️`,
+      endurance:   `Salut ${prenom} ! Pour ton endurance ${lieuMsg}, le ${styleLabel} sur ${nbJours} jours avec hautes reps est parfait. On va dépasser tes limites ! 🏃`,
+      forme:       `Salut ${prenom} ! Pour ta forme générale ${lieuMsg}, le ${styleLabel} sur ${nbJours} jours est l'approche la plus équilibrée. Corps sain, esprit sain ! ✨`
+    };
+    return msgs[objectif] || msgs.forme;
+  }
+
+  // ✅ Muscles ciblés
+  const musclesLabels = {
+    pectoraux: 'les pectoraux', deltoides: 'les épaules',
+    biceps: 'les biceps',       triceps: 'les triceps',
+    abdominaux: 'les abdos',    quadriceps: 'les quadriceps',
+    dorsal: 'le dos',           fessiers: 'les fessiers',
+    ischio: 'les ischio-jambiers', mollets: 'les mollets',
+    trapeze: 'les trapèzes',    lombaires: 'les lombaires',
+    avantbras: 'les avant-bras'
+  };
+
+  const musclesNoms = muscles.map(m => musclesLabels[m] || m).join(', ');
+
+  if (g) {
+    return `Salut ${prenom} ! 🌸 J'ai analysé tes zones cibles : ${musclesNoms}. J'ai créé un programme féminin spécialisé ${lieuMsg} sur ${nbJours} jours, axé sur le galbe, le renforcement et l'esthétique. On va sculpter exactement les zones que tu veux ! 💪`;
+  }
+
+  return `Salut ${prenom} ! J'ai analysé tes muscles cibles : ${musclesNoms}. J'ai créé un programme spécialisé ${lieuMsg} sur ${nbJours} jours pour maximiser le développement de ces groupes. Programme personnalisé à 100% ! 🔥`;
+}
+function _getSeancesAdaptees(style, objectif, niveau, genre, lieu, muscles) {
+  const duree = niveau === 'debutant' ? 45
+              : niveau === 'avance'   ? 75 : 60;
+
+  const g = genre === 'femme';
+
+  // ✅ Exercices selon lieu
+  const EXOS = {
+    salle: {
+      pectoraux:  ['Développé couché','Écarté poulie','Dips'],
+      deltoides:  ['Développé militaire','Élévations lat.','Face pull'],
+      biceps:     ['Curl barre','Curl incliné','Marteau'],
+      triceps:    ['Dips','Extension câble','Skull crusher'],
+      abdominaux: ['Crunch câble','Relevé jambes','Planche'],
+      quadriceps: ['Squat','Presse','Fentes'],
+      dorsal:     ['Tractions','Rowing barre','Tirage poulie'],
+      fessiers:   ['Hip thrust','Fentes bulgares','Kickback'],
+      ischio:     ['Leg curl','Soulevé terre jambes tendues','Nordic'],
+      mollets:    ['Mollets debout machine','Mollets assis'],
+      trapeze:    ['Shrug barre','Rowing vertical','Face pull'],
+      lombaires:  ['Hyperextension','Good morning','Soulevé terre']
+    },
+    maison: {
+      pectoraux:  ['Pompes','Pompes déclinées','Pompes diamant'],
+      deltoides:  ['Press haltères','Élévations lat.','Pike push-up'],
+      biceps:     ['Curl haltères','Curl concentré','Chin-up'],
+      triceps:    ['Dips chaise','Extension haltère','Pompes triceps'],
+      abdominaux: ['Crunch','Mountain climber','Planche'],
+      quadriceps: ['Squat poids corps','Fentes','Squat sauté'],
+      dorsal:     ['Superman','Row haltères','Pull-up'],
+      fessiers:   ['Hip thrust sol','Fentes','Donkey kick'],
+      ischio:     ['Good morning','Nordic curl','Fentes marche'],
+      mollets:    ['Mollets debout','Sauts mollets'],
+      trapeze:    ['Shrug haltères','Row haltères'],
+      lombaires:  ['Superman','Bird dog','Good morning']
+    },
+    dehors: {
+      pectoraux:  ['Pompes','Pompes sur banc','Dips parallèles'],
+      deltoides:  ['Pike push-up','Handstand wall','Élévations'],
+      biceps:     ['Chin-up barre','Curl élastique'],
+      triceps:    ['Dips parallèles','Pompes triceps'],
+      abdominaux: ['Crunch','Planche','L-sit'],
+      quadriceps: ['Squat','Fentes','Sprint côte'],
+      dorsal:     ['Pull-up','Inverted row','Tractions'],
+      fessiers:   ['Hip thrust banc','Fentes','Sprints'],
+      ischio:     ['Nordic curl','Fentes marche','Deadlift élastique'],
+      mollets:    ['Mollets escalier','Sauts'],
+      trapeze:    ['Pull-up prise large','Inverted row'],
+      lombaires:  ['Superman','Bird dog']
+    }
+  };
+
+  const exoLieu = EXOS[lieu] || EXOS.salle;
+
+  // ✅ Programme corps complet
+  if (muscles.length === 0) {
+    if (g) {
+      // Programme femme
+      return [
+        {
+          emoji: '🍑', nom: 'Lower Body Féminin',
+          muscles: 'Fessiers · Quadriceps · Ischio',
+          duree, lieu,
+          exercices: [
+            ...(exoLieu.fessiers?.slice(0,2) || []),
+            ...(exoLieu.quadriceps?.slice(0,1) || []),
+            ...(exoLieu.ischio?.slice(0,1) || [])
+          ]
+        },
+        {
+          emoji: '💪', nom: 'Upper Body Féminin',
+          muscles: 'Épaules · Dos · Bras',
+          duree, lieu,
+          exercices: [
+            ...(exoLieu.deltoides?.slice(0,2) || []),
+            ...(exoLieu.dorsal?.slice(0,1) || []),
+            ...(exoLieu.biceps?.slice(0,1) || [])
+          ]
+        },
+        {
+          emoji: '🔥', nom: 'Core & Cardio',
+          muscles: 'Abdos · Lombaires · Cardio',
+          duree: duree - 10, lieu,
+          exercices: [
+            ...(exoLieu.abdominaux?.slice(0,2) || []),
+            ...(exoLieu.lombaires?.slice(0,1) || []),
+            'Burpees'
+          ]
+        }
+      ];
+    }
+
+    // Programme homme
+    return [
+      {
+        emoji: '⬆️', nom: 'Push Day',
+        muscles: 'Pectoraux · Épaules · Triceps',
+        duree, lieu,
+        exercices: [
+          ...(exoLieu.pectoraux?.slice(0,2) || []),
+          ...(exoLieu.deltoides?.slice(0,1) || []),
+          ...(exoLieu.triceps?.slice(0,1) || [])
+        ]
+      },
+      {
+        emoji: '⬇️', nom: 'Pull Day',
+        muscles: 'Dos · Biceps · Trapèzes',
+        duree, lieu,
+        exercices: [
+          ...(exoLieu.dorsal?.slice(0,2) || []),
+          ...(exoLieu.biceps?.slice(0,1) || []),
+          ...(exoLieu.trapeze?.slice(0,1) || [])
+        ]
+      },
+      {
+        emoji: '🦵', nom: 'Legs Day',
+        muscles: 'Quadriceps · Ischio · Fessiers',
+        duree, lieu,
+        exercices: [
+          ...(exoLieu.quadriceps?.slice(0,2) || []),
+          ...(exoLieu.ischio?.slice(0,1) || []),
+          ...(exoLieu.fessiers?.slice(0,1) || [])
+        ]
+      }
+    ];
+  }
+
+  // ✅ Programme muscles ciblés
+  const seances = [];
+  const musclesUniques = [...new Set(muscles)];
+
+  // Grouper les muscles par séance
+  const pushMuscles = musclesUniques.filter(m =>
+    ['pectoraux','deltoides','triceps'].includes(m));
+  const pullMuscles = musclesUniques.filter(m =>
+    ['dorsal','biceps','trapeze','avantbras'].includes(m));
+  const legsMuscles = musclesUniques.filter(m =>
+    ['quadriceps','fessiers','ischio','mollets'].includes(m));
+  const coreMuscles = musclesUniques.filter(m =>
+    ['abdominaux','lombaires'].includes(m));
+
+  if (pushMuscles.length > 0) {
+    seances.push({
+      emoji: '⬆️',
+      nom: g ? 'Haut du corps Féminin' : 'Push — Poussée',
+      muscles: pushMuscles.join(' · '),
+      duree, lieu,
+      exercices: pushMuscles.flatMap(m =>
+        exoLieu[m]?.slice(0, Math.ceil(3/pushMuscles.length)) || []
+      ).slice(0, 5)
+    });
+  }
+
+  if (pullMuscles.length > 0) {
+    seances.push({
+      emoji: '⬇️',
+      nom: g ? 'Dos & Bras Féminin' : 'Pull — Tirage',
+      muscles: pullMuscles.join(' · '),
+      duree, lieu,
+      exercices: pullMuscles.flatMap(m =>
+        exoLieu[m]?.slice(0, Math.ceil(3/pullMuscles.length)) || []
+      ).slice(0, 5)
+    });
+  }
+
+  if (legsMuscles.length > 0) {
+    seances.push({
+      emoji: g ? '🍑' : '🦵',
+      nom: g ? 'Lower Body Sculpté' : 'Legs — Jambes',
+      muscles: legsMuscles.join(' · '),
+      duree, lieu,
+      exercices: legsMuscles.flatMap(m =>
+        exoLieu[m]?.slice(0, Math.ceil(3/legsMuscles.length)) || []
+      ).slice(0, 5)
+    });
+  }
+
+  if (coreMuscles.length > 0) {
+    seances.push({
+      emoji: '🔥',
+      nom: 'Core & Gainage',
+      muscles: coreMuscles.join(' · '),
+      duree: duree - 10, lieu,
+      exercices: coreMuscles.flatMap(m =>
+        exoLieu[m]?.slice(0,2) || []
+      ).slice(0, 5)
+    });
+  }
+
+  // Si aucune séance générée → full body
+  if (seances.length === 0) {
+    seances.push({
+      emoji: '🔄',
+      nom: 'Full Body',
+      muscles: 'Corps complet',
+      duree, lieu,
+      exercices: ['Squat', 'Pompes', 'Row', 'Planche', 'Fentes']
+    });
+  }
+
+  return seances;
+}
+function _getRecettesAdaptees(genre, objectif) {
+  const g = genre === 'femme';
+
+  const RECETTES = {
+    // ── PRISE DE MASSE ──
+    prise_masse: {
+      homme: [
+        { emoji:'🍗', nom:'Riz + Poulet + Légumes',
+          macros:'P:45g · G:65g · L:8g · 520kcal',
+          moment:'Déjeuner', color:'var(--fd-mint)' },
+        { emoji:'🥛', nom:'Shake protéiné + Avoine + Banane',
+          macros:'P:35g · G:55g · L:5g · 400kcal',
+          moment:'Post-séance', color:'var(--fd-indigo)' },
+        { emoji:'🥩', nom:'Steak + Patate douce + Brocoli',
+          macros:'P:50g · G:45g · L:12g · 490kcal',
+          moment:'Dîner', color:'var(--fd-lemon)' }
+      ],
+      femme: [
+        { emoji:'🍗', nom:'Poulet grillé + Quinoa + Avocat',
+          macros:'P:35g · G:40g · L:15g · 440kcal',
+          moment:'Déjeuner', color:'var(--fd-mint)' },
+        { emoji:'🥤', nom:'Smoothie protéiné + Fruits rouges',
+          macros:'P:25g · G:35g · L:6g · 290kcal',
+          moment:'Post-séance', color:'var(--fd-lavender)' },
+        { emoji:'🐟', nom:'Saumon + Riz basmati + Légumes verts',
+          macros:'P:38g · G:42g · L:14g · 450kcal',
+          moment:'Dîner', color:'var(--fd-indigo)' }
+      ]
+    },
+    // ── PERTE DE POIDS ──
+    perte_poids: {
+      homme: [
+        { emoji:'🥗', nom:'Salade thon + œufs + légumes',
+          macros:'P:40g · G:15g · L:12g · 330kcal',
+          moment:'Déjeuner', color:'var(--fd-mint)' },
+        { emoji:'🍳', nom:'Omelette + Épinards + Fromage blanc',
+          macros:'P:30g · G:8g · L:10g · 245kcal',
+          moment:'Matin', color:'var(--fd-lemon)' },
+        { emoji:'🐟', nom:'Cabillaud vapeur + Légumes rôtis',
+          macros:'P:35g · G:20g · L:5g · 265kcal',
+          moment:'Dîner', color:'var(--fd-indigo)' }
+      ],
+      femme: [
+        { emoji:'🥗', nom:'Salade Caesar légère + Poulet',
+          macros:'P:28g · G:12g · L:8g · 230kcal',
+          moment:'Déjeuner', color:'var(--fd-mint)' },
+        { emoji:'🍓', nom:'Bowl açaï + Granola + Fruits',
+          macros:'P:15g · G:38g · L:8g · 285kcal',
+          moment:'Matin', color:'var(--fd-coral)' },
+        { emoji:'🍲', nom:'Soupe lentilles + Légumes',
+          macros:'P:20g · G:35g · L:5g · 265kcal',
+          moment:'Dîner', color:'var(--fd-lavender)' }
+      ]
+    },
+    // ── SÈCHE ──
+    seche: {
+      homme: [
+        { emoji:'🥩', nom:'Bœuf maigre + Légumes vapeur',
+          macros:'P:45g · G:10g · L:8g · 295kcal',
+          moment:'Déjeuner', color:'var(--fd-coral)' },
+        { emoji:'🍳', nom:'Blancs d\'œufs + Épinards',
+          macros:'P:28g · G:5g · L:2g · 150kcal',
+          moment:'Matin', color:'var(--fd-lemon)' },
+        { emoji:'🐟', nom:'Thon + Salade verte + Citron',
+          macros:'P:38g · G:5g · L:3g · 200kcal',
+          moment:'Dîner', color:'var(--fd-mint)' }
+      ],
+      femme: [
+        { emoji:'🥗', nom:'Salade de thon + Concombre + Avocat',
+          macros:'P:28g · G:8g · L:10g · 235kcal',
+          moment:'Déjeuner', color:'var(--fd-mint)' },
+        { emoji:'🍳', nom:'Omelette blancs d\'œufs + Légumes',
+          macros:'P:22g · G:6g · L:3g · 140kcal',
+          moment:'Matin', color:'var(--fd-lemon)' },
+        { emoji:'🍗', nom:'Poulet épicé + Courgettes grillées',
+          macros:'P:32g · G:8g · L:5g · 205kcal',
+          moment:'Dîner', color:'var(--fd-lavender)' }
+      ]
+    },
+    // ── FORCE ──
+    force: {
+      homme: [
+        { emoji:'🥩', nom:'Bœuf + Riz + Patate douce',
+          macros:'P:55g · G:70g · L:15g · 635kcal',
+          moment:'Pré-séance', color:'var(--fd-lemon)' },
+        { emoji:'🥛', nom:'Shake caséine + Beurre cacahuète',
+          macros:'P:40g · G:25g · L:18g · 420kcal',
+          moment:'Nuit', color:'var(--fd-indigo)' },
+        { emoji:'🍗', nom:'Poulet + Pâtes complètes + Huile olive',
+          macros:'P:48g · G:75g · L:14g · 620kcal',
+          moment:'Déjeuner', color:'var(--fd-mint)' }
+      ],
+      femme: [
+        { emoji:'🥩', nom:'Bœuf maigre + Quinoa + Légumes',
+          macros:'P:40g · G:50g · L:10g · 450kcal',
+          moment:'Pré-séance', color:'var(--fd-lemon)' },
+        { emoji:'🐟', nom:'Saumon + Patate douce + Brocoli',
+          macros:'P:38g · G:45g · L:14g · 460kcal',
+          moment:'Déjeuner', color:'var(--fd-mint)' },
+        { emoji:'🥤', nom:'Shake whey + Lait + Banane',
+          macros:'P:35g · G:40g · L:6g · 350kcal',
+          moment:'Post-séance', color:'var(--fd-lavender)' }
+      ]
+    },
+    // ── ENDURANCE ──
+    endurance: {
+      homme: [
+        { emoji:'🍝', nom:'Pâtes complètes + Sauce tomate + Dinde',
+          macros:'P:35g · G:85g · L:8g · 560kcal',
+          moment:'Pré-séance', color:'var(--fd-lemon)' },
+        { emoji:'🍌', nom:'Bananes + Amandes + Yaourt grec',
+          macros:'P:18g · G:55g · L:10g · 385kcal',
+          moment:'Collation', color:'var(--fd-coral)' },
+        { emoji:'🍚', nom:'Riz + Légumes + Œufs',
+          macros:'P:28g · G:65g · L:10g · 470kcal',
+          moment:'Dîner', color:'var(--fd-mint)' }
+      ],
+      femme: [
+        { emoji:'🍝', nom:'Pâtes semi-complètes + Poulet',
+          macros:'P:30g · G:65g · L:6g · 435kcal',
+          moment:'Pré-séance', color:'var(--fd-lemon)' },
+        { emoji:'🫐', nom:'Porridge avoine + Fruits rouges + Miel',
+          macros:'P:12g · G:58g · L:6g · 335kcal',
+          moment:'Matin', color:'var(--fd-lavender)' },
+        { emoji:'🥤', nom:'Smoothie banane + Lait d\'amande + Spiruline',
+          macros:'P:15g · G:45g · L:5g · 285kcal',
+          moment:'Collation', color:'var(--fd-mint)' }
+      ]
+    },
+    // ── FORME ──
+    forme: {
+      homme: [
+        { emoji:'🍗', nom:'Poulet + Légumes + Riz complet',
+          macros:'P:40g · G:50g · L:8g · 440kcal',
+          moment:'Déjeuner', color:'var(--fd-mint)' },
+        { emoji:'🍳', nom:'Omelette 3 œufs + Avocat + Toast',
+          macros:'P:25g · G:30g · L:18g · 380kcal',
+          moment:'Matin', color:'var(--fd-lemon)' },
+        { emoji:'🐟', nom:'Saumon + Quinoa + Légumes verts',
+          macros:'P:38g · G:40g · L:14g · 440kcal',
+          moment:'Dîner', color:'var(--fd-indigo)' }
+      ],
+      femme: [
+        { emoji:'🥑', nom:'Bowl avocat + Œufs + Légumes',
+          macros:'P:22g · G:25g · L:18g · 350kcal',
+          moment:'Matin', color:'var(--fd-mint)' },
+        { emoji:'🍗', nom:'Poulet citron + Salade + Feta',
+          macros:'P:32g · G:15g · L:12g · 300kcal',
+          moment:'Déjeuner', color:'var(--fd-lemon)' },
+        { emoji:'🍲', nom:'Curry légumes + Pois chiches + Riz',
+          macros:'P:18g · G:55g · L:8g · 365kcal',
+          moment:'Dîner', color:'var(--fd-lavender)' }
+      ]
+    }
+  };
+
+  const recettesObjectif = RECETTES[objectif] || RECETTES.forme;
+  return recettesObjectif[genre] || recettesObjectif.homme;
+}
 
 // ════════════════════════════════════════════════════════════
 // DÉMARRAGE
