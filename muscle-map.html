@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Carte Musculaire Interactive</title>
+
+<!-- jQuery (requis par maphilight) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- Maphilight -->
+<script src="https://cdn.jsdelivr.net/npm/maphilight@1.4.0/jquery.maphilight.min.js"></script>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background:#09092d;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  font-family:system-ui, sans-serif;
+  padding:24px 16px;
+}
+
+.titre {
+  color:rgba(255,255,255,.5);
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  margin-bottom:18px;
+  text-align:center;
+}
+
+/* ── Conteneur image ── */
+.map-wrap {
+  position:relative;
+  display:inline-block;
+  border-radius:16px;
+  overflow:hidden;
+  max-width:100%;
+}
+
+.map-wrap img {
+  display:block;
+  max-width:100%;
+  height:auto;
+  border-radius:16px;
+}
+
+/* ── Bandeau muscle sélectionné ── */
+.muscle-info {
+  margin-top:20px;
+  min-height:44px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  max-width:600px;
+}
+
+.muscle-label {
+  font-size:15px;
+  font-weight:700;
+  color:rgba(255,255,255,.9);
+  text-align:center;
+  min-height:22px;
+  transition:all .2s;
+}
+
+.muscle-label span {
+  color:#22c55e;
+  font-size:17px;
+}
+
+/* ── Chips muscles sélectionnés ── */
+.chips-wrap {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+  min-height:32px;
+}
+
+.chip {
+  padding:5px 14px;
+  border-radius:99px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid;
+  transition:opacity .2s;
+}
+.chip:hover { opacity:.7; }
+
+.empty-msg {
+  font-size:12px;
+  color:rgba(255,255,255,.28);
+  font-style:italic;
+}
+
+/* ── Reset bouton ── */
+.reset-btn {
+  padding:7px 20px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:99px;
+  font-size:11px;
+  font-weight:700;
+  color:rgba(255,255,255,.4);
+  cursor:pointer;
+  transition:all .2s;
+  display:none;
+}
+.reset-btn:hover {
+  background:rgba(255,255,255,.1);
+  color:white;
+}
+
+.powered {
+  margin-top:24px;
+  font-size:10px;
+  color:rgba(255,255,255,.15);
+}
+</style>
+</head>
+<body>
+
+<div class="titre">💪 Clique sur les muscles à cibler</div>
+
+<!-- ══ IMAGE + MAP ══ -->
+<div class="map-wrap">
+  <img id="body-img"
+       src="Capture d'écran 2026-05-24 204800.png"
+       usemap="#image-map"
+       alt="Carte musculaire"
+       style="max-width:900px;width:100%">
+</div>
+
+<map name="image-map" id="image-map">
+
+  <!-- ░░ FACE AVANT ░░ -->
+  <area data-muscle="pectoraux"
+        alt="Pectoraux" title="Pectoraux"
+        href="#" shape="poly"
+        coords="297,207,290,219,280,227,266,231,255,233,241,230,228,223,217,213,208,206,200,205,209,195,219,184,227,176,235,166,243,160,254,156,263,151,273,150,282,151,289,154,297,160,297,176,297,190">
+
+  <area data-muscle="pectoraux"
+        alt="Pectoraux" title="Pectoraux"
+        href="#" shape="poly"
+        coords="298,206,303,216,310,224,321,229,336,234,351,232,362,227,373,221,381,212,390,204,397,204,385,194,375,185,367,175,358,165,349,158,337,152,323,149,309,153,299,160,297,182">
+
+  <area data-muscle="deltoides"
+        alt="Deltoïdes" title="Deltoïdes"
+        href="#" shape="poly"
+        coords="175,209,182,186,191,165,201,156,214,151,227,148,240,148,255,152,245,160,235,167,227,178,219,190,211,195,203,204">
+
+  <area data-muscle="deltoides"
+        alt="Deltoïdes" title="Deltoïdes"
+        href="#" shape="poly"
+        coords="423,212,408,205,395,202,384,194,373,183,363,170,349,158,339,152,352,147,365,147,380,148,395,156,407,168">
+
+  <area data-muscle="biceps"
+        alt="Biceps" title="Biceps"
+        href="#" shape="poly"
+        coords="175,210,161,230,151,255,151,270,155,281,165,286,183,280,192,263,203,250,213,239,214,222,210,207">
+
+  <area data-muscle="biceps"
+        alt="Biceps" title="Biceps"
+        href="#" shape="poly"
+        coords="422,212,433,230,442,249,444,264,443,280,429,286,415,280,404,266,395,253,385,242,381,226,381,214,396,206">
+
+  <area data-muscle="avantbras"
+        alt="Avant-bras" title="Avant-bras"
+        href="#" shape="poly"
+        coords="177,282,167,305,157,321,143,335,131,349,117,359,111,368,97,365,92,358,99,343,112,311,123,287,136,273,147,263,150,257,150,273,159,285,168,287">
+
+  <area data-muscle="avantbras"
+        alt="Avant-bras" title="Avant-bras"
+        href="#" shape="poly"
+        coords="502,357,493,337,486,319,476,295,465,279,445,256,445,269,445,281,433,285,416,280,430,304,436,316,441,323,447,334,456,340,464,348,475,358,484,367,492,370,499,366">
+
+  <area data-muscle="abdominaux"
+        alt="Abdominaux" title="Abdominaux"
+        href="#" shape="poly"
+        coords="383,242,375,264,365,282,361,298,366,354,344,362,319,378,300,396,275,376,255,362,229,353,233,330,234,307,229,284,221,266,213,243,215,224,215,212,230,230,248,237,272,230,285,226,297,234,307,226,320,233,333,236,354,232,365,226,379,214">
+
+  <area data-muscle="quadriceps"
+        alt="Quadriceps" title="Quadriceps"
+        href="#" shape="poly"
+        coords="229,356,223,395,217,430,211,471,210,508,215,545,219,562,226,566,237,566,242,580,254,588,267,577,271,564,274,540,279,520,284,502,293,476,295,455,295,440,285,432,279,416,273,396,265,380,248,364">
+
+  <area data-muscle="quadriceps"
+        alt="Quadriceps" title="Quadriceps"
+        href="#" shape="poly"
+        coords="365,357,371,388,380,424,385,472,386,502,380,539,377,556,371,566,358,566,356,578,348,584,336,582,325,558,321,536,315,514,305,479,299,450,299,440,313,428,318,410,322,396,335,377,349,365">
+
+  <!-- ░░ FACE DOS ░░ -->
+  <area data-muscle="trapeze"
+        alt="Trapèzes" title="Trapèzes"
+        href="#" shape="poly"
+        coords="712,160,701,150,688,146,700,140,713,134,725,132,747,132,767,132,794,132,804,136,823,146,811,152,803,156,797,163,783,164,769,162,755,161,742,161,731,162,720,165">
+
+  <area data-muscle="dorsal"
+        alt="Grand Dorsal" title="Grand Dorsal"
+        href="#" shape="poly"
+        coords="710,160,703,168,685,181,677,185,666,193,665,209,669,226,669,241,674,256,681,270,688,285,689,307,691,329,686,347,683,373,691,360,701,355,715,349,721,337,721,320,721,308,732,289,738,276,745,257,754,253,753,209,753,181,753,160,736,165,723,165">
+
+  <area data-muscle="dorsal"
+        alt="Grand Dorsal" title="Grand Dorsal"
+        href="#" shape="poly"
+        coords="754,160,772,162,786,166,798,163,803,160,810,167,820,176,836,189,846,197,844,212,842,232,840,246,834,266,824,284,823,304,823,324,823,342,828,374,819,362,808,356,796,349,790,336,790,316,786,300,778,284,770,268,767,253,755,254">
+
+  <area data-muscle="lombaires"
+        alt="Lombaires" title="Lombaires"
+        href="#" shape="poly"
+        coords="758,256,748,255,743,266,738,278,731,292,728,300,723,316,723,326,723,338,717,348,727,347,736,347,743,351,749,355,756,369,763,354,775,348,784,347,796,347,789,332,789,318,787,304,780,289,774,274,767,260,766,252">
+
+  <area data-muscle="fessiers"
+        alt="Fessiers" title="Fessiers"
+        href="#" shape="poly"
+        coords="755,425,751,439,739,440,725,440,708,435,696,427,692,417,689,403,689,393,695,379,700,364,709,353,718,348,732,347,740,350,751,358,755,368">
+
+  <area data-muscle="fessiers"
+        alt="Fessiers" title="Fessiers"
+        href="#" shape="poly"
+        coords="757,428,763,436,775,440,791,442,805,436,817,426,824,414,823,400,819,384,815,373,810,360,801,352,791,349,779,348,767,354,760,362,756,372">
+
+  <area data-muscle="ischio"
+        alt="Ischio-jambiers" title="Ischio-jambiers"
+        href="#" shape="poly"
+        coords="755,431,752,461,745,488,739,515,732,541,727,570,720,585,708,588,703,571,700,553,695,569,685,579,675,566,669,535,666,509,667,477,668,450,673,422,678,399,683,385,679,375,687,365,703,354,697,373,691,386,689,400,691,422,701,434,715,441,737,441,747,439">
+
+  <area data-muscle="ischio"
+        alt="Ischio-jambiers" title="Ischio-jambiers"
+        href="#" shape="poly"
+        coords="831,373,831,387,838,405,844,445,847,475,846,507,842,543,839,562,828,577,820,566,812,553,812,565,812,575,806,586,796,589,787,574,780,547,775,513,767,486,761,455,758,433,766,439,777,443,789,443,809,437,818,429,824,418,823,396,818,379,809,357">
+
+  <area data-muscle="mollets"
+        alt="Mollets" title="Mollets"
+        href="#" shape="poly"
+        coords="668,614,659,630,659,644,659,664,659,684,667,694,673,695,682,686,687,674,691,686,697,695,707,696,714,682,715,669,716,651,713,638,707,626,697,626,687,628,678,617">
+
+  <area data-muscle="mollets"
+        alt="Mollets" title="Mollets"
+        href="#" shape="poly"
+        coords="799,635,798,646,796,661,797,680,803,692,813,697,819,692,822,680,824,672,830,680,833,690,842,696,851,692,853,684,855,667,855,648,853,636,851,623,846,614,836,620,829,625,821,628,812,622,806,625">
+
+</map>
+
+<!-- ══ INFO + CHIPS ══ -->
+<div class="muscle-info">
+
+  <div class="muscle-label" id="muscle-label">
+    Survole ou clique un muscle
+  </div>
+
+  <div class="chips-wrap" id="chips-wrap">
+    <span class="empty-msg">Aucun muscle sélectionné</span>
+  </div>
+
+  <button class="reset-btn" id="reset-btn" onclick="resetTout()">
+    🔄 Tout déselectionner
+  </button>
+
+</div>
+
+<div class="powered">Powered by EverGPT</div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG MUSCLES
+// ══════════════════════════════════════════════
+const CFG = {
+  pectoraux:  { label:'Pectoraux',       r:34,  g:197, b:94  },
+  deltoides:  { label:'Deltoïdes',       r:75,  g:75,  b:249 },
+  biceps:     { label:'Biceps',          r:139, g:240, b:187 },
+  avantbras:  { label:'Avant-bras',      r:139, g:240, b:187 },
+  abdominaux: { label:'Abdominaux',      r:249, g:239, b:119 },
+  quadriceps: { label:'Quadriceps',      r:255, g:141, b:150 },
+  trapeze:    { label:'Trapèzes',        r:139, g:240, b:187 },
+  dorsal:     { label:'Grand Dorsal',    r:75,  g:75,  b:249 },
+  lombaires:  { label:'Lombaires',       r:191, g:161, b:255 },
+  fessiers:   { label:'Fessiers',        r:255, g:141, b:150 },
+  ischio:     { label:'Ischio-jambiers', r:249, g:239, b:119 },
+  mollets:    { label:'Mollets',         r:191, g:161, b:255 }
+};
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let selected = new Set();
+
+// ══════════════════════════════════════════════
+// INIT MAPHILIGHT
+// ══════════════════════════════════════════════
+$(document).ready(function() {
+
+  // Init maphilight sur l'image
+  $('#body-img').maphilight({
+    fillColor:   '22c55e',  // vert néon par défaut hover
+    fillOpacity: 0.35,
+    stroke:      true,
+    strokeColor: '22c55e',
+    strokeOpacity: 0.8,
+    strokeWidth: 2,
+    fade:        true
+  });
+
+  // ── Appliquer couleur par muscle via data-maphilight ──
+  $('area[data-muscle]').each(function() {
+    const m   = $(this).data('muscle');
+    const cfg = CFG[m];
+    if (!cfg) return;
+
+    const hex = rgbToHex(cfg.r, cfg.g, cfg.b);
+
+    $(this).data('maphilight', {
+      fillColor:     hex,
+      fillOpacity:   0.35,
+      stroke:        true,
+      strokeColor:   hex,
+      strokeOpacity: 0.85,
+      strokeWidth:   2.5,
+      fade:          true,
+      alwaysOn:      false  // sera mis à true si sélectionné
+    });
+  });
+
+  // ── Clic sur une zone ──
+  $('area[data-muscle]').on('click', function(e) {
+    e.preventDefault();
+    const muscle = $(this).data('muscle');
+    toggleMuscle(muscle);
+  });
+
+  // ── Hover → update label ──
+  $('area[data-muscle]').on('mouseover', function() {
+    const muscle = $(this).data('muscle');
+    const cfg    = CFG[muscle];
+    if (!cfg) return;
+
+    if (!selected.has(muscle)) {
+      document.getElementById('muscle-label').innerHTML =
+        `Survol : <span>${cfg.label}</span>`;
+    }
+  });
+
+  $('area[data-muscle]').on('mouseout', function() {
+    majLabel();
+  });
+
+});
+
+// ══════════════════════════════════════════════
+// TOGGLE MUSCLE
+// ══════════════════════════════════════════════
+function toggleMuscle(muscle) {
+  if (selected.has(muscle)) {
+    selected.delete(muscle);
+    // Désactiver alwaysOn pour ce muscle
+    setAlwaysOn(muscle, false);
+  } else {
+    selected.add(muscle);
+    // Activer alwaysOn pour ce muscle
+    setAlwaysOn(muscle, true);
+  }
+  majLabel();
+  majChips();
+  try { navigator.vibrate(20); } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+// ALWAYS ON (reste coloré après clic)
+// ══════════════════════════════════════════════
+function setAlwaysOn(muscle, on) {
+  $(`area[data-muscle="${muscle}"]`).each(function() {
+    const cfg = CFG[muscle];
+    const hex = rgbToHex(cfg.r, cfg.g, cfg.b);
+
+    $(this).data('maphilight', {
+      fillColor:     hex,
+      fillOpacity:   on ? 0.5 : 0.35,
+      stroke:        true,
+      strokeColor:   hex,
+      strokeOpacity: on ? 1 : 0.85,
+      strokeWidth:   on ? 3 : 2.5,
+      fade:          true,
+      alwaysOn:      on
+    });
+
+    // Forcer le refresh maphilight
+    $(this).trigger('alwaysOn.maphilight');
+  });
+
+  // Refresh global
+  $('#body-img').maphilight('options', {});
+}
+
+// ══════════════════════════════════════════════
+// MAJ LABEL
+// ══════════════════════════════════════════════
+function majLabel() {
+  const label = document.getElementById('muscle-label');
+
+  if (selected.size === 0) {
+    label.innerHTML = 'Survole ou clique un muscle';
+    return;
+  }
+
+  const noms = [...selected]
+    .map(m => CFG[m]?.label)
+    .filter(Boolean)
+    .filter((v, i, a) => a.indexOf(v) === i) // dédupliquer
+    .join(', ');
+
+  label.innerHTML = `Muscle(s) ciblé(s) : <span>${noms}</span>`;
+}
+
+// ══════════════════════════════════════════════
+// MAJ CHIPS
+// ══════════════════════════════════════════════
+function majChips() {
+  const wrap     = document.getElementById('chips-wrap');
+  const resetBtn = document.getElementById('reset-btn');
+
+  if (selected.size === 0) {
+    wrap.innerHTML = `<span class="empty-msg">Aucun muscle sélectionné</span>`;
+    resetBtn.style.display = 'none';
+    return;
+  }
+
+  resetBtn.style.display = 'block';
+
+  // Déduplique par label
+  const vus = new Set();
+  let html = '';
+
+  selected.forEach(m => {
+    const cfg = CFG[m];
+    if (!cfg || vus.has(cfg.label)) return;
+    vus.add(cfg.label);
+
+    const hex = `rgb(${cfg.r},${cfg.g},${cfg.b})`;
+    const hexA = `rgba(${cfg.r},${cfg.g},${cfg.b},0.15)`;
+
+    html += `
+      <span class="chip"
+            onclick="toggleMuscle('${m}')"
+            style="background:${hexA};
+                   border-color:${hex};
+                   color:${hex}">
+        ${cfg.label}
+        <span style="opacity:.5;font-size:10px">✕</span>
+      </span>`;
+  });
+
+  wrap.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════════
+function resetTout() {
+  const muscles = [...selected];
+  selected.clear();
+  muscles.forEach(m => setAlwaysOn(m, false));
+  majLabel();
+  majChips();
+}
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+function rgbToHex(r, g, b) {
+  return [r, g, b]
+    .map(v => v.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// ══════════════════════════════════════════════
+// API EXTERNE (pour app.js)
+// ══════════════════════════════════════════════
+window.getMusclesCibles = () => [...selected];
+window.setMusclesCibles = (arr) => {
+  resetTout();
+  (arr || []).forEach(m => {
+    selected.add(m);
+    setAlwaysOn(m, true);
+  });
+  majLabel();
+  majChips();
+};
+</script>
+
+</body>
+</html>
