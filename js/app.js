@@ -7858,12 +7858,6 @@ function _obValiderProgramme() {
   _terminerOb();
 }
 
-function _obModifierProgramme() {
-  window._obOuvrirIA = true;
-  Utils.toast('💡 Tu pourras personnaliser depuis Coach IA', 'info', 2500);
-  _terminerOb();
-}
-
 // ✅ Ouvrir le questionnaire IA complet
 function _obModifierProgramme() {
   // Rediriger vers le questionnaire IA après l'onboarding
@@ -8618,15 +8612,15 @@ if (etapeActuelle === 5) {
 
   const ob = document.getElementById('onboarding-screen');
   ob.innerHTML = _renderEtapeOnboarding(
-  etapeActuelle + 1, window._obData
-);
+    etapeActuelle + 1, window._obData
+  );
 
-// ✅ Init maphilight si on arrive sur l'étape 6
-if (etapeActuelle + 1 === 6) {
-  setTimeout(() => {
-    _initObMuscleMap(window._obData.muscles_cibles || []);
-  }, 200);
-}
+  // ✅ Init maphilight si on arrive sur l'étape 6
+  if (etapeActuelle + 1 === 6) {
+    setTimeout(() => {
+      _initObMuscleMap(window._obData.muscles_cibles || []);
+    }, 200);
+  }
 }
 
 function _renderEtapeOb(etape) {
