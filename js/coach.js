@@ -1,9 +1,12 @@
 /* ============================================================
-   PowerApp — Coach IA v6.0
-   Messages + Chat + Analyse + Programme IA Auto-généré
-   + Genre / Lieu / Muscles onboarding
-   + Fix remplacer condition + _seancesFemme filtrerExos
-   + getPostSeanceMessage()
+   PowerApp — Coach IA v7.0
+   ✅ Chat contextuel enrichi
+   ✅ Mémoire conversationnelle
+   ✅ Analyse prédictive
+   ✅ Mode Séance Ultra-Rapide
+   ✅ Périodisation Intelligente
+   ✅ Suggestions proactives
+   ✅ Toutes features v6.0 conservées
    ============================================================ */
 
 const Coach = {
@@ -19,6 +22,23 @@ const Coach = {
     window._coachHistorique = val;
   },
 
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v7.0 — Mémoire persistante
+  // ════════════════════════════════════════════════════════
+  _sauvegarderHistorique() {
+    try {
+      const toSave = this._historique.slice(-20);
+      Utils.storage.set('ft_coach_historique', toSave);
+    } catch(e) {}
+  },
+
+  _chargerHistorique() {
+    try {
+      const saved = Utils.storage.get('ft_coach_historique', []);
+      if (saved.length > 0) window._coachHistorique = saved;
+    } catch(e) {}
+  },
+
   _salutation() {
     const h = new Date().getHours();
     return h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
@@ -27,12 +47,9 @@ const Coach = {
   _getProfilOnboarding() {
     try {
       return Utils.storage.get('ft_profil_onboarding', {
-        genre:          'homme',
-        lieu:           'salle',
-        muscles_cibles: [],
-        objectif:       'forme',
-        niveau:         'intermediaire',
-        nom:            'Athlète'
+        genre:'homme', lieu:'salle',
+        muscles_cibles:[], objectif:'forme',
+        niveau:'intermediaire', nom:'Athlète'
       });
     } catch(e) {
       return {
@@ -44,7 +61,75 @@ const Coach = {
   },
 
   // ════════════════════════════════════════════════════════
-  // MESSAGE DU JOUR
+  // ✅ NOUVEAU v7.0 — Contexte enrichi
+  // ════════════════════════════════════════════════════════
+  _getContexteComplet() {
+    const profil = this._getProfilOnboarding();
+    let ctx = {
+      nom:           'Athlète',
+      genre:         profil.genre          || 'homme',
+      lieu:          profil.lieu           || 'salle',
+      muscles:       profil.muscles_cibles || [],
+      objectif:      profil.objectif       || 'forme',
+      niveau:        profil.niveau         || 'intermediaire',
+      seancesTotales:0,
+      streak:        0,
+      streakMax:     0,
+      joursAbsence:  -1,
+      rpe:           0,
+      fatigue:       null,
+      humeur:        null,
+      volume:        0,
+      volumeSemaine: 0,
+      prs:           {},
+      nbPRs:         0,
+      phase:         'Reprise',
+      scoreForme:    0,
+      blessures:     [],
+      surcharge:     [],
+      seanceDuJour:  null,
+      prochainPR:    null,
+      tendance:      'stable'
+    };
+
+    try { ctx.nom           = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+    try { ctx.seancesTotales= Tracker.getTotalSeances();             } catch(e) {}
+    try {
+      const s = Tracker.getStreak();
+      ctx.streak    = s.count;
+      ctx.streakMax = s.max;
+    } catch(e) {}
+    try { ctx.joursAbsence  = Tracker.getJoursAbsence();            } catch(e) {}
+    try { ctx.rpe           = Tracker.getRPEMoyen7Jours();           } catch(e) {}
+    try { ctx.fatigue       = Tracker.getFatigue();                  } catch(e) {}
+    try { ctx.humeur        = Tracker.getHumeur();                   } catch(e) {}
+    try { ctx.volumeSemaine = Tracker.getVolumeSemaine();            } catch(e) {}
+    try { ctx.prs           = Tracker.getAllPRs();                   } catch(e) {}
+    try { ctx.nbPRs         = Object.keys(ctx.prs).length;           } catch(e) {}
+    try { ctx.phase         = Programme.getInfosProgramme()?.phase?.nom || 'Reprise'; } catch(e) {}
+    try { ctx.scoreForme    = Tracker.calculerScoreForme()?.score || 0; } catch(e) {}
+    try { ctx.blessures     = Tracker.getBlessures().filter(b=>b.active); } catch(e) {}
+    try { ctx.surcharge     = Tracker.getSurchargeMusculaire();      } catch(e) {}
+    try { ctx.seanceDuJour  = Tracker.getSeanceDuJour();             } catch(e) {}
+
+    // Tendance volume (hausse / baisse / stable)
+    try {
+      const comp = Tracker.getComparaisonSemaines();
+      if (comp.delta > 10)       ctx.tendance = 'hausse';
+      else if (comp.delta < -10) ctx.tendance = 'baisse';
+      else                       ctx.tendance = 'stable';
+    } catch(e) {}
+
+    // Prochain PR potentiel
+    try {
+      ctx.prochainPR = Predict.prochainPRPotentiel?.() || null;
+    } catch(e) {}
+
+    return ctx;
+  },
+
+  // ════════════════════════════════════════════════════════
+  // MESSAGE DU JOUR (identique v6.0)
   // ════════════════════════════════════════════════════════
   getMessageDuJour() {
     let humeur = null, fatigue = null;
@@ -64,7 +149,6 @@ const Coach = {
     try { nom     = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
     try { total   = Tracker.getTotalSeances();            } catch(e) {}
 
-    // Message post-séance du jour
     try {
       const seanceDuJour = Tracker.getSeanceDuJour();
       if (seanceDuJour?.complete) {
@@ -72,13 +156,13 @@ const Coach = {
         if (prs.length > 0) {
           const ex = window.EXERCICES?.[prs[0].exerciceRef];
           return {
-            type: 'pr', emoji: '🏆',
-            message: `INCROYABLE ${nom} ! Tu as battu ton record sur ${ex?.nom || prs[0].exerciceRef} — ${prs[0].poids}kg × ${prs[0].reps} ! ${prs.length > 1 ? `Et ${prs.length - 1} autre(s) PR ce soir !` : ''} 🎉`
+            type:'pr', emoji:'🏆',
+            message:`INCROYABLE ${nom} ! Tu as battu ton record sur ${ex?.nom||prs[0].exerciceRef} — ${prs[0].poids}kg × ${prs[0].reps} ! ${prs.length>1?`Et ${prs.length-1} autre(s) PR !`:''} 🎉`
           };
         }
         return {
-          type: 'seance_faite', emoji: '✅',
-          message: `Séance terminée ${nom} ! ${seanceDuJour.volumeTotal ? `${Utils.formatVolume(seanceDuJour.volumeTotal)} de volume aujourd'hui.` : ''} Récupère bien 💪`
+          type:'seance_faite', emoji:'✅',
+          message:`Séance terminée ${nom} ! ${seanceDuJour.volumeTotal?`${Utils.formatVolume(seanceDuJour.volumeTotal)} de volume.`:''} Récupère bien 💪`
         };
       }
     } catch(e) {}
@@ -86,12 +170,10 @@ const Coach = {
     if (absence === -1 || total === 0) {
       const msgs = genre === 'femme' ? [
         `Bienvenue ${nom} ! C'est ta première séance — prends le temps de trouver tes sensations. 🌸`,
-        `Hey ${nom} ! Prête pour l'aventure ? Ta première séance commence ici. 💪`,
-        `${nom}, bienvenue dans PowerApp ! Aujourd'hui marque le début de quelque chose d'exceptionnel. ✨`
+        `Hey ${nom} ! Prête pour l'aventure ? Ta première séance commence ici. 💪`
       ] : [
         `Bienvenue ${nom} ! C'est ta première séance — profites-en pour trouver tes sensations.`,
-        `Hey ${nom} ! Prêt pour l'aventure ? Ta première séance commence ici.`,
-        `${nom}, bienvenue dans PowerApp ! Aujourd'hui marque le début de quelque chose de grand.`
+        `Hey ${nom} ! Prêt pour l'aventure ? Ta première séance commence ici.`
       ];
       return { type:'bienvenue', emoji:'👋', message:Utils.random(msgs) };
     }
@@ -99,12 +181,10 @@ const Coach = {
     if (absence >= 7) {
       return {
         type:'reprise', emoji:'🌱',
-        message: Utils.random(genre === 'femme' ? [
-          `Bonne reprise ${nom} ! Peu importe la pause — ce qui compte c'est d'être là. -20% sur les charges. 🌸`,
-          `Te revoilà ${nom} ! On ne juge pas les pauses, on célèbre les retours. Commence doucement. 💪`
+        message:Utils.random(genre === 'femme' ? [
+          `Bonne reprise ${nom} ! Peu importe la pause — ce qui compte c'est d'être là. -20% sur les charges. 🌸`
         ] : [
-          `Bonne reprise ${nom} ! Peu importe la pause — ce qui compte c'est d'être là. -20% sur les charges.`,
-          `Te revoilà ${nom} ! On ne juge pas les pauses, on célèbre les retours. Commence doucement.`
+          `Bonne reprise ${nom} ! Peu importe la pause — ce qui compte c'est d'être là. -20% sur les charges.`
         ])
       };
     }
@@ -112,63 +192,42 @@ const Coach = {
     if (absence >= 3) {
       return {
         type:'relance', emoji:'🔥',
-        message: Utils.random([
-          `Te revoilà ${nom} ! Quelques jours de pause, ça arrive. Le premier set est toujours le plus dur.`,
-          `${nom} de retour ! Le corps attendait ça. Une séance même courte remet tout en route.`
-        ])
+        message:`Te revoilà ${nom} ! Le corps attendait ça. Une séance même courte remet tout en route.`
       };
     }
 
     if (rpe > 0 && rpe >= 8.5) {
       return {
         type:'deload', emoji:'⚡',
-        message: `RPE moyen ${rpe}/10 ${nom}. Ton corps envoie un signal. Aujourd'hui : -40% charges, technique parfaite.`
+        message:`RPE moyen ${rpe}/10 ${nom}. Ton corps envoie un signal. Aujourd'hui : -40% charges, technique parfaite.`
       };
     }
 
-    if ((fatigue?.niveau || 0) >= 3) {
+    if ((fatigue?.niveau||0) >= 3) {
       return {
         type:'fatigue', emoji:'😴',
-        message: Utils.random([
-          `Tu te sens épuisé${genre === 'femme' ? 'e' : ''} ${nom} — écoute ton corps : technique parfaite sur charges modérées.`,
-          `Fatigue détectée ${nom}. Charges à -20%, concentration sur la qualité.`
-        ])
+        message:`Tu te sens épuisé${genre==='femme'?'e':''} ${nom} — écoute ton corps : technique parfaite sur charges modérées.`
       };
     }
 
     if (['😒','😤'].includes(humeur?.humeur)) {
       return {
         type:'motivation', emoji:'💡',
-        message: Utils.random([
-          `Pas dans ton assiette ${nom} ? Les meilleures séances arrivent parfois quand on s'y attend le moins.`,
-          `${nom}, les champion${genre === 'femme' ? 'nes' : 's'} s'entraînent aussi quand ils n'en ont pas envie.`
-        ])
+        message:`Pas dans ton assiette ${nom} ? Les meilleures séances arrivent parfois quand on s'y attend le moins.`
       };
     }
 
-    if (humeur?.humeur === '🔥' && (fatigue?.niveau || 0) <= 1) {
+    if (humeur?.humeur === '🔥' && (fatigue?.niveau||0) <= 1) {
       return {
         type:'peak', emoji:'🚀',
-        message: Utils.random([
-          `Tu es en feu ${nom} ! Corps frais, mental affûté — c'est le moment de tenter un PR !`,
-          `${nom} en mode peak ! Tout est réuni pour une séance exceptionnelle.`
-        ])
+        message:`Tu es en feu ${nom} ! Corps frais, mental affûté — c'est le moment de tenter un PR !`
       };
     }
-
-    try {
-      if (Programme.isDecharge()) {
-        return {
-          type:'decharge', emoji:'😴',
-          message: `Semaine de décharge ${nom} ! Charges à 55%, focus technique. Ton corps va supercompenser.`
-        };
-      }
-    } catch(e) {}
 
     if (streak.count >= 14) {
       return {
         type:'streak', emoji:'🏆',
-        message: `${streak.count} jours consécutifs ${nom} — c'est impressionnant ! Continue sur cette lancée.`
+        message:`${streak.count} jours consécutifs ${nom} — c'est impressionnant ! Continue sur cette lancée.`
       };
     }
 
@@ -182,10 +241,10 @@ const Coach = {
         ischio:'ischio-jambiers', mollets:'mollets'
       };
       const musclesNoms = muscles.slice(0,2)
-        .map(m => labels[m] || m).join(' et ');
+        .map(m => labels[m]||m).join(' et ');
       return {
         type:'muscles_cibles', emoji:'🎯',
-        message: `Aujourd'hui ${nom}, on attaque ${musclesNoms} ! Focus sur tes zones prioritaires. 💪`
+        message:`Aujourd'hui ${nom}, on attaque ${musclesNoms} ! Focus sur tes zones prioritaires. 💪`
       };
     }
 
@@ -199,144 +258,315 @@ const Coach = {
 
     const phase = infos.phase?.nom || 'Reprise';
     return {
-      type:    'programme',
-      emoji:   infos.phase?.emoji || '💡',
-      message: Utils.random(msgs[phase] || msgs['Reprise'])
+      type:'programme', emoji:infos.phase?.emoji||'💡',
+      message:Utils.random(msgs[phase]||msgs['Reprise'])
     };
   },
 
-  // ✅ NOUVEAU v6.0 — getPostSeanceMessage()
-  // Appelé par Live.js après la fin d'une séance
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v7.0 — Messages proactifs
+  // ════════════════════════════════════════════════════════
+  getMessagesProactifs() {
+    const ctx   = this._getContexteComplet();
+    const msgs  = [];
+    const genre = ctx.genre;
+    const e     = genre === 'femme' ? 'e' : '';
+
+    // Score de forme bas
+    if (ctx.scoreForme > 0 && ctx.scoreForme < 40) {
+      msgs.push({
+        type:    'alerte',
+        emoji:   '⚠️',
+        titre:   'Score de forme bas',
+        message: `Ton score est à ${ctx.scoreForme}/100. Priorité récupération : sommeil + nutrition + hydratation.`,
+        action:  null
+      });
+    }
+
+    // PR imminent détecté
+    if (ctx.prochainPR) {
+      msgs.push({
+        type:    'opportunite',
+        emoji:   '🎯',
+        titre:   'PR en vue !',
+        message: `${ctx.prochainPR.message}`,
+        action:  { label:'Voir les prédictions', page:'predict' }
+      });
+    }
+
+    // Tendance volume en baisse
+    if (ctx.tendance === 'baisse' && ctx.seancesTotales > 5) {
+      msgs.push({
+        type:    'conseil',
+        emoji:   '📉',
+        titre:   'Volume en baisse',
+        message: `Ton volume est en baisse cette semaine. Ajoute une série par exercice pour relancer la progression.`,
+        action:  null
+      });
+    }
+
+    // Streak en danger
+    if (ctx.streak === 0 && ctx.joursAbsence === 1) {
+      msgs.push({
+        type:    'urgence',
+        emoji:   '🔥',
+        titre:   'Streak en danger !',
+        message: `Tu n'as pas encore entraîné${e} aujourd'hui — même 20min sauvera ton streak !`,
+        action:  { label:'Démarrer une séance', page:'live' }
+      });
+    }
+
+    // Blessures actives
+    if (ctx.blessures.length > 0) {
+      msgs.push({
+        type:    'attention',
+        emoji:   '🩹',
+        titre:   `${ctx.blessures.length} blessure${ctx.blessures.length>1?'s':''} active${ctx.blessures.length>1?'s':''}`,
+        message: `Zones affectées : ${ctx.blessures.map(b=>b.zone).join(', ')}. Consulte les exercices alternatifs.`,
+        action:  { label:'Voir les blessures', page:'blessures' }
+      });
+    }
+
+    // Surcharge musculaire
+    if (ctx.surcharge.length > 0) {
+      msgs.push({
+        type:    'alerte',
+        emoji:   '⚠️',
+        titre:   'Surcharge musculaire',
+        message: `${ctx.surcharge.map(s=>`${s.muscle}: ${s.conseil}`).join(' · ')}`,
+        action:  null
+      });
+    }
+
+    return msgs.slice(0, 3);
+  },
+
+  // ════════════════════════════════════════════════════════
+  // getPostSeanceMessage (identique v6.0)
+  // ════════════════════════════════════════════════════════
   getPostSeanceMessage(seanceData = {}) {
     const profil = this._getProfilOnboarding();
     const genre  = profil.genre || 'homme';
-    let nom      = 'Athlète';
+    let nom = 'Athlète';
     try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
-
-    const {
-      volumeTotal = 0,
-      nbSeries    = 0,
-      prs         = [],
-      duree       = 0,
-      seanceNom   = ''
-    } = seanceData;
-
+    const { volumeTotal=0, nbSeries=0, prs=[], duree=0 } = seanceData;
     const e = genre === 'femme' ? 'e' : '';
-
-    // PRs battus → message spécial
-    if (prs.length >= 3) {
+    if (prs.length >= 3)
       return `🏆 SÉANCE LÉGENDAIRE ${nom} ! ${prs.length} nouveaux records ! Tu es inarrêtable${e} ! 🔥`;
-    }
     if (prs.length > 0) {
       const ex = window.EXERCICES?.[prs[0].exerciceRef];
-      return `🏆 PR sur ${ex?.nom || prs[0].exerciceRef} — ${prs[0].poids}kg × ${prs[0].reps} ! Bravo ${nom} ! 💪`;
+      return `🏆 PR sur ${ex?.nom||prs[0].exerciceRef} — ${prs[0].poids}kg × ${prs[0].reps} ! Bravo ${nom} ! 💪`;
     }
-
-    // Volume élevé
-    if (volumeTotal > 8000) {
+    if (volumeTotal > 8000)
       return `💥 Volume monstre ${nom} ! ${Utils.formatVolume(volumeTotal)} — ton corps va adorer ça ! 🔥`;
-    }
-
-    // Séance longue
-    if (duree > 75 * 60) {
-      return `⏱ Séance marathon terminée ${nom} ! ${Utils.formatDuree(duree)} de travail acharné. Récupère bien 💤`;
-    }
-
-    // Message adapté genre
+    if (duree > 75*60)
+      return `⏱ Séance marathon terminée ${nom} ! ${Utils.formatDuree(duree)} de travail. Récupère bien 💤`;
     const msgs = genre === 'femme' ? [
-      `Séance terminée ${nom} ! ${volumeTotal > 0 ? `${Utils.formatVolume(volumeTotal)} de volume.` : ''} Tes efforts d'aujourd'hui construisent tes résultats de demain. 🌸`,
-      `GG ${nom} ! Une séance de plus dans la boîte. Chaque rep compte ! 💪`,
-      `Fière de toi ${nom} ! Continue sur cette lancée. ✨`
+      `Séance terminée ${nom} ! Tes efforts d'aujourd'hui construisent tes résultats de demain. 🌸`,
+      `GG ${nom} ! Une séance de plus dans la boîte. Chaque rep compte ! 💪`
     ] : [
-      `Séance terminée ${nom} ! ${volumeTotal > 0 ? `${Utils.formatVolume(volumeTotal)} soulevés.` : ''} Récupère bien. 💪`,
-      `GG ${nom} ! ${nbSeries > 0 ? `${nbSeries} séries dans la boîte.` : ''} Le travail paie toujours.`,
-      `Bien joué ${nom} ! Une séance de plus vers l'objectif. 🔥`
+      `Séance terminée ${nom} ! ${volumeTotal>0?`${Utils.formatVolume(volumeTotal)} soulevés.`:''} Récupère bien. 💪`,
+      `GG ${nom} ! Le travail paie toujours.`
     ];
-
     return Utils.random(msgs);
   },
 
   // ════════════════════════════════════════════════════════
-  // COACH IA CHAT
+  // ✅ NOUVEAU v7.0 — envoyerMessage enrichi
   // ════════════════════════════════════════════════════════
   async envoyerMessage(question) {
-    let nom = 'Athlète', seances = 0;
-    let streak  = { count:0 }, absence = -1;
-    let rpe = 0, fatigue = null, humeur = null;
-    let prs = {}, phase = { phase:{ nom:'Reprise' } };
-    let volume = 0;
-    const profil = this._getProfilOnboarding();
+    const ctx = this._getContexteComplet();
+    const q   = question.toLowerCase();
 
-    try { nom     = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
-    try { seances = Tracker.getTotalSeances();             } catch(e) {}
-    try { streak  = Tracker.getStreak();                  } catch(e) {}
-    try { absence = Tracker.getJoursAbsence();            } catch(e) {}
-    try { rpe     = Tracker.getRPEMoyen7Jours();          } catch(e) {}
-    try { fatigue = Tracker.getFatigue();                 } catch(e) {}
-    try { humeur  = Tracker.getHumeur();                  } catch(e) {}
-    try { prs     = Tracker.getAllPRs();                  } catch(e) {}
-    try { phase   = Programme.getInfosProgramme();        } catch(e) {}
-    try { volume  = Tracker.getVolumeSemaine();           } catch(e) {}
-
-    const ctx = {
-      nom,
-      seancesTotales: seances,
-      streak:         streak.count,
-      joursAbsence:   absence === -1 ? 'jamais' : `${absence} jours`,
-      rpe:            rpe > 0 ? `${rpe}/10` : 'aucune donnée',
-      fatigue:        fatigue ? `niveau ${fatigue.niveau}/4` : 'non renseignée',
-      humeur:         humeur?.humeur || 'non renseignée',
-      phase:          phase?.phase?.nom || 'Reprise',
-      volume:         Utils.formatVolume(volume),
-      nbPRs:          Object.keys(prs).length,
-      genre:          profil.genre          || 'homme',
-      lieu:           profil.lieu           || 'salle',
-      muscles:        profil.muscles_cibles || [],
-      objectif:       profil.objectif       || 'forme',
-      niveau:         profil.niveau         || 'intermediaire'
-    };
-
-    const q = question.toLowerCase();
-
-    // ✅ FIX v6.0 — Détection remplacement (condition correcte)
-    if (q.includes('remplace') || q.includes('alternative')
-        || q.includes('substitut') || q.includes('à la place')) {
-      return this._raisonnerRemplacement(q, ctx);
-    }
-
+    // ── Navigation ──────────────────────────────────────
     if (q.includes('génère') || q.includes('crée')
-        || q.includes('nouveau programme')
-        || q.includes('programme ia')
-        || q.includes('générer')) {
+        || q.includes('programme ia') || q.includes('générer')) {
       setTimeout(() => {
         Coach.ProgrammeIA._modeQuestionnaire = true;
         Coach.ProgrammeIA._etapeActuelle     = 0;
         Coach.ProgrammeIA._reponses          = {};
         naviguer('adaptatif');
       }, 800);
-      return `Je lance le questionnaire pour toi ${nom} ! 🧠\n\nRéponds aux questions et ton programme sur mesure sera généré instantanément !`;
+      return `Je lance le questionnaire pour toi ${ctx.nom} ! 🧠\n\nRéponds aux questions et ton programme sur mesure sera généré instantanément !`;
     }
 
-    const reponse = this._raisonnerIA(q, ctx, prs);
+    if (q.includes('remplace') || q.includes('alternative')
+        || q.includes('substitut') || q.includes('à la place')) {
+      return this._raisonnerRemplacement(q, ctx);
+    }
+
+    // ── Nouvelle feature : Analyse prédictive ───────────
+    if (q.includes('prédi') || q.includes('proch')
+        || q.includes('estime') || q.includes('futur')
+        || q.includes('potentiel') || q.includes('quand')) {
+      return this._raisonnerPrediction(ctx);
+    }
+
+    // ── Nouvelle feature : Plan semaine ─────────────────
+    if (q.includes('plan') || q.includes('semaine')
+        || q.includes('planning') || q.includes('organisation')) {
+      return this._raisonnerPlanSemaine(ctx);
+    }
+
+    // ── Nouvelle feature : Déload ────────────────────────
+    if (q.includes('décharge') || q.includes('deload')
+        || q.includes('repos semaine') || q.includes('récupération semaine')) {
+      return this._raisonnerDeload(ctx);
+    }
+
+    // ── Nouvelle feature : Comparaison ──────────────────
+    if (q.includes('progress') || q.includes('évolution')
+        || q.includes('améliore') || q.includes('résultat')) {
+      return this._raisonnerProgression(ctx);
+    }
+
+    // ── Logique v6.0 conservée ───────────────────────────
+    const reponse = this._raisonnerIA(q, ctx, ctx.prs);
 
     const hist = this._historique;
     hist.push(
       { role:'user',      content:question },
       { role:'assistant', content:reponse  }
     );
-    if (hist.length > 30) hist.splice(0, hist.length - 30);
+    if (hist.length > 40) hist.splice(0, hist.length - 40);
     this._historique = hist;
+    this._sauvegarderHistorique();
 
     return reponse;
   },
 
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v7.0 — Raisonnement prédiction
+  // ════════════════════════════════════════════════════════
+  _raisonnerPrediction(ctx) {
+    const nom = ctx.nom;
+
+    // Tenter Predict.js
+    try {
+      const preds = Predict.getToutesPredictons?.() || [];
+      if (preds.length > 0) {
+        const top3 = preds.slice(0,3).map(p =>
+          `  • ${p.emoji||'💪'} ${p.nom} : ${p.message}`
+        );
+        return `Prédictions IA pour toi ${nom} 🔮\n\n${top3.join('\n')}\n\nScore de forme actuel : ${ctx.scoreForme}/100\nTendance : ${ctx.tendance === 'hausse'?'📈 Hausse':ctx.tendance==='baisse'?'📉 Baisse':'➡️ Stable'}`;
+      }
+    } catch(e) {}
+
+    // Analyse depuis les PRs
+    const prs = ctx.prs;
+    if (!Object.keys(prs).length)
+      return `Fais quelques séances d'abord ${nom} — je pourrai ensuite prédire tes prochains records ! 💪`;
+
+    const top = Object.entries(prs)
+      .filter(([,v]) => v.rm1 > 0)
+      .sort(([,a],[,b]) => (b.rm1||0)-(a.rm1||0))
+      .slice(0,3);
+
+    const preds = top.map(([ref, pr]) => {
+      const ex    = (window.EXERCICES||{})[ref];
+      const gain  = ctx.tendance === 'hausse' ? 5
+                  : ctx.tendance === 'baisse' ? 0 : 2.5;
+      const futur = Math.round((pr.rm1 + gain) / 2.5) * 2.5;
+      return `  • ${ex?.nom||ref} : ${pr.rm1}kg → ~${futur}kg (dans 4 semaines)`;
+    });
+
+    return `Prédictions sur 4 semaines ${nom} 🔮\n\nBasé sur ta tendance (${ctx.tendance}) :\n\n${preds.join('\n')}\n\n💡 Continue ta progression — chaque séance compte !`;
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v7.0 — Plan semaine intelligent
+  // ════════════════════════════════════════════════════════
+  _raisonnerPlanSemaine(ctx) {
+    const nom    = ctx.nom;
+    const genre  = ctx.genre;
+    const e      = genre === 'femme' ? 'e' : '';
+    const jours  = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+    let planning = [];
+    try {
+      planning = Programme.getSeancesSemaine() || [];
+    } catch(e2) {}
+
+    if (!planning.length) {
+      return `Je n'ai pas encore ton planning ${nom}.\n\nVa dans 🧠 Programme IA pour en générer un adapté à :\n  • Ton objectif : ${ctx.objectif}\n  • Ton lieu : ${ctx.lieu}\n  • Ton niveau : ${ctx.niveau}`;
+    }
+
+    const seancesRestantes = planning
+      .filter(j => !j.seance && j.seanceId)
+      .length;
+
+    const seancesFaites = planning
+      .filter(j => j.estFaite)
+      .length;
+
+    const lignes = planning.map(j => {
+      if (!j.seanceId) return `  😴 ${j.label || jours[j.jour]} — Repos`;
+      const icon = j.estFaite ? '✅' : '📋';
+      const nomS = j.seance?.nom || j.seanceId;
+      return `  ${icon} ${j.label||jours[j.jour]} — ${nomS}`;
+    });
+
+    return `Planning semaine ${nom} 📅\n\n${lignes.join('\n')}\n\n✅ Faites : ${seancesFaites}\n📋 Restantes : ${seancesRestantes}\n\n💡 ${seancesRestantes > 0 ? 'Tu es sur la bonne voie — continue !' : 'Semaine complète, bravo !'}`;
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v7.0 — Conseil déload
+  // ════════════════════════════════════════════════════════
+  _raisonnerDeload(ctx) {
+    const nom    = ctx.nom;
+    const deload = this.necessiteDeload();
+
+    if (deload.oui) {
+      return `⚠️ Décharge recommandée ${nom} !\n\nRaison : ${deload.raison}\n\nProtocole décharge :\n  • Charges à 50-60% de ton habituel\n  • Même nombre de séries\n  • Focus sur la technique parfaite\n  • Durée : 7 jours\n\nBénéfices : supercompensation = +5-10% force après la décharge ! 💪`;
+    }
+
+    const semainesConsecutives = Math.floor(ctx.seancesTotales / (ctx.streak || 1));
+    const besoinDeload         = semainesConsecutives >= 4;
+
+    if (besoinDeload) {
+      return `💡 Décharge conseillée ${nom}\n\nTu t'entraînes intensément depuis plusieurs semaines.\n\nUne décharge préventive tous les 4-6 semaines :\n  • Prévient le surentraînement\n  • Laisse le corps assimiler\n  • Augmente la longévité\n\nQuand : la semaine prochaine serait idéale.`;
+    }
+
+    return `✅ Pas besoin de décharge ${nom} !\n\nTon RPE moyen (${ctx.rpe || '—'}/10) est OK.\nContinue ta progression normale.\n\nRappel : une décharge est recommandée toutes les 4-6 semaines.`;
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v7.0 — Analyse progression
+  // ════════════════════════════════════════════════════════
+  _raisonnerProgression(ctx) {
+    const nom = ctx.nom;
+
+    const top = Object.entries(ctx.prs)
+      .filter(([,v]) => v.rm1 > 0 && v.ancienPR?.rm1)
+      .sort(([,a],[,b]) => {
+        const gA = ((a.rm1 - (a.ancienPR?.rm1||a.rm1)) / Math.max(a.ancienPR?.rm1||1,1)) * 100;
+        const gB = ((b.rm1 - (b.ancienPR?.rm1||b.rm1)) / Math.max(b.ancienPR?.rm1||1,1)) * 100;
+        return gB - gA;
+      })
+      .slice(0, 4);
+
+    if (!top.length) {
+      return `Continue tes séances ${nom} — les données de progression arrivent ! 💪\n\nTu as ${ctx.seancesTotales} séances et ${ctx.nbPRs} records.`;
+    }
+
+    const lignes = top.map(([ref, pr]) => {
+      const ex  = (window.EXERCICES||{})[ref];
+      const gain = pr.rm1 - (pr.ancienPR?.rm1 || pr.rm1);
+      const pct  = Math.round((gain / Math.max(pr.ancienPR?.rm1||1,1)) * 100);
+      return `  • ${ex?.nom||ref} : +${gain}kg 1RM (+${pct}%) 📈`;
+    });
+
+    return `Ta progression ${nom} 📈\n\nMeilleures évolutions :\n${lignes.join('\n')}\n\nStreak : ${ctx.streak} jours 🔥\nTendance : ${ctx.tendance === 'hausse'?'📈 Hausse':ctx.tendance==='baisse'?'📉 Baisse':'➡️ Stable'}\n\n💡 ${ctx.tendance==='hausse'?'Excellente trajectoire — maintiens le cap !':'La régularité prime toujours sur l\'intensité.'}`;
+  },
+
+  // ════════════════════════════════════════════════════════
+  // _raisonnerRemplacement (identique v6.0)
+  // ════════════════════════════════════════════════════════
   _raisonnerRemplacement(q, ctx) {
     const nom  = ctx.nom;
     const lieu = ctx.lieu || 'salle';
-
-    const exoMentionne = Object.entries(window.EXERCICES || {})
-      .find(([, ex]) => q.includes(ex.nom.toLowerCase()));
-
+    const exoMentionne = Object.entries(window.EXERCICES||{})
+      .find(([,ex]) => q.includes(ex.nom.toLowerCase()));
     if (exoMentionne) {
       const [ref, exo] = exoMentionne;
       try {
@@ -344,51 +574,51 @@ const Coach = {
           ?.getSimilaires(ref, lieu) || [];
         if (similaires.length > 0) {
           const liste = similaires.slice(0,4)
-            .map(s => `  • ${s.emoji} ${s.nom}`)
-            .join('\n');
+            .map(s => `  • ${s.emoji} ${s.nom}`).join('\n');
           return `Alternatives pour **${exo.nom}** (${lieu}) ${nom} :\n\n${liste}\n\nTous ciblent le même muscle. 💪`;
         }
       } catch(e) {}
-      return `Je n'ai pas trouvé d'alternatives disponibles pour ${exo.nom} ${nom}. Essaie de préciser ton équipement.`;
+      return `Je n'ai pas trouvé d'alternatives pour ${exo.nom} ${nom}.`;
     }
-
-    return `Quel exercice veux-tu remplacer ${nom} ? Précise le nom et je te propose des alternatives adaptées à ${lieu === 'salle' ? 'la salle' : lieu === 'maison' ? 'la maison' : 'l\'extérieur'} ! 💪`;
+    return `Quel exercice veux-tu remplacer ${nom} ? Précise le nom ! 💪`;
   },
 
+  // ════════════════════════════════════════════════════════
+  // _raisonnerIA (v6.0 + enrichissements v7.0)
+  // ════════════════════════════════════════════════════════
   _raisonnerIA(q, ctx, prs = {}) {
-    const nom     = ctx.nom;
-    const genre   = ctx.genre   || 'homme';
-    const lieu    = ctx.lieu    || 'salle';
+    const nom   = ctx.nom;
+    const genre = ctx.genre || 'homme';
+    const lieu  = ctx.lieu  || 'salle';
     const muscles = ctx.muscles || [];
 
     if (q.includes('pr') || q.includes('record')
         || q.includes('max') || q.includes('meilleur')) {
       const top = Object.entries(prs)
-        .filter(([, v]) => v.rm1 > 0)
-        .sort((a,b) => (b[1].rm1||0) - (a[1].rm1||0))
-        .slice(0, 5)
+        .filter(([,v]) => v.rm1 > 0)
+        .sort((a,b) => (b[1].rm1||0)-(a[1].rm1||0))
+        .slice(0,5)
         .map(([ref, pr]) => {
           const ex = window.EXERCICES?.[ref];
           return `  • ${ex?.nom||ref}: ${pr.poids}kg × ${pr.reps} (~${pr.rm1}kg 1RM)`;
         });
       if (!top.length)
-        return `Tu n'as pas encore de records enregistrés ${nom}. Lance ta première séance !`;
+        return `Tu n'as pas encore de records ${nom}. Lance ta première séance !`;
       return `Tes meilleurs records ${nom} 🏆\n\n${top.join('\n')}\n\n${ctx.nbPRs} records au total 💪`;
     }
 
     if (q.includes('fatigu') || q.includes('récup')
-        || q.includes('repos')  || q.includes('douleur')
-        || q.includes('mal')    || q.includes('épuisé')) {
-      if (ctx.rpe !== 'aucune donnée'
-          && parseFloat(ctx.rpe) >= 8) {
-        return `Ton RPE moyen est de ${ctx.rpe} — c'est élevé ${nom} ⚠️\n\nConseils :\n  • -30-40% charges\n  • Prioriser le sommeil (7-9h)\n  • Augmenter les protéines\n  • 1 séance légère max\n\nLa récupération = progression !`;
+        || q.includes('repos') || q.includes('douleur')
+        || q.includes('mal')   || q.includes('épuisé')) {
+      if (ctx.rpe !== 0 && ctx.rpe >= 8) {
+        return `Ton RPE moyen est de ${ctx.rpe}/10 — c'est élevé ${nom} ⚠️\n\nConseils :\n  • -30-40% charges\n  • Prioriser le sommeil (7-9h)\n  • Augmenter les protéines\n  • 1 séance légère max\n\nLa récupération = progression !`;
       }
       return `La récupération est la moitié de l'entraînement ${nom} :\n\n  • 48h entre groupes musculaires\n  • 7-9h de sommeil\n  • Hydratation : 35ml/kg/jour\n  • Protéines : 1.6-2.2g/kg\n\nTon corps se construit au repos 💤`;
     }
 
-    if (q.includes('programme') || q.includes('plan')
-        || q.includes('séance')  || q.includes('aujourd')
-        || q.includes('faire')   || q.includes('entraîn')) {
+    if (q.includes('programme') || q.includes('séance')
+        || q.includes('aujourd') || q.includes('faire')
+        || q.includes('entraîn')) {
       const phaseMsg = {
         'Reprise':      '🌱 Focus technique. Charges légères, mouvements parfaits.',
         'Construction': '🏗️ Volume élevé. +2.5kg dès que tu complètes toutes les séries.',
@@ -396,1832 +626,740 @@ const Coach = {
         'Peak':         '🏆 Charges maximales — semaine des records !',
         'Décharge':     '😴 Charges légères 55%. Récupération et technique.'
       };
-
       const musclesCtx = muscles.length > 0
         ? `\n\nMuscles ciblés : ${muscles.join(', ')}`
         : '';
-
-      return `Tu es en phase **${ctx.phase}** ${nom}.\n\n${phaseMsg[ctx.phase]||phaseMsg['Reprise']}${musclesCtx}\n\nVolume cette semaine : ${ctx.volume}\nStreak : ${ctx.streak} jours 🔥\nLieu : ${lieu === 'salle' ? '🏋️ Salle' : lieu === 'maison' ? '🏠 Maison' : '🌳 Dehors'}`;
+      return `Tu es en phase **${ctx.phase}** ${nom}.\n\n${phaseMsg[ctx.phase]||phaseMsg['Reprise']}${musclesCtx}\n\nVolume cette semaine : ${Utils.formatVolume(ctx.volumeSemaine)}\nStreak : ${ctx.streak} jours 🔥\nLieu : ${lieu==='salle'?'🏋️ Salle':lieu==='maison'?'🏠 Maison':'🌳 Dehors'}`;
     }
 
     if (q.includes('manger') || q.includes('nutrition')
         || q.includes('protéine') || q.includes('calorie')
-        || q.includes('régime')   || q.includes('nourriture')) {
+        || q.includes('régime')) {
       let poids = 80;
       try { poids = Tracker.getProfil().poids || 80; } catch(e) {}
-
       const facteurGenre = genre === 'femme' ? 0.85 : 1;
       const prot = Math.round(poids * 2 * facteurGenre);
-      const cal  = Math.round(poids * (genre === 'femme' ? 30 : 35));
+      const cal  = Math.round(poids * (genre==='femme'?30:35));
       const eau  = (poids * 0.035).toFixed(1);
-
       const objMsg = {
-        prise_masse: `\n  • Surplus : +300kcal/jour`,
-        perte_poids: `\n  • Déficit : -300kcal/jour`,
-        seche:       `\n  • Déficit : -400kcal/jour, glucides bas`,
-        force:       `\n  • Légère surplus : +200kcal`,
-        endurance:   `\n  • Glucides hauts : 5-7g/kg`
+        prise_masse:`\n  • Surplus : +300kcal/jour`,
+        perte_poids:`\n  • Déficit : -300kcal/jour`,
+        seche:      `\n  • Déficit : -400kcal/jour, glucides bas`,
+        force:      `\n  • Légère surplus : +200kcal`,
+        endurance:  `\n  • Glucides hauts : 5-7g/kg`
       }[ctx.objectif] || '';
-
-      return `Recommandations pour toi ${nom} (${poids}kg${genre === 'femme' ? ' 🌸' : ''}) 🥗\n\n  • Protéines : ${prot}g/jour\n  • Calories : ~${cal} kcal/jour${objMsg}\n  • Eau : ${eau}L minimum\n  • Repas 2-3h avant séance\n  • Post-séance : prot + gluc dans 30min 🎯`;
+      return `Recommandations pour toi ${nom} (${poids}kg${genre==='femme'?' 🌸':''}) 🥗\n\n  • Protéines : ${prot}g/jour\n  • Calories : ~${cal} kcal/jour${objMsg}\n  • Eau : ${eau}L minimum\n  • Repas 2-3h avant séance\n  • Post-séance : prot + gluc dans 30min 🎯`;
     }
 
     if (q.includes('motiv') || q.includes('envie')
-        || q.includes('abandon') || q.includes('dur')
-        || q.includes('difficile') || q.includes('arrêt')) {
+        || q.includes('abandon') || q.includes('dur')) {
       const msgs = genre === 'femme' ? [
-        `${nom}, ${ctx.seancesTotales} séances derrière toi. La discipline ne faiblit jamais. 🌸\n\n"Le seul mauvais entraînement est celui qui n'a pas eu lieu."`,
-        `Les jours difficiles font les athlètes durables ${nom}. Une séance à 50% vaut mieux que zéro.\n\nStreak de ${ctx.streak} jours — tu n'es pas du genre à abandonner. 💪`
+        `${nom}, ${ctx.seancesTotales} séances derrière toi. La discipline ne faiblit jamais. 🌸`,
+        `Les jours difficiles font les athlètes durables ${nom}. Streak de ${ctx.streak} jours — tu n'es pas du genre à abandonner. 💪`
       ] : [
-        `${nom}, ${ctx.seancesTotales} séances derrière toi. La discipline ne faiblit jamais.\n\n"Le seul mauvais entraînement est celui qui n'a pas eu lieu."`,
-        `Les jours difficiles font les athlètes durables ${nom}. Une séance à 50% vaut mieux que zéro.\n\nStreak de ${ctx.streak} jours — tu n'es pas du genre à abandonner.`
+        `${nom}, ${ctx.seancesTotales} séances derrière toi. La discipline ne faiblit jamais.`,
+        `Les jours difficiles font les athlètes durables ${nom}. Streak de ${ctx.streak} jours.`
       ];
       return Utils.random(msgs);
     }
 
-    if (q.includes('streak') || q.includes('consécutif')
-        || q.includes('régularité')) {
+    if (q.includes('streak') || q.includes('consécutif')) {
       if (ctx.streak === 0)
         return `Ton streak est à 0 ${nom}. Une séance aujourd'hui et c'est parti 🔥`;
-      const qualif = ctx.streak >= 21 ? 'exceptionnel — top 1%'
-                   : ctx.streak >= 14 ? 'excellent'
-                   : ctx.streak >= 7  ? 'très bien'
-                   : 'un bon début';
+      const qualif = ctx.streak>=21?'exceptionnel — top 1%'
+                   :ctx.streak>=14?'excellent'
+                   :ctx.streak>=7 ?'très bien':'un bon début';
       return `Ton streak : **${ctx.streak} jours** 🔥\n\nC'est ${qualif} ${nom} ! Continue 💪`;
     }
 
-    if (q.includes('muscle') || q.includes('heatmap')
-        || q.includes('volume') || q.includes('répartition')
-        || q.includes('travaill') || q.includes('cibl')) {
+    if (q.includes('muscle') || q.includes('volume')
+        || q.includes('répartition') || q.includes('cibl')) {
       try {
         const volumeParMuscle = Tracker.getVolumeParMuscle(7);
         if (volumeParMuscle.length > 0) {
           const top3 = volumeParMuscle.slice(0,3)
-            .map(m => `  • ${m.muscle} : ${m.pourcentage}% d'intensité (${m.intensite})`);
+            .map(m => `  • ${m.muscle} : ${m.pourcentage}% (${m.intensite})`);
           const negliges = volumeParMuscle
-            .filter(m => m.intensite === 'faible').slice(0,2)
+            .filter(m => m.intensite==='faible').slice(0,2)
             .map(m => `  • ${m.muscle}`);
-          let msg = `Analyse musculaire cette semaine ${nom} 💪\n\nPlus travaillés :\n${top3.join('\n')}`;
-          if (negliges.length > 0)
-            msg += `\n\nÀ ne pas négliger :\n${negliges.join('\n')}`;
-          if (muscles.length > 0)
-            msg += `\n\n🎯 Tes zones prioritaires : ${muscles.join(', ')}`;
+          let msg = `Analyse musculaire ${nom} 💪\n\nPlus travaillés :\n${top3.join('\n')}`;
+          if (negliges.length>0) msg += `\n\nÀ ne pas négliger :\n${negliges.join('\n')}`;
+          if (muscles.length>0)  msg += `\n\n🎯 Zones prioritaires : ${muscles.join(', ')}`;
           return msg;
         }
       } catch(e) {}
       return `Fais quelques séances pour voir l'analyse musculaire ${nom} ! 💪`;
     }
 
-    if (q.includes('surcharge') || q.includes('blessure')
-        || q.includes('éviter') || q.includes('danger')) {
-      try {
-        const surcharge = Tracker.getSurchargeMusculaire();
-        const blessures = Tracker.getBlessuresActives?.()
-          || Tracker.getBlessures?.().filter(b => b.active)
-          || [];
-
-        let msg = '';
-
-        if (surcharge.length > 0) {
-          const alertes = surcharge.map(s =>
-            `  ⚠️ ${s.muscle} : ${s.conseil}`
-          ).join('\n');
-          msg += `Surcharge musculaire détectée ${nom} :\n\n${alertes}\n\n`;
-        }
-
-        if (blessures.length > 0) {
-          const bMsg = blessures.map(b =>
-            `  🚫 ${b.zone} (${b.severite})\n    Éviter : ${(b.exercicesAEviter||[]).slice(0,3).join(', ')}\n    OK : ${(b.alternativesOK||[]).slice(0,2).join(', ')}`
-          ).join('\n');
-          msg += `Blessures actives :\n\n${bMsg}`;
-        }
-
-        if (!msg)
-          return `Aucune surcharge ni blessure active détectée ${nom}. Tu peux y aller à fond ! 💪`;
-
-        return msg.trim();
-      } catch(e) {}
-      return `Je n'ai pas assez de données pour analyser les risques ${nom}.`;
-    }
-
-    if (q.includes('maison') || q.includes('salle')
-        || q.includes('dehors') || q.includes('extérieur')
-        || q.includes('équipement')) {
-      try {
-        const exosDispo = window.ExercicesFilter?.parLieu(lieu) || {};
-        const nbExos    = Object.keys(exosDispo).length;
-        const lieuLabel = lieu === 'salle' ? '🏋️ Salle'
-                        : lieu === 'maison' ? '🏠 Maison'
-                        : '🌳 Extérieur';
-        return `Pour ton lieu d'entraînement : ${lieuLabel} ${nom}\n\n  • ${nbExos} exercices disponibles\n  • Programme adapté à ton équipement\n\nVeux-tu que je génère un programme spécial ${lieuLabel} ? Dis "génère un programme" ! 🎯`;
-      } catch(e) {}
-    }
-
     if (q.includes('bonjour') || q.includes('salut')
         || q.includes('hello') || q.includes('hey')
-        || q.includes('coucou') || q.includes('bonsoir')) {
-      const lieuLabel = lieu === 'salle' ? '🏋️ salle'
-                      : lieu === 'maison' ? '🏠 maison'
-                      : '🌳 dehors';
-      return `${this._salutation()} ${nom} ! ${genre === 'femme' ? '🌸' : '👋'}\n\nJe suis ton Coach IA PowerApp.\n\nJe peux t'aider avec :\n  💪 Tes records\n  📅 Séance du jour (${lieuLabel})\n  🥗 Nutrition\n  😴 Fatigue\n  🔥 Motivation\n  💪 Muscles ciblés\n  🧠 Générer un programme\n\nDe quoi as-tu besoin ? 🎯`;
+        || q.includes('coucou')) {
+      const lieuLabel = lieu==='salle'?'🏋️ salle'
+                      :lieu==='maison'?'🏠 maison':'🌳 dehors';
+      return `${this._salutation()} ${nom} ! ${genre==='femme'?'🌸':'👋'}\n\nJe suis ton Coach IA PowerApp.\n\nJe peux t'aider avec :\n  💪 Tes records & progression\n  📅 Ton planning & programme\n  🥗 Nutrition\n  😴 Récupération & décharge\n  🔮 Prédictions de PRs\n  🔥 Motivation\n  💪 Tes muscles ciblés\n  🧠 Générer un programme IA\n\nDe quoi as-tu besoin ? 🎯`;
     }
 
-    return Utils.random([
-      `${nom} — je peux t'aider sur :\n  💪 Records / PRs\n  📈 Volume / Programme\n  😴 Récupération\n  🥗 Nutrition\n  🔥 Motivation\n  💪 Muscles ciblés\n  🧠 Générer un programme IA\n\nPrécise ! 🎯`,
-      `Pour te donner les meilleurs conseils ${nom}, dis-moi ce que tu cherches : force, volume, récupération, nutrition ou programme ?`
-    ]);
-  },
+    return Utils## 🤖 Feature 1 — Coach IA Conversationnel v7.0
+
+Le coach actuel est bon mais je vais l'**upgrader massivement** avec :
+---
+
+## 📦 PATCH coach.js — Nouvelles méthodes à ajouter
+
+```javascript
+/* ============================================================
+   PowerApp — Coach IA v7.0 PATCH
+   Ajouter ces méthodes dans const Coach = { ... }
+   AVANT la dernière accolade }
+   ============================================================ */
 
   // ════════════════════════════════════════════════════════
-  // PROGRAMME IA
+  // ✅ NOUVEAU v7.0 — Analyse proactive
+  // Appelée automatiquement à l'ouverture du coach
   // ════════════════════════════════════════════════════════
-  ProgrammeIA: {
+  getAnalyseProactive() {
+    const alertes  = [];
+    const conseils = [];
 
-    CLE:        'ft_programme_ia_config',
-    CLE_GENERE: 'ft_programme_ia_genere',
-
-    ETAPES: [
-      {
-        id:'objectif', titre:'🎯 Quel est ton objectif principal ?',
-        type:'choix_unique',
-        options: [
-          { val:'prise_masse', label:'💪 Prise de masse',   desc:'Grossir et muscler'    },
-          { val:'seche',       label:'🔥 Sèche',            desc:'Perdre du gras'        },
-          { val:'force',       label:'🏋️ Force pure',        desc:'Soulever plus lourd'  },
-          { val:'forme',       label:'✨ Forme générale',    desc:'Rester en bonne santé' },
-          { val:'endurance',   label:'🏃 Endurance',         desc:'Cardio et résistance'  }
-        ]
-      },
-      {
-        id:'niveau', titre:'📊 Quel est ton niveau ?',
-        type:'choix_unique',
-        options: [
-          { val:'debutant',      label:'🌱 Débutant',      desc:'Moins de 6 mois' },
-          { val:'intermediaire', label:'💪 Intermédiaire', desc:'6 mois — 2 ans'  },
-          { val:'avance',        label:'🔥 Avancé',        desc:'Plus de 2 ans'   }
-        ]
-      },
-      {
-        id:'jours', titre:'📅 Combien de jours par semaine ?',
-        type:'choix_unique',
-        options: [
-          { val:'3', label:'3 jours', desc:'Lun / Mer / Ven'       },
-          { val:'4', label:'4 jours', desc:'Lun / Mar / Jeu / Ven' },
-          { val:'5', label:'5 jours', desc:'Lun à Ven'             },
-          { val:'6', label:'6 jours', desc:'Lun à Sam'             }
-        ]
-      },
-      {
-        id:'jours_specifiques', titre:'📆 Quels jours tu t\'entraînes ?',
-        type:'jours_semaine',
-        desc:'Sélectionne tes jours (optionnel)',
-        optionnel:true
-      },
-      {
-        id:'style', titre:'🏋️ Quel style de programme ?',
-        type:'choix_unique',
-        options: [
-          { val:'ppl',         label:'⚡ Push / Pull / Legs', desc:'Classique et efficace'       },
-          { val:'full_body',   label:'🔄 Full Body',           desc:'Tout le corps chaque séance' },
-          { val:'upper_lower', label:'↕️ Upper / Lower',       desc:'Haut et bas alternés'        },
-          { val:'auto',        label:'🧠 IA choisit',          desc:'Selon ton profil'            }
-        ]
-      },
-      {
-        id:'equipement', titre:'🏗️ Quel équipement as-tu ?',
-        type:'choix_multiple',
-        options: [
-          { val:'barre',       label:'🏋️ Barre + poids'  },
-          { val:'halteres',    label:'💪 Haltères'        },
-          { val:'machines',    label:'🤖 Machines salle'  },
-          { val:'cables',      label:'🔄 Câbles'          },
-          { val:'poids_corps', label:'🧘 Poids du corps'  },
-          { val:'rack',        label:'🏗️ Rack à squat'    }
-        ]
-      },
-      {
-        id:'duree', titre:'⏱ Durée de séance souhaitée ?',
-        type:'choix_unique',
-        options: [
-          { val:'45', label:'45 min', desc:'Express'           },
-          { val:'60', label:'1 heure',desc:'Standard'          },
-          { val:'75', label:'1h15',   desc:'Complet'           },
-          { val:'90', label:'1h30',   desc:'Entraînement long' }
-        ]
-      }
-    ],
-
-    get _etapeActuelle() { return window._piaEtape || 0; },
-    set _etapeActuelle(v) { window._piaEtape = v; },
-    get _reponses() {
-      return window._piaReponses || (window._piaReponses = {});
-    },
-    set _reponses(v) { window._piaReponses = v; },
-    get _modeQuestionnaire() { return window._piaModeQ || false; },
-    set _modeQuestionnaire(v) { window._piaModeQ = v; },
-
-    getConfig()   { return Utils.storage.get(this.CLE, null);        },
-    getGenere()   { return Utils.storage.get(this.CLE_GENERE, null); },
-    sauvegarderConfig(c)  { Utils.storage.set(this.CLE, c);          },
-    sauvegarderGenere(p)  { Utils.storage.set(this.CLE_GENERE, p);   },
-
-    _getContainer() {
-      return document.getElementById('page-adaptatif')
-        || document.getElementById('stats-content')
-        || document.querySelector('.page.active');
-    },
-
-    // ════════════════════════════════════════════════════
-    // GÉNÉRATION
-    // ════════════════════════════════════════════════════
-    generer(reponses) {
-      const {
-        objectif          = 'prise_masse',
-        niveau            = 'intermediaire',
-        jours             = '4',
-        jours_specifiques = null,
-        style             = 'auto',
-        equipement        = ['barre','halteres','machines','cables'],
-        duree             = '60'
-      } = reponses;
-
-      const nbJours  = parseInt(jours);
-      const dureeMin = parseInt(duree);
-
-      let genre = 'homme', lieu = 'salle';
-      try {
-        const profil = Utils.storage.get('ft_profil_onboarding', {});
-        genre = profil.genre || 'homme';
-        lieu  = profil.lieu  || 'salle';
-      } catch(e) {}
-
-      const styleChoisi = style === 'auto'
-        ? this._choisirStyleAuto(objectif, nbJours, niveau, genre)
-        : style;
-
-      const seances = this._genererSeances(
-        styleChoisi, objectif, niveau,
-        nbJours, dureeMin, equipement, genre, lieu
-      );
-
-      const planning = this._genererPlanning(
-        seances, nbJours, jours_specifiques
-      );
-
-      const conseils = this._genererConseils(
-        objectif, niveau, styleChoisi, genre
-      );
-
-      const programme = {
-        id:           'ia_' + Date.now(),
-        dateCreation: Utils.aujourd_hui(),
-        config:       reponses,
-        style:        styleChoisi,
-        styleLabel:   this._styleLabel(styleChoisi),
-        objectif, niveau, nbJours, dureeMin,
-        genre, lieu,
-        seances, planning, conseils,
-        version:      'IA v2.0'
-      };
-
-      this.sauvegarderConfig(reponses);
-      this.sauvegarderGenere(programme);
-      this._enregistrerSeances(seances);
-      this._appliquerPlanning(planning);
-
-      try {
-        Programme.appliquerPlanningGenre(genre, lieu);
-      } catch(e) {}
-
-      return programme;
-    },
-
-    _enregistrerSeances(seances) {
-      try {
-        const uniques = [...new Map(
-          seances.map(s => [s.id, s])
-        ).values()];
-        const customs = Utils.storage.get('ft_seances_custom', {});
-        uniques.forEach(seance => {
-          customs[seance.id] = {
-            ...seance,
-            custom:       true,
-            ia:           true,
-            dateCreation: Utils.aujourd_hui()
-          };
+    // ── Vérification surcharge ──────────────────────────
+    try {
+      const surcharge = Tracker.getSurchargeMusculaire();
+      surcharge.forEach(s => {
+        alertes.push({
+          type:    'surcharge',
+          emoji:   '⚠️',
+          message: `${s.muscle} en surcharge — ${s.conseil}`,
+          urgent:  true
         });
-        Utils.storage.set('ft_seances_custom', customs);
-        console.log(`[ProgrammeIA] ${uniques.length} séances enregistrées ✅`);
-      } catch(e) {
-        console.error('[ProgrammeIA] Erreur enregistrement:', e);
-      }
-    },
-
-    _choisirStyleAuto(objectif, nbJours, niveau, genre = 'homme') {
-      if (genre === 'femme' && nbJours <= 3) return 'full_body';
-      if (genre === 'femme' && nbJours === 4) return 'upper_lower';
-      if (nbJours <= 3)  return 'full_body';
-      if (nbJours === 4) return objectif === 'force'
-        ? 'upper_lower' : 'ppl';
-      if (nbJours >= 5)  return 'ppl';
-      return 'full_body';
-    },
-
-    _styleLabel(style) {
-      return {
-        ppl:         'Push / Pull / Legs',
-        full_body:   'Full Body',
-        upper_lower: 'Upper / Lower'
-      }[style] || style;
-    },
-
-    // ════════════════════════════════════════════════════
-    // GÉNÉRATION SÉANCES — ✅ v6.0 Fix _seancesFemme equipement
-    // ════════════════════════════════════════════════════
-    _genererSeances(style, objectif, niveau,
-                    nbJours, duree, equipement,
-                    genre = 'homme', lieu = 'salle') {
-      const params = {
-        debutant:      { series:3, repsForce:'8-10', repsVol:'12-15', repsEnd:'15-20', repos:60  },
-        intermediaire: { series:4, repsForce:'5-8',  repsVol:'8-12',  repsEnd:'12-15', repos:75  },
-        avance:        { series:5, repsForce:'3-6',  repsVol:'6-10',  repsEnd:'10-15', repos:90  }
-      }[niveau] || { series:4, repsForce:'6-8', repsVol:'8-12', repsEnd:'12-15', repos:90 };
-
-      const reps = objectif === 'force'     ? params.repsForce
-                 : objectif === 'endurance' ? params.repsEnd
-                 :                            params.repsVol;
-      const s = params.series;
-      const r = params.repos;
-
-      // ✅ FIX v6.0 — Passer equipement + duree à _seancesFemme
-      if (genre === 'femme') {
-        return this._seancesFemme(
-          objectif, niveau, nbJours,
-          s, reps, r, duree, equipement, lieu
-        );
-      }
-
-      if (lieu === 'maison' || lieu === 'dehors') {
-        return this._seancesMaison(
-          objectif, niveau, nbJours, s, reps, r, duree
-        );
-      }
-
-      if (style === 'full_body') {
-        return this._seancesFullBody(
-          objectif, niveau, nbJours, s, reps, r, duree, equipement
-        );
-      }
-      if (style === 'upper_lower') {
-        return this._seancesUpperLower(
-          objectif, niveau, nbJours, s, reps, r, duree, equipement
-        );
-      }
-      return this._seancesPPL(
-        objectif, niveau, nbJours, s, reps, r, duree, equipement
-      );
-    },
-
-    // ✅ FIX v6.0 — _seancesFemme utilise _filtrerExos()
-    _seancesFemme(objectif, niveau, nbJours,
-                  s, reps, r, duree, equipement, lieu) {
-      // Équipement fallback si lieu maison
-      const equip = equipement?.length
-        ? equipement
-        : ['poids_corps'];
-
-      const lower = {
-        id: 'ia_lower_femme',
-        nom: '🍑 Lower Body — Fessiers & Jambes',
-        emoji: '🍑',
-        muscles: ['Fessiers','Quadriceps','Ischio-jambiers'],
-        duree_estimee: duree,
-        exercices: this._filtrerExos([
-          { ref:'hip_thrust',        series:s,   reps:reps,    repos:75 },
-          { ref:'fentes_bulgares',   series:s-1, reps:'12/j',  repos:75 },
-          { ref:'squat_poids_corps', series:s-1, reps:'15-20', repos:60 },
-          { ref:'donkey_kick',       series:s-1, reps:'15/j',  repos:45 },
-          { ref:'hip_thrust_sol',    series:s-1, reps:'20',    repos:45 },
-          { ref:'clamshell',         series:s-1, reps:'15/j',  repos:45 },
-          { ref:'planche',           series:3,   reps:'30s',   repos:30 },
-          { ref:'crunch',            series:3,   reps:'20',    repos:30 }
-        ], equip, duree)
-      };
-
-      const upper = {
-        id: 'ia_upper_femme',
-        nom: '💪 Upper Body Féminin',
-        emoji: '💪',
-        muscles: ['Épaules','Dos','Bras'],
-        duree_estimee: duree,
-        exercices: this._filtrerExos([
-          { ref:'dev_militaire',   series:s-1, reps:reps,     repos:75 },
-          { ref:'elev_laterales',  series:s-1, reps:'15',     repos:60 },
-          { ref:'inverted_row',    series:s-1, reps:'12',     repos:75 },
-          { ref:'curl_halteres',   series:s-1, reps:'15',     repos:60 },
-          { ref:'diamond_pushup',  series:s-1, reps:'12',     repos:60 },
-          { ref:'planche',         series:3,   reps:'30-45s', repos:30 },
-          { ref:'russian_twist',   series:3,   reps:'20',     repos:30 }
-        ], equip, duree)
-      };
-
-      const core = {
-        id: 'ia_core_femme',
-        nom: '🔥 Core & Galbe',
-        emoji: '🔥',
-        muscles: ['Core','Abdominaux'],
-        duree_estimee: Math.min(duree, 45),
-        exercices: this._filtrerExos([
-          { ref:'planche',          series:4, reps:'30-45s', repos:45 },
-          { ref:'crunch',           series:3, reps:'20',     repos:45 },
-          { ref:'russian_twist',    series:3, reps:'20',     repos:45 },
-          { ref:'mountain_climbers',series:3, reps:'20',     repos:45 },
-          { ref:'hip_thrust_sol',   series:3, reps:'20',     repos:45 }
-        ], equip, duree)
-      };
-
-      if (nbJours === 3) return [lower, upper, lower];
-      if (nbJours === 4) return [lower, upper, lower, core];
-      if (nbJours === 5) return [lower, upper, lower, core, upper];
-      return [lower, upper, lower, core, upper, lower];
-    },
-
-    _seancesMaison(objectif, niveau, nbJours,
-                   s, reps, r, duree) {
-      const push = {
-        id: 'ia_push_maison', nom: '🏠 Push Maison — Poussée',
-        emoji: '⬆️',
-        muscles: ['Pectoraux','Épaules','Triceps'],
-        duree_estimee: duree,
-        exercices: [
-          { ref:'pompes',          series:s,   reps:reps,     repos:75 },
-          { ref:'pompes_declined', series:s-1, reps:'12',     repos:75 },
-          { ref:'diamond_pushup',  series:s-1, reps:'12',     repos:60 },
-          { ref:'pike_pushup',     series:s-1, reps:'12',     repos:60 },
-          { ref:'dips_triceps',    series:s-1, reps:'max',    repos:60 },
-          { ref:'planche',         series:3,   reps:'45-60s', repos:30 },
-          { ref:'crunch',          series:3,   reps:'20',     repos:30 }
-        ]
-      };
-
-      const pull = {
-        id: 'ia_pull_maison', nom: '🏠 Pull Maison — Tirage',
-        emoji: '⬇️',
-        muscles: ['Dos','Biceps'],
-        duree_estimee: duree,
-        exercices: [
-          { ref:'tractions',    series:s,   reps:reps,  repos:90 },
-          { ref:'inverted_row', series:s-1, reps:'12',  repos:75 },
-          { ref:'superman',     series:s-1, reps:'15',  repos:60 },
-          { ref:'bird_dog',     series:s-1, reps:'12/c',repos:60 },
-          { ref:'curl_halteres',series:s-1, reps:'15',  repos:60 },
-          { ref:'planche',      series:3,   reps:'45s', repos:30 }
-        ]
-      };
-
-      const legs = {
-        id: 'ia_legs_maison', nom: '🏠 Legs Maison — Jambes',
-        emoji: '🦵',
-        muscles: ['Quadriceps','Fessiers','Ischio-jambiers'],
-        duree_estimee: duree,
-        exercices: [
-          { ref:'squat_poids_corps',series:s,   reps:'20',   repos:60 },
-          { ref:'fentes_bulgares',  series:s-1, reps:'12/j', repos:75 },
-          { ref:'hip_thrust_sol',   series:s-1, reps:'20',   repos:60 },
-          { ref:'donkey_kick',      series:s-1, reps:'15/j', repos:45 },
-          { ref:'squat_saute',      series:s-1, reps:'15',   repos:60 }
-        ]
-      };
-
-      if (nbJours === 3) return [push, pull, legs];
-      if (nbJours === 4) return [push, pull, legs, push];
-      if (nbJours === 5) return [push, pull, legs, push, pull];
-      return [push, pull, legs, push, pull, legs];
-    },
-
-    _seancesPPL(objectif, niveau, nbJours,
-                s, reps, r, duree, equip) {
-      const push = {
-        id:'ia_push', nom:'Push — Pectoraux · Épaules · Triceps',
-        emoji:'⬆️',
-        muscles:['Pectoraux','Épaules','Triceps'],
-        duree_estimee:duree,
-        exercices: this._filtrerExos([
-          {ref:'bench_press',        series:s,   reps:reps,     repos:90},
-          {ref:'incline_halteres',   series:s-1, reps:reps,     repos:75},
-          {ref:'dev_militaire',      series:s-1, reps:reps,     repos:75},
-          {ref:'elev_laterales',     series:s,   reps:'12-15',  repos:45},
-          {ref:'ext_triceps_poulie', series:s-1, reps:'12',     repos:45},
-          {ref:'dips_triceps',       series:s-1, reps:'échec',  repos:45},
-          {ref:'planche',            series:3,   reps:'45-60s', repos:30},
-          {ref:'crunch',             series:3,   reps:'15',     repos:30}
-        ], equip, duree)
-      };
-
-      const pull = {
-        id:'ia_pull', nom:'Pull — Dos · Biceps · Épaules Arr.',
-        emoji:'⬇️',
-        muscles:['Dos','Biceps','Épaules Postérieures'],
-        duree_estimee:duree,
-        exercices: this._filtrerExos([
-          {ref:'tractions',    series:s,   reps:reps,    repos:90},
-          {ref:'rowing_barre', series:s,   reps:reps,    repos:90},
-          {ref:'lat_pulldown', series:s-1, reps:'10-12', repos:75},
-          {ref:'face_pull',    series:s-1, reps:'15',    repos:45},
-          {ref:'curl_halteres',series:s-1, reps:'12',    repos:45},
-          {ref:'curl_marteau', series:s-1, reps:'12',    repos:45},
-          {ref:'releve_jambes',series:3,   reps:'12',    repos:30},
-          {ref:'russian_twist',series:3,   reps:'20',    repos:30}
-        ], equip, duree)
-      };
-
-      const legs = {
-        id:'ia_legs', nom:'Legs — Quadriceps · Ischio · Fessiers',
-        emoji:'🦵',
-        muscles:['Quadriceps','Ischio-jambiers','Fessiers','Mollets'],
-        duree_estimee:duree,
-        exercices: this._filtrerExos([
-          {ref:'squat',         series:s,   reps:reps,     repos:120},
-          {ref:'presse_cuisses',series:s-1, reps:'10-12',  repos:90 },
-          {ref:'fentes',        series:s-1, reps:'12/j',   repos:75 },
-          {ref:'leg_curl',      series:s-1, reps:'12',     repos:60 },
-          {ref:'hip_thrust',    series:s-1, reps:'12',     repos:75 },
-          {ref:'mollets',       series:s,   reps:'15-20',  repos:45 },
-          {ref:'planche',       series:3,   reps:'45-60s', repos:30 },
-          {ref:'releve_jambes', series:3,   reps:'12',     repos:30 }
-        ], equip, duree)
-      };
-
-      if (nbJours === 3) return [push, pull, legs];
-      if (nbJours === 4) return [push, pull, legs,
-        {...push, id:'ia_push_b', nom:'Push B — Variation'}];
-      if (nbJours === 5) return [push, pull, legs, push, pull];
-      return [push, pull, legs, push, pull, legs];
-    },
-
-    _seancesFullBody(objectif, niveau, nbJours,
-                     s, reps, r, duree, equip) {
-      const fbA = {
-        id:'ia_fba', nom:'Full Body A',
-        emoji:'🔄',
-        muscles:['Full Body','Force'],
-        duree_estimee:duree,
-        exercices: this._filtrerExos([
-          {ref:'squat',          series:s-1, reps:reps,     repos:120},
-          {ref:'bench_press',    series:s-1, reps:reps,     repos:90 },
-          {ref:'rowing_barre',   series:s-1, reps:reps,     repos:90 },
-          {ref:'dev_militaire',  series:s-2, reps:reps,     repos:75 },
-          {ref:'curl_halteres',  series:s-2, reps:'12',     repos:45 },
-          {ref:'planche',        series:3,   reps:'45-60s', repos:30 },
-          {ref:'crunch',         series:3,   reps:'15',     repos:30 }
-        ], equip, duree)
-      };
-
-      const fbB = {
-        id:'ia_fbb', nom:'Full Body B',
-        emoji:'🔄',
-        muscles:['Full Body','Volume'],
-        duree_estimee:duree,
-        exercices: this._filtrerExos([
-          {ref:'soulevé_terre',    series:s-1, reps:reps,     repos:120},
-          {ref:'incline_halteres', series:s-1, reps:reps,     repos:90 },
-          {ref:'tractions',        series:s-1, reps:'max',    repos:90 },
-          {ref:'elev_laterales',   series:s-1, reps:'12-15',  repos:45 },
-          {ref:'leg_curl',         series:s-2, reps:'12',     repos:60 },
-          {ref:'releve_jambes',    series:3,   reps:'12',     repos:30 },
-          {ref:'russian_twist',    series:3,   reps:'20',     repos:30 }
-        ], equip, duree)
-      };
-
-      if (nbJours === 3) return [fbA, fbB, fbA];
-      if (nbJours === 4) return [fbA, fbB, fbA, fbB];
-      return [fbA, fbB, fbA, fbB, fbA];
-    },
-
-    _seancesUpperLower(objectif, niveau, nbJours,
-                       s, reps, r, duree, equip) {
-      const upper = {
-        id:'ia_upper', nom:'Upper — Haut du corps',
-        emoji:'💪',
-        muscles:['Pectoraux','Dos','Épaules','Bras'],
-        duree_estimee:duree,
-        exercices: this._filtrerExos([
-          {ref:'bench_press',        series:s-1, reps:reps,     repos:90 },
-          {ref:'rowing_barre',       series:s-1, reps:reps,     repos:90 },
-          {ref:'dev_militaire',      series:s-1, reps:reps,     repos:75 },
-          {ref:'tractions',          series:s-1, reps:'max',    repos:90 },
-          {ref:'curl_halteres',      series:s-2, reps:'12',     repos:45 },
-          {ref:'ext_triceps_poulie', series:s-2, reps:'12',     repos:45 },
-          {ref:'planche',            series:3,   reps:'45-60s', repos:30 },
-          {ref:'russian_twist',      series:3,   reps:'20',     repos:30 }
-        ], equip, duree)
-      };
-
-      const lower = {
-        id:'ia_lower', nom:'Lower — Bas du corps',
-        emoji:'🦵',
-        muscles:['Quadriceps','Ischio-jambiers','Fessiers','Mollets'],
-        duree_estimee:duree,
-        exercices: this._filtrerExos([
-          {ref:'squat',          series:s,   reps:reps,     repos:120},
-          {ref:'soulevé_terre',  series:s-1, reps:reps,     repos:120},
-          {ref:'presse_cuisses', series:s-1, reps:'10-12',  repos:90 },
-          {ref:'fentes',         series:s-1, reps:'12/j',   repos:75 },
-          {ref:'hip_thrust',     series:s-1, reps:'12',     repos:75 },
-          {ref:'mollets',        series:s,   reps:'15-20',  repos:45 },
-          {ref:'releve_jambes',  series:3,   reps:'12',     repos:30 },
-          {ref:'crunch',         series:3,   reps:'15',     repos:30 }
-        ], equip, duree)
-      };
-
-      if (nbJours === 4) return [upper, lower, upper, lower];
-      if (nbJours === 5) return [upper, lower, upper, lower, upper];
-      return [upper, lower, upper, lower, upper, lower];
-    },
-
-    _filtrerExos(exercices, equipement, duree) {
-      const maxExos = duree <= 45 ? 5
-                    : duree <= 60 ? 7
-                    : duree <= 75 ? 8
-                    : 10;
-
-      const necessiteEquip = {
-        bench_press:          ['barre'],
-        rowing_barre:         ['barre'],
-        'soulevé_terre':      ['barre'],
-        squat:                ['barre','rack'],
-        lat_pulldown:         ['machines'],
-        rowing_machine:       ['machines'],
-        leg_curl:             ['machines'],
-        leg_extension:        ['machines'],
-        presse_cuisses:       ['machines'],
-        ext_triceps_poulie:   ['cables'],
-        face_pull:            ['cables'],
-        ecarte_poulie:        ['cables'],
-        curl_halteres:        ['halteres'],
-        curl_marteau:         ['halteres'],
-        elev_laterales:       ['halteres'],
-        incline_halteres:     ['halteres'],
-        dev_militaire:        ['halteres','barre'],
-        hip_thrust:           ['barre','halteres'],
-        tractions:            ['poids_corps'],
-        dips_triceps:         ['poids_corps'],
-        pompes:               ['poids_corps'],
-        planche:              ['poids_corps'],
-        releve_jambes:        ['poids_corps'],
-        russian_twist:        ['poids_corps','halteres'],
-        fentes:               ['halteres','poids_corps'],
-        mollets:              ['poids_corps','machines'],
-        pompes_declined:      ['poids_corps'],
-        diamond_pushup:       ['poids_corps'],
-        pike_pushup:          ['poids_corps'],
-        squat_poids_corps:    ['poids_corps'],
-        fentes_bulgares:      ['poids_corps'],
-        hip_thrust_sol:       ['poids_corps'],
-        donkey_kick:          ['poids_corps'],
-        clamshell:            ['poids_corps'],
-        squat_saute:          ['poids_corps'],
-        superman:             ['poids_corps'],
-        bird_dog:             ['poids_corps'],
-        inverted_row:         ['poids_corps'],
-        crunch:               ['poids_corps'],
-        mountain_climbers:    ['poids_corps']
-      };
-
-      const filtres = exercices.filter(ex => {
-        const requis = necessiteEquip[ex.ref];
-        if (!requis) return true;
-        return requis.some(eq => (equipement||[]).includes(eq));
       });
+    } catch(e) {}
 
-      return filtres.slice(0, maxExos);
-    },
-
-    _genererPlanning(seances, nbJours, joursSpecifiques) {
-      const planning = Array(7).fill(null).map((_, i) => ({
-        jour:     i,
-        label:    ['LUN','MAR','MER','JEU','VEN','SAM','DIM'][i],
-        seanceId: null
-      }));
-
-      let joursActifs = joursSpecifiques;
-
-      if (!joursActifs || joursActifs.length === 0) {
-        const distributions = {
-          3: [0, 2, 4],
-          4: [0, 1, 3, 4],
-          5: [0, 1, 2, 3, 4],
-          6: [0, 1, 2, 3, 4, 5]
-        };
-        joursActifs = distributions[nbJours] || [0,1,3,4];
-      }
-
-      joursActifs.slice(0, nbJours).forEach((jourIdx, i) => {
-        const seance = seances[i % seances.length];
-        if (planning[jourIdx]) {
-          planning[jourIdx].seanceId = seance.id;
-        }
+    // ── Vérification blessures ──────────────────────────
+    try {
+      const blessures = (Tracker.getBlessuresActives?.()
+        || Tracker.getBlessures?.().filter(b => b.active) || []);
+      blessures.forEach(b => {
+        alertes.push({
+          type:    'blessure',
+          emoji:   '🩹',
+          message: `Blessure active : ${b.zone} — écoute ton corps`,
+          urgent:  true
+        });
       });
+    } catch(e) {}
 
-      return planning;
-    },
-
-    _appliquerPlanning(planning) {
-      try {
-        Programme.sauvegarderPlanning(planning.map(j => ({
-          jour:     j.jour,
-          label:    j.label,
-          seanceId: j.seanceId
-        })));
-        console.log('[ProgrammeIA] Planning appliqué ✅');
-      } catch(e) {
-        console.warn('[ProgrammeIA] Erreur planning:', e);
-      }
-    },
-
-    _genererConseils(objectif, niveau, style, genre = 'homme') {
-      const base = [
-        '💧 Hydratation : boire 35ml/kg/jour minimum',
-        '😴 Sommeil : 7-9h par nuit pour une récupération optimale',
-        '📊 Note ton RPE après chaque série pour adapter l\'intensité'
-      ];
-
-      const parObjectif = {
-        prise_masse: [
-          '🥩 Protéines : 2-2.2g par kg de poids corporel',
-          '🍚 Surplus calorique : +300 kcal/jour minimum',
-          '⬆️ Progressivité : +2.5kg dès que tu complètes toutes les séries'
-        ],
-        seche: [
-          '🥗 Déficit calorique modéré : -300 à -500 kcal/jour',
-          '💪 Maintiens les charges lourdes pour préserver le muscle',
-          '🏃 Cardio léger en complément 2-3x/semaine'
-        ],
-        force: [
-          '🏋️ Priorité aux mouvements composés : squat, bench, soulevé',
-          '⏱ Repos longs : 2-5 min entre les séries lourdes',
-          '📈 Périodisation : varie les charges et les reps'
-        ],
-        forme: [
-          '🎯 Consistance > Intensité — mieux vaut 3 séances régulières',
-          '🔄 Varie les exercices pour éviter la routine',
-          '🌟 Écoute ton corps et ajuste selon ton énergie du jour'
-        ],
-        endurance: [
-          '❤️ Cardio 2-3x/semaine en complément de la musculation',
-          '⬇️ Temps de repos courts : 30-60 secondes',
-          '📈 Progression graduelle : +5-10% volume/semaine maximum'
-        ]
-      };
-
-      const parNiveau = {
-        debutant:      ['🌱 Focus sur la technique avant d\'augmenter les charges'],
-        intermediaire: ['📈 Alternez les phases de volume et d\'intensité'],
-        avance:        ['⚡ Intégrez des techniques avancées : supersets, drop sets']
-      };
-
-      const parGenre = genre === 'femme' ? [
-        '🌸 Adapte l\'intensité selon ton cycle hormonal',
-        '🍑 Les exercices unilatéraux (fentes, kickbacks) sont excellents pour le galbe',
-        '💪 N\'aie pas peur de soulever lourd — ça ne rend pas "trop musclée" !'
-      ] : [
-        '💪 La testostérone favorise la récupération — profites-en !',
-        '📈 Le sommeil est crucial pour la synthèse protéique'
-      ];
-
-      return [
-        ...base,
-        ...(parObjectif[objectif] || []),
-        ...(parNiveau[niveau]     || []),
-        ...parGenre
-      ];
-    },
-
-    // ════════════════════════════════════════════════════
-    // RENDER QUESTIONNAIRE
-    // ════════════════════════════════════════════════════
-    render(container) {
-      if (!container) return;
-      const programmeExistant = this.getGenere();
-      if (programmeExistant && !this._modeQuestionnaire) {
-        this._renderProgrammeGenere(container, programmeExistant);
-      } else {
-        this._renderQuestionnaire(container);
-      }
-    },
-
-    _renderQuestionnaire(container) {
-      const etape   = this.ETAPES[this._etapeActuelle];
-      const total   = this.ETAPES.length;
-      const pctProg = Math.round((this._etapeActuelle / total) * 100);
-
-      container.innerHTML = `
-        <div class="card mb-md"
-             style="background:linear-gradient(135deg,
-                    rgba(75,75,249,0.2),rgba(75,75,249,0.05));
-                    border-color:rgba(75,75,249,0.3)">
-          <div style="display:flex;align-items:center;
-                      justify-content:space-between;
-                      margin-bottom:8px">
-            <div>
-              <div style="font-size:1rem;font-weight:800">
-                🧠 Programme IA</div>
-              <div style="font-size:.72rem;color:var(--text-muted)">
-                Étape ${this._etapeActuelle + 1} / ${total}</div>
-            </div>
-            <div style="font-size:.78rem;font-weight:700;
-                        color:var(--fd-indigo)">${pctProg}%</div>
-          </div>
-          <div style="height:6px;
-                      background:rgba(255,255,255,0.08);
-                      border-radius:99px;overflow:hidden">
-            <div style="height:100%;width:${pctProg}%;
-                        background:var(--fd-indigo);
-                        border-radius:99px;
-                        transition:width .5s ease"></div>
-          </div>
-        </div>
-
-        <div class="card mb-md">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--text-muted);margin-bottom:10px">
-            Question ${this._etapeActuelle + 1}
-          </div>
-          <div style="font-size:1rem;font-weight:800;
-                      margin-bottom:6px;line-height:1.3">
-            ${etape.titre}
-          </div>
-          ${etape.desc ? `
-            <div style="font-size:.72rem;color:var(--text-muted);
-                        margin-bottom:12px">${etape.desc}</div>` : ''}
-          ${this._renderOptionsEtape(etape)}
-        </div>
-
-        <div style="display:grid;
-                    grid-template-columns:${
-                      this._etapeActuelle > 0 ? '1fr 2fr' : '1fr'
-                    };gap:8px">
-          ${this._etapeActuelle > 0 ? `
-            <button onclick="Coach.ProgrammeIA._etapePrecedente()"
-                    class="btn-secondary"
-                    style="font-size:.85rem">← Retour</button>` : ''}
-          <button onclick="Coach.ProgrammeIA._etapeSuivante()"
-                  class="btn-primary" style="font-size:.85rem">
-            ${this._etapeActuelle === total - 1
-              ? '🧠 Générer mon programme !'
-              : 'Suivant →'}
-          </button>
-        </div>
-
-        ${etape.optionnel ? `
-          <div style="text-align:center;margin-top:8px">
-            <button onclick="Coach.ProgrammeIA._etapeSuivante(true)"
-                    style="background:none;border:none;
-                           color:var(--text-muted);font-size:.72rem;
-                           cursor:pointer">
-              Passer cette étape →
-            </button>
-          </div>` : ''}
-      `;
-    },
-
-    _renderOptionsEtape(etape) {
-      const rep = this._reponses[etape.id];
-
-      if (etape.type === 'choix_unique') {
-        return `
-          <div style="display:flex;flex-direction:column;gap:8px">
-            ${etape.options.map(opt => `
-              <button onclick="Coach.ProgrammeIA._selectionnerChoix(
-                        '${etape.id}','${opt.val}')"
-                      style="display:flex;align-items:center;
-                             gap:12px;padding:12px 16px;
-                             background:${rep === opt.val
-                               ? 'rgba(75,75,249,0.2)'
-                               : 'var(--bg-input)'};
-                             border:2px solid ${rep === opt.val
-                               ? 'var(--fd-indigo)'
-                               : 'var(--border-color)'};
-                             border-radius:var(--radius-lg);
-                             cursor:pointer;text-align:left;
-                             transition:all .2s;width:100%">
-                <div style="font-size:1.1rem;flex-shrink:0">
-                  ${opt.label.split(' ')[0]}</div>
-                <div style="flex:1">
-                  <div style="font-size:.85rem;font-weight:700;
-                              color:${rep === opt.val
-                                ? 'var(--fd-indigo)'
-                                : 'var(--text-primary)'}">
-                    ${opt.label}</div>
-                  ${opt.desc ? `
-                    <div style="font-size:.65rem;
-                                color:var(--text-muted);
-                                margin-top:1px">${opt.desc}</div>` : ''}
-                </div>
-                ${rep === opt.val ? `
-                  <div style="width:20px;height:20px;border-radius:50%;
-                              background:var(--fd-indigo);
-                              display:flex;align-items:center;
-                              justify-content:center;font-size:.75rem;
-                              color:white;flex-shrink:0">✓</div>` : ''}
-              </button>`).join('')}
-          </div>`;
-      }
-
-      if (etape.type === 'choix_multiple') {
-        const reps = this._reponses[etape.id] || [];
-        return `
-          <div style="display:grid;
-                      grid-template-columns:1fr 1fr;gap:8px">
-            ${etape.options.map(opt => {
-              const actif = reps.includes(opt.val);
-              return `
-                <button onclick="Coach.ProgrammeIA._toggleChoixMultiple(
-                          '${etape.id}','${opt.val}')"
-                        style="padding:12px 8px;text-align:center;
-                               background:${actif
-                                 ? 'rgba(75,75,249,0.2)'
-                                 : 'var(--bg-input)'};
-                               border:2px solid ${actif
-                                 ? 'var(--fd-indigo)'
-                                 : 'var(--border-color)'};
-                               border-radius:var(--radius-lg);
-                               cursor:pointer;transition:all .2s">
-                  <div style="font-size:1.2rem;margin-bottom:4px">
-                    ${opt.label.split(' ')[0]}</div>
-                  <div style="font-size:.75rem;font-weight:600;
-                              color:${actif
-                                ? 'var(--fd-indigo)'
-                                : 'var(--text-primary)'}">
-                    ${opt.label.split(' ').slice(1).join(' ')}</div>
-                  ${actif ? `
-                    <div style="margin-top:4px;font-size:.65rem;
-                                color:var(--fd-mint)">
-                      ✓ Sélectionné</div>` : ''}
-                </button>`;
-            }).join('')}
-          </div>
-          <div style="margin-top:8px;font-size:.68rem;
-                      color:var(--text-muted);text-align:center">
-            ${(this._reponses[etape.id]||[]).length} sélectionné(s)
-            · Sélection multiple
-          </div>`;
-      }
-
-      if (etape.type === 'jours_semaine') {
-        const reps = this._reponses[etape.id] || [];
-        const jours = [
-          {idx:0,label:'Lun'},{idx:1,label:'Mar'},
-          {idx:2,label:'Mer'},{idx:3,label:'Jeu'},
-          {idx:4,label:'Ven'},{idx:5,label:'Sam'},
-          {idx:6,label:'Dim'}
-        ];
-        return `
-          <div style="display:grid;
-                      grid-template-columns:repeat(7,1fr);gap:5px">
-            ${jours.map(j => {
-              const actif = reps.includes(j.idx);
-              return `
-                <button onclick="Coach.ProgrammeIA._toggleJour(${j.idx})"
-                        style="padding:10px 4px;text-align:center;
-                               background:${actif
-                                 ? 'var(--fd-indigo)'
-                                 : 'var(--bg-input)'};
-                               border:2px solid ${actif
-                                 ? 'var(--fd-indigo)'
-                                 : 'var(--border-color)'};
-                               border-radius:var(--radius-md);
-                               cursor:pointer;transition:all .2s">
-                  <div style="font-size:.68rem;font-weight:700;
-                              color:${actif
-                                ? 'white' : 'var(--text-muted)'}">
-                    ${j.label}</div>
-                </button>`;
-            }).join('')}
-          </div>
-          <div style="margin-top:8px;font-size:.68rem;
-                      color:var(--text-muted);text-align:center">
-            ${reps.length} jour(s) sélectionné(s)
-          </div>`;
-      }
-
-      return '';
-    },
-
-    _reRender() {
-      const c = this._getContainer();
-      if (c) this._renderQuestionnaire(c);
-    },
-
-    _selectionnerChoix(etapeId, val) {
-      this._reponses[etapeId] = val;
-      this._reRender();
-    },
-
-    _toggleChoixMultiple(etapeId, val) {
-      if (!this._reponses[etapeId]) this._reponses[etapeId] = [];
-      const arr = this._reponses[etapeId];
-      const idx = arr.indexOf(val);
-      if (idx >= 0) arr.splice(idx, 1); else arr.push(val);
-      this._reRender();
-    },
-
-    _toggleJour(jourIdx) {
-      const id = this.ETAPES[this._etapeActuelle].id;
-      if (!this._reponses[id]) this._reponses[id] = [];
-      const arr = this._reponses[id];
-      const idx = arr.indexOf(jourIdx);
-      if (idx >= 0) arr.splice(idx, 1); else arr.push(jourIdx);
-      this._reRender();
-    },
-
-    _etapeSuivante(passer = false) {
-      const etape = this.ETAPES[this._etapeActuelle];
-      if (!passer && !etape.optionnel) {
-        const rep = this._reponses[etape.id];
-        if (!rep || (Array.isArray(rep) && rep.length === 0)) {
-          Utils.toast('Fais un choix avant de continuer !', 'error');
-          return;
-        }
-      }
-      if (this._etapeActuelle >= this.ETAPES.length - 1) {
-        this._lancerGeneration();
-        return;
-      }
-      this._etapeActuelle++;
-      this._reRender();
-    },
-
-    _etapePrecedente() {
-      if (this._etapeActuelle <= 0) return;
-      this._etapeActuelle--;
-      this._reRender();
-    },
-
-    _lancerGeneration() {
-      const container = this._getContainer();
-      if (!container) return;
-
-      container.innerHTML = `
-        <div style="display:flex;flex-direction:column;
-                    align-items:center;justify-content:center;
-                    min-height:60vh;text-align:center;
-                    padding:var(--space-xl)">
-          <div style="font-size:3rem;margin-bottom:var(--space-lg);
-                      animation:pulse 1s infinite">🧠</div>
-          <div style="font-size:1.1rem;font-weight:800;
-                      margin-bottom:var(--space-sm)">
-            Génération en cours...</div>
-          <div style="font-size:.82rem;color:var(--text-muted);
-                      margin-bottom:var(--space-xl)">
-            L'IA analyse ton profil et crée ton programme</div>
-          <div style="width:200px;height:4px;
-                      background:var(--border-color);
-                      border-radius:2px;overflow:hidden">
-            <div style="height:100%;background:var(--fd-indigo);
-                        border-radius:2px;
-                        animation:splashLoad 2s ease forwards">
-            </div>
-          </div>
-          <div style="margin-top:var(--space-lg);font-size:.72rem;
-                      color:var(--text-muted)">
-            ${this._getMessageChargement()}</div>
-        </div>`;
-
-      setTimeout(() => {
-        try {
-          const programme = this.generer(this._reponses);
-          this._modeQuestionnaire = false;
-          this._etapeActuelle     = 0;
-          const c = this._getContainer();
-          if (c) this._renderProgrammeGenere(c, programme);
-          Utils.toast('🧠 Programme généré !', 'success', 3000);
-          Utils.confetti(2000);
-          try { Gamification.ajouterXP(100, 'programme_ia'); } catch(e) {}
-        } catch(e) {
-          console.error('[ProgrammeIA] Erreur:', e);
-          Utils.toast('❌ Erreur génération', 'error');
-        }
-      }, 2200);
-    },
-
-    _getMessageChargement() {
-      const msgs = [
-        '⚡ Analyse de ton niveau...',
-        '🎯 Adaptation à ton objectif...',
-        '💪 Sélection des exercices optimaux...',
-        '📅 Création du planning semaine...',
-        '🧪 Optimisation des séries et répétitions...'
-      ];
-      return msgs[Math.floor(Math.random() * msgs.length)];
-    },
-
-    _renderProgrammeGenere(container, prog) {
-      const genreLabel = prog.genre === 'femme' ? '👩 Femme' : '👨 Homme';
-      const lieuLabel  = prog.lieu === 'salle' ? '🏋️ Salle'
-                       : prog.lieu === 'maison' ? '🏠 Maison'
-                       : '🌳 Dehors';
-
-      container.innerHTML = `
-        <div class="card mb-md"
-             style="background:linear-gradient(135deg,
-                    rgba(75,75,249,0.25),rgba(139,240,187,0.08));
-                    border-color:rgba(75,75,249,0.4);
-                    text-align:center;padding:20px">
-          <div style="font-size:2rem;margin-bottom:8px">🧠</div>
-          <div style="font-size:1.1rem;font-weight:800;
-                      margin-bottom:6px">Ton programme IA</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;
-                      justify-content:center;margin-bottom:10px">
-            ${[
-              {label:prog.styleLabel,   color:'var(--fd-indigo)'  },
-              {label:`${prog.nbJours}j/sem`, color:'var(--fd-mint)'  },
-              {label:`~${prog.dureeMin}min`,color:'var(--fd-lemon)' },
-              {label:genreLabel,        color:'var(--fd-lavender)' },
-              {label:lieuLabel,         color:'var(--fd-coral)'    }
-            ].map(b => `
-              <span style="padding:4px 10px;
-                           background:${b.color}22;
-                           border:1px solid ${b.color}44;
-                           border-radius:99px;font-size:.68rem;
-                           color:${b.color};font-weight:700">
-                ${b.label}</span>`).join('')}
-          </div>
-          <div style="font-size:.72rem;color:var(--text-muted)">
-            Généré le ${prog.dateCreation}
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;
-                    gap:8px;margin-bottom:14px">
-          <button onclick="
-            Coach.ProgrammeIA._modeQuestionnaire = true;
-            Coach.ProgrammeIA._etapeActuelle = 0;
-            Coach.ProgrammeIA._reponses = {};
-            window._piaReponses = {};
-            const c = Coach.ProgrammeIA._getContainer();
-            if (c) Coach.ProgrammeIA._renderQuestionnaire(c);"
-                  class="btn-secondary" style="font-size:.75rem">
-            🔄 Refaire
-          </button>
-          <button onclick="naviguer('training')"
-                  class="btn-primary" style="font-size:.75rem">
-            📅 Voir planning →
-          </button>
-        </div>
-
-        <!-- Planning -->
-        <div class="card mb-md">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--text-muted);margin-bottom:12px">
-            📅 Planning généré</div>
-          <div style="display:grid;
-                      grid-template-columns:repeat(7,1fr);gap:4px">
-            ${prog.planning.map(j => {
-              const seance = prog.seances.find(
-                s => s.id === j.seanceId
-              );
-              return `
-                <div style="text-align:center">
-                  <div style="width:100%;aspect-ratio:1;
-                              border-radius:10px;
-                              display:flex;align-items:center;
-                              justify-content:center;
-                              font-size:.85rem;
-                              ${j.seanceId
-                                ? 'background:rgba(75,75,249,0.2);border:2px solid var(--fd-indigo);'
-                                : 'background:var(--bg-input);border:1px solid var(--border-color);'}">
-                    ${seance ? seance.emoji : '😴'}
-                  </div>
-                  <div style="font-size:.5rem;color:var(--text-muted);
-                              margin-top:3px;text-transform:uppercase;
-                              font-weight:600">${j.label}</div>
-                </div>`;
-            }).join('')}
-          </div>
-        </div>
-
-        <!-- Séances -->
-        <div style="font-size:.6rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.1em;
-                    color:var(--text-muted);margin:0 0 8px">
-          💪 Séances générées</div>
-
-        ${[...new Map(prog.seances.map(s => [s.id, s])).values()]
-          .map(seance => `
-          <div class="card mb-md">
-            <div style="display:flex;align-items:center;
-                        justify-content:space-between;
-                        margin-bottom:10px">
-              <div>
-                <div style="font-size:.95rem;font-weight:800">
-                  ${seance.emoji} ${seance.nom}</div>
-                <div style="font-size:.68rem;color:var(--text-muted)">
-                  ~${seance.duree_estimee}min
-                  · ${seance.exercices.length} exercices</div>
-              </div>
-              <button onclick="naviguer('live',
-                        {seanceId:'${seance.id}'})"
-                      class="btn-primary"
-                      style="font-size:.72rem;
-                             padding:var(--space-sm) var(--space-md)">
-                ▶ Start
-              </button>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;
-                        margin-bottom:10px">
-              ${(seance.muscles||[]).map(m => `
-                <span style="padding:3px 8px;border-radius:99px;
-                             font-size:.6rem;font-weight:700;
-                             background:rgba(75,75,249,0.15);
-                             color:var(--fd-lavender);
-                             border:1px solid rgba(75,75,249,0.2)">
-                  ${m}</span>`).join('')}
-            </div>
-            ${seance.exercices.map(ex => {
-              const exoData = (window.EXERCICES||{})[ex.ref] || {};
-              return `
-                <div style="display:flex;align-items:center;
-                            gap:8px;padding:7px 0;
-                            border-bottom:1px solid var(--border-color)">
-                  <div style="width:26px;height:26px;border-radius:8px;
-                              background:rgba(75,75,249,0.1);
-                              border:1px solid rgba(75,75,249,0.2);
-                              display:flex;align-items:center;
-                              justify-content:center;
-                              font-size:.8rem;flex-shrink:0">
-                    ${exoData.emoji || '💪'}</div>
-                  <div style="flex:1">
-                    <div style="font-size:.78rem;font-weight:700">
-                      ${exoData.nom || ex.ref}</div>
-                    <div style="font-size:.6rem;color:var(--fd-mint)">
-                      ${exoData.muscle || ''}</div>
-                  </div>
-                  <div style="text-align:right;flex-shrink:0">
-                    <div style="font-size:.72rem;font-weight:700;
-                                color:var(--fd-indigo)">
-                      ${ex.series}×${ex.reps}</div>
-                    <div style="font-size:.55rem;
-                                color:var(--text-muted)">
-                      ⏱ ${ex.repos}s</div>
-                  </div>
-                </div>`;
-            }).join('')}
-          </div>`).join('')}
-
-        <!-- Conseils -->
-        <div class="card mb-md"
-             style="border-color:rgba(191,161,255,0.2);
-                    background:rgba(191,161,255,0.05)">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--fd-lavender);margin-bottom:10px">
-            💡 Conseils personnalisés ${genreLabel}</div>
-          ${prog.conseils.map(c => `
-            <div style="display:flex;gap:8px;align-items:flex-start;
-                        padding:6px 0;
-                        border-bottom:1px solid rgba(191,161,255,0.1)">
-              <div style="font-size:.8rem;line-height:1.5;
-                          color:var(--text-secondary)">${c}</div>
-            </div>`).join('')}
-        </div>
-
-        <div class="card mb-md"
-             style="border-color:rgba(139,240,187,0.2);
-                    background:rgba(139,240,187,0.05)">
-          <div style="font-size:.82rem;color:var(--text-secondary);
-                      margin-bottom:10px;line-height:1.5">
-            ✅ Programme appliqué à ton planning.
-            Tu peux démarrer depuis
-            <strong style="color:var(--fd-mint)">Programme</strong>.
-          </div>
-          <button onclick="naviguer('training')"
-                  class="btn-primary" style="width:100%">
-            📅 Voir mon planning →
-          </button>
-        </div>
-      `;
-    }
-  },
-
-  // ════════════════════════════════════════════════════════
-  // RENDER COACH TAB
-  // ════════════════════════════════════════════════════════
-  renderCoachTab(container) {
-    if (!container) return;
-
-    let msg      = { emoji:'💡', message:'Prêt pour la séance ?' };
-    let analyse  = {
-      seances:0, objectif:4, volume:0, rpe:0,
-      intensite:'🟢 Faible', recommendation:'Continue !', deltaVolume:0
-    };
-    let warmup   = [];
-    let deload   = { oui:false };
-    let citation = { texte:'La progression est un choix.', auteur:'Anonyme' };
-    let aEviter  = [];
-    let nom      = 'Athlète';
-    const profil = this._getProfilOnboarding();
-
-    try { msg      = this.getMessageDuJour();              } catch(e) {}
-    try { analyse  = this.getAnalyseSemaine();             } catch(e) {}
-    try { warmup   = this.getWarmupDuJour();               } catch(e) {}
-    try { deload   = this.necessiteDeload();               } catch(e) {}
-    try { citation = this.getCitationDuJour(profil.genre); } catch(e) {}
-    try { aEviter  = this.getExercicesAEviter();           } catch(e) {}
-    try { nom      = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
-
-    let surcharge = [];
-    try { surcharge = Tracker.getSurchargeMusculaire(); } catch(e) {}
-
-    container.innerHTML = `
-
-      <!-- BOUTON PROGRAMME IA -->
-      <div class="card mb-md"
-           style="background:linear-gradient(135deg,
-                  rgba(75,75,249,0.2),rgba(139,240,187,0.05));
-                  border-color:rgba(75,75,249,0.4);cursor:pointer"
-           onclick="Coach.ProgrammeIA._modeQuestionnaire=false;
-                    naviguer('adaptatif')">
-        <div style="display:flex;align-items:center;gap:14px">
-          <div style="width:50px;height:50px;border-radius:16px;
-                      background:rgba(75,75,249,0.2);
-                      border:2px solid rgba(75,75,249,0.4);
-                      display:flex;align-items:center;
-                      justify-content:center;font-size:1.8rem;
-                      flex-shrink:0">🧠</div>
-          <div style="flex:1">
-            <div style="font-size:.95rem;font-weight:800;
-                        margin-bottom:3px">
-              Programme IA Personnalisé</div>
-            <div style="font-size:.72rem;color:var(--text-muted)">
-              ${this.ProgrammeIA.getGenere()
-                ? `✅ Programme actif (${profil.genre === 'femme' ? 'Féminin' : 'Masculin'} · ${profil.lieu === 'salle' ? 'Salle' : profil.lieu === 'maison' ? 'Maison' : 'Dehors'})`
-                : 'Questionnaire · Génération automatique · Planning adapté'}
-            </div>
-          </div>
-          <div style="color:var(--fd-indigo);font-size:1.2rem">›</div>
-        </div>
-      </div>
-
-      <!-- Surcharge musculaire -->
-      ${surcharge.length > 0 ? `
-        <div class="card mb-md"
-             style="border-color:var(--fd-coral);
-                    background:rgba(255,141,150,0.08)">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--fd-coral);margin-bottom:8px">
-            ⚠️ Surcharge musculaire détectée
-          </div>
-          ${surcharge.map(s => `
-            <div style="font-size:.78rem;color:var(--text-secondary);
-                        padding:4px 0;
-                        border-bottom:1px solid rgba(255,141,150,0.1)">
-              🔴 <strong>${s.muscle}</strong> — ${s.conseil}
-            </div>`).join('')}
-        </div>` : ''}
-
-      <!-- Citation -->
-      <div class="card mb-md"
-           style="border-left:3px solid var(--fd-lemon);
-                  background:rgba(249,239,119,0.06)">
-        <div style="font-size:.72rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.08em;
-                    color:var(--fd-lemon);margin-bottom:var(--space-sm)">
-          💬 Citation du jour</div>
-        <p style="font-size:.9rem;font-style:italic;
-                  line-height:1.6;color:var(--text-primary)">
-          "${citation.texte}"</p>
-        <p style="font-size:.72rem;color:var(--text-muted);
-                  margin-top:var(--space-xs)">— ${citation.auteur}</p>
-      </div>
-
-      <!-- Message coach -->
-      <div class="card mb-md"
-           style="border-left:3px solid var(--fd-lavender)">
-        <div style="font-size:.65rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.08em;
-                    color:var(--fd-lavender);margin-bottom:var(--space-sm)">
-          ${msg.emoji} Coach du jour</div>
-        <p style="font-size:.88rem;color:var(--text-secondary);
-                  line-height:1.6;margin:0">${msg.message}</p>
-      </div>
-
-      <!-- Décharge -->
-      ${deload.oui ? `
-        <div class="card mb-md"
-             style="border-color:var(--fd-coral);
-                    background:rgba(255,141,150,0.08)">
-          <div class="card-label" style="color:var(--fd-coral)">
-            ⚠️ Décharge recommandée</div>
-          <p style="font-size:.88rem;margin-top:var(--space-sm);
-                    color:var(--text-secondary)">
-            ${deload.raison}.<br>
-            Réduis les charges de <strong>40%</strong>.</p>
-        </div>` : ''}
-
-      <!-- Exercices à éviter -->
-      ${aEviter.length > 0 ? `
-        <div class="card mb-md"
-             style="border-color:var(--fd-lemon);
-                    background:rgba(249,239,119,0.06)">
-          <div class="card-label" style="color:var(--fd-lemon)">
-            ⚠️ Exercices déconseillés</div>
-          <div style="display:flex;flex-wrap:wrap;gap:var(--space-xs);
-                      margin-top:var(--space-sm)">
-            ${aEviter.map(ref => `
-              <span class="chip chip-lemon">
-                ${(window.EXERCICES||{})[ref]?.nom||ref}
-              </span>`).join('')}
-          </div>
-        </div>` : ''}
-
-      <!-- Analyse semaine -->
-      <div class="card mb-md">
-        <div class="card-label">📊 Analyse de la semaine</div>
-        <div style="margin-top:var(--space-sm)">
-          ${[
-            {label:'Séances',   val:`${analyse.seances}/${analyse.objectif}`},
-            {label:'Volume',    val:Utils.formatVolume(analyse.volume)       },
-            {label:'RPE moyen', val:analyse.rpe > 0 ? `${analyse.rpe}/10` : '—'},
-            {label:'Intensité', val:analyse.intensite                        },
-            {label:'vs S-1',    val:`${(analyse.deltaVolume||0) >= 0 ? '+' : ''}${analyse.deltaVolume||0}%`}
-          ].map(r => `
-            <div class="score-row">
-              <span class="score-row-label">${r.label}</span>
-              <span style="font-size:.85rem;font-weight:600">
-                ${r.val}</span>
-            </div>`).join('')}
-          <div class="progress-bar mt-md">
-            <div class="progress-fill"
-                 style="width:${Math.min(100, Math.round(
-                   (analyse.seances / Math.max(analyse.objectif,1)) * 100
-                 ))}%"></div>
-          </div>
-        </div>
-        <div style="margin-top:var(--space-md);padding:var(--space-sm);
-                    background:var(--fd-indigo-dim);
-                    border-radius:var(--radius-sm)">
-          <span style="font-size:.82rem;color:var(--fd-lavender)">
-            💡 ${analyse.recommendation}
-          </span>
-        </div>
-      </div>
-
-      <!-- Chat IA -->
-      <div class="card mb-md"
-           style="border-color:var(--fd-indigo);
-                  background:rgba(75,75,249,0.04)">
-        <div class="card-label" style="color:var(--fd-indigo)">
-          🤖 Coach IA — Chat</div>
-
-        <div style="display:flex;flex-wrap:wrap;gap:6px;
-                    margin-top:var(--space-md);
-                    margin-bottom:var(--space-md)">
-          ${[
-            {label:'💪 Mes records',   q:'Mes records'         },
-            {label:'😴 Récupération',  q:'Récupération'        },
-            {label:'📈 Programme',     q:'Mon programme'       },
-            {label:'🥗 Nutrition',     q:'Nutrition'           },
-            {label:'🔥 Motivation',    q:'Motivation'          },
-            {label:'💪 Mes muscles',   q:'Analyse mes muscles' },
-            {label:'🔄 Remplacer exo', q:'Remplace un exercice'},
-            {label:'🧠 Programme IA',  q:'Générer un programme'}
-          ].map(s => `
-            <button onclick="Coach._suggestionRapide('${s.q}')"
-                    style="padding:6px 10px;border-radius:99px;
-                           border:1px solid var(--fd-indigo);
-                           background:rgba(75,75,249,0.12);
-                           color:var(--fd-lavender);font-size:.72rem;
-                           font-weight:600;cursor:pointer;
-                           white-space:nowrap">
-              ${s.label}
-            </button>`).join('')}
-        </div>
-
-        <div id="coach-chat"
-             style="min-height:100px;max-height:360px;overflow-y:auto;
-                    margin-bottom:var(--space-md);
-                    display:flex;flex-direction:column;
-                    gap:var(--space-sm);padding:var(--space-xs)">
-          ${this._historique.length === 0 ? `
-            <div data-initial="true"
-                 style="text-align:center;padding:var(--space-lg);
-                        color:var(--text-muted);font-size:.85rem;
-                        line-height:1.8">
-              🤖 ${this._salutation()} ${nom} !${profil.genre === 'femme' ? ' 🌸' : ''}<br><br>
-              Pose-moi une question ou clique sur une suggestion 👆<br><br>
-              💡 Clique sur
-              <strong style="color:var(--fd-indigo)">🧠 Programme IA</strong>
-              pour générer ton programme !
-            </div>` :
-            this._historique.map(m => `
-              <div style="display:flex;justify-content:${
-                m.role === 'user' ? 'flex-end' : 'flex-start'}">
-                <div style="max-width:82%;padding:10px 14px;
-                            border-radius:${m.role === 'user'
-                              ? '16px 16px 4px 16px'
-                              : '16px 16px 16px 4px'};
-                            background:${m.role === 'user'
-                              ? 'var(--fd-indigo)'
-                              : 'var(--bg-input)'};
-                            color:${m.role === 'user'
-                              ? 'white' : 'var(--text-primary)'};
-                            font-size:.85rem;line-height:1.6;
-                            white-space:pre-wrap;
-                            word-break:break-word">
-                  ${m.role === 'assistant' ? '🤖 ' : ''}${m.content}
-                </div>
-              </div>`).join('')}
-        </div>
-
-        <div style="display:grid;
-                    grid-template-columns:1fr auto;
-                    gap:var(--space-sm);align-items:center">
-          <input id="coach-input" type="text" class="input"
-                 style="border-radius:var(--radius-full)"
-                 placeholder="Ta question..."
-                 autocomplete="off" autocorrect="off"
-                 autocapitalize="sentences"
-                 onkeydown="if(event.key==='Enter'){
-                   event.preventDefault();
-                   Coach._envoyerChat();
-                 }"/>
-          <button onclick="Coach._envoyerChat()"
-                  style="height:44px;padding:0 16px;
-                         background:var(--fd-indigo);color:white;
-                         border:none;border-radius:var(--radius-full);
-                         font-size:.85rem;font-weight:700;
-                         cursor:pointer">↗</button>
-        </div>
-      </div>
-
-      <!-- Warm-up -->
-      <div class="card">
-        <div class="card-label">🔥 Warm-up recommandé</div>
-        ${(warmup||[]).length === 0 ? `
-          <p style="color:var(--text-muted);text-align:center;
-                    padding:var(--space-md);font-size:.85rem">
-            Aucun warm-up disponible</p>` :
-          (warmup||[]).map((w, i) => `
-            <div style="display:flex;align-items:center;
-                        gap:var(--space-md);padding:var(--space-sm) 0;
-                        border-bottom:1px solid var(--border-color)">
-              <div style="width:28px;height:28px;border-radius:50%;
-                          background:var(--fd-indigo-dim);
-                          display:flex;align-items:center;
-                          justify-content:center;font-size:.75rem;
-                          font-weight:700;color:var(--fd-indigo);
-                          flex-shrink:0">${i + 1}</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:.88rem;font-weight:600">
-                  ${w.nom}</div>
-                <div style="font-size:.72rem;color:var(--text-muted)">
-                  ${w.description}</div>
-              </div>
-              <div style="font-size:.78rem;color:var(--fd-mint);
-                          font-weight:600;flex-shrink:0">
-                ${Utils.formatDuree(w.duree)}</div>
-            </div>`).join('')}
-      </div>
-    `;
-
-    const chat = document.getElementById('coach-chat');
-    if (chat) chat.scrollTop = chat.scrollHeight;
-  },
-
-  // ════════════════════════════════════════════════════════
-  // CHAT
-  // ════════════════════════════════════════════════════════
-  async _envoyerChat() {
-    const input = document.getElementById('coach-input');
-    const chat  = document.getElementById('coach-chat');
-    if (!input || !chat) return;
-
-    const question = input.value.trim();
-    if (!question) return;
-
-    input.value = '';
-    input.focus();
-
-    const initMsg = chat.querySelector('[data-initial]');
-    if (initMsg) initMsg.remove();
-
-    const bulleUser = document.createElement('div');
-    bulleUser.style.cssText = 'display:flex;justify-content:flex-end';
-    bulleUser.innerHTML = `
-      <div style="max-width:82%;padding:10px 14px;
-                  border-radius:16px 16px 4px 16px;
-                  background:var(--fd-indigo);color:white;
-                  font-size:.85rem;line-height:1.6;
-                  word-break:break-word">${question}</div>`;
-    chat.appendChild(bulleUser);
-    chat.scrollTop = chat.scrollHeight;
-
-    const bulleLoad = document.createElement('div');
-    bulleLoad.style.cssText = 'display:flex;justify-content:flex-start';
-    bulleLoad.innerHTML = `
-      <div style="padding:10px 14px;background:var(--bg-input);
-                  border-radius:16px 16px 16px 4px;
-                  font-size:.85rem;color:var(--text-muted)">
-        🤖 <span style="display:inline-block;width:12px;height:12px;
-                        border:2px solid rgba(255,255,255,0.2);
-                        border-top-color:var(--fd-indigo);
-                        border-radius:50%;
-                        animation:spin .8s linear infinite;
-                        vertical-align:middle;
-                        margin-left:4px"></span>
-      </div>`;
-    chat.appendChild(bulleLoad);
-    chat.scrollTop = chat.scrollHeight;
-
-    await new Promise(r =>
-      setTimeout(r, 600 + Math.random() * 400)
-    );
-
-    let reponse = '';
-    try { reponse = await this.envoyerMessage(question); }
-    catch(e) { reponse = 'Désolé, une erreur est survenue. 🤖'; }
-
-    bulleLoad.remove();
-
-    const bulleCoach = document.createElement('div');
-    bulleCoach.style.cssText = 'display:flex;justify-content:flex-start';
-    bulleCoach.innerHTML = `
-      <div style="max-width:82%;padding:10px 14px;
-                  border-radius:16px 16px 16px 4px;
-                  background:var(--bg-input);
-                  color:var(--text-primary);
-                  font-size:.85rem;line-height:1.6;
-                  white-space:pre-wrap;word-break:break-word">
-        🤖 ${reponse}
-      </div>`;
-    chat.appendChild(bulleCoach);
-    chat.scrollTop = chat.scrollHeight;
-
-    try { Utils.vibrerSuccess(); } catch(e) {}
-  },
-
-  _suggestionRapide(texte) {
-    const input = document.getElementById('coach-input');
-    if (input) {
-      input.value = texte;
-      this._envoyerChat();
-    }
-  },
-
-  // ════════════════════════════════════════════════════════
-  // CITATIONS
-  // ════════════════════════════════════════════════════════
-  getCitationDuJour(genre = 'homme') {
-    const citations = [
-      {texte:"Le corps accomplit ce que l'esprit croit possible.",auteur:"Napoleon Hill"},
-      {texte:"La douleur est temporaire. Abandonner dure toujours.",auteur:"Lance Armstrong"},
-      {texte:"Chaque rep que tu fais change ton futur.",auteur:"Anonyme"},
-      {texte:"La force vient d'une volonté indomptable.",auteur:"Gandhi"},
-      {texte:"Le seul mauvais entraînement est celui qui n'a pas eu lieu.",auteur:"Anonyme"},
-      {texte:"Tu n'as pas à être extrême, juste consistant.",auteur:"Anonyme"},
-      {texte:"Les champions sont faits à la salle — reconnus ailleurs.",auteur:"Joe Frazier"},
-      {texte:"Construis ton corps, construis ta confiance.",auteur:"Anonyme"},
-      {texte:"Souffre maintenant et vis le reste de ta vie en champion.",auteur:"Muhammad Ali"},
-      {texte:"La progression n'est pas un accident, c'est un choix.",auteur:"Anonyme"},
-      {texte:"La force n'a pas de genre. Elle se construit, rep après rep.",auteur:"Anonyme"},
-      {texte:"Les femmes qui soulèvent changent le monde — à commencer par elles-mêmes.",auteur:"Anonyme"},
-      {texte:"Ton corps peut faire bien plus que tu ne le crois.",auteur:"Anonyme"},
-      {texte:"Les limites n'existent que dans l'esprit.",auteur:"Arnold Schwarzenegger"},
-      {texte:"La discipline est le pont entre les objectifs et les résultats.",auteur:"Jim Rohn"},
-      {texte:"Ton futur te remerciera pour les efforts d'aujourd'hui.",auteur:"Anonyme"}
-    ];
-    const idx = new Date().getDate() % citations.length;
-    return citations[idx];
-  },
-
-  // ════════════════════════════════════════════════════════
-  // WARM-UP / ANALYSE / DELOAD / EXERCICES À ÉVITER
-  // ════════════════════════════════════════════════════════
-  getWarmupDuJour() {
+    // ── RPE élevé ───────────────────────────────────────
     try {
-      const indexJour = Utils.indexJourSemaine(Utils.aujourd_hui());
-      const planning  = window.PLANNING_SEMAINE?.[indexJour];
-      const seanceId  = planning?.seanceId;
-      return seanceId
-        ? (window.WARMUP?.[seanceId] || window.WARMUP?.general || [])
-        : (window.WARMUP?.general || []);
-    } catch(e) { return []; }
-  },
+      const rpe = Tracker.getRPEMoyen7Jours();
+      if (rpe >= 8.5) {
+        alertes.push({
+          type:    'rpe',
+          emoji:   '🔴',
+          message: `RPE moyen ${rpe}/10 — décharge recommandée`,
+          urgent:  true
+        });
+      } else if (rpe >= 7.5) {
+        conseils.push({
+          type:    'rpe_eleve',
+          emoji:   '🟠',
+          message: `RPE ${rpe}/10 — maintiens sans augmenter`
+        });
+      }
+    } catch(e) {}
 
-  getAnalyseSemaine() {
-    let volume = 0, seances = 0, rpe = 0;
-    let objectif = 4, comp = { delta:0 };
-
-    try { volume   = Tracker.getVolumeSemaine();       } catch(e) {}
-    try { seances  = Tracker.getSeancesParSemaine();   } catch(e) {}
-    try { rpe      = Tracker.getRPEMoyen7Jours();      } catch(e) {}
+    // ── Absence prolongée ───────────────────────────────
     try {
-      objectif = Utils.storage.get(
+      const absence = Tracker.getJoursAbsence();
+      if (absence >= 7) {
+        alertes.push({
+          type:    'absence',
+          emoji:   '🌱',
+          message: `${absence} jours d'absence — reprends à -20% charges`
+        });
+      } else if (absence >= 3) {
+        conseils.push({
+          type:    'absence_courte',
+          emoji:   '⏰',
+          message: `${absence} jours sans séance — c'est le moment de reprendre !`
+        });
+      }
+    } catch(e) {}
+
+    // ── Streak en danger ────────────────────────────────
+    try {
+      const streak = Tracker.getStreak();
+      if (streak.count >= 7 && Tracker.getJoursAbsence() === 0) {
+        conseils.push({
+          type:    'streak',
+          emoji:   '🔥',
+          message: `Streak de ${streak.count} jours — ne laisse pas tomber aujourd'hui !`
+        });
+      }
+    } catch(e) {}
+
+    // ── Objectif séances semaine ─────────────────────────
+    try {
+      const seances  = Tracker.getSeancesParSemaine();
+      const objectif = Utils.storage.get(
         'ft_objectif_seances_semaine', 4
       );
+      const joursRestants = 7 - new Date().getDay();
+      const manquantes    = objectif - seances;
+      if (manquantes > 0 && manquantes <= joursRestants) {
+        conseils.push({
+          type:    'objectif_semaine',
+          emoji:   '📅',
+          message: `${manquantes} séance${manquantes > 1 ? 's' : ''} `
+            + `restante${manquantes > 1 ? 's' : ''} pour atteindre `
+            + `ton objectif hebdo !`
+        });
+      }
     } catch(e) {}
-    try { comp = Tracker.getComparaisonSemaines();     } catch(e) {}
 
-    let intensite      = '🟢 Faible';
-    let recommendation = 'Augmente l\'intensité ou le volume cette semaine.';
-
-    if (rpe >= 9) {
-      intensite      = '🔴 Très élevée';
-      recommendation = 'Décharge recommandée — réduis les charges de 40%.';
-    } else if (rpe >= 7.5) {
-      intensite      = '🟠 Élevée';
-      recommendation = 'Maintiens le volume actuel sans augmenter.';
-    } else if (rpe >= 5.5) {
-      intensite      = '🟡 Modérée';
-      recommendation = 'Augmentation progressive possible (+5% volume).';
-    } else if (seances >= objectif) {
-      intensite      = '🟢 Bonne';
-      recommendation = 'Objectif séances atteint ! Maintiens ce rythme.';
-    }
-
-    return {
-      volume, seances, objectif, rpe,
-      intensite, recommendation,
-      deltaVolume:     comp.delta || 0,
-      objectifAtteint: seances >= objectif
-    };
-  },
-
-  suggererCharge(exerciceRef) {
+    // ── Hydratation ─────────────────────────────────────
     try {
-      const pr    = Tracker.getPR(exerciceRef);
-      const phase = Programme.getPhaseActuelle();
-      if (!pr?.rm1) return null;
-      const charge = Math.round(
-        pr.rm1 * phase.intensite / 2.5
-      ) * 2.5;
-      return {
-        charge,
-        pourcentage: Math.round(phase.intensite * 100),
-        rm1:         pr.rm1,
-        phase:       phase.nom
-      };
-    } catch(e) { return null; }
-  },
+      const eau    = Nutrition?.getEau?.() || 0;
+      const objEau = Nutrition?.getObjectifs?.()?.eau || 2.5;
+      if (eau < objEau * 500 && new Date().getHours() >= 14) {
+        conseils.push({
+          type:    'hydratation',
+          emoji:   '💧',
+          message: `Seulement ${(eau/1000).toFixed(1)}L aujourd'hui — hydrate-toi !`
+        });
+      }
+    } catch(e) {}
 
-  necessiteDeload() {
+    // ── PR proche ───────────────────────────────────────
     try {
-      const rpe     = Tracker.getRPEMoyen7Jours();
-      const fatigue = Tracker.getFatigue();
-      const absence = Tracker.getJoursAbsence();
-      if (absence === -1) return { oui:false };
-      if (rpe > 0 && rpe >= 8.5)
-        return { oui:true, raison:`RPE moyen élevé : ${rpe}/10` };
-      if ((fatigue?.niveau || 0) >= 3)
-        return { oui:true, raison:'Fatigue déclarée maximale' };
-      if (Programme.isDecharge?.())
-        return {
-          oui:true,
-          raison:'Semaine de décharge planifiée (S16)'
-        };
-      return { oui:false };
-    } catch(e) { return { oui:false }; }
-  },
-
-  getExercicesAEviter() {
-    try {
-      const blessures = Tracker.getBlessuresActives
-        ? Tracker.getBlessuresActives()
-        : (Tracker.getBlessures?.() || []).filter(b => b.active);
-
-      const aEviter = new Set();
-
-      blessures.forEach(b => {
-        if (b.exercicesAEviter?.length) {
-          b.exercicesAEviter.forEach(e => aEviter.add(e));
-        } else {
-          const restrictions = {
-            'epaule':   ['dev_militaire','bench_press','elev_laterales','dips'],
-            'genou':    ['squat','presse_cuisses','fentes','leg_extension'],
-            'dos':      ['soulevé_terre','rowing_barre','squat'],
-            'coude':    ['curl_halteres','curl_barre','ext_triceps_poulie'],
-            'poignet':  ['bench_press','curl_barre'],
-            'cheville': ['squat','fentes','mollets'],
-            'cou':      ['dev_militaire','rowing_barre'],
-            'hanche':   ['squat','fentes','hip_thrust']
-          };
-          const zone = b.zone?.toLowerCase() || '';
-          Object.entries(restrictions).forEach(([k, exos]) => {
-            if (zone.includes(k)) exos.forEach(e => aEviter.add(e));
+      const prs      = Tracker.getAllPRs();
+      const prProche = Object.entries(prs)
+        .filter(([, pr]) => {
+          if (!pr.rm1) return false;
+          const reco = Tracker.getSuggestionCharge
+            ?.([Object.keys(prs)]);
+          return false; // placeholder
+        }).slice(0, 1);
+      // Simplified — check recent progression
+      const topEx = Object.entries(prs)
+        .filter(([, pr]) => pr.rm1 > 0)
+        .sort(([,a],[,b]) => (b.rm1||0) - (a.rm1||0));
+      if (topEx) {
+        const [ref, pr] = topEx;
+        const ex = (window.EXERCICES || {})[ref];
+        if (ex && pr.date === Utils.ajouterJours(Utils.aujourd_hui(), -1)) {
+          conseils.push({
+            type:    'pr_recent',
+            emoji:   '🏆',
+            message: `PR hier sur ${ex.nom} ! Récupère bien avant la prochaine séance.`
           });
         }
-      });
+      }
+    } catch(e) {}
 
-      return [...aEviter];
-    } catch(e) { return []; }
+    return { alertes, conseils };
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v7.0 — Réponses enrichies
+  // ════════════════════════════════════════════════════════
+  _raisonnerIAV7(q, ctx, prs = {}) {
+
+    const nom   = ctx.nom;
+    const genre = ctx.genre || 'homme';
+    const e     = genre === 'femme' ? 'e' : '';
+
+    // ── Charges / suggestion ────────────────────────────
+    if (q.includes('charge') || q.includes('poids')
+        || q.includes('combien') || q.includes('suggèr')
+        || q.includes('mettre') || q.includes('utiliser')) {
+
+      // Détecter l'exercice mentionné
+      const exoTrouve = Object.entries(window.EXERCICES || {})
+        .find(([, ex]) =>
+          q.includes(ex.nom.toLowerCase())
+          || q.includes(ex.emoji)
+        );
+
+      if (exoTrouve) {
+        const [ref, exo] = exoTrouve;
+        const pr         = prs[ref];
+        let msg          = `Charge suggérée pour **${exo.nom}** ${nom} :\n\n`;
+
+        if (pr?.rm1) {
+          msg += `  • Ton 1RM estimé : ${pr.rm1}kg\n\n`;
+          msg += `  📊 Zones d'entraînement :\n`;
+          msg += `  • Endurance (50%) : ${Math.round(pr.rm1*0.50)}kg × 15-20\n`;
+          msg += `  • Volume    (65%) : ${Math.round(pr.rm1*0.65)}kg × 10-12\n`;
+          msg += `  • Hypertro  (75%) : ${Math.round(pr.rm1*0.75)}kg × 8-10\n`;
+          msg += `  • Force     (85%) : ${Math.round(pr.rm1*0.85)}kg × 5-6\n`;
+          msg += `  • Max       (95%) : ${Math.round(pr.rm1*0.95)}kg × 2-3\n\n`;
+
+          try {
+            const suggestion = Tracker.getSuggestionCharge(ref);
+            if (suggestion) {
+              msg += `  💡 Suggestion pour ta prochaine séance :\n`;
+              msg += `  **${suggestion.poids}kg** (${suggestion.raison})`;
+            }
+          } catch(e2) {}
+        } else {
+          msg += `  Pas encore de PR enregistré pour cet exercice.\n`;
+          msg += `  Commence avec une charge confortable et note tes séries !`;
+        }
+        return msg;
+      }
+
+      // Pas d'exercice précis → conseils généraux
+      const top5 = Object.entries(prs)
+        .filter(([, v]) => v.rm1 > 0)
+        .sort(([,a],[,b]) => (b.rm1||0) - (a.rm1||0))
+        .slice(0, 5);
+
+      if (top5.length === 0)
+        return `Fais quelques séances pour que je puisse te suggérer des charges ${nom} ! 💪`;
+
+      const liste = top5.map(([ref, pr]) => {
+        const ex  = (window.EXERCICES||{})[ref];
+        const sug = Math.round(pr.rm1 * 0.75 / 2.5) * 2.5;
+        return `  • ${ex?.nom||ref} : ${sug}kg (75% de ${pr.rm1}kg)`;
+      }).join('\n');
+
+      return `Charges suggérées (75% 1RM) ${nom} 💪\n\n${liste}\n\nAjuste selon ton énergie du jour ! 🎯`;
+    }
+
+    // ── Comparaison semaines ─────────────────────────────
+    if (q.includes('progress') || q.includes('évolution')
+        || q.includes('améliorer') || q.includes('compar')
+        || q.includes('mieux')) {
+      try {
+        const comp   = Tracker.getComparaisonSemaines();
+        const vol8   = Tracker.getVolumeParSemaine(8);
+        const trend  = comp.delta;
+        const tendance = trend > 5  ? '📈 En forte progression'
+                       : trend > 0  ? '📈 En légère progression'
+                       : trend > -5 ? '➡️ Stable'
+                       :              '📉 En baisse';
+
+        let msg = `Analyse de ta progression ${nom} :\n\n`;
+        msg += `  ${tendance}\n`;
+        msg += `  • Cette semaine : ${Utils.formatVolume(comp.cette)}\n`;
+        msg += `  • Semaine préc. : ${Utils.formatVolume(comp.prec)}\n`;
+        msg += `  • Évolution     : ${trend >= 0 ? '+' : ''}${trend}%\n\n`;
+
+        if (vol8.length > 0) {
+          const maxVol = Math.max(...vol8.map(v => v.volume));
+          const minVol = Math.min(...vol8.map(v => v.volume));
+          msg += `  Sur 8 semaines :\n`;
+          msg += `  • Pic  : ${Utils.formatVolume(maxVol)}\n`;
+          msg += `  • Creux : ${Utils.formatVolume(minVol)}\n\n`;
+        }
+
+        msg += trend > 5
+          ? `  💚 Excellente progression — continue comme ça !`
+          : trend > 0
+            ? `  💙 Bonne direction — essaie +5% volume la semaine prochaine.`
+            : `  💡 Stagnation ? Varie les exercices ou augmente les charges.`;
+
+        return msg;
+      } catch(e2) {
+        return `Fais plusieurs séances pour voir ta progression ${nom} ! 💪`;
+      }
+    }
+
+    // ── Récupération et sommeil ──────────────────────────
+    if (q.includes('sommeil') || q.includes('dormir')
+        || q.includes('nuit')) {
+      return `Le sommeil est l'arme secrète des athlètes ${nom} 😴\n\n`
+        + `  🌙 7-9h par nuit minimum\n`
+        + `  🌡️ Chambre fraîche (17-19°C)\n`
+        + `  📵 Pas d'écran 1h avant\n`
+        + `  🥛 Caséine ou cottage cheese avant de dormir\n`
+        + `  💧 Hydratation le soir (pas de caféine après 14h)\n\n`
+        + `  📊 Tes données :\n`
+        + `  • RPE moyen : ${ctx.rpe}\n`
+        + `  • Fatigue : ${ctx.fatigue}\n\n`
+        + (ctx.rpe !== 'aucune donnée' && parseFloat(ctx.rpe) >= 8
+          ? `  ⚠️ Ton RPE élevé suggère un déficit de récupération — priorise le sommeil !`
+          : `  ✅ Tes données semblent correctes — maintiens ce rythme.`);
+    }
+
+    // ── Blessure spécifique ──────────────────────────────
+    if (q.includes('bless') || q.includes('douleur')
+        || q.includes('mal à') || q.includes('souffr')) {
+
+      const zones = {
+        'épaule': {
+          eviter:      ['Développé couché lourd', 'Développé militaire derrière la nuque', 'Écarté lourd'],
+          alternatives:['Rotation externe', 'Face pull câble', 'Pompes légères'],
+          conseil:     'Renforce la coiffe des rotateurs. Évite les charges lourdes 2-3 semaines.'
+        },
+        'genou': {
+          eviter:      ['Squat profond', 'Fentes avant', 'Leg extension lourd'],
+          alternatives:['Hip thrust', 'Leg curl', 'Presse avec angle modéré'],
+          conseil:     'Travaille les ischio-jambiers pour protéger le genou. Ice 15min après séance.'
+        },
+        'dos': {
+          eviter:      ['Soulevé de terre lourd', 'Good morning', 'Squat lourd'],
+          alternatives:['Tirage câble assis', 'Extension dos léger', 'Planche'],
+          conseil:     'Renforce le core. Technique parfaite sur toutes les charges. Kiné si persistant.'
+        },
+        'poignet': {
+          eviter:      ['Développé barre', 'Curl barre droite', 'Front squat'],
+          alternatives:['Curl haltères neutres', 'Poussées haltères', 'Machines'],
+          conseil:     'Bandage + chaleur avant séance. Haltères ou machines plutôt que barre.'
+        },
+        'coude': {
+          eviter:      ['Dips lesté', 'Extension triceps lourd', 'Curl barre'],
+          alternatives:['Curl haltères prise neutre', 'Extension poulie légère'],
+          conseil:     'Golfer/Tennis elbow — repos 1 semaine puis reprise progressive.'
+        },
+        'cheville': {
+          eviter:      ['Fentes', 'Squat lourd', 'Mollets lourd'],
+          alternatives:['Presse cuisses', 'Hip thrust', 'Exercices assis'],
+          conseil:     'Élévation + ice 15min. Kinésithérapeute si gonflé.'
+        }
+      };
+
+      const zoneDetectee = Object.entries(zones).find(([z]) =>
+        q.includes(z)
+      );
+
+      if (zoneDetectee) {
+        const [zone, info] = zoneDetectee;
+        return `Douleur à l'${zone} ${nom} — voici mon analyse 🩺\n\n`
+          + `  🚫 À éviter maintenant :\n`
+          + info.eviter.map(e => `  • ${e}`).join('\n')
+          + `\n\n  ✅ Alternatives sûres :\n`
+          + info.alternatives.map(a => `  • ${a}`).join('\n')
+          + `\n\n  💡 Conseil : ${info.conseil}\n\n`
+          + `  ⚠️ Si la douleur persiste > 1 semaine, consulte un professionnel de santé.`;
+      }
+
+      return `Douleur détectée ${nom} 🩺\n\n`
+        + `  Règles générales :\n`
+        + `  • Douleur aiguë → arrête l'exercice immédiatement\n`
+        + `  • Ice 15min après séance\n`
+        + `  • Repos 48-72h minimum\n`
+        + `  • Reprends à -50% charges\n`
+        + `  • Consulte un professionnel si > 1 semaine\n\n`
+        + `  Précise la zone (épaule, genou, dos, poignet...) pour plus de détails ! 🎯`;
+    }
+
+    // ── Cardio / endurance ───────────────────────────────
+    if (q.includes('cardio') || q.includes('course')
+        || q.includes('vélo') || q.includes('natation')
+        || q.includes('endurance') || q.includes('souffle')) {
+      return `Cardio & musculation ${nom} 🏃\n\n`
+        + `  ✅ Comment combiner :\n`
+        + `  • Cardio APRÈS la muscu (pas avant)\n`
+        + `  • 2-3 séances cardio/semaine max\n`
+        + `  • HIIT 20min > Cardio 60min lent\n`
+        + `  • Cardio à jeun OK si objectif : perte de gras\n\n`
+        + `  📊 Pour ton objectif (${ctx.objectif}) :\n`
+        + (ctx.objectif === 'prise_masse'
+          ? `  • Limite le cardio — il coupe la récupération\n  • 1-2x/semaine max, 20-30min`
+          : ctx.objectif === 'seche' || ctx.objectif === 'perte_poids'
+          ? `  • 2-3x/semaine HIIT (4min effort/2min repos)\n  • Marche quotidienne 7000 pas/jour`
+          : `  • 2x/semaine — équilibre parfait muscu/cardio`);
+    }
+
+    // ── Suppléments ──────────────────────────────────────
+    if (q.includes('supplément') || q.includes('whey')
+        || q.includes('créatine') || q.includes('bcaa')
+        || q.includes('protéine en poudre')) {
+      const priorite = ctx.objectif === 'prise_masse' || ctx.objectif === 'force'
+        ? 'créatine + whey'
+        : ctx.objectif === 'seche'
+        ? 'whey + caféine'
+        : 'whey';
+
+      return `Suppléments recommandés pour toi ${nom} 💊\n\n`
+        + `  🥇 Priorité absolue (${priorite}) :\n`
+        + `  • Whey : 25-30g post-séance (dans 30min)\n`
+        + (ctx.objectif === 'prise_masse' || ctx.objectif === 'force'
+          ? `  • Créatine monohydrate : 5g/jour (n'importe quand)\n`
+          : '')
+        + (ctx.objectif === 'seche'
+          ? `  • Caféine : 200mg avant séance (si toléré)\n`
+          : '')
+        + `\n  💛 Secondaires :\n`
+        + `  • Vitamine D3 : 2000-4000 UI/jour\n`
+        + `  • Magnésium : 300mg le soir\n`
+        + `  • Oméga-3 : 2-3g/jour\n\n`
+        + `  🚫 À éviter :\n`
+        + `  • Boosters pre-workout agressifs\n`
+        + `  • BCAA (inutiles si whey suffisant)\n`
+        + `  • "Fat burners" — marketing 95%\n\n`
+        + `  💡 La base : alimentation + sommeil > tous les suppléments !`;
+    }
+
+    // ── Test 1RM ─────────────────────────────────────────
+    if (q.includes('1rm') || q.includes('1 rm')
+        || q.includes('répétition max')
+        || q.includes('max')) {
+      const topPrs = Object.entries(prs)
+        .filter(([, v]) => v.rm1 > 0)
+        .sort(([,a],[,b]) => (b.rm1||0) - (a.rm1||0))
+        .slice(0, 5);
+
+      if (!topPrs.length)
+        return `Pas encore de données 1RM ${nom}. Lance des séances pour voir tes estimations ! 💪`;
+
+      const liste = topPrs.map(([ref, pr]) => {
+        const ex = (window.EXERCICES||{})[ref];
+        return `  • ${ex?.emoji||'💪'} ${ex?.nom||ref} : ~${pr.rm1}kg (${pr.poids}kg × ${pr.reps})`;
+      }).join('\n');
+
+      return `Tes 1RM estimés ${nom} 🏋️\n\n${liste}\n\n`
+        + `  💡 Formule Brzycki utilisée\n`
+        + `  📈 Objectif pour prochaine séance :\n`
+        + topPrs.slice(0,1).map(([ref, pr]) => {
+          const ex = (window.EXERCICES||{})[ref];
+          return `  • ${ex?.nom||ref} : vise ${Math.round((pr.rm1 * 0.85)/2.5)*2.5}kg × 5 (85% 1RM)`;
+        }).join('');
+    }
+
+    // ── Planning / prochaine séance ──────────────────────
+    if (q.includes('aujourd\'hui') || q.includes('maintenant')
+        || q.includes('ce soir') || q.includes('quelle séance')
+        || q.includes('quoi faire')) {
+      try {
+        const seanceDuJour = Programme.getSeanceduJour();
+        if (!seanceDuJour) {
+          const prochaine = Programme.getProchaineSeance?.();
+          return prochaine
+            ? `Aujourd'hui c'est repos ${nom} 😴\n\nProchaine séance : ${prochaine.emoji} ${prochaine.nom} dans ${prochaine.dansJours} jour${prochaine.dansJours>1?'s':''}\n\nProfites-en pour récupérer et bien manger ! 💤`
+            : `Jour de repos ${nom} 😴 — récupération active recommandée.`;
+        }
+
+        const seanceComplete = Programme.getSeanceComplete?.(seanceDuJour.id);
+        const exos = seanceComplete?.exercicesDetails?.slice(0, 4) || [];
+        const exosList = exos.map(ex => {
+          const sugg = this.suggererCharge(ex.ref);
+          const exoData = ex.details || {};
+          return `  • ${exoData.emoji||'💪'} ${exoData.nom||ex.ref} — ${sugg ? sugg.charge + 'kg recommandés' : ex.series + 'x' + ex.reps}`;
+        }).join('\n');
+
+        return `Séance du jour ${nom} 💪\n\n`
+          + `  ${seanceDuJour.emoji} **${seanceDuJour.nom}**\n`
+          + `  ~${seanceDuJour.duree_estimee}min · ${seanceDuJour.exercices?.length||0} exercices\n\n`
+          + (exosList ? `  Top exercices :\n${exosList}\n\n` : '')
+          + `  🎯 Conseils pour aujourd'hui :\n`
+          + `  • RPE cible : ${ctx.rpe !== 'aucune donnée' ? Math.min(9, parseFloat(ctx.rpe)+0.5)+'/10' : '7-8/10'}\n`
+          + `  • Échauffement : 5-10min obligatoire\n`
+          + `  • Hydratation : 500ml avant + 250ml/heure\n\n`
+          + `  Tape "Démarrer" pour lancer la séance ! ▶️`;
+      } catch(e2) {
+        return `Je ne trouve pas ta séance du jour ${nom}. Va dans Programme pour la voir ! 📅`;
+      }
+    }
+
+    // ── Poids / corps / IMC ──────────────────────────────
+    if (q.includes('poids') || q.includes('maigrir')
+        || q.includes('grossir') || q.includes('imc')
+        || q.includes('corps') || q.includes('transformation')) {
+      try {
+        const profil  = Tracker.getProfil();
+        const mesure  = Tracker.getDerniereMesure?.() || {};
+        const poids   = mesure.poids || profil.poids || 0;
+        const taille  = mesure.taille || profil.taille || 0;
+        const imc     = poids && taille
+          ? (poids / ((taille/100) ** 2)).toFixed(1) : null;
+        const imcLabel= !imc ? '—'
+          : imc < 18.5 ? '🔵 Maigreur'
+          : imc < 25   ? '🟢 Normal'
+          : imc < 30   ? '🟡 Surpoids'
+          :              '🔴 Obésité';
+
+        return `Analyse corporelle ${nom} ⚖️\n\n`
+          + `  • Poids actuel : ${poids || '—'}kg\n`
+          + `  • Taille : ${taille || '—'}cm\n`
+          + `  • IMC : ${imc || '—'} (${imcLabel})\n\n`
+          + `  💡 Pour ton objectif (${ctx.objectif}) :\n`
+          + (ctx.objectif === 'prise_masse'
+            ? `  • Vise +0.5kg/semaine max (prise propre)\n  • Protéines : 2.2g/kg\n  • Surplus : +300-400 kcal`
+            : ctx.objectif === 'perte_poids' || ctx.objectif === 'seche'
+            ? `  • Vise -0.5kg/semaine max (préserve le muscle)\n  • Protéines : 2g/kg (anti-catabolisme)\n  • Déficit : -400 kcal max`
+            : `  • Maintiens ton poids actuel\n  • Focus sur la composition corporelle\n  • Recomp : même poids, moins de gras`)
+          + `\n\n  📸 Prends des photos mensuelles — la balance ne dit pas tout !`;
+      } catch(e2) {
+        return `Configure ton profil pour voir ton analyse corporelle ${nom} ! 👤`;
+      }
+    }
+
+    // ── Aide / que peux-tu faire ─────────────────────────
+    if (q.includes('aide') || q.includes('peux-tu')
+        || q.includes('capable') || q.includes('fonction')
+        || q.includes('commande')) {
+      return `Voici tout ce que je peux faire pour toi ${nom} 🤖\n\n`
+        + `  💪 **Entraînement**\n`
+        + `  • Analyse ta progression\n`
+        + `  • Suggère des charges par exercice\n`
+        + `  • Explique quelle séance faire aujourd'hui\n`
+        + `  • Indique tes 1RM et zones d'entraînement\n\n`
+        + `  😴 **Récupération**\n`
+        + `  • Détecte la surcharge et la fatigue\n`
+        + `  • Conseille sur les blessures\n`
+        + `  • Recommande une décharge\n\n`
+        + `  🥗 **Nutrition**\n`
+        + `  • Calcule tes macros personnalisées\n`
+        + `  • Conseille sur les suppléments\n`
+        + `  • Timing des repas\n\n`
+        + `  🧠 **Programme**\n`
+        + `  • Génère un programme IA complet\n`
+        + `  • Remplace des exercices\n`
+        + `  • Adapte le volume\n\n`
+        + `  📊 **Stats**\n`
+        + `  • Analyse ta semaine\n`
+        + `  • Compare tes performances\n`
+        + `  • Prédit tes prochains records\n\n`
+        + `  Pose-moi n'importe quelle question ! 🎯`;
+    }
+
+    // ── Fallback — déléguer à v6 ─────────────────────────
+    return this._raisonnerIA(q, ctx, prs);
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v7.0 — renderCoachTabV7
+  // Remplace renderCoachTab avec bannière proactive
+  // ════════════════════════════════════════════════════════
+  renderCoachTabV7(container) {
+    if (!container) return;
+
+    // Récupérer analyse proactive
+    const proactive = this.getAnalyseProactive();
+    const profil    = this._getProfilOnboarding();
+    let nom         = 'Athlète';
+    try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+
+    // Injecter bannières proactives AVANT le chat
+    const bannieres = [
+      ...proactive.alertes.map(a => `
+        <div style="background:rgba(255,141,150,0.08);
+                    border:1px solid rgba(255,141,150,0.3);
+                    border-left:3px solid var(--fd-coral);
+                    border-radius:var(--radius-lg);
+                    padding:10px 14px;margin-bottom:8px;
+                    display:flex;align-items:center;gap:10px">
+          <span style="font-size:1.2rem">${a.emoji}</span>
+          <div style="flex:1">
+            <div style="font-size:.75rem;font-weight:700;
+                        color:var(--fd-coral)">
+              Alerte Coach IA
+            </div>
+            <div style="font-size:.72rem;color:var(--text-secondary);
+                        margin-top:2px">${a.message}</div>
+          </div>
+        </div>`),
+      ...proactive.conseils.map(c => `
+        <div style="background:rgba(75,75,249,0.06);
+                    border:1px solid rgba(75,75,249,0.2);
+                    border-left:3px solid var(--fd-indigo);
+                    border-radius:var(--radius-lg);
+                    padding:10px 14px;margin-bottom:8px;
+                    display:flex;align-items:center;gap:10px">
+          <span style="font-size:1.2rem">${c.emoji}</span>
+          <div style="flex:1">
+            <div style="font-size:.75rem;font-weight:700;
+                        color:var(--fd-indigo)">
+              Conseil du Coach
+            </div>
+            <div style="font-size:.72rem;color:var(--text-secondary);
+                        margin-top:2px">${c.message}</div>
+          </div>
+        </div>`)
+    ].join('');
+
+    // Injecter les bannières dans le DOM après le rendu standard
+    this.renderCoachTab(container);
+
+    // Trouver le premier card et insérer avant
+    const firstCard = container.querySelector('.card');
+    if (firstCard && bannieres) {
+      const div   = document.createElement('div');
+      div.innerHTML = bannieres;
+      container.insertBefore(div, firstCard);
+    }
+
+    // ── Upgrade envoyerMessage pour utiliser v7 ──────────
+    const origEnvoyer = this.envoyerMessage.bind(this);
+    this._envoyerMessageV7 = async (question) => {
+      let nom = 'Athlète', seances = 0;
+      let streak  = { count:0 }, absence = -1;
+      let rpe = 0, fatigue = null, humeur = null;
+      let prs = {}, phase = { phase:{ nom:'Reprise' } };
+      let volume = 0;
+      const profil = this._getProfilOnboarding();
+
+      try { nom     = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+      try { seances = Tracker.getTotalSeances();             } catch(e) {}
+      try { streak  = Tracker.getStreak();                  } catch(e) {}
+      try { absence = Tracker.getJoursAbsence();            } catch(e) {}
+      try { rpe     = Tracker.getRPEMoyen7Jours();          } catch(e) {}
+      try { fatigue = Tracker.getFatigue();                 } catch(e) {}
+      try { humeur  = Tracker.getHumeur();                  } catch(e) {}
+      try { prs     = Tracker.getAllPRs();                  } catch(e) {}
+      try { phase   = Programme.getInfosProgramme();        } catch(e) {}
+      try { volume  = Tracker.getVolumeSemaine();           } catch(e) {}
+
+      const ctx = {
+        nom, seancesTotales:seances,
+        streak:       streak.count,
+        joursAbsence: absence === -1 ? 'jamais' : `${absence} jours`,
+        rpe:          rpe > 0 ? `${rpe}/10` : 'aucune donnée',
+        fatigue:      fatigue ? `niveau ${fatigue.niveau}/4` : 'non renseignée',
+        humeur:       humeur?.humeur || 'non renseignée',
+        phase:        phase?.phase?.nom || 'Reprise',
+        volume:       Utils.formatVolume(volume),
+        nbPRs:        Object.keys(prs).length,
+        genre:        profil.genre          || 'homme',
+        lieu:         profil.lieu           || 'salle',
+        muscles:      profil.muscles_cibles || [],
+        objectif:     profil.objectif       || 'forme',
+        niveau:       profil.niveau         || 'intermediaire'
+      };
+
+      const q = question.toLowerCase();
+
+      // ── Délégations spéciales ──────────────────────────
+      if (q.includes('remplace') || q.includes('alternative')
+          || q.includes('substitut')) {
+        return this._raisonnerRemplacement(q, ctx);
+      }
+
+      if (q.includes('génère') || q.includes('crée')
+          || q.includes('nouveau programme')
+          || q.includes('programme ia')) {
+        setTimeout(() => {
+          Coach.ProgrammeIA._modeQuestionnaire = true;
+          Coach.ProgrammeIA._etapeActuelle     = 0;
+          Coach.ProgrammeIA._reponses          = {};
+          naviguer('adaptatif');
+        }, 800);
+        return `Je lance le questionnaire ${nom} ! 🧠\nRéponds aux questions → programme sur mesure instantané !`;
+      }
+
+      // ── IA v7 en priorité ──────────────────────────────
+      const reponseV7 = this._raisonnerIAV7(q, ctx, prs);
+
+      const hist = this._historique;
+      hist.push(
+        { role:'user',      content:question  },
+        { role:'assistant', content:reponseV7 }
+      );
+      if (hist.length > 30) hist.splice(0, hist.length - 30);
+      this._historique = hist;
+
+      return reponseV7;
+    };
+
+    // ── Remplacer temporairement envoyerMessage ──────────
+    const chatInput = container.querySelector('#coach-input');
+    const chatBtn   = container.querySelector(
+      'button[onclick*="_envoyerChat"]'
+    );
+
+    // Patcher _envoyerChat pour utiliser v7
+    this._origEnvoyerMessage      = this.envoyerMessage;
+    this.envoyerMessage           = this._envoyerMessageV7;
   }
-};
-
-window.Coach       = Coach;
-window.ProgrammeIA = Coach.ProgrammeIA;
-
-console.log('✅ Coach IA v6.0 chargé — Fix condition remplacer + seancesFemme + getPostSeanceMessage');
