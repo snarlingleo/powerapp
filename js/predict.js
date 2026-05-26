@@ -1,6 +1,7 @@
 /* ============================================================
-   FitTracker Pro — Predict v3.0 CORRIGÉ
-   Prédiction PRs + Analyse + Recommandations + Supersets
+   PowerApp — Predict v4.0
+   Prédiction PRs + Analyse + Recommandations
+   + Genre-aware + Lieu-aware
    ============================================================ */
 
 const Predict = {
@@ -13,13 +14,32 @@ const Predict = {
   },
 
   // ════════════════════════════════════════════════════════
+  // HELPERS PROFIL
+  // ════════════════════════════════════════════════════════
+  _getProfil() {
+    try {
+      return Utils.storage.get('ft_profil_onboarding', {});
+    } catch(e) { return {}; }
+  },
+
+  _getGenre() {
+    return this._getProfil().genre || 'homme';
+  },
+
+  _getLieu() {
+    return this._getProfil().lieu || 'salle';
+  },
+
+  // ════════════════════════════════════════════════════════
   // ANALYSER PROGRESSION
   // ════════════════════════════════════════════════════════
   analyserProgression(exerciceRef) {
     try {
       const hist = Tracker.getHistoriqueExercice(exerciceRef, 100);
       if (hist.length < this.CONFIG.minSeancesPourPredire) {
-        return { suffisant:false, raison:'Pas assez de données' };
+        return {
+          suffisant:false, raison:'Pas assez de données'
+        };
       }
 
       const data = hist
@@ -35,8 +55,12 @@ const Predict = {
       const xMoy = xs.reduce((a,b) => a+b, 0) / n;
       const yMoy = ys.reduce((a,b) => a+b, 0) / n;
 
-      const num = xs.reduce((acc,x,i) => acc + (x-xMoy)*(ys[i]-yMoy), 0);
-      const den = xs.reduce((acc,x)   => acc + Math.pow(x-xMoy, 2), 0);
+      const num = xs.reduce(
+        (acc,x,i) => acc + (x-xMoy)*(ys[i]-yMoy), 0
+      );
+      const den = xs.reduce(
+        (acc,x) => acc + Math.pow(x-xMoy, 2), 0
+      );
 
       const pente  = den !== 0 ? num / den : 0;
       const offset = yMoy - pente * xMoy;
@@ -52,16 +76,13 @@ const Predict = {
       const d0 = new Date(data[0].date + 'T00:00:00');
       const dN = new Date(data[data.length-1].date + 'T00:00:00');
 
-      // ✅ FIX — éviter division par 0 sur semaines
       const semaines = Math.max(
-        0.1,
-        (dN - d0) / (1000*60*60*24*7)
+        0.1, (dN - d0) / (1000*60*60*24*7)
       );
 
-      const rm1Debut  = data[0].rm1;
-      const rm1Final  = data[data.length-1].rm1;
+      const rm1Debut = data[0].rm1;
+      const rm1Final = data[data.length-1].rm1;
 
-      // ✅ FIX — éviter division par 0 sur rm1Debut
       const tauxHebdo = rm1Debut > 0
         ? ((rm1Final - rm1Debut) / rm1Debut) / semaines
         : 0;
@@ -96,15 +117,15 @@ const Predict = {
 
       let pr    = null;
       let phase = { nom:'Reprise', intensite:0.65 };
-      try { pr    = Tracker.getPR(exerciceRef);    } catch(e) {}
-      try { phase = Programme.getPhaseActuelle();  } catch(e) {}
+      try { pr    = Tracker.getPR(exerciceRef);   } catch(e) {}
+      try { phase = Programme.getPhaseActuelle(); } catch(e) {}
 
       const rm1Actuel = pr?.rm1 || analyse.rm1Actuel;
 
       const mult =
-        phase.nom === 'Peak'        ? 1.3 :
-        phase.nom === 'Intensité'   ? 1.2 :
-        phase.nom === 'Construction'? 1.0 : 0.7;
+        phase.nom === 'Peak'         ? 1.3 :
+        phase.nom === 'Intensité'    ? 1.2 :
+        phase.nom === 'Construction' ? 1.0 : 0.7;
 
       const tauxEffectif = Math.max(
         0.005, Math.min(0.08, analyse.tauxHebdo * mult)
@@ -113,15 +134,14 @@ const Predict = {
       const prochainRM1 = Math.round(
         rm1Actuel * (1 + tauxEffectif)
       );
-      const deltaRM1    = Math.max(0, prochainRM1 - rm1Actuel);
+      const deltaRM1 = Math.max(0, prochainRM1 - rm1Actuel);
 
-      // ✅ FIX — éviter NaN sur seancesEstimees
       const tauxParSeance = Math.max(
         0.01, rm1Actuel * tauxEffectif / 2
       );
-      const seancesEstimees = Math.max(1, Math.round(
-        deltaRM1 / tauxParSeance
-      ));
+      const seancesEstimees = Math.max(
+        1, Math.round(deltaRM1 / tauxParSeance)
+      );
 
       let seancesParSemaine = 3;
       try {
@@ -131,7 +151,7 @@ const Predict = {
       const joursEstimes = Math.round(
         (seancesEstimees / Math.max(1, seancesParSemaine)) * 7
       );
-      const dateEstimee  = Utils.ajouterJours(
+      const dateEstimee = Utils.ajouterJours(
         Utils.aujourd_hui(), joursEstimes
       );
 
@@ -160,11 +180,21 @@ const Predict = {
 
   predireTout() {
     try {
-      const prs = Tracker.getAllPRs();
-      const res = [];
+      const prs   = Tracker.getAllPRs();
+      const genre = this._getGenre();
+      const res   = [];
 
       Object.keys(prs).forEach(ref => {
         try {
+          // ✅ NOUVEAU v4.0 — Filtrer selon genre
+          const ex = (window.EXERCICES||{})[ref] || {};
+
+          // Si femme, inclure exercices femme
+          // Si homme, exclure exercices purement femme
+          if (genre === 'homme' && ex.genreExclu === 'femme') {
+            return;
+          }
+
           const p = this.predireProchainPR(ref);
           if (p && p.confiance >= this.CONFIG.seuilConfiance) {
             res.push(p);
@@ -190,30 +220,32 @@ const Predict = {
 
       const max       = Math.max(...rm1s);
       const min       = Math.min(...rm1s);
-      // ✅ FIX — éviter division par 0
       const variation = max > 0 ? (max-min)/max : 0;
 
-      const derniers  = rm1s.slice(0, 3);
-      const premiers  = rm1s.slice(-3);
-      const moyDern   = derniers.reduce((a,b)=>a+b,0) / derniers.length;
-      const moyPrem   = premiers.reduce((a,b)=>a+b,0) / premiers.length;
+      const derniers = rm1s.slice(0, 3);
+      const premiers = rm1s.slice(-3);
+      const moyDern  = derniers.reduce((a,b)=>a+b,0) / derniers.length;
+      const moyPrem  = premiers.reduce((a,b)=>a+b,0) / premiers.length;
       const regression = moyPrem > 0 && moyDern < moyPrem * 0.97;
-
-      const stagne = variation < 0.03;
+      const stagne     = variation < 0.03;
 
       return {
         stagne,
         regression,
         variation:    Utils.arrondir(variation * 100),
         dureeSeances: recent.length,
-        conseils:     this._conseilsStagnation(stagne, regression, exerciceRef)
+        conseils: this._conseilsStagnation(
+          stagne, regression, exerciceRef
+        )
       };
     } catch(e) { return null; }
   },
 
+  // ✅ NOUVEAU v4.0 — analyserFatigue genre-aware
   analyserFatigue() {
     let rpe7j = 0, joursAbs = -1;
     let fatigue = null, seanceSem = 0;
+    const genre = this._getGenre();
 
     try { rpe7j     = Tracker.getRPEMoyen7Jours();    } catch(e) {}
     try { joursAbs  = Tracker.getJoursAbsence();      } catch(e) {}
@@ -227,35 +259,51 @@ const Predict = {
     else if (rpe7j > 7.5)   score -= 15;
     if (niveauFat >= 3)      score -= 25;
     else if (niveauFat >= 2) score -= 10;
-    if (seanceSem >= 6)      score -= 20;
-    if (joursAbs === 0)      score += 5;
-    if (joursAbs >= 1 && joursAbs <= 2) score += 10;
+
+    // ✅ NOUVEAU v4.0 — Seuils différents selon genre
+    if (genre === 'femme') {
+      // Femme : récupération ≤ 5 séances/semaine recommandé
+      if (seanceSem >= 5)  score -= 20;
+      // ✅ Bonus récupération courte
+      if (joursAbs === 1)  score += 12;
+      if (joursAbs === 2)  score += 8;
+    } else {
+      // Homme : récupération ≤ 6 séances/semaine
+      if (seanceSem >= 6)  score -= 20;
+      if (joursAbs === 0)  score += 5;
+      if (joursAbs >= 1 && joursAbs <= 2) score += 10;
+    }
 
     score = Math.max(0, Math.min(100, score));
+
+    // ✅ NOUVEAU v4.0 — Messages genre-aware
+    const e = genre === 'femme' ? 'e' : '';
 
     const recommandation =
       score >= 80 ? {
         action:'GO',    emoji:'🟢',
-        message:'Tu es en pleine forme ! Parfait pour un PR.',
+        message: genre === 'femme'
+          ? `Tu es en pleine forme ! Parfait pour un entraînement Lower Body intensif.`
+          : `Tu es en pleine forme ! Parfait pour un PR.`,
         couleur:'var(--fd-mint)'
       } :
       score >= 60 ? {
         action:'NORMAL', emoji:'🟡',
-        message:'Bonne forme. Séance normale recommandée.',
+        message:`Bonne forme. Séance normale recommandée.`,
         couleur:'var(--fd-lemon)'
       } :
       score >= 40 ? {
         action:'LEGER', emoji:'🟠',
-        message:'Fatigue détectée. Séance légère conseillée.',
+        message:`Fatigue détectée. Séance légère conseillée.`,
         couleur:'var(--fd-coral)'
       } : {
         action:'REPOS', emoji:'🔴',
-        message:'Récupération nécessaire. Repos recommandé.',
+        message:`Récupération nécessaire. Repos recommandé.`,
         couleur:'var(--fd-coral)'
       };
 
     return {
-      score, rpe7j,
+      score, rpe7j, genre,
       niveauFatigue: niveauFat,
       seanceSemaine: seanceSem,
       joursAbsence:  joursAbs,
@@ -263,46 +311,68 @@ const Predict = {
     };
   },
 
+  // ✅ NOUVEAU v4.0 — recommanderCharge lieu-aware
   recommanderCharge(exerciceRef) {
     try {
       let pr    = null;
       let phase = { nom:'Reprise', intensite:0.65 };
-      try { pr    = Tracker.getPR(exerciceRef);    } catch(e) {}
-      try { phase = Programme.getPhaseActuelle();  } catch(e) {}
+      try { pr    = Tracker.getPR(exerciceRef);   } catch(e) {}
+      try { phase = Programme.getPhaseActuelle(); } catch(e) {}
       if (!pr?.rm1) return null;
 
       const fatigue = this.analyserFatigue();
+      const lieu    = this._getLieu();
+      const genre   = this._getGenre();
 
       const ajustFatigue =
         fatigue.score >= 80 ? 1.00 :
         fatigue.score >= 60 ? 0.97 :
         fatigue.score >= 40 ? 0.93 : 0.88;
 
-      const chargeBase = pr.rm1 * phase.intensite * ajustFatigue;
-      const charge     = Math.round(chargeBase / 2.5) * 2.5;
+      // ✅ NOUVEAU v4.0 — Ajustement maison (poids du corps)
+      const ajustLieu = lieu !== 'salle' ? 0.85 : 1.0;
+
+      const chargeBase = pr.rm1 * phase.intensite
+        * ajustFatigue * ajustLieu;
+      const charge = Math.round(chargeBase / 2.5) * 2.5;
 
       const reps =
-        phase.nom === 'Reprise'       ? '12-15' :
-        phase.nom === 'Construction'  ? '8-12'  :
-        phase.nom === 'Intensité'     ? '5-8'   :
-        phase.nom === 'Décharge'      ? '15-20' : '3-5';
+        phase.nom === 'Reprise'      ? (genre === 'femme' ? '15-20' : '12-15') :
+        phase.nom === 'Construction' ? (genre === 'femme' ? '12-15' : '8-12') :
+        phase.nom === 'Intensité'    ? (genre === 'femme' ? '8-12'  : '5-8')  :
+        phase.nom === 'Décharge'     ? '20-25' : '3-5';
 
       const zones = [
-        { label:'Échauffement', pct:50,
+        {
+          label:'Échauffement',
+          pct:50,
           charge: Math.round(pr.rm1 * 0.5 / 2.5) * 2.5,
-          series:1, reps:'15', couleur:'var(--fd-mint)' },
-        { label:'Activation',   pct:65,
+          series:1, reps:'15',
+          couleur:'var(--fd-mint)'
+        },
+        {
+          label:'Activation',
+          pct:65,
           charge: Math.round(pr.rm1 * 0.65 / 2.5) * 2.5,
-          series:2, reps:'10', couleur:'var(--fd-lemon)' },
-        { label:'Travail',
+          series:2, reps:'10',
+          couleur:'var(--fd-lemon)'
+        },
+        {
+          label:'Travail',
           pct: Math.round(phase.intensite * ajustFatigue * 100),
           charge, series:4, reps,
-          couleur:'var(--fd-indigo)' },
-        { label:'Intensification',
-          pct: Math.round(phase.intensite * ajustFatigue * 100) + 5,
+          couleur:'var(--fd-indigo)'
+        },
+        {
+          label:'Intensification',
+          pct: Math.round(
+            phase.intensite * ajustFatigue * 100
+          ) + 5,
           charge: Math.round(charge * 1.05 / 2.5) * 2.5,
-          series:2, reps: reps.split('-')[0],
-          couleur:'var(--fd-lavender)' }
+          series:2,
+          reps:  reps.split('-')[0],
+          couleur:'var(--fd-lavender)'
+        }
       ];
 
       return {
@@ -310,9 +380,13 @@ const Predict = {
         rm1:       pr.rm1,
         charge, reps,
         phase:     phase.nom,
-        intensite: Math.round(phase.intensite * ajustFatigue * 100),
+        genre,
+        lieu,
+        intensite: Math.round(
+          phase.intensite * ajustFatigue * ajustLieu * 100
+        ),
         zones,
-        fatigue:   fatigue.recommandation,
+        fatigue:    fatigue.recommandation,
         prediction: this.predireProchainPR(exerciceRef)
       };
     } catch(e) { return null; }
@@ -320,7 +394,9 @@ const Predict = {
 
   predireObjectif(objectif) {
     try {
-      if (!objectif?.valeurCible || !objectif?.valeurActuelle) return null;
+      if (!objectif?.valeurCible || !objectif?.valeurActuelle) {
+        return null;
+      }
 
       const delta       = objectif.valeurCible - objectif.valeurActuelle;
       const exerciceRef = objectif.exerciceRef;
@@ -367,6 +443,7 @@ const Predict = {
   getAnalyseGlobale() {
     const fatigue     = this.analyserFatigue();
     const predictions = this.predireTout().slice(0, 3);
+    const genre       = this._getGenre();
 
     let seance = null;
     let phase  = { nom:'Reprise', emoji:'🌱' };
@@ -389,7 +466,7 @@ const Predict = {
 
     let prs = 0, seanceTot = 0;
     try { prs       = Object.keys(Tracker.getAllPRs()).length; } catch(e) {}
-    try { seanceTot = Tracker.getTotalSeances();               } catch(e) {}
+    try { seanceTot = Tracker.getTotalSeances();              } catch(e) {}
 
     const scoreGlobal = Math.min(100, Math.round(
       prs * 8 + seanceTot * 2 + fatigue.score * 0.3
@@ -397,8 +474,10 @@ const Predict = {
 
     return {
       fatigue, predictions, opportunitePR,
-      scoreGlobal, phase,
-      conseilDuJour: this._conseilDuJour(fatigue, opportunitePR, phase)
+      scoreGlobal, phase, genre,
+      conseilDuJour: this._conseilDuJour(
+        fatigue, opportunitePR, phase, genre
+      )
     };
   },
 
@@ -411,6 +490,7 @@ const Predict = {
     const analyse     = this.getAnalyseGlobale();
     const predictions = this.predireTout();
     const fatigue     = analyse.fatigue;
+    const genre       = analyse.genre;
 
     let refs = [];
     try { refs = Object.keys(Tracker.getAllPRs()); } catch(e) {}
@@ -427,6 +507,7 @@ const Predict = {
         <div class="flex justify-between items-center mb-md">
           <div class="card-label">
             ${fatigue.recommandation.emoji} État de forme
+            ${genre === 'femme' ? '🌸' : ''}
           </div>
           <div style="font-size:1.8rem;font-weight:800;
                       color:${fatigue.recommandation.couleur}">
@@ -506,8 +587,8 @@ const Predict = {
               <div style="font-size:1.1rem;font-weight:700">
                 ${ex.emoji||'💪'} ${ex.nom||p.exerciceRef}
               </div>
-              <div style="font-size:.82rem;
-                          color:var(--text-muted);margin-top:4px">
+              <div style="font-size:.82rem;color:var(--text-muted);
+                          margin-top:4px">
                 Record actuel :
                 <strong style="color:var(--fd-indigo)">
                   ${p.rm1Actuel}kg 1RM
@@ -543,21 +624,24 @@ const Predict = {
                 </option>`;
             }).join('')}
           </select>
-          <div id="detail-charge" style="margin-top:var(--space-md)"></div>
+          <div id="detail-charge"
+               style="margin-top:var(--space-md)"></div>
         </div>` : ''}
 
       <!-- Supersets recommandés -->
       ${this._renderSupersets()}
 
       <!-- Prédictions PRs -->
-      <div class="section-title">📈 Prédictions prochains PRs</div>
+      <div class="section-title">
+        📈 Prédictions prochains PRs
+        ${genre === 'femme' ? '🍑' : ''}
+      </div>
 
       ${predictions.length === 0 ? `
         <div class="card mb-md"
              style="text-align:center;padding:var(--space-xl)">
-          <div style="font-size:2rem;margin-bottom:var(--space-sm)">
-            📊
-          </div>
+          <div style="font-size:2rem;
+                      margin-bottom:var(--space-sm)">📊</div>
           <div style="font-size:.88rem;color:var(--text-muted)">
             Pas encore assez de données.<br>
             Continue tes séances, les prédictions arrivent !
@@ -565,11 +649,11 @@ const Predict = {
         </div>` :
 
         predictions.map(pred => {
-          const ex    = (window.EXERCICES||{})[pred.exerciceRef] || {};
-          const pct   = Math.round(pred.confiance * 100);
+          const ex   = (window.EXERCICES||{})[pred.exerciceRef]||{};
+          const pct  = Math.round(pred.confiance * 100);
           const cfCoul =
-            pct >= 80 ? 'var(--fd-mint)'     :
-            pct >= 60 ? 'var(--fd-lemon)'    :
+            pct >= 80 ? 'var(--fd-mint)'    :
+            pct >= 60 ? 'var(--fd-lemon)'   :
                         'var(--fd-lavender)';
 
           return `
@@ -593,23 +677,24 @@ const Predict = {
                               color:var(--text-secondary)">
                     ${pred.rm1Actuel}kg
                   </div>
-                  <div style="font-size:.65rem;color:var(--text-muted)">
+                  <div style="font-size:.65rem;
+                              color:var(--text-muted)">
                     1RM actuel
                   </div>
                 </div>
                 <div style="flex:1;text-align:center;
                             padding:0 var(--space-md)">
-                  <div style="font-size:.8rem;color:var(--fd-mint);
-                              font-weight:600">
+                  <div style="font-size:.8rem;
+                              color:var(--fd-mint);font-weight:600">
                     +${pred.delta}kg
                   </div>
-                  <div style="height:2px;
-                              background:linear-gradient(
-                                to right, var(--text-muted),
+                  <div style="height:2px;background:linear-gradient(
+                                to right,var(--text-muted),
                                 var(--fd-lemon));
                               margin:4px 0;border-radius:1px">
                   </div>
-                  <div style="font-size:.65rem;color:var(--text-muted)">
+                  <div style="font-size:.65rem;
+                              color:var(--text-muted)">
                     ~${pred.joursEstimes} jours
                   </div>
                 </div>
@@ -618,48 +703,38 @@ const Predict = {
                               color:var(--fd-lemon)">
                     ${pred.rm1Predit}kg
                   </div>
-                  <div style="font-size:.65rem;color:var(--text-muted)">
+                  <div style="font-size:.65rem;
+                              color:var(--text-muted)">
                     1RM prédit
                   </div>
                 </div>
               </div>
 
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);
+              <div style="display:grid;
+                          grid-template-columns:repeat(3,1fr);
                           gap:var(--space-sm);
                           margin-bottom:var(--space-sm)">
-                <div style="text-align:center;padding:var(--space-sm);
-                            background:var(--bg-input);
-                            border-radius:var(--radius-sm)">
-                  <div style="font-size:.82rem;font-weight:700;
-                              color:var(--fd-indigo)">
-                    ${pred.seancesEstimees}
-                  </div>
-                  <div style="font-size:.62rem;color:var(--text-muted)">
-                    séances
-                  </div>
-                </div>
-                <div style="text-align:center;padding:var(--space-sm);
-                            background:var(--bg-input);
-                            border-radius:var(--radius-sm)">
-                  <div style="font-size:.82rem;font-weight:700;
-                              color:var(--fd-mint)">
-                    +${pred.tauxHebdo}%/sem
-                  </div>
-                  <div style="font-size:.62rem;color:var(--text-muted)">
-                    progression
-                  </div>
-                </div>
-                <div style="text-align:center;padding:var(--space-sm);
-                            background:var(--bg-input);
-                            border-radius:var(--radius-sm)">
-                  <div style="font-size:.82rem;font-weight:700;
-                              color:var(--fd-lavender)">
-                    ${Utils.formatDateCourt(pred.dateEstimee)}
-                  </div>
-                  <div style="font-size:.62rem;color:var(--text-muted)">
-                    date estimée
-                  </div>
-                </div>
+                ${[
+                  { val:pred.seancesEstimees, label:'séances',
+                    color:'var(--fd-indigo)' },
+                  { val:`+${pred.tauxHebdo}%/sem`, label:'progression',
+                    color:'var(--fd-mint)' },
+                  { val:Utils.formatDateCourt(pred.dateEstimee),
+                    label:'date estimée', color:'var(--fd-lavender)' }
+                ].map(s => `
+                  <div style="text-align:center;
+                              padding:var(--space-sm);
+                              background:var(--bg-input);
+                              border-radius:var(--radius-sm)">
+                    <div style="font-size:.82rem;font-weight:700;
+                                color:${s.color}">
+                      ${s.val}
+                    </div>
+                    <div style="font-size:.62rem;
+                                color:var(--text-muted)">
+                      ${s.label}
+                    </div>
+                  </div>`).join('')}
               </div>
 
               <div style="font-size:.68rem;color:var(--text-muted);
@@ -669,8 +744,12 @@ const Predict = {
 
               ${(() => {
                 try {
-                  const stag = Predict.detecterStagnation(pred.exerciceRef);
-                  if (!stag || (!stag.stagne && !stag.regression)) return '';
+                  const stag = Predict.detecterStagnation(
+                    pred.exerciceRef
+                  );
+                  if (!stag || (!stag.stagne && !stag.regression)) {
+                    return '';
+                  }
                   return `
                     <div style="margin-top:var(--space-sm);
                                 padding:var(--space-sm);
@@ -701,12 +780,12 @@ const Predict = {
       <div class="card mb-md">
         ${refs.slice(0, 6).map(ref => {
           try {
-            const analyse = this.analyserProgression(ref);
-            if (!analyse.suffisant) return '';
+            const analyse2 = this.analyserProgression(ref);
+            if (!analyse2.suffisant) return '';
             const ex   = (window.EXERCICES||{})[ref] || {};
-            const prog = analyse.progression;
-            const color = prog >= 0 ? 'var(--fd-mint)' : 'var(--fd-coral)';
-
+            const prog = analyse2.progression;
+            const color = prog >= 0
+              ? 'var(--fd-mint)' : 'var(--fd-coral)';
             return `
               <div style="padding:var(--space-sm) 0;
                           border-bottom:1px solid var(--border-color)">
@@ -721,16 +800,18 @@ const Predict = {
                 </div>
                 <div class="progress-bar">
                   <div class="progress-fill"
-                       style="width:${Math.max(5, Math.min(100, 50+prog))}%;
+                       style="width:${Math.max(5,
+                         Math.min(100, 50+prog))}%;
                               background:${color}">
                   </div>
                 </div>
-                <div style="display:flex;justify-content:space-between;
-                            font-size:.65rem;color:var(--text-muted);
-                            margin-top:4px">
-                  <span>${analyse.rm1Debut}kg</span>
-                  <span>${Utils.arrondir(analyse.semaines)}sem</span>
-                  <span>${analyse.rm1Actuel}kg</span>
+                <div style="display:flex;
+                            justify-content:space-between;
+                            font-size:.65rem;
+                            color:var(--text-muted);margin-top:4px">
+                  <span>${analyse2.rm1Debut}kg</span>
+                  <span>${Utils.arrondir(analyse2.semaines)}sem</span>
+                  <span>${analyse2.rm1Actuel}kg</span>
                 </div>
               </div>`;
           } catch(e) { return ''; }
@@ -745,10 +826,7 @@ const Predict = {
   _renderCharge(ref) {
     const el = document.getElementById('detail-charge');
     if (!el) return;
-    if (!ref) {
-      el.innerHTML = '';
-      return;
-    }
+    if (!ref) { el.innerHTML = ''; return; }
 
     const reco = this.recommanderCharge(ref);
     if (!reco) {
@@ -761,13 +839,23 @@ const Predict = {
       return;
     }
 
+    // ✅ NOUVEAU v4.0 — Info lieu si maison
+    const lieuNote = reco.lieu !== 'salle'
+      ? `<div style="font-size:.68rem;color:var(--fd-lavender);
+                     margin-bottom:6px">
+           🏠 Charges adaptées pour entraînement maison
+         </div>`
+      : '';
+
     el.innerHTML = `
       <div style="margin-bottom:var(--space-md)">
+        ${lieuNote}
         <div style="font-size:.72rem;font-weight:700;
                     text-transform:uppercase;letter-spacing:.06em;
                     color:var(--text-muted);
                     margin-bottom:var(--space-sm)">
           Zones d'entraînement — Phase ${reco.phase}
+          ${reco.genre === 'femme' ? '🌸' : ''}
         </div>
         ${reco.zones.map(zone => `
           <div style="display:flex;align-items:center;
@@ -822,7 +910,6 @@ const Predict = {
     `;
   },
 
-  // ✅ FIX — window.PLANNING_SEMAINE
   _renderSupersets() {
     try {
       let seanceId = null;
@@ -834,7 +921,9 @@ const Predict = {
       if (!seanceId) return '';
 
       let supersets = [];
-      try { supersets = Programme.getSupersets?.(seanceId) || []; } catch(e) {}
+      try {
+        supersets = Programme.getSupersets?.(seanceId) || [];
+      } catch(e) {}
       if (!supersets.length) return '';
 
       return `
@@ -863,18 +952,23 @@ const Predict = {
                     </div>` : ''}
                   <div style="display:flex;
                               justify-content:space-between;
-                              align-items:center;font-size:.82rem;
-                              padding:4px 0">
-                    <span>${exo.emoji||'💪'} ${exo.nom||ex.ref}</span>
-                    <span style="color:var(--fd-indigo);font-weight:600">
+                              align-items:center;
+                              font-size:.82rem;padding:4px 0">
+                    <span>
+                      ${exo.emoji||'💪'} ${exo.nom||ex.ref}
+                    </span>
+                    <span style="color:var(--fd-indigo);
+                                 font-weight:600">
                       ${ex.series}×${ex.reps}
                     </span>
                   </div>`;
               }).join('')}
             </div>`).join('')}
           <div style="font-size:.72rem;color:var(--text-muted);
-                      text-align:center;margin-top:var(--space-sm)">
-            ⏱️ Repos entre exercices : 0s · Repos entre sets : 60-90s
+                      text-align:center;
+                      margin-top:var(--space-sm)">
+            ⏱️ Repos entre exercices : 0s
+            · Repos entre sets : 60-90s
           </div>
         </div>`;
     } catch(e) { return ''; }
@@ -943,36 +1037,59 @@ const Predict = {
     return c;
   },
 
-  _conseilDuJour(fatigue, opportunitePR, phase) {
+  // ✅ NOUVEAU v4.0 — _conseilDuJour genre-aware
+  _conseilDuJour(fatigue, opportunitePR, phase, genre) {
+    const e = genre === 'femme' ? 'e' : '';
+
     if (fatigue.recommandation.action === 'REPOS') {
-      return '😴 Ton corps a besoin de récupération. '
-           + 'Profite de ce repos pour bien manger et bien dormir. '
-           + 'La progression continue au repos !';
+      return genre === 'femme'
+        ? '😴 Ton corps a besoin de récupération. '
+        + 'Profite de ce repos pour bien manger, bien dormir. '
+        + 'La progression des fessiers passe aussi par la récupération !'
+        : '😴 Ton corps a besoin de récupération. '
+        + 'Profite de ce repos pour bien manger et bien dormir. '
+        + 'La progression continue au repos !';
     }
+
     if (opportunitePR) {
-      const ex = (window.EXERCICES||{})[opportunitePR.exerciceRef] || {};
+      const ex = (window.EXERCICES||{})[opportunitePR.exerciceRef]||{};
       return `🎯 Tu es proche d'un record sur ${ex.nom||'cet exercice'}. `
            + `Cible ${opportunitePR.rm1Predit}kg aujourd'hui ! `
            + `Confiance : ${Math.round(opportunitePR.confiance*100)}%`;
     }
+
     if (phase.nom === 'Peak') {
-      return '🏆 Tu es en phase Peak ! '
-           + 'C\'est le moment de tout donner et de battre des records.';
+      return genre === 'femme'
+        ? '🏆 Tu es en phase Peak ! '
+        + 'C\'est le moment de tout donner. '
+        + 'Tes fessiers et ton bas du corps sont prêts à battre des records !'
+        : '🏆 Tu es en phase Peak ! '
+        + 'C\'est le moment de tout donner et de battre des records.';
     }
+
     if (phase.nom === 'Décharge') {
       return '😴 Semaine de décharge — charges légères, technique parfaite. '
            + 'Ton corps supercompense en ce moment. '
            + 'Le prochain cycle sera encore meilleur !';
     }
+
     if (fatigue.score >= 80) {
-      return '💪 Tu es en pleine forme ! '
-           + 'Pousse un peu plus fort aujourd\'hui, '
-           + 'c\'est le bon moment pour progresser.';
+      return genre === 'femme'
+        ? '💪 Tu es en pleine forme ! '
+        + 'Parfait pour un entraînement Lower Body intense. '
+        + 'C\'est le bon moment pour progresser sur tes objectifs fessiers !'
+        : '💪 Tu es en pleine forme ! '
+        + 'Pousse un peu plus fort aujourd\'hui, '
+        + 'c\'est le bon moment pour progresser.';
     }
-    return '🎯 Reste régulier et la progression viendra naturellement. '
-         + 'Chaque séance compte, même les petites !';
+
+    return genre === 'femme'
+      ? '🎯 Reste régulière et la progression viendra naturellement. '
+      + 'Chaque séance Lower Body te rapproche de tes objectifs !'
+      : '🎯 Reste régulier et la progression viendra naturellement. '
+      + 'Chaque séance compte, même les petites !';
   }
 };
 
 window.Predict = Predict;
-console.log('✅ Predict v3.0 chargé');
+console.log('✅ Predict v4.0 chargé — Genre-aware + Lieu-aware');
