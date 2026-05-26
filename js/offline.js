@@ -1,7 +1,8 @@
 /* ============================================================
-   FitTracker Pro — Offline.js v2.0
+   PowerApp — Offline.js v3.0
    Mode hors-ligne complet + Backup auto + Restauration
-   Sync + Cache + PWA + Banner
+   + Backup nutrition + Profil onboarding + Séances custom
+   + Versioning backup (3 derniers)
    ============================================================ */
 
 const Offline = {
@@ -13,11 +14,13 @@ const Offline = {
   _listeners:    [],
 
   CONFIG: {
-    cleQueue:     'ft_offline_queue',
-    cleLastSync:  'ft_offline_last_sync',
-    retryDelay:   30000,
-    maxRetries:   5,
-    cacheVersion: 'powerapp-v3'
+    cleQueue:      'ft_offline_queue',
+    cleLastSync:   'ft_offline_last_sync',
+    cleBackupBase: 'ft_backup_v',  // ✅ NOUVEAU v3.0
+    nbBackups:     3,              // ✅ NOUVEAU v3.0 — 3 versions
+    retryDelay:    30000,
+    maxRetries:    5,
+    cacheVersion:  'powerapp-v4'
   },
 
   // ════════════════════════════════════════════════════════
@@ -46,7 +49,7 @@ const Offline = {
       setTimeout(() => this.syncPendingQueue(), 3000);
     }
 
-    // ✅ Backup auto toutes les 10 minutes
+    // ✅ Backup auto toutes les 5 minutes
     setInterval(() => {
       try { this._sauvegarderBackupLocal(); } catch(e) {}
       if (this._estEnLigne && !this._syncing) {
@@ -60,7 +63,7 @@ const Offline = {
     }, 3000);
 
     console.log(
-      `✅ Offline.js v2.0 init — en ligne: ${this._estEnLigne}`,
+      `✅ Offline.js v3.0 init — en ligne: ${this._estEnLigne}`,
       `· Queue: ${this._pendingQueue.length} actions`
     );
   },
@@ -195,7 +198,9 @@ const Offline = {
   },
 
   _chargerQueue() {
-    this._pendingQueue = Utils.storage.get(this.CONFIG.cleQueue, []);
+    this._pendingQueue = Utils.storage.get(
+      this.CONFIG.cleQueue, []
+    );
   },
 
   _sauvegarderQueue() {
@@ -218,8 +223,8 @@ const Offline = {
     this._syncing = true;
     this._afficherIndicateurSync();
 
-    const aTraiter = [...this._pendingQueue];
-    const reussies = [], echouees = [];
+    const aTraiter  = [...this._pendingQueue];
+    const reussies  = [], echouees = [];
 
     for (const action of aTraiter) {
       try {
@@ -248,7 +253,6 @@ const Offline = {
     this._syncing = false;
     this._retirerIndicateurSync();
 
-    // ✅ Backup après chaque sync réussie
     if (reussies.length > 0) {
       console.log(`[Offline] Sync OK: ${reussies.length} actions`);
       try { this._sauvegarderBackupLocal(); } catch(e) {}
@@ -256,71 +260,140 @@ const Offline = {
     }
   },
 
-  // ✅ Traitement local complet — pas besoin de CloudDB
   async _traiterAction(action) {
     switch(action.type) {
-
       case 'seance_complete':
         console.log('[Offline] Séance synced:', action.data?.seanceId);
         break;
-
       case 'serie_sauvegardee':
-        // Déjà en localStorage — rien à faire
         break;
-
       case 'pr_battu':
-        // Déjà en localStorage
         break;
-
       case 'mesure_ajoutee':
         try { Tracker.ajouterMesure(action.data); } catch(e) {}
         break;
-
       case 'xp_gagne':
-        // localStorage déjà géré
         break;
-
       case 'profil_modifie':
         try { Tracker.sauvegarderProfil(action.data); } catch(e) {}
         break;
-
       case 'sync_complet':
         console.log('[Offline] Sync globale OK');
         break;
-
       default:
         console.log('[Offline] Action traitée localement:', action.type);
     }
-
-    // ✅ Backup après chaque action
     try { this._sauvegarderBackupLocal(); } catch(e) {}
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ BACKUP LOCAL AUTOMATIQUE
+  // ✅ BACKUP LOCAL — v3.0 complet + versioning
   // ════════════════════════════════════════════════════════
   _sauvegarderBackupLocal() {
     try {
+      // ✅ NOUVEAU v3.0 — Nutrition (7 derniers jours)
+      const nutritionJournal = {};
+      const nutritionEau     = {};
+      for (let i = 0; i < 7; i++) {
+        const date    = Utils.ajouterJours(Utils.aujourd_hui(), -i);
+        const journal = Utils.storage.get(
+          `ft_nutrition_journal_${date}`, null
+        );
+        const eau     = Utils.storage.get(
+          `ft_nutrition_eau_${date}`, null
+        );
+        if (journal) nutritionJournal[date] = journal;
+        if (eau !== null) nutritionEau[date] = eau;
+      }
+
       const backup = {
-        date:      new Date().toISOString(),
-        version:   'v3.0',
-        profil:    Utils.storage.get('ft_profil', {}),
-        streak:    Utils.storage.get('ft_streak', {}),
-        mesures:   Utils.storage.get('ft_mesures', []),
-        objectifs: Utils.storage.get('ft_objectifs', []),
-        blessures: Utils.storage.get('ft_blessures', []),
-        journal:   Utils.storage.get('ft_journal', []).slice(0, 30),
-        photos:    Utils.storage.get('ft_photos', []).slice(0, 5),
-        xp:        Utils.storage.get('ft_xp', {}),
-        trophees:  Utils.storage.get('ft_trophees', []),
-        prs:       this._getAllPRsLocal(),
-        planning:  Utils.storage.get('ft_planning_custom', null)
+        date:               new Date().toISOString(),
+        version:            'v3.0',
+        // Profil
+        profil:             Utils.storage.get('ft_profil', {}),
+        profilOnboarding:   Utils.storage.get('ft_profil_onboarding', {}), // ✅ NOUVEAU
+        profilComplet:      Utils.storage.get('ft_profil_complet', {}),   // ✅ NOUVEAU
+        // Activité
+        streak:             Utils.storage.get('ft_streak', {}),
+        mesures:            Utils.storage.get('ft_mesures', []),
+        objectifs:          Utils.storage.get('ft_objectifs', []),
+        blessures:          Utils.storage.get('ft_blessures', []),
+        journal:            Utils.storage.get('ft_journal', []).slice(0, 30),
+        photos:             Utils.storage.get('ft_photos', []).slice(0, 5),
+        // Gamification
+        xp:                 Utils.storage.get('ft_xp', {}),
+        xpTotal:            Utils.storage.get('ft_xp_total', 0),           // ✅ NOUVEAU
+        trophees:           Utils.storage.get('ft_trophees', []),
+        // PRs
+        prs:                this._getAllPRsLocal(),
+        // Programme IA
+        programmeIA:        Utils.storage.get('ft_programme_ia_genere', null), // ✅ NOUVEAU
+        programmeIAConfig:  Utils.storage.get('ft_programme_ia_config', null), // ✅ NOUVEAU
+        // Séances custom
+        seancesCustom:      Utils.storage.get('ft_seances_custom', {}),        // ✅ NOUVEAU
+        // Nutrition (7 derniers jours)
+        nutritionJournal,                                                       // ✅ NOUVEAU
+        nutritionEau,                                                           // ✅ NOUVEAU
+        nutritionObjectifs: Utils.storage.get('ft_nutrition_objectifs', null), // ✅ NOUVEAU
+        // Planning
+        planning:           Utils.storage.get('ft_planning_custom', null),
+        planningNew:        Utils.storage.get('ft_planning', null),            // ✅ NOUVEAU
+        // Config
+        notifsConfig:       Utils.storage.get('ft_notifs_config', null),
+        themeConfig:        Utils.storage.get('ft_theme_config', null)         // ✅ NOUVEAU
       };
+
+      // ✅ NOUVEAU v3.0 — Versioning : garder 3 backups
+      this._rotationBackup(backup);
+
+      // Backup principal (compatibilité)
       Utils.storage.set('ft_backup_auto', backup);
-      console.log('[Offline] Backup local sauvegardé');
+
+      console.log('[Offline] Backup v3.0 sauvegardé ✅');
     } catch(e) {
       console.warn('[Offline] Erreur backup:', e);
     }
+  },
+
+  // ✅ NOUVEAU v3.0 — Rotation des backups (3 versions)
+  _rotationBackup(backup) {
+    try {
+      // Décaler les backups : v3 → supprimer, v2 → v3, v1 → v2, nouveau → v1
+      const v2 = Utils.storage.get(
+        this.CONFIG.cleBackupBase + '2', null
+      );
+      if (v2) {
+        Utils.storage.set(
+          this.CONFIG.cleBackupBase + '3', v2
+        );
+      }
+      const v1 = Utils.storage.get(
+        this.CONFIG.cleBackupBase + '1', null
+      );
+      if (v1) {
+        Utils.storage.set(
+          this.CONFIG.cleBackupBase + '2', v1
+        );
+      }
+      Utils.storage.set(
+        this.CONFIG.cleBackupBase + '1', backup
+      );
+    } catch(e) {}
+  },
+
+  // ✅ NOUVEAU v3.0 — Récupérer la liste des backups
+  getBackups() {
+    const backups = [];
+    for (let i = 1; i <= this.CONFIG.nbBackups; i++) {
+      const b = Utils.storage.get(
+        this.CONFIG.cleBackupBase + i, null
+      );
+      if (b) backups.push({ version: i, ...b });
+    }
+    // Ajouter backup_auto si existe
+    const auto = Utils.storage.get('ft_backup_auto', null);
+    if (auto) backups.unshift({ version: 0, ...auto });
+    return backups;
   },
 
   _getAllPRsLocal() {
@@ -329,19 +402,30 @@ const Offline = {
       const cle = localStorage.key(i);
       if (cle?.startsWith('ft_pr_')) {
         try {
-          prs[cle.replace('ft_pr_', '')] =
-            JSON.parse(localStorage.getItem(cle));
+          prs[cle.replace('ft_pr_', '')] = JSON.parse(
+            localStorage.getItem(cle)
+          );
         } catch(e) {}
       }
     }
     return prs;
   },
 
-  // ✅ Restaurer depuis backup local
-  async _restaurerDepuisBackup() {
-    const backup = Utils.storage.get('ft_backup_auto', null);
-    if (!backup) {
+  // ✅ NOUVEAU v3.0 — Restauration complète
+  async _restaurerDepuisBackup(versionIdx = null) {
+    const backups = this.getBackups();
+    if (!backups.length) {
       Utils.toast('Aucun backup disponible.', 'info');
+      return;
+    }
+
+    // Utiliser le backup demandé ou le plus récent
+    const backup = versionIdx !== null
+      ? backups.find(b => b.version === versionIdx)
+      : backups[0];
+
+    if (!backup) {
+      Utils.toast('Backup introuvable.', 'error');
       return;
     }
 
@@ -353,22 +437,81 @@ const Offline = {
     if (!ok) return;
 
     try {
-      if (backup.profil)    Utils.storage.set('ft_profil',    backup.profil);
+      // ✅ Profil
+      if (backup.profil)    Utils.storage.set('ft_profil', backup.profil);
+      if (backup.profilOnboarding) {
+        Utils.storage.set('ft_profil_onboarding', backup.profilOnboarding);
+      }
+      if (backup.profilComplet) {
+        Utils.storage.set('ft_profil_complet', backup.profilComplet);
+      }
+      // ✅ Activité
       if (backup.streak)    Utils.storage.set('ft_streak',    backup.streak);
       if (backup.mesures)   Utils.storage.set('ft_mesures',   backup.mesures);
       if (backup.objectifs) Utils.storage.set('ft_objectifs', backup.objectifs);
       if (backup.blessures) Utils.storage.set('ft_blessures', backup.blessures);
       if (backup.journal)   Utils.storage.set('ft_journal',   backup.journal);
+      // ✅ Gamification
       if (backup.xp)        Utils.storage.set('ft_xp',        backup.xp);
+      if (backup.xpTotal !== undefined) {
+        Utils.storage.set('ft_xp_total', backup.xpTotal);
+      }
       if (backup.trophees)  Utils.storage.set('ft_trophees',  backup.trophees);
-      if (backup.planning)  Utils.storage.set('ft_planning_custom', backup.planning);
+      // ✅ PRs
       if (backup.prs) {
         Object.entries(backup.prs).forEach(([ref, pr]) => {
           Utils.storage.set(`ft_pr_${ref}`, pr);
         });
       }
+      // ✅ Programme IA
+      if (backup.programmeIA) {
+        Utils.storage.set('ft_programme_ia_genere', backup.programmeIA);
+      }
+      if (backup.programmeIAConfig) {
+        Utils.storage.set('ft_programme_ia_config', backup.programmeIAConfig);
+      }
+      // ✅ Séances custom
+      if (backup.seancesCustom) {
+        Utils.storage.set('ft_seances_custom', backup.seancesCustom);
+      }
+      // ✅ NOUVEAU v3.0 — Nutrition
+      if (backup.nutritionJournal) {
+        Object.entries(backup.nutritionJournal).forEach(
+          ([date, journal]) => {
+            Utils.storage.set(`ft_nutrition_journal_${date}`, journal);
+          }
+        );
+      }
+      if (backup.nutritionEau) {
+        Object.entries(backup.nutritionEau).forEach(
+          ([date, eau]) => {
+            Utils.storage.set(`ft_nutrition_eau_${date}`, eau);
+          }
+        );
+      }
+      if (backup.nutritionObjectifs) {
+        Utils.storage.set(
+          'ft_nutrition_objectifs', backup.nutritionObjectifs
+        );
+      }
+      // ✅ Planning
+      if (backup.planning) {
+        Utils.storage.set('ft_planning_custom', backup.planning);
+      }
+      if (backup.planningNew) {
+        Utils.storage.set('ft_planning', backup.planningNew);
+      }
+      // ✅ Config
+      if (backup.notifsConfig) {
+        Utils.storage.set('ft_notifs_config', backup.notifsConfig);
+      }
+      if (backup.themeConfig) {
+        Utils.storage.set('ft_theme_config', backup.themeConfig);
+      }
 
-      Utils.toast('✅ Données restaurées avec succès !', 'success', 3000);
+      Utils.toast(
+        '✅ Données restaurées avec succès !', 'success', 3000
+      );
       Utils.vibrerSuccess();
       setTimeout(() => window.location.reload(), 1500);
     } catch(e) {
@@ -497,7 +640,8 @@ const Offline = {
       bottom:calc(var(--nav-height,60px) + 16px);
       left:16px;z-index:1000;
       background:var(--fd-indigo);color:white;border:none;
-      padding:10px 16px;border-radius:var(--radius-full,99px);
+      padding:10px 16px;
+      border-radius:var(--radius-full,99px);
       font-size:.78rem;font-weight:700;cursor:pointer;
       box-shadow:0 4px 16px rgba(75,75,249,0.4);
       display:flex;align-items:center;gap:6px`;
@@ -535,7 +679,9 @@ const Offline = {
     try {
       Utils.storage.set(cle, data);
       if (!this.estEnLigne()) {
-        this.ajouterAction('sync_complet', { cle, timestamp: Date.now() });
+        this.ajouterAction('sync_complet', {
+          cle, timestamp: Date.now()
+        });
       }
       return true;
     } catch(e) {
@@ -568,14 +714,15 @@ const Offline = {
   async render(container) {
     if (!container) return;
 
-    const statut = this.getStatut();
-    const cache  = await this.getCacheStats();
-    const sw     = await this._getSWInfo();
-    const backup = Utils.storage.get('ft_backup_auto', null);
+    const statut  = this.getStatut();
+    const cache   = await this.getCacheStats();
+    const sw      = await this._getSWInfo();
+    const backups = this.getBackups();
+    const backup  = backups[0] || null;
 
     container.innerHTML = `
 
-      <!-- ✅ Statut connexion -->
+      <!-- Statut connexion -->
       <div class="card mb-md"
            style="border-color:${statut.enLigne
              ? 'var(--fd-mint)' : 'var(--fd-coral)'};
@@ -589,8 +736,7 @@ const Offline = {
             </div>
             <div style="font-weight:700;
                         color:${statut.enLigne
-                          ? 'var(--fd-mint)'
-                          : 'var(--fd-coral)'}">
+                          ? 'var(--fd-mint)' : 'var(--fd-coral)'}">
               ${statut.enLigne ? 'Connecté' : 'Hors-ligne'}
             </div>
             <div style="font-size:.72rem;color:var(--text-muted);
@@ -621,90 +767,131 @@ const Offline = {
         ${statut.pending > 0 && statut.enLigne ? `
           <button class="btn-primary mt-md"
                   style="width:100%;font-size:.82rem"
-                  onclick="Offline.syncPendingQueue().then(
-                    () => {
-                      const el = Offline._getContainer();
-                      if (el) Offline.render(el);
-                    })">
+                  onclick="Offline.syncPendingQueue().then(() => {
+                    const el = Offline._getContainer();
+                    if (el) Offline.render(el);
+                  })">
             🔄 Synchroniser (${statut.pending} actions)
           </button>` : ''}
       </div>
 
-      <!-- ✅ BACKUP AUTO -->
+      <!-- ✅ NOUVEAU v3.0 — Backups versionnés -->
       <div class="card mb-md"
            style="border-color:${backup
-             ? 'rgba(139,240,187,0.3)'
-             : 'var(--border-color)'}">
-        <div class="card-label"
-             style="color:${backup ? 'var(--fd-mint)' : 'var(--text-muted)'}">
-          💾 Sauvegarde automatique
+             ? 'rgba(139,240,187,0.3)' : 'var(--border-color)'}">
+        <div class="flex justify-between items-center mb-md">
+          <div class="card-label"
+               style="color:${backup
+                 ? 'var(--fd-mint)' : 'var(--text-muted)'};margin:0">
+            💾 Sauvegardes automatiques
+          </div>
+          <span style="font-size:.65rem;color:var(--text-muted)">
+            ${backups.length}/${this.CONFIG.nbBackups} versions
+          </span>
         </div>
-        <div style="margin-top:var(--space-sm)">
-          ${backup ? `
-            <div style="font-size:.78rem;color:var(--text-muted);
-                        margin-bottom:var(--space-sm)">
-              Dernière sauvegarde :<br>
-              <span style="color:var(--fd-mint);font-weight:600">
-                ${new Date(backup.date).toLocaleString('fr-FR')}
-              </span>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;
-                        margin-bottom:var(--space-sm)">
-              ${[
-                backup.prs
-                  ? `${Object.keys(backup.prs).length} PRs`
-                  : '',
-                backup.mesures?.length
-                  ? `${backup.mesures.length} mesures`
-                  : '',
-                backup.journal?.length
-                  ? `${backup.journal.length} entrées journal`
-                  : '',
-                backup.objectifs?.length
-                  ? `${backup.objectifs.length} objectifs`
-                  : '',
-                backup.blessures?.length
-                  ? `${backup.blessures.length} blessures`
-                  : ''
-              ].filter(Boolean).map(i => `
-                <span style="padding:2px 8px;
-                             background:rgba(139,240,187,0.1);
-                             border:1px solid rgba(139,240,187,0.2);
-                             border-radius:99px;
-                             font-size:.65rem;
-                             color:var(--fd-mint)">
-                  ✅ ${i}
-                </span>`).join('')}
-            </div>` : `
-            <p style="font-size:.78rem;color:var(--text-muted);
+
+        ${backup ? `
+          <div style="font-size:.78rem;color:var(--text-muted);
                       margin-bottom:var(--space-sm)">
-              Aucune sauvegarde auto disponible.<br>
-              Lance une séance pour créer un backup !
-            </p>`}
-        </div>
+            Dernière :
+            <span style="color:var(--fd-mint);font-weight:600">
+              ${new Date(backup.date).toLocaleString('fr-FR')}
+            </span>
+          </div>
+
+          <!-- Ce que le backup contient -->
+          <div style="display:flex;flex-wrap:wrap;gap:4px;
+                      margin-bottom:var(--space-sm)">
+            ${[
+              backup.prs
+                ? `${Object.keys(backup.prs).length} PRs` : '',
+              backup.mesures?.length
+                ? `${backup.mesures.length} mesures` : '',
+              backup.nutritionJournal
+                ? `${Object.keys(backup.nutritionJournal).length}j nutrition` : '',
+              backup.seancesCustom
+                ? `${Object.keys(backup.seancesCustom).length} séances IA` : '',
+              backup.programmeIA
+                ? `Programme IA` : '',
+              backup.profilOnboarding?.genre
+                ? `Profil ${backup.profilOnboarding.genre}` : ''
+            ].filter(Boolean).map(i => `
+              <span style="padding:2px 8px;
+                           background:rgba(139,240,187,0.1);
+                           border:1px solid rgba(139,240,187,0.2);
+                           border-radius:99px;
+                           font-size:.62rem;
+                           color:var(--fd-mint)">
+                ✅ ${i}
+              </span>`).join('')}
+          </div>
+
+          <!-- ✅ NOUVEAU v3.0 — Liste des 3 versions -->
+          ${backups.length > 1 ? `
+            <div style="margin-bottom:var(--space-sm)">
+              <div style="font-size:.6rem;font-weight:700;
+                          text-transform:uppercase;
+                          letter-spacing:.08em;
+                          color:var(--text-muted);
+                          margin-bottom:6px">
+                Versions disponibles
+              </div>
+              ${backups.map((b, i) => `
+                <div style="display:flex;
+                            justify-content:space-between;
+                            align-items:center;padding:5px 0;
+                            border-bottom:1px solid var(--border-color)">
+                  <span style="font-size:.72rem;
+                               color:${i === 0
+                                 ? 'var(--fd-mint)'
+                                 : 'var(--text-muted)'}">
+                    ${i === 0 ? '🟢' : '⚪'} V${b.version||'auto'}
+                    <span style="font-size:.62rem">
+                      · ${new Date(b.date).toLocaleString('fr-FR',
+                          {hour:'2-digit',minute:'2-digit',
+                           day:'2-digit',month:'2-digit'})}
+                    </span>
+                  </span>
+                  <button onclick="Offline._restaurerDepuisBackup(${b.version||null})"
+                          style="padding:3px 10px;
+                                 background:rgba(75,75,249,0.15);
+                                 border:1px solid rgba(75,75,249,0.3);
+                                 border-radius:99px;
+                                 color:var(--fd-lavender);
+                                 font-size:.62rem;cursor:pointer">
+                    Restaurer
+                  </button>
+                </div>`).join('')}
+            </div>` : ''}` : `
+          <p style="font-size:.78rem;color:var(--text-muted);
+                    margin-bottom:var(--space-sm)">
+            Aucune sauvegarde auto disponible.<br>
+            Lance une séance pour créer un backup !
+          </p>`}
+
         <div style="display:grid;grid-template-columns:1fr 1fr;
                     gap:var(--space-sm)">
-          <button class="btn-secondary"
-                  style="font-size:.75rem"
+          <button class="btn-secondary" style="font-size:.75rem"
                   onclick="Offline._sauvegarderBackupLocal();
                            Utils.toast('✅ Backup créé !','success',2000);
-                           const el=Offline._getContainer();
-                           if(el) Offline.render(el);">
+                           setTimeout(() => {
+                             const el = Offline._getContainer();
+                             if (el) Offline.render(el);
+                           }, 500)">
             💾 Backup maintenant
           </button>
           <button class="btn-secondary"
                   style="font-size:.75rem;
                          color:${backup
-                           ? 'var(--fd-mint)'
-                           : 'var(--text-muted)'}"
+                           ? 'var(--fd-mint)' : 'var(--text-muted)'}"
                   onclick="Offline._restaurerDepuisBackup()"
                   ${!backup ? 'disabled' : ''}>
-            🔄 Restaurer
+            🔄 Restaurer (dernier)
           </button>
         </div>
       </div>
 
-      <!-- ✅ PWA Install -->
+      <!-- PWA Install -->
       ${this._installPrompt ? `
         <div class="card mb-md"
              style="border-color:var(--fd-indigo)">
@@ -713,8 +900,8 @@ const Offline = {
           </div>
           <p style="font-size:.82rem;color:var(--text-muted);
                     margin:var(--space-sm) 0">
-            Installe PowerApp sur ton écran d'accueil
-            pour un accès rapide et une meilleure expérience.
+            Installe PowerApp sur ton écran d'accueil pour un accès
+            rapide et une meilleure expérience.
           </p>
           <button class="btn-primary" style="width:100%"
                   onclick="Offline.demanderInstall()">
@@ -722,33 +909,36 @@ const Offline = {
           </button>
         </div>` : ''}
 
-      <!-- ✅ Mode hors-ligne info -->
+      <!-- Mode hors-ligne info -->
       <div class="card mb-md">
         <div class="card-label">💾 Fonctionnement hors-ligne</div>
         <div style="margin-top:var(--space-sm)">
           ${[
-            { emoji:'✅', label:'Séances & exercices'             },
-            { emoji:'✅', label:'Historique complet'              },
-            { emoji:'✅', label:'Stats & graphiques'              },
-            { emoji:'✅', label:'Records personnels'              },
-            { emoji:'✅', label:'Photos de progression'           },
-            { emoji:'✅', label:'Coach IA (données locales)'      },
-            { emoji:'✅', label:'Backup auto toutes les 5 min'    },
-            { emoji:'✅', label:'Restauration depuis backup'      },
-            { emoji:'⚡', label:'Sync cloud (à la reconnexion)'  },
-            { emoji:'❌', label:'Partage en ligne'                }
+            { emoji:'✅', label:'Séances & exercices'                },
+            { emoji:'✅', label:'Historique complet'                 },
+            { emoji:'✅', label:'Stats & graphiques'                 },
+            { emoji:'✅', label:'Records personnels'                 },
+            { emoji:'✅', label:'Photos de progression'              },
+            { emoji:'✅', label:'Coach IA (données locales)'         },
+            { emoji:'✅', label:'Nutrition journal (7 jours)'        },
+            { emoji:'✅', label:'Programme IA sauvegardé'            },
+            { emoji:'✅', label:'Profil onboarding sauvegardé'       },
+            { emoji:'✅', label:'Backup auto toutes les 5 min (3 versions)' },
+            { emoji:'✅', label:'Restauration depuis 3 versions'     },
+            { emoji:'⚡', label:'Sync cloud (à la reconnexion)'     },
+            { emoji:'❌', label:'Partage en ligne'                   }
           ].map(f => `
             <div style="display:flex;align-items:center;
                         gap:var(--space-sm);padding:var(--space-xs) 0;
-                        font-size:.82rem;border-bottom:
-                        1px solid var(--border-color)">
+                        font-size:.82rem;
+                        border-bottom:1px solid var(--border-color)">
               <span>${f.emoji}</span>
               <span>${f.label}</span>
             </div>`).join('')}
         </div>
       </div>
 
-      <!-- ✅ Service Worker -->
+      <!-- Service Worker -->
       <div class="card mb-md">
         <div class="card-label">⚙️ Service Worker</div>
         <div style="margin-top:var(--space-sm)">
@@ -783,15 +973,17 @@ const Offline = {
         </div>
       </div>
 
-      <!-- ✅ Données locales -->
+      <!-- Données locales -->
       <div class="card mb-md">
         <div class="card-label">📦 Données locales</div>
         <div style="margin-top:var(--space-sm)">
           ${[
             { label:'Taille utilisée',    val:Utils.storage.taille()  },
-            { label:'Actions en attente', val:`${statut.pending} action${statut.pending>1?'s':''}` },
+            { label:'Actions en attente', val:`${statut.pending}` },
             { label:'Dernière sync',      val:statut.lastSyncHuman    },
-            { label:'Mode',               val:statut.enLigne ? 'En ligne' : 'Hors-ligne' }
+            { label:'Backups disponibles',val:`${backups.length}/3`   },
+            { label:'Mode',               val:statut.enLigne
+              ? 'En ligne' : 'Hors-ligne' }
           ].map(r => `
             <div class="score-row">
               <span class="score-row-label">${r.label}</span>
@@ -813,7 +1005,7 @@ const Offline = {
         </div>
       </div>
 
-      <!-- ✅ Queue détail -->
+      <!-- Queue détail -->
       ${statut.pending > 0 ? `
         <div class="card mb-md">
           <div class="card-label" style="color:var(--fd-lemon)">
@@ -846,20 +1038,20 @@ const Offline = {
           </button>
         </div>` : ''}
 
-      <!-- ✅ Conseils PWA -->
+      <!-- Conseils PWA -->
       <div class="card">
-        <div class="card-label">💡 Conseils PWA</div>
+        <div class="card-label">💡 Conseils</div>
         <div style="margin-top:var(--space-sm)">
           ${[
             '📲 Installe l\'app pour un accès hors-ligne complet',
-            '💾 Backup auto toutes les 5 minutes',
+            '💾 3 versions de backup conservées automatiquement',
             '🔄 La sync reprend automatiquement à la reconnexion',
             '📤 Exporte régulièrement tes données en JSON',
             '⚡ L\'app fonctionne même sans internet'
           ].map(c => `
             <div style="display:flex;gap:8px;padding:var(--space-xs) 0;
-                        font-size:.78rem;border-bottom:1px solid
-                        var(--border-color)">
+                        font-size:.78rem;border-bottom:
+                        1px solid var(--border-color)">
               ${c}
             </div>`).join('')}
         </div>
@@ -868,7 +1060,7 @@ const Offline = {
   },
 
   // ════════════════════════════════════════════════════════
-  // HELPERS RENDER
+  // HELPERS
   // ════════════════════════════════════════════════════════
   _labelAction(type) {
     const labels = {
@@ -887,7 +1079,11 @@ const Offline = {
     if (!('serviceWorker' in navigator)) return { actif:false };
     try {
       const reg = await navigator.serviceWorker.ready;
-      return { actif:true, version:this.CONFIG.cacheVersion, scope:reg.scope };
+      return {
+        actif:   true,
+        version: this.CONFIG.cacheVersion,
+        scope:   reg.scope
+      };
     } catch(e) {
       return { actif:false };
     }
@@ -924,4 +1120,4 @@ const Offline = {
 };
 
 window.Offline = Offline;
-console.log('✅ Offline.js v2.0 chargé');
+console.log('✅ Offline.js v3.0 chargé — Backup complet + Nutrition + IA + Versioning');
