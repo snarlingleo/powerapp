@@ -1033,17 +1033,25 @@ requestAnimationFrame(() => {
 
   // ✅ NOUVEAU v5.0 — Export rapport mensuel HTML/texte
   _exporterRapport() {
-    const dash       = this.getDashboard();
-    const top        = this.getTopExercices(10);
-    const seances    = Tracker.getHistoriqueSeances(30);
-    const stats      = this.getStatsCorps();
-    const scoreForme = Tracker.calculerScoreForme();
-    const auj        = Utils.aujourd_hui();
-    const moisLabel  = new Date().toLocaleString('fr-FR',
-      { month:'long', year:'numeric' }
-    );
+  const dash       = this.getDashboard();
+  const top        = this.getTopExercices(10);
+  const seances    = Tracker.getHistoriqueSeances(30);
+  const stats      = this.getStatsCorps();
+  const scoreForme = Tracker.calculerScoreForme();
+  const auj        = Utils.aujourd_hui();
+  const moisLabel  = new Date().toLocaleString('fr-FR',
+    { month:'long', year:'numeric' }
+  );
 
-    const contenu = `
+  // ✅ FIX — Ligne séances sans imbrication cassée
+  const lignesSeances = seances.slice(0,10).map(s => {
+    const nom = (
+      window.SEANCES_BASE?.[s.id]?.nom || s.id || 'Séance'
+    ).replace(/,/g,'');
+    return `• ${s.date} — ${nom} — ${Utils.formatVolume(s.volumeTotal||0)} — ${Utils.formatDuree(s.duree||0)}`;
+  }).join('\n');
+
+  const contenu = `
 RAPPORT POWERAPP — ${moisLabel.toUpperCase()}
 ${'═'.repeat(50)}
 
@@ -1058,9 +1066,9 @@ ${'═'.repeat(50)}
 
 ⚖️ CORPS
 ─────────────────
-• Poids actuel : ${stats.poids || '—'} kg
+• Poids actuel : ${stats.poids  || '—'} kg
 • Taille       : ${stats.taille || '—'} cm
-• IMC          : ${stats.imc || '—'} (${stats.catIMC || '—'})
+• IMC          : ${stats.imc    || '—'} (${stats.catIMC || '—'})
 • Cal/semaine  : ${stats.calSemaine || 0} kcal
 
 🏆 TOP RECORDS PERSONNELS
@@ -1071,32 +1079,24 @@ ${top.map((ex,i) =>
 
 📅 SÉANCES CE MOIS
 ──────────────────
-${seances.slice(0,10).map(s => {
-  ${seances.slice(0,10).map(s => {
-  const seancesBase = window.SEANCES_BASE || {};
-  const nom = (seancesBase[s.id]?.nom || s.id || 'Séance')
-    .replace(/,/g,'');
-  return `• ${s.date} — ${nom} — ${Utils.formatVolume(s.volumeTotal||0)} — ${Utils.formatDuree(s.duree||0)}`;
-}).join('\n')}_BASE?.[s.id]?.nom || s.id || 'Séance';
-  return `• ${s.date} — ${nom} — ${Utils.formatVolume(s.volumeTotal||0)} — ${Utils.formatDuree(s.duree||0)}`;
-}).join('\n')}
+${lignesSeances}
 
 ─────────────────
 Généré par PowerApp — ${auj}
-    `.trim();
+  `.trim();
 
-    const blob = new Blob([contenu], {
-      type: 'text/plain;charset=utf-8;'
-    });
-    const url = URL.createObjectURL(blob);
-    const a   = document.createElement('a');
-    a.href     = url;
-    a.download = `powerapp-rapport-${auj}.txt`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const blob = new Blob([contenu], {
+    type: 'text/plain;charset=utf-8;'
+  });
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.href     = url;
+  a.download = `powerapp-rapport-${auj}.txt`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-    Utils.toast('📄 Rapport exporté !', 'success');
-  },
+  Utils.toast('📄 Rapport exporté !', 'success');
+},
 
   // ════════════════════════════════════════════════════════
   // HISTORIQUE TAB
