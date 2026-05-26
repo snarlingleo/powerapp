@@ -132,16 +132,37 @@ function _rendreContenu(page, container, options = {}) {
     switch(page) {
       case 'home':         _rendreHome(container);                        break;
       case 'training':     _rendreTraining(container);                    break;
-      case 'live':
-  // ✅ Si séance déjà en cours → ne pas re-render
+      // ════════════════════════════════════════════════════════════
+// _rendreContenu() — case 'live' ✅ v4.0
+// Remplace le case 'live' complet dans le switch
+// ════════════════════════════════════════════════════════════
+case 'live': {
+  // ✅ FIX v4.0 — Bloc scoped pour éviter
+  // le break orphelin
   const seanceEnCours = document.getElementById('live-exo-0');
-  const chronoActif   = Chrono?._actif || false;
+  const chronoActif   = (typeof Chrono !== 'undefined')
+    && Chrono?._actif;
 
   if (seanceEnCours && chronoActif) {
-    // Séance déjà lancée → juste scroller en haut
     container.scrollTop = 0;
     break;
   }
+
+  const skipChecklist = options.skipChecklist
+    || Utils.storage.get('ft_skip_checklist', false);
+
+  const seanceIdLive = options.seanceId
+    || Programme.getSeanceduJour()?.id;
+
+  if (!skipChecklist && seanceIdLive) {
+    _rendreChecklistPreSeance(
+      container, options, seanceIdLive
+    );
+  } else {
+    _rendreLive(container, options);
+  }
+  break;
+}
 
   const skipChecklist = options.skipChecklist
     || Utils.storage.get('ft_skip_checklist', false);
@@ -5620,23 +5641,42 @@ validerSerieLR(seanceId, exoRef, exoIdx, serieIdx,
   } catch(e) {}
 
   // ✅ Chrono — démarre auto à la première série si pas encore démarré
+// ════════════════════════════════════════════════════════════
+// validerSerieLR() — ✅ v4.0 Chrono sécurisé
+// Remplace la section "// ✅ Chrono — démarre auto..."
+// ════════════════════════════════════════════════════════════
+
+// ✅ FIX v4.0 — Vérifier Chrono._actif avant accès
 try {
-  if (!Chrono._actif) {
-    Chrono.reset();
-    Chrono.demarrer();
+  const chronoActif = typeof Chrono !== 'undefined'
+    && Chrono._actif;
+
+  if (!chronoActif) {
+    if (typeof Chrono !== 'undefined' && Chrono.reset) {
+      Chrono.reset();
+    }
+    if (typeof Chrono !== 'undefined' && Chrono.demarrer) {
+      Chrono.demarrer();
+    }
+
     const nomSeance = (window.SEANCES_BASE||{})[seanceId]?.nom
       || 'Séance en cours';
-    ChronoSticky.afficher(nomSeance);
-    // ✅ Démarrer le tracker ici si pas encore fait
+
+    if (typeof ChronoSticky !== 'undefined') {
+      ChronoSticky.afficher(nomSeance);
+    }
+
     try {
       if (!Tracker._seanceEnCours) {
         Tracker.demarrerSeance(seanceId);
       }
     } catch(e) {}
-    // ✅ Mettre à jour le bouton démarrer
+
     App._mettreAJourBtnDemarrer(true);
   }
-} catch(e) {}
+} catch(e) {
+  console.warn('[App] Erreur Chrono démarrage:', e);
+}
 
   // ✅ Mettre à jour le bouton → validé
   const btn = document.getElementById(
@@ -6087,14 +6127,25 @@ function _afficherResumSeance(seanceId, duree, volume, prs) {
     : scoreSeance >= 40 ? '👍'
     : '😤';
 
-  // ✅ Durée formatée
-  const dureeAffichee = (() => {
-    try {
+  // ════════════════════════════════════════════════════════════
+// _afficherResumSeance() — ✅ v4.0 duréeAffichée sécurisée
+// Remplace la section "const dureeAffichee = ..."
+// ════════════════════════════════════════════════════════════
+const dureeAffichee = (() => {
+  try {
+    if (typeof TempsSalle !== 'undefined'
+        && TempsSalle.recuperer) {
       const sec = TempsSalle.recuperer(seanceId);
-      if (sec > 60) return TempsSalle.formaterDuree(sec);
-    } catch(e) {}
-    return Utils.formatDuree(duree);
-  })();
+      if (sec && sec > 60) {
+        return TempsSalle.formaterDuree(sec);
+      }
+    }
+    if (duree > 0) return Utils.formatDuree(duree);
+    return '—';
+  } catch(e) {
+    return duree > 0 ? Utils.formatDuree(duree) : '—';
+  }
+})();
 
   // ✅ PRs de la séance
   let prsDetails = [];
@@ -6538,11 +6589,21 @@ const ResumSeance = {
       try { volume    = Tracker.getVolumeSemaine();  } catch(e) {}
       try { scoreForm = Tracker.calculerScoreForme().score; } catch(e) {}
       try {
-        const sec = TempsSalle.recuperer(seanceId);
-        dureeAff  = sec > 60
-          ? TempsSalle.formaterDuree(sec)
-          : '—';
-      } catch(e) {}
+  // ✅ FIX v4.0 — Vérifier TempsSalle avant appel
+  if (typeof TempsSalle !== 'undefined'
+      && TempsSalle.recuperer) {
+    const sec = TempsSalle.recuperer(seanceId);
+    if (sec && sec > 60) {
+      dureeAff = TempsSalle.formaterDuree(sec);
+    } else if (duree > 0) {
+      dureeAff = Utils.formatDuree(duree);
+    }
+  } else if (duree > 0) {
+    dureeAff = Utils.formatDuree(duree);
+  }
+} catch(e) {
+  if (duree > 0) dureeAff = Utils.formatDuree(duree);
+}
       try {
         prs = (Tracker.getPRsSeance(seanceId) || []).length;
       } catch(e) {}
@@ -7358,23 +7419,36 @@ window.GalerieExercices = GalerieExercices;
 // ════════════════════════════════════════════════════════════
 // INIT PRINCIPAL
 // ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// init() ✅ v4.0 — Plus robuste
+// ════════════════════════════════════════════════════════════
 async function init() {
   try {
-    console.log('🚀 PowerApp v3.0 — Init...');
-    try { i18n.init(); } catch(e) {}
+    console.log('🚀 PowerApp v4.0 — Init...');
 
-    const profil = Utils.storage.get('ft_profil', null);
-    if (!profil?.nom) { _afficherOnboarding(); return; }
+    try { i18n?.init?.(); } catch(e) {}
 
-    document.getElementById('splash-screen').style.display = 'none';
-    document.getElementById('app-wrapper').style.display   = 'flex';
+    // ✅ FIX v4.0 — Vérifier ft_profil ET ft_profil_onboarding
+    const profil1  = Utils.storage.get('ft_profil', null);
+    const profil2  = Utils.storage.get('ft_profil_onboarding', null);
+    const profilOk = profil1?.nom || profil2?.nom;
 
-    try { Tracker.init?.();               } catch(e) {}
-    try { Programme.getDateDebut();       } catch(e) {}
-    try { Gamification.verifierTrophees();} catch(e) {}
-    try { await Notifications.init();     } catch(e) {}
-    try { Offline.init();                 } catch(e) {}
-    try { Offline.initInstall();          } catch(e) {}
+    if (!profilOk) {
+      _afficherOnboarding();
+      return;
+    }
+
+    const splash = document.getElementById('splash-screen');
+    const app    = document.getElementById('app-wrapper');
+    if (splash) splash.style.display = 'none';
+    if (app)    app.style.display    = 'flex';
+
+    try { Tracker.init?.();                          } catch(e) {}
+    try { Programme.getDateDebut();                  } catch(e) {}
+    try { Gamification.verifierTrophees();           } catch(e) {}
+    try { await Notifications.init();                } catch(e) {}
+    try { Offline.init?.();                          } catch(e) {}
+    try { Offline.initInstall?.();                   } catch(e) {}
 
     try {
       const jours = Tracker.getJoursAbsence();
@@ -7385,67 +7459,75 @@ async function init() {
     } catch(e) {}
 
     try {
-      if (Programme.isDecharge?.())
-        setTimeout(() => Notifications.notifierDecharge(), 5000);
+      if (Programme.isDecharge?.()) {
+        setTimeout(() => {
+          Notifications.notifierDecharge?.();
+        }, 5000);
+      }
     } catch(e) {}
 
     try {
-      if (Offline.estEnLigne() && Offline._pendingQueue?.length > 0)
-        setTimeout(() => Offline.syncPendingQueue(), 4000);
+      if (Offline.estEnLigne?.()
+          && Offline._pendingQueue?.length > 0) {
+        setTimeout(() => Offline.syncPendingQueue?.(), 4000);
+      }
     } catch(e) {}
 
     naviguer('home');
     _updateHeaderXP();
-    // ✅ FIX BACKGROUND TIMER — Détecter retour au premier plan
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    // Vérifier si timer repos fini pendant l'absence
-    try {
-      LiveRapide._verifierTimerAuRetour();
-    } catch(e) {}
 
-    // Rafraîchir le chrono sticky
-    try {
-      if (ChronoSticky._visible) {
-        const disp = document.querySelector(
-          '.chrono-sticky-display'
-        );
-        if (disp && Chrono?._actif) {
-          disp.textContent =
-            Chrono.formaterDuree(
-              Chrono.getDureeSecondes()
+    // ✅ FIX BACKGROUND TIMER
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          LiveRapide._verifierTimerAuRetour();
+        } catch(e) {}
+        try {
+          if (ChronoSticky._visible) {
+            const disp = document.querySelector(
+              '.chrono-sticky-display'
             );
-        }
+            if (disp && Chrono?._actif) {
+              const sec = Chrono.getDureeSecondes?.() || 0;
+              disp.textContent =
+                Chrono.formaterDuree?.(sec) || '00:00';
+            }
+          }
+        } catch(e) {}
       }
-    } catch(e) {}
-  }
-}); 
-
-    try { ThemeManager.init(); } catch(e) {}
-    try { SwipeNav.init();     } catch(e) {}
-    try { SeanceGuidee.prechargerVoix(); } catch(e) {} 
-    try { TimerManager.initAlarme(); } catch(e) {}
-
-    setTimeout(() => {
-      try { ThemeManager._injecterBtn(); } catch(e) {}
-      try { _updateHeaderXP();           } catch(e) {}
-    }, 300);
-
-    navigator.serviceWorker?.addEventListener('message', event => {
-      const { type, page } = event.data || {};
-      if (type === 'NAVIGATE' && page) { try { naviguer(page); } catch(e) {} }
     });
 
-    console.log('✅ PowerApp v3.0 — Prêt !');
+    try { ThemeManager.init?.();       } catch(e) {}
+    try { SwipeNav.init?.();           } catch(e) {}
+    try { SeanceGuidee.prechargerVoix?.(); } catch(e) {}
+    try { TimerManager.initAlarme?.(); } catch(e) {}
+
+    setTimeout(() => {
+      try { ThemeManager._injecterBtn?.(); } catch(e) {}
+      try { _updateHeaderXP();             } catch(e) {}
+    }, 300);
+
+    navigator.serviceWorker?.addEventListener('message',
+      event => {
+        const { type, page } = event.data || {};
+        if (type === 'NAVIGATE' && page) {
+          try { naviguer(page); } catch(e) {}
+        }
+      }
+    );
+
+    console.log('✅ PowerApp v4.0 — Prêt !');
 
   } catch(e) {
     console.error('[App] Erreur init:', e);
-    document.getElementById('splash-screen')?.style.setProperty('display','none');
-    document.getElementById('app-wrapper')?.style.setProperty('display','flex');
+    const splash = document.getElementById('splash-screen');
+    const app    = document.getElementById('app-wrapper');
+    if (splash) splash.style.display = 'none';
+    if (app)    app.style.display    = 'flex';
     naviguer('home');
   }
 
-  try { Sounds.init(); } catch(e) {}
+  try { Sounds?.init?.(); } catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════════
@@ -8763,46 +8845,70 @@ function _renderEtapeOb(etape) {
     _renderEtapeOnboarding(etape, window._obData);
 }
 
+// ════════════════════════════════════════════════════════════
+// ONBOARDING — _terminerOb() v4.0
+// ════════════════════════════════════════════════════════════
 function _terminerOb() {
   try {
-    // ✅ Sauvegarder via Profil.js (nouveau système)
-    const profilComplet = Profil.set({
-      nom:            window._obData.nom      || 'Athlète',
-      poids:          window._obData.poids,
-      taille:         window._obData.taille,
-      age:            window._obData.age,
-      genre:          window._obData.genre    || 'homme',
-      objectif:       window._obData.objectif || 'forme',
-      niveau:         window._obData.niveau   || 'intermediaire',
-      lieu:           window._obData.lieu     || 'salle',
-      muscles_cibles: window._obData.muscles_cibles || [],
-      avatar:         '💪',
-      dateCreation:   Utils.aujourd_hui()
-    });
+    // ✅ FIX v4.0 — Vérifier que Profil.js est chargé
+    let profil = {};
+    if (typeof Profil !== 'undefined' && Profil.set) {
+      profil = Profil.set({
+        nom:            window._obData.nom      || 'Athlète',
+        poids:          window._obData.poids,
+        taille:         window._obData.taille,
+        age:            window._obData.age,
+        genre:          window._obData.genre    || 'homme',
+        objectif:       window._obData.objectif || 'forme',
+        niveau:         window._obData.niveau   || 'intermediaire',
+        lieu:           window._obData.lieu     || 'salle',
+        muscles_cibles: window._obData.muscles_cibles || [],
+        avatar:         '💪',
+        dateCreation:   Utils.aujourd_hui()
+      });
+    } else {
+      // ✅ Fallback si Profil.js absent
+      profil = {
+        nom:    window._obData.nom || 'Athlète',
+        avatar: '💪'
+      };
+      // Sauvegarder manuellement
+      const data = {
+        nom:            window._obData.nom      || 'Athlète',
+        poids:          window._obData.poids    || 80,
+        taille:         window._obData.taille   || 175,
+        age:            window._obData.age      || 25,
+        genre:          window._obData.genre    || 'homme',
+        objectif:       window._obData.objectif || 'forme',
+        niveau:         window._obData.niveau   || 'intermediaire',
+        lieu:           window._obData.lieu     || 'salle',
+        muscles_cibles: window._obData.muscles_cibles || [],
+        avatar:         '💪',
+        dateCreation:   Utils.aujourd_hui()
+      };
+      // Sauvegarder dans ft_profil ET ft_profil_onboarding
+      Utils.storage.set('ft_profil', data);
+      Utils.storage.set('ft_profil_onboarding', data);
+      profil = data;
+    }
 
     Programme.setDateDebut(Utils.aujourd_hui());
     Gamification.ajouterXP(200, 'Bienvenue');
-    // ✅ Le reste de _terminerOb reste identique...
 
-    // ✅ Générer et appliquer le programme IA automatiquement
+    // ✅ Générer et appliquer le programme IA
     if (window._obProgrammePropose) {
       try {
         const config = {
           ...window._obProgrammePropose,
-          // ✅ S'assurer que les jours_specifiques reflètent
-          // le planning qui commence aujourd'hui
-          jours_specifiques: null // laisser _genererPlanning recalculer
+          jours_specifiques: null
         };
 
-        // ✅ Recalculer le planning depuis aujourd'hui
         const aujourdhuiIdx = Utils.indexJourSemaine(
           Utils.aujourd_hui()
         );
         const nbJours    = config.nbJours || 4;
-        const styleChoix = config.style   || 'ppl';
-
-        // Recréer les jours en commençant par aujourd'hui
         const joursFinaux = [];
+
         for (
           let offset = 0;
           offset < 7 && joursFinaux.length < nbJours;
@@ -8813,13 +8919,13 @@ function _terminerOb() {
           const estConsec = dernier !== undefined
             && (jourCible - dernier + 7) % 7 === 1;
 
-          if (nbJours <= 4 && estConsec && joursFinaux.length > 0) {
+          if (nbJours <= 4 && estConsec
+              && joursFinaux.length > 0) {
             continue;
           }
           joursFinaux.push(jourCible);
         }
 
-        // Compléter si besoin
         if (joursFinaux.length < nbJours) {
           for (
             let i = 0;
@@ -8835,14 +8941,11 @@ function _terminerOb() {
 
         config.jours_specifiques = joursFinaux;
 
-        // ✅ Générer le programme via le Coach IA
         const programme = Coach.ProgrammeIA.generer(config);
-
         console.log(
-          '[Onboarding] Programme IA généré et appliqué ✅',
+          '[Onboarding] Programme IA généré ✅',
           programme
         );
-
         Utils.toast(
           `🧠 Programme ${programme.styleLabel} activé !`,
           'success', 3000
@@ -8854,46 +8957,48 @@ function _terminerOb() {
       }
     }
 
-    // ✅ Si l'utilisateur veut personnaliser via le questionnaire IA
     if (window._obOuvrirIA) {
       window._obOuvrirIA = false;
       document.getElementById('onboarding-screen')
-        .classList.add('hidden');
+        ?.classList.add('hidden');
       document.getElementById('app-wrapper')
-        .style.display = 'flex';
+        ?.style.setProperty('display','flex');
       naviguer('home');
-
       setTimeout(() => {
         Coach.ProgrammeIA._modeQuestionnaire = true;
         Coach.ProgrammeIA._etapeActuelle     = 0;
         Coach.ProgrammeIA._reponses          = {};
         naviguer('adaptatif');
       }, 500);
-
       return;
     }
 
     document.getElementById('onboarding-screen')
-      .classList.add('hidden');
+      ?.classList.add('hidden');
     document.getElementById('app-wrapper')
-      .style.display = 'flex';
+      ?.style.setProperty('display','flex');
 
     naviguer('home');
 
     Utils.toast(
-      `Bienvenue ${profil.nom} ! 🎉`,
+      `Bienvenue ${profil.nom || 'Athlète'} ! 🎉`,
       'success', 4000
     );
     Utils.confetti(2000);
 
-    // ✅ Nettoyer les variables temporaires
     window._obProgrammePropose = null;
     window._obProgrammeValide  = null;
     window._obOuvrirIA         = null;
 
   } catch(e) {
     console.error('[App] Erreur onboarding:', e);
-    window.location.reload();
+    // ✅ FIX — Ne pas recharger brutalement
+    // Juste afficher l'app
+    document.getElementById('onboarding-screen')
+      ?.classList.add('hidden');
+    document.getElementById('app-wrapper')
+      ?.style.setProperty('display','flex');
+    naviguer('home');
   }
 }
 function _genererMessageCoach(nom, genre, objectif, muscles,
