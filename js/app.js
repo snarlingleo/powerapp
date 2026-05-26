@@ -177,7 +177,16 @@ case 'live': {
     _rendreLive(container, options);
   }
   break;
-      case 'stats':        Stats.render(container);                       break;
+      case 'stats':
+  if (typeof Stats !== 'undefined') {
+    Stats.render(container);
+  } else {
+    _rendrePlaceholder(
+      container,'📊','Statistiques',
+      'Module stats non disponible.'
+    );
+  }
+  break;
       case 'profil':       _rendreProfil(container);                      break;
       case 'coach':        Coach.renderCoachTab(container);               break;
       case 'defis':        Defis.render(container);                       break;
