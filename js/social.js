@@ -8,7 +8,7 @@
 const Social = {
 
   CONFIG: {
-    watermark:   'PowerApp · EverGPT',
+    watermark:   'PowerApp · Othmane',
     hashtags:    '#fitness #powerapp #musculation #progrès',
     hashtagsEN:  '#fitness #powerapp #gym #progress',
     hashtagsFemme: '#fitness #powerapp #bodygoals #gainage #fessiers',
