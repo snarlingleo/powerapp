@@ -1,35 +1,62 @@
 /* ============================================================
-   FitTracker Pro — Share v3.0 CORRIGÉ
+   PowerApp — Share v4.0
    Cartes stats + Apple Music + YouTube + Partage
+   + Genre-aware playlists + Muscles ciblés
+   + Heatmap musculaire carte semaine
    ============================================================ */
 
 const Share = {
 
   PLAYLISTS: {
-    reprise:      { nom:'Motivation Fitness',  emoji:'🌱', description:'Pour bien démarrer',         url:'https://music.apple.com/fr/search?term=motivation+fitness+workout',    urlYoutube:'https://www.youtube.com/results?search_query=motivation+fitness+playlist',    genre:'Pop / Urban'     },
-    construction: { nom:'Rap FR Workout',      emoji:'💪', description:'Pour les séances intenses',  url:'https://music.apple.com/fr/search?term=rap+francais+workout+2024',      urlYoutube:'https://www.youtube.com/results?search_query=rap+francais+sport+playlist+2024', genre:'Rap FR'          },
-    intensite:    { nom:'Électro Sport',       emoji:'🔥', description:'Pour dépasser tes limites',  url:'https://music.apple.com/fr/search?term=electro+sport+workout',          urlYoutube:'https://www.youtube.com/results?search_query=electro+sport+workout+playlist',   genre:'Electronic / EDM' },
-    peak:         { nom:'Hip-Hop Gym',         emoji:'🏆', description:'Pour les jours de PR',       url:'https://music.apple.com/fr/search?term=hip+hop+gym+workout',            urlYoutube:'https://www.youtube.com/results?search_query=hip+hop+gym+workout+playlist',     genre:'Hip-Hop'         },
-    jambes:       { nom:'Hard Rap FR',         emoji:'🦵', description:'Pour les séances jambes',    url:'https://music.apple.com/fr/search?term=hard+rap+francais+sport',        urlYoutube:'https://www.youtube.com/results?search_query=hard+rap+francais+sport',          genre:'Rap Français'    },
-    cardio:       { nom:'Dance Cardio Mix',    emoji:'🚴', description:'Rythme parfait cardio',      url:'https://music.apple.com/fr/search?term=dance+cardio+workout',           urlYoutube:'https://www.youtube.com/results?search_query=dance+cardio+workout+playlist',    genre:'Dance / Pop'     },
+    reprise:      { nom:'Motivation Fitness',  emoji:'🌱', description:'Pour bien démarrer',         url:'https://music.apple.com/fr/search?term=motivation+fitness+workout',    urlYoutube:'https://www.youtube.com/results?search_query=motivation+fitness+playlist',    genre:'Pop / Urban'      },
+    construction: { nom:'Rap FR Workout',      emoji:'💪', description:'Pour les séances intenses',  url:'https://music.apple.com/fr/search?term=rap+francais+workout+2024',      urlYoutube:'https://www.youtube.com/results?search_query=rap+francais+sport+playlist+2024', genre:'Rap FR'           },
+    intensite:    { nom:'Électro Sport',       emoji:'🔥', description:'Pour dépasser tes limites',  url:'https://music.apple.com/fr/search?term=electro+sport+workout',          urlYoutube:'https://www.youtube.com/results?search_query=electro+sport+workout+playlist',   genre:'Electronic / EDM'  },
+    peak:         { nom:'Hip-Hop Gym',         emoji:'🏆', description:'Pour les jours de PR',       url:'https://music.apple.com/fr/search?term=hip+hop+gym+workout',            urlYoutube:'https://www.youtube.com/results?search_query=hip+hop+gym+workout+playlist',     genre:'Hip-Hop'          },
+    jambes:       { nom:'Hard Rap FR',         emoji:'🦵', description:'Pour les séances jambes',    url:'https://music.apple.com/fr/search?term=hard+rap+francais+sport',        urlYoutube:'https://www.youtube.com/results?search_query=hard+rap+francais+sport',          genre:'Rap Français'     },
+    cardio:       { nom:'Dance Cardio Mix',    emoji:'🚴', description:'Rythme parfait cardio',      url:'https://music.apple.com/fr/search?term=dance+cardio+workout',           urlYoutube:'https://www.youtube.com/results?search_query=dance+cardio+workout+playlist',    genre:'Dance / Pop'      },
     repos:        { nom:'Chill Récupération',  emoji:'😴', description:'Stretching & récupération',  url:'https://music.apple.com/fr/search?term=chill+relaxation+stretching',    urlYoutube:'https://www.youtube.com/results?search_query=chill+stretching+music+playlist',  genre:'Ambient / Chill'  },
-    decharge:     { nom:'Lo-Fi Study & Train', emoji:'🧘', description:'Décharge — concentration',   url:'https://music.apple.com/fr/search?term=lofi+hip+hop+study',             urlYoutube:'https://www.youtube.com/results?search_query=lofi+hip+hop+study+beats',          genre:'Lo-Fi / Ambient'  }
+    decharge:     { nom:'Lo-Fi Study & Train', emoji:'🧘', description:'Décharge — concentration',   url:'https://music.apple.com/fr/search?term=lofi+hip+hop+study',             urlYoutube:'https://www.youtube.com/results?search_query=lofi+hip+hop+study+beats',          genre:'Lo-Fi / Ambient'  },
+    // ✅ NOUVEAU v4.0 — Playlists femme
+    lower_body:   { nom:'Girls Power Workout', emoji:'🍑', description:'Pour le Lower Body',         url:'https://music.apple.com/fr/search?term=girls+power+workout+pop',        urlYoutube:'https://www.youtube.com/results?search_query=girls+power+workout+playlist',      genre:'Pop / Urban Femme' },
+    latin_femme:  { nom:'Latin Pop Fitness',   emoji:'💃', description:'Energie et motivation',      url:'https://music.apple.com/fr/search?term=latin+pop+fitness+workout',      urlYoutube:'https://www.youtube.com/results?search_query=latin+pop+workout+playlist',        genre:'Latin / Dance'    },
+    pilates:      { nom:'Pilates & Gainage',   emoji:'🧘', description:'Focus & core',               url:'https://music.apple.com/fr/search?term=pilates+fitness+music',          urlYoutube:'https://www.youtube.com/results?search_query=pilates+workout+music+playlist',    genre:'Ambient / Yoga'   }
   },
 
+  // ✅ NOUVEAU v4.0 — Cache canvas
+  _cache: {},
+
   // ════════════════════════════════════════════════════════
-  // PLAYLIST DU JOUR
+  // PLAYLIST DU JOUR — genre-aware
   // ════════════════════════════════════════════════════════
   getPlaylistDuJour() {
     try {
-      let seance = null, phase = { nom:'Construction' };
+      let seance = null;
+      let phase  = { nom:'Construction' };
+
+      // ✅ NOUVEAU v4.0 — Récupérer genre
+      let genre = 'homme';
+      try {
+        genre = Utils.storage.get(
+          'ft_profil_onboarding', {}
+        ).genre || 'homme';
+      } catch(e) {}
+
       try { seance = Programme.getSeanceduJour?.();  } catch(e) {}
       try { phase  = Programme.getPhaseActuelle?.(); } catch(e) {}
-
       try {
         if (Programme.isDecharge?.()) return this.PLAYLISTS.decharge;
       } catch(e) {}
 
       if (!seance) return this.PLAYLISTS.repos;
+
+      // ✅ Genre femme → playlists adaptées
+      if (genre === 'femme') {
+        if (seance.id?.includes('lower') || seance.id?.includes('fessier')) {
+          return this.PLAYLISTS.lower_body;
+        }
+        if (seance.id?.includes('cardio')) return this.PLAYLISTS.latin_femme;
+        if (seance.id?.includes('core'))   return this.PLAYLISTS.pilates;
+      }
 
       if (seance.id?.includes('jambes'))  return this.PLAYLISTS.jambes;
       if (seance.id?.includes('cardio'))  return this.PLAYLISTS.cardio;
@@ -52,6 +79,10 @@ const Share = {
   // GÉNÉRER CARTE
   // ════════════════════════════════════════════════════════
   async genererCarte(type = 'semaine') {
+    // ✅ NOUVEAU v4.0 — Cache invalidé chaque nouveau jour
+    const cacheKey  = `${type}_${Utils.aujourd_hui()}`;
+    if (this._cache[cacheKey]) return this._cache[cacheKey];
+
     const canvas  = document.createElement('canvas');
     canvas.width  = 1080;
     canvas.height = 1080;
@@ -66,11 +97,20 @@ const Share = {
       default:            await this._carteSemanale(ctx, canvas);
     }
 
+    // ✅ Cache pendant 10 min
+    this._cache[cacheKey] = canvas;
+    setTimeout(() => { delete this._cache[cacheKey]; }, 10 * 60 * 1000);
+
     return canvas;
   },
 
+  // ✅ Invalider le cache (après une séance par exemple)
+  invaliderCache() {
+    this._cache = {};
+  },
+
   // ════════════════════════════════════════════════════════
-  // CARTE SEMAINE
+  // CARTE SEMAINE — ✅ v4.0 avec heatmap musculaire
   // ════════════════════════════════════════════════════════
   async _carteSemanale(ctx, canvas) {
     const W = canvas.width, H = canvas.height;
@@ -78,7 +118,10 @@ const Share = {
     let profil  = { nom:'Athlète', avatar:'💪' };
     let seances = 0, volume = 0;
     let streak  = { count:0, max:0 };
-    let xp      = { total:0, pourcentage:0, niveau:{ emoji:'💪', numero:1, nom:'Débutant' } };
+    let xp      = {
+      total:0, pourcentage:0,
+      niveau:{ emoji:'💪', numero:1, nom:'Débutant' }
+    };
     let phase   = { nom:'Reprise', couleur:'#8bf0bb', emoji:'🌱' };
     let prs     = 0;
     let comp    = { delta:0 };
@@ -92,6 +135,11 @@ const Share = {
     try { prs     = Object.keys(Tracker.getAllPRs()).length; } catch(e) {}
     try { comp    = Tracker.getComparaisonSemaines();       } catch(e) {}
 
+    // ✅ NOUVEAU v4.0 — Volume par muscle
+    let volumeMuscle = [];
+    try { volumeMuscle = Tracker.getVolumeParMuscle(7); } catch(e) {}
+
+    // Fond
     const grad = ctx.createLinearGradient(0, 0, W, H);
     grad.addColorStop(0, '#09092d');
     grad.addColorStop(0.5, '#1a1a4e');
@@ -106,31 +154,42 @@ const Share = {
     ctx.fillStyle = 'rgba(75,75,249,0.15)';
     for (let x = 40; x < W; x += 40)
       for (let y = 40; y < H; y += 40) {
-        ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, y, 1.5, 0, Math.PI*2);
+        ctx.fill();
       }
 
+    // Badges header
     ctx.fillStyle = '#4b4bf9';
-    this._roundRect(ctx, 60, 60, 200, 56, 28); ctx.fill();
+    this._roundRect(ctx, 60, 60, 200, 56, 28);
+    ctx.fill();
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 22px system-ui'; ctx.textAlign = 'center';
+    ctx.font = 'bold 22px system-ui';
+    ctx.textAlign = 'center';
     ctx.fillText('⚡ PowerApp', 160, 95);
 
     ctx.fillStyle = (phase.couleur||'#8bf0bb') + '33';
-    this._roundRect(ctx, W-280, 60, 220, 56, 28); ctx.fill();
-    ctx.strokeStyle = phase.couleur||'#8bf0bb'; ctx.lineWidth = 2;
-    this._roundRect(ctx, W-280, 60, 220, 56, 28); ctx.stroke();
+    this._roundRect(ctx, W-280, 60, 220, 56, 28);
+    ctx.fill();
+    ctx.strokeStyle = phase.couleur||'#8bf0bb';
+    ctx.lineWidth   = 2;
+    this._roundRect(ctx, W-280, 60, 220, 56, 28);
+    ctx.stroke();
     ctx.fillStyle = phase.couleur||'#8bf0bb';
     ctx.font = 'bold 20px system-ui';
     ctx.fillText(`${phase.emoji||'🌱'} ${phase.nom}`, W-170, 95);
 
+    // Titre
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 72px system-ui'; ctx.textAlign = 'center';
+    ctx.font = 'bold 72px system-ui';
+    ctx.textAlign = 'center';
     ctx.fillText('Ma Semaine', W/2, 220);
-
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '32px system-ui';
     ctx.fillText(
-      `${profil.nom} · ${Utils.formatDateCourt(Utils.debutSemaine(Utils.aujourd_hui()))}`,
+      `${profil.nom} · ${Utils.formatDateCourt(
+        Utils.debutSemaine(Utils.aujourd_hui())
+      )}`,
       W/2, 270
     );
 
@@ -138,66 +197,94 @@ const Share = {
     lineGrad.addColorStop(0, 'transparent');
     lineGrad.addColorStop(0.5, '#4b4bf9');
     lineGrad.addColorStop(1, 'transparent');
-    ctx.strokeStyle = lineGrad; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(60, 310); ctx.lineTo(W-60, 310); ctx.stroke();
+    ctx.strokeStyle = lineGrad;
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(60, 310);
+    ctx.lineTo(W-60, 310);
+    ctx.stroke();
 
+    // Stats 4 colonnes
     const stats = [
-      { label:'Séances', val:`${seances}`,                emoji:'📅', color:'#4b4bf9' },
+      { label:'Séances', val:`${seances}`,               emoji:'📅', color:'#4b4bf9' },
       { label:'Volume',  val:Utils.formatVolume(volume),  emoji:'🏋️', color:'#8bf0bb' },
       { label:'Streak',  val:`${streak.count}🔥`,         emoji:'⚡', color:'#f9ef77' },
-      { label:'Records', val:`${prs}`,                    emoji:'🏆', color:'#bfa1ff' }
+      { label:'Records', val:`${prs}`,                   emoji:'🏆', color:'#bfa1ff' }
     ];
 
-    const cardW = 220, cardH = 220;
+    const cardW  = 220, cardH = 220;
     const startX = (W - (cardW*4 + 30*3)) / 2;
 
     stats.forEach((stat, i) => {
       const x = startX + i*(cardW+30), y = 350;
       ctx.fillStyle = 'rgba(255,255,255,0.05)';
-      this._roundRect(ctx, x, y, cardW, cardH, 24); ctx.fill();
-      ctx.strokeStyle = stat.color + '44'; ctx.lineWidth = 2;
-      this._roundRect(ctx, x, y, cardW, cardH, 24); ctx.stroke();
-      ctx.font = '48px system-ui'; ctx.textAlign = 'center';
+      this._roundRect(ctx, x, y, cardW, cardH, 24);
+      ctx.fill();
+      ctx.strokeStyle = stat.color + '44';
+      ctx.lineWidth   = 2;
+      this._roundRect(ctx, x, y, cardW, cardH, 24);
+      ctx.stroke();
+      ctx.font = '48px system-ui';
+      ctx.textAlign = 'center';
       ctx.fillText(stat.emoji, x+cardW/2, y+72);
-      ctx.fillStyle = stat.color; ctx.font = 'bold 52px system-ui';
+      ctx.fillStyle = stat.color;
+      ctx.font = 'bold 52px system-ui';
       ctx.fillText(stat.val, x+cardW/2, y+140);
-      ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '24px system-ui';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '24px system-ui';
       ctx.fillText(stat.label, x+cardW/2, y+185);
     });
 
+    // Delta volume
     const deltaColor = (comp.delta||0) >= 0 ? '#8bf0bb' : '#ff8d96';
-    ctx.fillStyle = deltaColor; ctx.font = 'bold 28px system-ui';
+    ctx.fillStyle = deltaColor;
+    ctx.font = 'bold 28px system-ui';
     ctx.textAlign = 'center';
     ctx.fillText(
       `${(comp.delta||0) >= 0 ? '+' : ''}${comp.delta||0}% vs semaine précédente`,
-      W/2, 600
+      W/2, 610
     );
 
-    const xpY = 640;
+    // XP bar
+    const xpY = 645;
     ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    this._roundRect(ctx, 60, xpY, W-120, 100, 20); ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px system-ui';
+    this._roundRect(ctx, 60, xpY, W-120, 100, 20);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 32px system-ui';
     ctx.textAlign = 'left';
-    ctx.fillText(`${xp.niveau.emoji} Niv.${xp.niveau.numero} — ${xp.niveau.nom}`, 100, xpY+42);
-    ctx.fillStyle = '#f9ef77'; ctx.font = 'bold 32px system-ui';
+    ctx.fillText(
+      `${xp.niveau.emoji} Niv.${xp.niveau.numero} — ${xp.niveau.nom}`,
+      100, xpY+42
+    );
+    ctx.fillStyle = '#f9ef77';
+    ctx.font = 'bold 32px system-ui';
     ctx.textAlign = 'right';
     ctx.fillText(`${xp.total} XP`, W-100, xpY+42);
 
     const bX = 100, bY = xpY+65, bW = W-200, bH = 16;
     ctx.fillStyle = 'rgba(255,255,255,0.1)';
-    this._roundRect(ctx, bX, bY, bW, bH, 8); ctx.fill();
+    this._roundRect(ctx, bX, bY, bW, bH, 8);
+    ctx.fill();
     const xpFill = ctx.createLinearGradient(bX, 0, bX+bW, 0);
-    xpFill.addColorStop(0, '#4b4bf9'); xpFill.addColorStop(1, '#f9ef77');
+    xpFill.addColorStop(0, '#4b4bf9');
+    xpFill.addColorStop(1, '#f9ef77');
     ctx.fillStyle = xpFill;
-    this._roundRect(ctx, bX, bY, Math.max(20, bW*(xp.pourcentage/100)), bH, 8);
+    this._roundRect(
+      ctx, bX, bY,
+      Math.max(20, bW*(xp.pourcentage/100)),
+      bH, 8
+    );
     ctx.fill();
 
-    // Heatmap
-    const hmY = 785, hmCellW = 100, hmCellH = 80;
+    // Heatmap semaine
+    const hmY    = 800;
+    const jours  = ['L','M','M','J','V','S','D'];
+    const hmCellW = 100, hmCellH = 80;
     const hmStartX = (W - (7*hmCellW + 6*12)) / 2;
-    const jours = ['L','M','M','J','V','S','D'];
 
-    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '22px system-ui';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '22px system-ui';
     ctx.textAlign = 'center';
     ctx.fillText('Cette semaine', W/2, hmY - 20);
 
@@ -211,25 +298,66 @@ const Share = {
       const x    = hmStartX + idx*(hmCellW+12), y = hmY;
 
       ctx.fillStyle =
-        etat === 'done'   ? '#4b4bf9' :
+        etat === 'done'   ? '#4b4bf9'               :
         etat === 'missed' ? 'rgba(255,141,150,0.4)' :
         etat === 'rest'   ? 'rgba(139,240,187,0.2)' :
                             'rgba(255,255,255,0.06)';
-      this._roundRect(ctx, x, y, hmCellW, hmCellH, 12); ctx.fill();
-
-      ctx.fillStyle = etat === 'done' ? '#ffffff' : 'rgba(255,255,255,0.5)';
-      ctx.font = 'bold 24px system-ui'; ctx.textAlign = 'center';
+      this._roundRect(ctx, x, y, hmCellW, hmCellH, 12);
+      ctx.fill();
+      ctx.fillStyle = etat === 'done'
+        ? '#ffffff' : 'rgba(255,255,255,0.5)';
+      ctx.font = 'bold 24px system-ui';
+      ctx.textAlign = 'center';
       ctx.fillText(jours[idx], x+hmCellW/2, y+30);
       ctx.font = '28px system-ui';
       ctx.fillText(
-        etat==='done' ? '✅' : etat==='missed' ? '❌' : etat==='rest' ? '😴' : '·',
+        etat==='done'   ? '✅'
+        : etat==='missed' ? '❌'
+        : etat==='rest'   ? '😴' : '·',
         x+hmCellW/2, y+62
       );
     }
 
-    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = '22px system-ui';
+    // ✅ NOUVEAU v4.0 — Top 3 muscles travaillés cette semaine
+    if (volumeMuscle.length > 0) {
+      const muscleY = hmY + 120;
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '20px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('Top muscles cette semaine', W/2, muscleY);
+
+      const colorIntens = {
+        haute:   '#ff8d96',
+        moyenne: '#4b4bf9',
+        faible:  '#8bf0bb'
+      };
+      const musclesToShow = volumeMuscle.slice(0, 4);
+      const mW    = (W - 120) / musclesToShow.length;
+
+      musclesToShow.forEach((m, i) => {
+        const x     = 60 + i * mW;
+        const color = colorIntens[m.intensite] || '#4b4bf9';
+        ctx.fillStyle = color + '33';
+        this._roundRect(ctx, x, muscleY+15, mW-10, 40, 10);
+        ctx.fill();
+        ctx.strokeStyle = color + '66';
+        ctx.lineWidth   = 1;
+        this._roundRect(ctx, x, muscleY+15, mW-10, 40, 10);
+        ctx.stroke();
+        ctx.fillStyle   = color;
+        ctx.font        = 'bold 18px system-ui';
+        ctx.textAlign   = 'center';
+        ctx.fillText(m.muscle, x + (mW-10)/2, muscleY+42);
+      });
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '22px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText('PowerApp · EverGPT · ' + Utils.aujourd_hui(), W/2, H-40);
+    ctx.fillText(
+      'PowerApp · EverGPT · ' + Utils.aujourd_hui(),
+      W/2, H-40
+    );
   },
 
   // ════════════════════════════════════════════════════════
@@ -244,58 +372,88 @@ const Share = {
 
     const top = Object.entries(prs)
       .filter(([,v]) => (v.rm1||0) > 0)
-      .sort(([,a],[,b]) => (b.rm1||0)-(a.rm1||0))
+      .sort(([,a],[,b]) => (b.rm1||0) - (a.rm1||0))
       .slice(0, 3);
 
     const grad = ctx.createLinearGradient(0, 0, W, H);
     grad.addColorStop(0, '#1a1200');
     grad.addColorStop(0.5, '#2a1f00');
     grad.addColorStop(1, '#09092d');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
 
     this._drawCircle(ctx, W/2, H/2, 500, 'rgba(249,239,119,0.05)');
     this._drawCircle(ctx, W/2, 200, 300, 'rgba(249,239,119,0.08)');
 
-    ctx.fillStyle = '#f9ef77'; ctx.font = 'bold 42px system-ui';
+    ctx.fillStyle = '#f9ef77';
+    ctx.font = 'bold 42px system-ui';
     ctx.textAlign = 'center';
     ctx.fillText('🏆 MES RECORDS PERSONNELS', W/2, 120);
-    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '30px system-ui';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '30px system-ui';
     ctx.fillText(profil.nom, W/2, 170);
 
     if (top.length === 0) {
-      ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '36px system-ui';
-      ctx.fillText('Lance tes séances pour voir tes records !', W/2, H/2);
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '36px system-ui';
+      ctx.fillText(
+        'Lance tes séances pour voir tes records !', W/2, H/2
+      );
     } else {
       const medals = ['🥇','🥈','🥉'];
       top.forEach(([ref, pr], i) => {
-        const ex = (window.EXERCICES||{})[ref] || {};
-        const y  = 230 + i*240;
+        const ex  = (window.EXERCICES||{})[ref] || {};
+        const y   = 230 + i*240;
 
         const cGrad = ctx.createLinearGradient(60, y, W-60, y+210);
-        cGrad.addColorStop(0, i===0 ? 'rgba(249,239,119,0.15)' : 'rgba(255,255,255,0.05)');
+        cGrad.addColorStop(0, i===0
+          ? 'rgba(249,239,119,0.15)' : 'rgba(255,255,255,0.05)');
         cGrad.addColorStop(1, 'rgba(75,75,249,0.05)');
         ctx.fillStyle = cGrad;
-        this._roundRect(ctx, 60, y, W-120, 210, 24); ctx.fill();
+        this._roundRect(ctx, 60, y, W-120, 210, 24);
+        ctx.fill();
 
-        ctx.strokeStyle = i===0 ? 'rgba(249,239,119,0.5)' : 'rgba(255,255,255,0.1)';
+        ctx.strokeStyle = i===0
+          ? 'rgba(249,239,119,0.5)' : 'rgba(255,255,255,0.1)';
         ctx.lineWidth = 2;
-        this._roundRect(ctx, 60, y, W-120, 210, 24); ctx.stroke();
+        this._roundRect(ctx, 60, y, W-120, 210, 24);
+        ctx.stroke();
 
-        ctx.font = '60px system-ui'; ctx.textAlign = 'left';
+        ctx.font = '60px system-ui';
+        ctx.textAlign = 'left';
         ctx.fillText(medals[i], 100, y+92);
-        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 38px system-ui';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 38px system-ui';
         ctx.fillText(`${ex.emoji||'💪'} ${ex.nom||ref}`, 180, y+72);
-        ctx.fillStyle = '#f9ef77'; ctx.font = 'bold 50px system-ui';
+        ctx.fillStyle = '#f9ef77';
+        ctx.font = 'bold 50px system-ui';
         ctx.textAlign = 'right';
         ctx.fillText(`${pr.poids}kg × ${pr.reps}`, W-100, y+82);
-        ctx.fillStyle = '#bfa1ff'; ctx.font = '30px system-ui';
+        ctx.fillStyle = '#bfa1ff';
+        ctx.font = '30px system-ui';
         ctx.fillText(`~${pr.rm1}kg 1RM`, W-100, y+130);
-        ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '24px system-ui';
-        ctx.fillText(pr.date ? Utils.formatDateCourt(pr.date) : '', W-100, y+175);
+
+        // ✅ NOUVEAU v4.0 — Ancien PR
+        if (pr.ancienPR?.poids) {
+          const gain = Utils.arrondir(pr.poids - pr.ancienPR.poids);
+          ctx.fillStyle = '#8bf0bb';
+          ctx.font = '24px system-ui';
+          ctx.fillText(
+            `↑ +${gain}kg vs ancien record`,
+            W-100, y+170
+          );
+        } else if (pr.date) {
+          ctx.fillStyle = 'rgba(255,255,255,0.3)';
+          ctx.font = '24px system-ui';
+          ctx.fillText(
+            Utils.formatDateCourt(pr.date), W-100, y+175
+          );
+        }
       });
     }
 
-    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = '22px system-ui';
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '22px system-ui';
     ctx.textAlign = 'center';
     ctx.fillText('PowerApp · EverGPT', W/2, H-40);
   },
@@ -317,104 +475,221 @@ const Share = {
     grad.addColorStop(0, '#1a0500');
     grad.addColorStop(0.5, '#2a0f00');
     grad.addColorStop(1, '#09092d');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
 
     this._drawCircle(ctx, W/2, H/2, 600, 'rgba(255,141,50,0.06)');
 
-    ctx.font = '200px system-ui'; ctx.textAlign = 'center';
+    ctx.font = '200px system-ui';
+    ctx.textAlign = 'center';
     ctx.fillText('🔥', W/2, 400);
 
-    ctx.fillStyle = '#ff8d00'; ctx.font = 'bold 160px system-ui';
+    ctx.fillStyle = '#ff8d00';
+    ctx.font = 'bold 160px system-ui';
     ctx.fillText(`${streak.count}`, W/2, 620);
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 52px system-ui';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 52px system-ui';
     ctx.fillText('JOURS CONSÉCUTIFS', W/2, 700);
-    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '32px system-ui';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '32px system-ui';
     ctx.fillText(profil.nom, W/2, 770);
-    ctx.fillStyle = '#f9ef77'; ctx.font = '28px system-ui';
-    ctx.fillText(`🏆 Record personnel : ${streak.max} jours`, W/2, 840);
-    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '26px system-ui';
-    ctx.fillText(`${xp.niveau.emoji} ${xp.niveau.nom} · ${xp.total} XP`, W/2, 920);
-    ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.font = '22px system-ui';
+    ctx.fillStyle = '#f9ef77';
+    ctx.font = '28px system-ui';
+    ctx.fillText(
+      `🏆 Record personnel : ${streak.max} jours`, W/2, 840
+    );
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '26px system-ui';
+    ctx.fillText(
+      `${xp.niveau.emoji} ${xp.niveau.nom} · ${xp.total} XP`,
+      W/2, 920
+    );
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.font = '22px system-ui';
     ctx.fillText('PowerApp · EverGPT', W/2, H-40);
   },
 
   // ════════════════════════════════════════════════════════
-  // CARTE PROFIL
+  // CARTE PROFIL — ✅ v4.0 avec muscles ciblés
   // ════════════════════════════════════════════════════════
   async _carteProfil(ctx, canvas) {
     const W = canvas.width, H = canvas.height;
 
     let profil   = { nom:'Athlète', avatar:'💪' };
-    let xp       = { total:0, pourcentage:0, niveau:{ emoji:'💪', numero:1, nom:'Débutant' } };
+    let xp       = {
+      total:0, pourcentage:0,
+      niveau:{ emoji:'💪', numero:1, nom:'Débutant' }
+    };
     let streak   = { count:0, max:0 };
     let total    = 0, prs = 0, trophees = 0;
     let infos    = { label:'S1', cycle:1, phase:{ emoji:'🌱' } };
 
-    try { profil   = Tracker.getProfil();                     } catch(e) {}
-    try { xp       = Gamification.getXP();                   } catch(e) {}
-    try { streak   = Tracker.getStreak();                     } catch(e) {}
-    try { total    = Tracker.getTotalSeances();               } catch(e) {}
-    try { prs      = Object.keys(Tracker.getAllPRs()).length; } catch(e) {}
-    try { trophees = Gamification.getTrophees().filter(t => t.debloquee).length; } catch(e) {}
-    try { infos    = Programme.getInfosProgramme();           } catch(e) {}
+    try { profil   = Tracker.getProfil();                              } catch(e) {}
+    try { xp       = Gamification.getXP();                            } catch(e) {}
+    try { streak   = Tracker.getStreak();                             } catch(e) {}
+    try { total    = Tracker.getTotalSeances();                        } catch(e) {}
+    try { prs      = Object.keys(Tracker.getAllPRs()).length;          } catch(e) {}
+    try {
+      trophees = Gamification.getTrophees()
+        .filter(t => t.debloquee).length;
+    } catch(e) {}
+    try { infos = Programme.getInfosProgramme();                       } catch(e) {}
+
+    // ✅ NOUVEAU v4.0 — Muscles ciblés depuis onboarding
+    let musclesCibles = [];
+    try {
+      const profilOb = Utils.storage.get('ft_profil_onboarding', {});
+      musclesCibles  = profilOb.muscles_cibles || [];
+    } catch(e) {}
+
+    // ✅ Genre
+    let genre = 'homme';
+    try {
+      genre = Utils.storage.get('ft_profil_onboarding', {})
+        .genre || 'homme';
+    } catch(e) {}
 
     const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, '#09092d'); grad.addColorStop(1, '#1a1a4e');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    grad.addColorStop(0, '#09092d');
+    grad.addColorStop(1, '#1a1a4e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
     this._drawCircle(ctx, W/2, 300, 500, 'rgba(75,75,249,0.08)');
 
+    // Avatar
     ctx.fillStyle = '#4b4bf9';
-    ctx.beginPath(); ctx.arc(W/2, 220, 120, 0, Math.PI*2); ctx.fill();
-    ctx.font = '100px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText(profil.avatar||'💪', W/2, 260);
-
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 56px system-ui';
-    ctx.fillText(profil.nom||'Athlète', W/2, 390);
-    ctx.fillStyle = '#f9ef77'; ctx.font = 'bold 32px system-ui';
-    ctx.fillText(`${xp.niveau.emoji} Niveau ${xp.niveau.numero} — ${xp.niveau.nom}`, W/2, 450);
-
-    const bX = 140, bY = 480, bW = W-280;
-    ctx.fillStyle = 'rgba(255,255,255,0.1)';
-    this._roundRect(ctx, bX, bY, bW, 20, 10); ctx.fill();
-    const xpGrad = ctx.createLinearGradient(bX, 0, bX+bW, 0);
-    xpGrad.addColorStop(0, '#4b4bf9'); xpGrad.addColorStop(1, '#f9ef77');
-    ctx.fillStyle = xpGrad;
-    this._roundRect(ctx, bX, bY, Math.max(20, bW*(xp.pourcentage/100)), 20, 10);
+    ctx.beginPath();
+    ctx.arc(W/2, 200, 110, 0, Math.PI*2);
     ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '22px system-ui';
-    ctx.fillText(`${xp.total} XP`, W/2, bY+50);
+    ctx.font = '90px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(profil.avatar||'💪', W/2, 240);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 56px system-ui';
+    ctx.fillText(profil.nom||'Athlète', W/2, 380);
+
+    // Badge genre
+    const genreLabel = genre === 'femme' ? '👩 Femme' : '👨 Homme';
+    ctx.fillStyle = 'rgba(191,161,255,0.2)';
+    this._roundRect(ctx, W/2-80, 395, 160, 36, 18);
+    ctx.fill();
+    ctx.fillStyle = '#bfa1ff';
+    ctx.font = '20px system-ui';
+    ctx.fillText(genreLabel, W/2, 419);
+
+    ctx.fillStyle = '#f9ef77';
+    ctx.font = 'bold 32px system-ui';
+    ctx.fillText(
+      `${xp.niveau.emoji} Niveau ${xp.niveau.numero} — ${xp.niveau.nom}`,
+      W/2, 470
+    );
+
+    const bX = 140, bY = 496, bW = W-280;
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    this._roundRect(ctx, bX, bY, bW, 18, 9);
+    ctx.fill();
+    const xpGrad = ctx.createLinearGradient(bX, 0, bX+bW, 0);
+    xpGrad.addColorStop(0, '#4b4bf9');
+    xpGrad.addColorStop(1, '#f9ef77');
+    ctx.fillStyle = xpGrad;
+    this._roundRect(
+      ctx, bX, bY,
+      Math.max(20, bW*(xp.pourcentage/100)),
+      18, 9
+    );
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '22px system-ui';
+    ctx.fillText(`${xp.total} XP`, W/2, bY+46);
 
     const gridS = [
-      { label:'Séances',  val:total,       color:'#4b4bf9', emoji:'📅' },
-      { label:'Streak',   val:streak.count,color:'#f9ef77', emoji:'🔥' },
-      { label:'Records',  val:prs,         color:'#bfa1ff', emoji:'🏆' },
-      { label:'Trophées', val:trophees,    color:'#8bf0bb', emoji:'🎖️' }
+      { label:'Séances',  val:total,        color:'#4b4bf9', emoji:'📅' },
+      { label:'Streak',   val:streak.count, color:'#f9ef77', emoji:'🔥' },
+      { label:'Records',  val:prs,          color:'#bfa1ff', emoji:'🏆' },
+      { label:'Trophées', val:trophees,     color:'#8bf0bb', emoji:'🎖️' }
     ];
-    const gW = 220, gStartX = (W-(gW*4+24*3))/2;
+    const gW      = 220;
+    const gStartX = (W-(gW*4+24*3)) / 2;
+
     gridS.forEach((s, i) => {
-      const x = gStartX+i*(gW+24), y = 580;
+      const x = gStartX + i*(gW+24), y = 580;
       ctx.fillStyle = 'rgba(255,255,255,0.05)';
-      this._roundRect(ctx, x, y, gW, 180, 20); ctx.fill();
-      ctx.strokeStyle = s.color+'33'; ctx.lineWidth = 2;
-      this._roundRect(ctx, x, y, gW, 180, 20); ctx.stroke();
-      ctx.font = '44px system-ui'; ctx.textAlign = 'center';
+      this._roundRect(ctx, x, y, gW, 180, 20);
+      ctx.fill();
+      ctx.strokeStyle = s.color + '33';
+      ctx.lineWidth   = 2;
+      this._roundRect(ctx, x, y, gW, 180, 20);
+      ctx.stroke();
+      ctx.font = '44px system-ui';
+      ctx.textAlign = 'center';
       ctx.fillText(s.emoji, x+gW/2, y+60);
-      ctx.fillStyle = s.color; ctx.font = 'bold 52px system-ui';
+      ctx.fillStyle = s.color;
+      ctx.font = 'bold 52px system-ui';
       ctx.fillText(`${s.val}`, x+gW/2, y+125);
-      ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '22px system-ui';
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = '22px system-ui';
       ctx.fillText(s.label, x+gW/2, y+162);
     });
 
+    // Programme
     ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    this._roundRect(ctx, 60, 810, W-120, 100, 20); ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 30px system-ui';
+    this._roundRect(ctx, 60, 810, W-120, 80, 20);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px system-ui';
     ctx.textAlign = 'center';
     ctx.fillText(
       `${infos.phase?.emoji||'🌱'} ${infos.label} · Cycle ${infos.cycle}`,
-      W/2, 872
+      W/2, 858
     );
 
-    ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.font = '22px system-ui';
+    // ✅ NOUVEAU v4.0 — Muscles ciblés
+    if (musclesCibles.length > 0) {
+      const muscleY = 910;
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '22px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('🎯 Zones ciblées', W/2, muscleY);
+
+      const mLabels = {
+        pectoraux:'Pec', epaules:'Épaules', biceps:'Biceps',
+        triceps:'Triceps', abdos:'Abdos', dos:'Dos',
+        fessiers:'Fessiers', quadriceps:'Quad', ischio:'Ischio',
+        mollets:'Mollets', trapeze:'Trapèze'
+      };
+      const mColors = {
+        pectoraux:'#4b4bf9', epaules:'#bfa1ff', biceps:'#8bf0bb',
+        triceps:'#bfa1ff',   abdos:'#f9ef77',   dos:'#4b4bf9',
+        fessiers:'#ff8d96',  quadriceps:'#ff8d96', ischio:'#8bf0bb',
+        mollets:'#f9ef77',   trapeze:'#bfa1ff'
+      };
+
+      const chips    = musclesCibles.slice(0, 5);
+      const chipW    = 160;
+      const totalW   = chips.length * chipW + (chips.length-1) * 10;
+      const startCX  = (W - totalW) / 2;
+
+      chips.forEach((m, i) => {
+        const x     = startCX + i*(chipW+10);
+        const color = mColors[m] || '#4b4bf9';
+        ctx.fillStyle = color + '33';
+        this._roundRect(ctx, x, muscleY+10, chipW, 36, 18);
+        ctx.fill();
+        ctx.strokeStyle = color + '66';
+        ctx.lineWidth   = 1;
+        this._roundRect(ctx, x, muscleY+10, chipW, 36, 18);
+        ctx.stroke();
+        ctx.fillStyle   = color;
+        ctx.font        = 'bold 18px system-ui';
+        ctx.textAlign   = 'center';
+        ctx.fillText(mLabels[m]||m, x+chipW/2, muscleY+34);
+      });
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.font = '22px system-ui';
+    ctx.textAlign = 'center';
     ctx.fillText('PowerApp · EverGPT', W/2, H-40);
   },
 
@@ -428,23 +703,27 @@ const Share = {
     try { profil = Tracker.getProfil();          } catch(e) {}
 
     const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, '#09092d'); grad.addColorStop(1, '#1a0030');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    grad.addColorStop(0, '#09092d');
+    grad.addColorStop(1, '#1a0030');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
     this._drawCircle(ctx, W/2, H/2, 500, 'rgba(191,161,255,0.05)');
 
-    ctx.fillStyle = '#bfa1ff'; ctx.font = 'bold 52px system-ui';
+    ctx.fillStyle = '#bfa1ff';
+    ctx.font = 'bold 52px system-ui';
     ctx.textAlign = 'center';
     ctx.fillText('📸 MA PROGRESSION', W/2, 100);
-    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '28px system-ui';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '28px system-ui';
     ctx.fillText(profil.nom||'', W/2, 150);
 
     if (photos.length >= 2) {
       const avant = photos[photos.length - 1];
       const apres = photos[0];
-      const phW = 460, phH = 600, phY = 200;
+      const phW   = 460, phH = 600, phY = 200;
 
       const loadImg = src => new Promise((res) => {
-        const img = new Image();
+        const img   = new Image();
         img.onload  = () => res(img);
         img.onerror = () => res(null);
         img.src     = src;
@@ -457,7 +736,8 @@ const Share = {
 
       const _rr = (ctx, x, y, w, h, r) => {
         ctx.beginPath();
-        ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+        ctx.moveTo(x+r, y);
+        ctx.lineTo(x+w-r, y);
         ctx.quadraticCurveTo(x+w, y, x+w, y+r);
         ctx.lineTo(x+w, y+h-r);
         ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
@@ -469,67 +749,123 @@ const Share = {
       };
 
       ctx.fillStyle = 'rgba(255,255,255,0.05)';
-      _rr(ctx, 40, phY, phW, phH, 20); ctx.fill();
+      _rr(ctx, 40, phY, phW, phH, 20);
+      ctx.fill();
 
       if (imgAvant) {
         ctx.save();
-        ctx.beginPath(); _rr(ctx, 40, phY, phW, phH, 20); ctx.clip();
-        const r = Math.max(phW/imgAvant.width, phH/imgAvant.height);
-        ctx.drawImage(imgAvant, 40+(phW-imgAvant.width*r)/2, phY+(phH-imgAvant.height*r)/2,
-          imgAvant.width*r, imgAvant.height*r);
+        ctx.beginPath();
+        _rr(ctx, 40, phY, phW, phH, 20);
+        ctx.clip();
+        const r = Math.max(
+          phW/imgAvant.width, phH/imgAvant.height
+        );
+        ctx.drawImage(
+          imgAvant,
+          40 + (phW - imgAvant.width*r)/2,
+          phY + (phH - imgAvant.height*r)/2,
+          imgAvant.width*r, imgAvant.height*r
+        );
         ctx.restore();
       }
 
       ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      _rr(ctx, 40, phY+phH-60, phW, 60, 0); ctx.fill();
-      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px system-ui';
-      // Suite de _carteAvantApres (après imgAvant)
+      _rr(ctx, 40, phY+phH-60, phW, 60, 0);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px system-ui';
       ctx.textAlign = 'center';
       ctx.fillText('AVANT', 40+phW/2, phY+phH-20);
-      ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '22px system-ui';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '22px system-ui';
       ctx.fillText(avant.date||'', 40+phW/2, phY+phH+30);
+      if (avant.poids) {
+        ctx.fillText(`⚖️ ${avant.poids}kg`, 40+phW/2, phY+phH+55);
+      }
 
       // APRÈS
       ctx.fillStyle = 'rgba(75,75,249,0.1)';
-      _rr(ctx, W-40-phW, phY, phW, phH, 20); ctx.fill();
-      ctx.strokeStyle = '#4b4bf9'; ctx.lineWidth = 4;
-      _rr(ctx, W-40-phW, phY, phW, phH, 20); ctx.stroke();
+      _rr(ctx, W-40-phW, phY, phW, phH, 20);
+      ctx.fill();
+      ctx.strokeStyle = '#4b4bf9';
+      ctx.lineWidth   = 4;
+      _rr(ctx, W-40-phW, phY, phW, phH, 20);
+      ctx.stroke();
 
       if (imgApres) {
         ctx.save();
-        ctx.beginPath(); _rr(ctx, W-40-phW, phY, phW, phH, 20); ctx.clip();
-        const r = Math.max(phW/imgApres.width, phH/imgApres.height);
-        ctx.drawImage(imgApres, W-40-phW+(phW-imgApres.width*r)/2,
-          phY+(phH-imgApres.height*r)/2, imgApres.width*r, imgApres.height*r);
+        ctx.beginPath();
+        _rr(ctx, W-40-phW, phY, phW, phH, 20);
+        ctx.clip();
+        const r = Math.max(
+          phW/imgApres.width, phH/imgApres.height
+        );
+        ctx.drawImage(
+          imgApres,
+          W-40-phW + (phW - imgApres.width*r)/2,
+          phY + (phH - imgApres.height*r)/2,
+          imgApres.width*r, imgApres.height*r
+        );
         ctx.restore();
       }
 
       ctx.fillStyle = '#4b4bf9';
-      _rr(ctx, W-40-phW, phY+phH-60, phW, 60, 0); ctx.fill();
-      ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px system-ui';
+      _rr(ctx, W-40-phW, phY+phH-60, phW, 60, 0);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px system-ui';
       ctx.textAlign = 'center';
-      ctx.fillText('MAINTENANT', W-40-phW+phW/2, phY+phH-20);
-      ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '22px system-ui';
+      ctx.fillText(
+        'MAINTENANT', W-40-phW+phW/2, phY+phH-20
+      );
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '22px system-ui';
       ctx.fillText(apres.date||'', W-40-phW+phW/2, phY+phH+30);
+      if (apres.poids) {
+        ctx.fillText(
+          `⚖️ ${apres.poids}kg`, W-40-phW+phW/2, phY+phH+55
+        );
+      }
 
-      ctx.fillStyle = '#f9ef77'; ctx.font = '60px system-ui';
+      ctx.fillStyle = '#f9ef77';
+      ctx.font = '60px system-ui';
       ctx.fillText('→', W/2, phY+phH/2);
 
       try {
         const diff = Utils.diffJours(avant.date, apres.date);
         if (diff > 0) {
-          ctx.fillStyle = '#f9ef77'; ctx.font = 'bold 28px system-ui';
-          ctx.fillText(`${diff} jours de progression`, W/2, phY+phH+80);
+          ctx.fillStyle = '#f9ef77';
+          ctx.font = 'bold 28px system-ui';
+          ctx.fillText(
+            `${diff} jours de progression`, W/2, phY+phH+90
+          );
+        }
+        // ✅ NOUVEAU v4.0 — Δ poids
+        if (avant.poids && apres.poids) {
+          const deltaPoids = Utils.arrondir(
+            apres.poids - avant.poids
+          );
+          ctx.fillStyle = deltaPoids <= 0
+            ? '#8bf0bb' : '#ff8d96';
+          ctx.font = '26px system-ui';
+          ctx.fillText(
+            `Δ poids : ${deltaPoids > 0 ? '+' : ''}${deltaPoids}kg`,
+            W/2, phY+phH+130
+          );
         }
       } catch(e) {}
 
     } else {
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.font = '36px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('Ajoute des photos dans Stats > Photos', W/2, H/2);
+      ctx.font = '36px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(
+        'Ajoute des photos dans Stats > Photos', W/2, H/2
+      );
     }
 
-    ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.font = '22px system-ui';
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.font = '22px system-ui';
     ctx.textAlign = 'center';
     ctx.fillText('PowerApp · EverGPT', W/2, H-40);
   },
@@ -539,7 +875,8 @@ const Share = {
   // ════════════════════════════════════════════════════════
   _roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
-    ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y);
     ctx.quadraticCurveTo(x+w, y, x+w, y+r);
     ctx.lineTo(x+w, y+h-r);
     ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
@@ -565,8 +902,9 @@ const Share = {
     try {
       const canvas = await this.genererCarte(type);
       const link   = document.createElement('a');
-      link.download = `powerapp-${type}-${Utils.aujourd_hui()}.png`;
-      link.href     = canvas.toDataURL('image/png');
+      link.download =
+        `powerapp-${type}-${Utils.aujourd_hui()}.png`;
+      link.href = canvas.toDataURL('image/png');
       link.click();
       Utils.toast('✅ Carte téléchargée !', 'success');
     } catch(e) {
@@ -609,7 +947,7 @@ const Share = {
   },
 
   // ════════════════════════════════════════════════════════
-  // RENDER PAGE PARTAGE
+  // RENDER PAGE PARTAGE — ✅ v4.0 genre-aware
   // ════════════════════════════════════════════════════════
   render(container) {
     if (!container) return;
@@ -618,19 +956,64 @@ const Share = {
     let phase     = { nom:'Construction', emoji:'🏗️' };
     let hasPhotos = false;
 
+    // ✅ Genre
+    let genre = 'homme';
+    try {
+      genre = Utils.storage.get('ft_profil_onboarding', {})
+        .genre || 'homme';
+    } catch(e) {}
+
     try { playlist  = this.getPlaylistDuJour();                    } catch(e) {}
     try { phase     = Programme.getPhaseActuelle();                } catch(e) {}
     try { hasPhotos = (Tracker.getPhotos?.()?.length||0) >= 2;    } catch(e) {}
 
     const cartes = [
-      { type:'semaine',     emoji:'📅', titre:'Résumé semaine',  desc:'Séances, volume, streak, heatmap'     },
-      { type:'pr',          emoji:'🏆', titre:'Mes records',     desc:'Top 3 exercices + 1RM estimé'         },
-      { type:'streak',      emoji:'🔥', titre:'Mon streak',      desc:'Jours consécutifs + record'           },
-      { type:'profil',      emoji:'👤', titre:'Mon profil',      desc:'Niveau, XP, trophées, stats'          },
-      { type:'avant_apres', emoji:'📸', titre:'Avant / Après',   desc:hasPhotos
-          ? 'Progression photos'
-          : '⚠️ Ajoute 2 photos dans Stats > Photos' }
+      {
+        type:'semaine',
+        emoji:'📅',
+        titre:'Résumé semaine',
+        desc:'Séances, volume, streak, heatmap + muscles'
+      },
+      {
+        type:'pr',
+        emoji:'🏆',
+        titre:'Mes records',
+        desc:'Top 3 exercices + 1RM estimé'
+      },
+      {
+        type:'streak',
+        emoji:'🔥',
+        titre:'Mon streak',
+        desc:'Jours consécutifs + record'
+      },
+      {
+        type:'profil',
+        emoji:'👤',
+        titre:'Mon profil',
+        desc:'Niveau, XP, trophées, muscles ciblés'
+      },
+      {
+        type:'avant_apres',
+        emoji:'📸',
+        titre:'Avant / Après',
+        desc: hasPhotos
+          ? 'Progression photos + Δ poids'
+          : '⚠️ Ajoute 2 photos dans Stats > Photos'
+      }
     ];
+
+    // ✅ NOUVEAU v4.0 — Playlists filtrées par genre
+    const playlistsFiltrees = genre === 'femme'
+      ? {
+          ...this.PLAYLISTS,
+          lower_body:  this.PLAYLISTS.lower_body,
+          latin_femme: this.PLAYLISTS.latin_femme,
+          pilates:     this.PLAYLISTS.pilates
+        }
+      : Object.fromEntries(
+          Object.entries(this.PLAYLISTS)
+            .filter(([k]) => !['lower_body','latin_femme','pilates'].includes(k))
+        );
 
     container.innerHTML = `
 
@@ -644,30 +1027,39 @@ const Share = {
         </div>
 
         <div style="margin-top:var(--space-md)">
-          <div style="font-size:2rem;margin-bottom:4px">${playlist.emoji}</div>
-          <div style="font-weight:700;font-size:1.1rem">${playlist.nom}</div>
-          <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">
+          <div style="font-size:2rem;margin-bottom:4px">
+            ${playlist.emoji}</div>
+          <div style="font-weight:700;font-size:1.1rem">
+            ${playlist.nom}</div>
+          <div style="font-size:.78rem;color:var(--text-muted);
+                      margin-top:4px">
             ${playlist.description} · ${playlist.genre}
           </div>
-          <div style="font-size:.72rem;color:var(--fd-lavender);margin-top:4px">
+          <div style="font-size:.72rem;color:var(--fd-lavender);
+                      margin-top:4px">
             📍 Phase ${phase.nom} ${phase.emoji}
+            ${genre === 'femme' ? '🌸' : ''}
           </div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;
                     gap:var(--space-sm);margin-top:var(--space-md)">
           <a href="${playlist.url}" target="_blank" rel="noopener"
-             style="display:flex;align-items:center;justify-content:center;
-                    gap:6px;padding:var(--space-md);background:#ff3b30;
+             style="display:flex;align-items:center;
+                    justify-content:center;gap:6px;
+                    padding:var(--space-md);background:#ff3b30;
                     color:white;border-radius:var(--radius-full);
-                    font-weight:700;font-size:.82rem;text-decoration:none">
+                    font-weight:700;font-size:.82rem;
+                    text-decoration:none">
             🍎 Apple Music
           </a>
           <a href="${playlist.urlYoutube}" target="_blank" rel="noopener"
-             style="display:flex;align-items:center;justify-content:center;
-                    gap:6px;padding:var(--space-md);background:#ff0000;
+             style="display:flex;align-items:center;
+                    justify-content:center;gap:6px;
+                    padding:var(--space-md);background:#ff0000;
                     color:white;border-radius:var(--radius-full);
-                    font-weight:700;font-size:.82rem;text-decoration:none">
+                    font-weight:700;font-size:.82rem;
+                    text-decoration:none">
             ▶ YouTube
           </a>
         </div>
@@ -675,11 +1067,13 @@ const Share = {
         <details style="margin-top:var(--space-md)">
           <summary style="font-size:.75rem;font-weight:700;
                           color:var(--text-muted);cursor:pointer;
-                          text-transform:uppercase;letter-spacing:.06em">
-            Toutes les playlists (${Object.keys(this.PLAYLISTS).length})
+                          text-transform:uppercase;
+                          letter-spacing:.06em">
+            Toutes les playlists
+            (${Object.keys(playlistsFiltrees).length})
           </summary>
           <div style="margin-top:var(--space-sm)">
-            ${Object.entries(this.PLAYLISTS).map(([, pl]) => `
+            ${Object.entries(playlistsFiltrees).map(([, pl]) => `
               <div style="display:flex;align-items:center;
                           justify-content:space-between;
                           padding:var(--space-sm) 0;
@@ -696,10 +1090,14 @@ const Share = {
                 <div style="display:flex;gap:8px">
                   <a href="${pl.url}" target="_blank" rel="noopener"
                      style="font-size:.78rem;color:#ff3b30;
-                            text-decoration:none;font-weight:700">🍎</a>
+                            text-decoration:none;font-weight:700">
+                    🍎
+                  </a>
                   <a href="${pl.urlYoutube}" target="_blank" rel="noopener"
                      style="font-size:.78rem;color:#ff0000;
-                            text-decoration:none;font-weight:700">▶</a>
+                            text-decoration:none;font-weight:700">
+                    ▶
+                  </a>
                 </div>
               </div>`).join('')}
           </div>
@@ -721,26 +1119,31 @@ const Share = {
             </div>
           </div>
 
-          <!-- Aperçu -->
           <div id="preview-${carte.type}"
-               style="width:100%;height:160px;background:var(--bg-input);
-                      border-radius:var(--radius-md);display:flex;
-                      align-items:center;justify-content:center;
+               style="width:100%;height:160px;
+                      background:var(--bg-input);
+                      border-radius:var(--radius-md);
+                      display:flex;align-items:center;
+                      justify-content:center;
                       font-size:.82rem;color:var(--text-muted);
-                      margin-bottom:var(--space-md);overflow:hidden;
-                      cursor:pointer;transition:opacity .2s"
+                      margin-bottom:var(--space-md);
+                      overflow:hidden;cursor:pointer;
+                      transition:opacity .2s"
                onclick="Share.afficherApercu('${carte.type}')">
             👆 Cliquer pour aperçu
           </div>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr;
+          <div style="display:grid;
+                      grid-template-columns:1fr 1fr;
                       gap:var(--space-sm)">
             <button onclick="Share.telecharger('${carte.type}')"
-                    class="btn-secondary" style="font-size:.82rem">
+                    class="btn-secondary"
+                    style="font-size:.82rem">
               💾 Télécharger
             </button>
             <button onclick="Share.partager('${carte.type}')"
-                    class="btn-primary" style="font-size:.82rem">
+                    class="btn-primary"
+                    style="font-size:.82rem">
               📤 Partager
             </button>
           </div>
@@ -749,7 +1152,7 @@ const Share = {
   },
 
   // ════════════════════════════════════════════════════════
-  // APERÇU — ✅ FIX container vérifié avant utilisation
+  // APERÇU — ✅ v4.0 avec cache
   // ════════════════════════════════════════════════════════
   async afficherApercu(type) {
     const el = document.getElementById(`preview-${type}`);
@@ -762,7 +1165,6 @@ const Share = {
     try {
       const canvas = await this.genererCarte(type);
 
-      // ✅ FIX — Vérifier que l'élément existe encore (navigation possible)
       const elCheck = document.getElementById(`preview-${type}`);
       if (!elCheck) return;
 
@@ -785,4 +1187,4 @@ const Share = {
 };
 
 window.Share = Share;
-console.log('✅ Share v3.0 chargé');
+console.log('✅ Share v4.0 chargé — Genre-aware + Cache + Muscles ciblés + Heatmap musculaire');
