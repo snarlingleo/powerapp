@@ -1,6 +1,7 @@
 /* ============================================================
-   FitTracker Pro — Superset.js v1.0 CORRIGÉ
+   PowerApp — Superset.js v2.0
    Gestion complète des supersets en séance
+   + Supersets femme + Maison + Fix signature
    ============================================================ */
 
 const Superset = {
@@ -35,14 +36,16 @@ const Superset = {
 
   PREDEFINIS: {
     pec_tri: [
-      { id:'ss_pec_tri_1', nom:'Pec + Tri Classique',
+      {
+        id:'ss_pec_tri_1', nom:'Pec + Tri Classique',
         type:'agoniste', emoji:'💪',
         exercices:[
           {ref:'bench_press',        series:3, reps:'8-10', repos:0  },
           {ref:'ext_triceps_poulie', series:3, reps:'12',   repos:75 }
         ]
       },
-      { id:'ss_pec_tri_2', nom:'Pec Haut + Dips',
+      {
+        id:'ss_pec_tri_2', nom:'Pec Haut + Dips',
         type:'agoniste', emoji:'🔥',
         exercices:[
           {ref:'incline_halteres', series:3, reps:'10',    repos:0  },
@@ -51,14 +54,16 @@ const Superset = {
       }
     ],
     dos_bi: [
-      { id:'ss_dos_bi_1', nom:'Dos + Biceps Pull',
+      {
+        id:'ss_dos_bi_1', nom:'Dos + Biceps Pull',
         type:'agoniste', emoji:'🔗',
         exercices:[
           {ref:'lat_pulldown',  series:3, reps:'10-12', repos:0  },
           {ref:'curl_halteres', series:3, reps:'12',    repos:75 }
         ]
       },
-      { id:'ss_dos_bi_2', nom:'Rowing + Curl Marteau',
+      {
+        id:'ss_dos_bi_2', nom:'Rowing + Curl Marteau',
         type:'agoniste', emoji:'💪',
         exercices:[
           {ref:'rowing_machine', series:3, reps:'12', repos:0  },
@@ -67,14 +72,16 @@ const Superset = {
       }
     ],
     epaules_bras: [
-      { id:'ss_epaules_1', nom:'Épaules Ant + Post',
+      {
+        id:'ss_epaules_1', nom:'Épaules Ant + Post',
         type:'antagoniste', emoji:'🦅',
         exercices:[
           {ref:'elev_laterales', series:3, reps:'12-15', repos:0  },
           {ref:'face_pull',      series:3, reps:'15',    repos:60 }
         ]
       },
-      { id:'ss_bras_1', nom:'Biceps + Triceps',
+      {
+        id:'ss_bras_1', nom:'Biceps + Triceps',
         type:'antagoniste', emoji:'🔄',
         exercices:[
           {ref:'curl_barre',         series:3, reps:'10', repos:0  },
@@ -83,14 +90,16 @@ const Superset = {
       }
     ],
     jambes: [
-      { id:'ss_jambes_1', nom:'Quad + Ischio',
+      {
+        id:'ss_jambes_1', nom:'Quad + Ischio',
         type:'antagoniste', emoji:'🦵',
         exercices:[
           {ref:'leg_extension', series:3, reps:'15',    repos:0  },
           {ref:'leg_curl',      series:3, reps:'12',    repos:75 }
         ]
       },
-      { id:'ss_jambes_2', nom:'Pré-fatigue Jambes',
+      {
+        id:'ss_jambes_2', nom:'Pré-fatigue Jambes',
         type:'pre_fatigue', emoji:'🔥',
         exercices:[
           {ref:'leg_extension',  series:3, reps:'15',    repos:0  },
@@ -99,11 +108,125 @@ const Superset = {
       }
     ],
     full_body: [
-      { id:'ss_full_1', nom:'Full Body Express',
+      {
+        id:'ss_full_1', nom:'Full Body Express',
         type:'non_competitif', emoji:'⚡',
         exercices:[
           {ref:'bench_press', series:3, reps:'10', repos:0  },
           {ref:'squat',       series:3, reps:'10', repos:90 }
+        ]
+      }
+    ],
+
+    // ✅ NOUVEAU v2.0 — Supersets FEMME (Lower Body)
+    lower_body_femme: [
+      {
+        id:'ss_lower_femme_1', nom:'Fessiers + Ischio',
+        type:'agoniste', emoji:'🍑',
+        exercices:[
+          {ref:'hip_thrust_sol', series:3, reps:'15',   repos:0  },
+          {ref:'donkey_kick',    series:3, reps:'15/j', repos:60 }
+        ]
+      },
+      {
+        id:'ss_lower_femme_2', nom:'Fentes + Glute Kickback',
+        type:'pre_fatigue', emoji:'🔥',
+        exercices:[
+          {ref:'fentes_bulgares', series:3, reps:'12/j', repos:0  },
+          {ref:'clamshell',       series:3, reps:'15/j', repos:60 }
+        ]
+      },
+      {
+        id:'ss_lower_femme_3', nom:'Squat + Hip Thrust',
+        type:'agoniste', emoji:'🦵',
+        exercices:[
+          {ref:'squat_poids_corps', series:3, reps:'20', repos:0  },
+          {ref:'hip_thrust_sol',    series:3, reps:'20', repos:75 }
+        ]
+      }
+    ],
+    upper_body_femme: [
+      {
+        id:'ss_upper_femme_1', nom:'Épaules + Dos Femme',
+        type:'antagoniste', emoji:'💪',
+        exercices:[
+          {ref:'elev_laterales', series:3, reps:'15', repos:0  },
+          {ref:'inverted_row',   series:3, reps:'12', repos:60 }
+        ]
+      }
+    ],
+    core_femme: [
+      {
+        id:'ss_core_femme_1', nom:'Planche + Hip Thrust Sol',
+        type:'non_competitif', emoji:'🔥',
+        exercices:[
+          {ref:'planche',        series:3, reps:'30s', repos:0  },
+          {ref:'hip_thrust_sol', series:3, reps:'20',  repos:45 }
+        ]
+      },
+      {
+        id:'ss_core_femme_2', nom:'Abdos Complet',
+        type:'tri_set', emoji:'🏆',
+        exercices:[
+          {ref:'crunch',        series:3, reps:'20',  repos:0  },
+          {ref:'russian_twist', series:3, reps:'20',  repos:0  },
+          {ref:'planche',       series:3, reps:'30s', repos:60 }
+        ]
+      }
+    ],
+
+    // ✅ NOUVEAU v2.0 — Supersets MAISON
+    maison_push: [
+      {
+        id:'ss_maison_push_1', nom:'Pompes + Dips',
+        type:'agoniste', emoji:'🏠',
+        exercices:[
+          {ref:'pompes',       series:3, reps:'max',   repos:0  },
+          {ref:'dips_triceps', series:3, reps:'max',   repos:75 }
+        ]
+      },
+      {
+        id:'ss_maison_push_2', nom:'Pompes + Pike Push-up',
+        type:'agoniste', emoji:'💪',
+        exercices:[
+          {ref:'pompes',      series:3, reps:'12', repos:0  },
+          {ref:'pike_pushup', series:3, reps:'10', repos:60 }
+        ]
+      }
+    ],
+    maison_pull: [
+      {
+        id:'ss_maison_pull_1', nom:'Tractions + Inverted Row',
+        type:'agoniste', emoji:'🔗',
+        exercices:[
+          {ref:'tractions',    series:3, reps:'max', repos:0  },
+          {ref:'inverted_row', series:3, reps:'12',  repos:75 }
+        ]
+      },
+      {
+        id:'ss_maison_pull_2', nom:'Superman + Bird Dog',
+        type:'non_competitif', emoji:'🦸',
+        exercices:[
+          {ref:'superman',  series:3, reps:'15',  repos:0  },
+          {ref:'bird_dog',  series:3, reps:'12/c',repos:45 }
+        ]
+      }
+    ],
+    maison_legs: [
+      {
+        id:'ss_maison_legs_1', nom:'Squat Sauté + Hip Thrust',
+        type:'non_competitif', emoji:'🦵',
+        exercices:[
+          {ref:'squat_saute',    series:3, reps:'15', repos:0  },
+          {ref:'hip_thrust_sol', series:3, reps:'20', repos:60 }
+        ]
+      },
+      {
+        id:'ss_maison_legs_2', nom:'Fentes Bulgares + Donkey Kick',
+        type:'agoniste', emoji:'🔥',
+        exercices:[
+          {ref:'fentes_bulgares', series:3, reps:'12/j', repos:0  },
+          {ref:'donkey_kick',     series:3, reps:'15/j', repos:60 }
         ]
       }
     ]
@@ -120,10 +243,54 @@ const Superset = {
   // GETTERS
   // ════════════════════════════════════════════════════════
   getSupersets(seanceId) {
-    const custom    = this._getCustom();
-    const predef    = this.PREDEFINIS[seanceId] || [];
+    const custom     = this._getCustom();
+    const predef     = this.PREDEFINIS[seanceId] || [];
     const custSeance = custom.filter(s => s.seanceId === seanceId);
     return [...predef, ...custSeance];
+  },
+
+  // ✅ NOUVEAU v2.0 — Tous les supersets filtrés par genre + lieu
+  getAllSupersets(genre = null, lieu = null) {
+    const profil = (() => {
+      try {
+        return Utils.storage.get('ft_profil_onboarding', {});
+      } catch(e) { return {}; }
+    })();
+
+    const g = genre || profil.genre || 'homme';
+    const l = lieu  || profil.lieu  || 'salle';
+
+    // Supersets selon genre + lieu
+    const sets = [];
+
+    if (l === 'maison' || l === 'dehors') {
+      // Maison / Dehors
+      sets.push(...(this.PREDEFINIS.maison_push || []));
+      sets.push(...(this.PREDEFINIS.maison_pull || []));
+      sets.push(...(this.PREDEFINIS.maison_legs || []));
+      if (g === 'femme') {
+        sets.push(...(this.PREDEFINIS.lower_body_femme || []));
+        sets.push(...(this.PREDEFINIS.core_femme || []));
+      }
+    } else {
+      // Salle
+      sets.push(...(this.PREDEFINIS.pec_tri || []));
+      sets.push(...(this.PREDEFINIS.dos_bi || []));
+      sets.push(...(this.PREDEFINIS.epaules_bras || []));
+      sets.push(...(this.PREDEFINIS.jambes || []));
+      sets.push(...(this.PREDEFINIS.full_body || []));
+
+      if (g === 'femme') {
+        sets.push(...(this.PREDEFINIS.lower_body_femme || []));
+        sets.push(...(this.PREDEFINIS.upper_body_femme || []));
+        sets.push(...(this.PREDEFINIS.core_femme || []));
+      }
+    }
+
+    // Ajouter customs
+    sets.push(...this._getCustom());
+
+    return sets;
   },
 
   getSupersetById(id) {
@@ -149,8 +316,8 @@ const Superset = {
     return true;
   },
 
-  isActif()            { return !!this._supersetActif; },
-  getSupersetActif()   { return this._supersetActif; },
+  isActif()          { return !!this._supersetActif; },
+  getSupersetActif() { return this._supersetActif;   },
 
   getExoActuel() {
     if (!this._supersetActif) return null;
@@ -159,9 +326,8 @@ const Superset = {
 
   getProgression() {
     if (!this._supersetActif) return null;
-    const ss      = this._supersetActif;
+    const ss       = this._supersetActif;
     const nbSeries = ss.exercices[0]?.series || 3;
-
     return {
       serieActuelle: this._serieActuelle,
       totalSeries:   nbSeries,
@@ -186,7 +352,8 @@ const Superset = {
     let result = { isPR:false };
     try {
       result = Tracker.sauvegarderSerie(
-        seanceId, exo.ref, this._serieActuelle, reps, poids, rpe
+        seanceId, exo.ref,
+        this._serieActuelle, reps, poids, rpe
       );
     } catch(e) {}
 
@@ -256,12 +423,14 @@ const Superset = {
     };
 
     try {
-      Utils.storage.set(`ft_superset_${seanceId}_${Date.now()}`, log);
+      Utils.storage.set(
+        `ft_superset_${seanceId}_${Date.now()}`, log
+      );
     } catch(e) {}
 
     try { Gamification.recompenser('SUPERSET_COMPLETE'); } catch(e) {}
 
-    const result = { ...log };
+    const result    = { ...log };
     this._supersetActif = null;
     this._serieActuelle = 1;
     this._exoActuel     = 0;
@@ -285,7 +454,6 @@ const Superset = {
   creer(data) {
     const custom = this._getCustom();
     const id     = 'custom_ss_' + Date.now();
-
     custom.push({
       id,
       nom:          data.nom       || 'Mon superset',
@@ -296,7 +464,6 @@ const Superset = {
       custom:       true,
       dateCreation: Utils.aujourd_hui()
     });
-
     this._saveCustom(custom);
     return id;
   },
@@ -305,7 +472,6 @@ const Superset = {
     const custom = this._getCustom();
     const idx    = custom.findIndex(s => s.id === id);
     if (idx < 0) return false;
-
     custom[idx] = {
       ...custom[idx],
       nom:       data.nom       ?? custom[idx].nom,
@@ -313,7 +479,6 @@ const Superset = {
       emoji:     data.emoji     ?? custom[idx].emoji,
       exercices: data.exercices ?? custom[idx].exercices
     };
-
     this._saveCustom(custom);
     return true;
   },
@@ -339,14 +504,15 @@ const Superset = {
       } catch(e) {}
     }
 
-    return hist.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    return hist.sort(
+      (a,b) => (b.date||'').localeCompare(a.date||'')
+    );
   },
 
   getStats() {
-    const hist   = this.getHistorique(90);
-    const types  = {};
+    const hist  = this.getHistorique(90);
+    const types = {};
     hist.forEach(s => { types[s.type] = (types[s.type]||0) + 1; });
-
     return {
       total:  hist.length,
       volume: hist.reduce((a,s) => a + (s.volume||0), 0),
@@ -356,9 +522,9 @@ const Superset = {
   },
 
   // ════════════════════════════════════════════════════════
-  // RENDER — ✅ FIX container resolution
+  // RENDER
   // ════════════════════════════════════════════════════════
-  _getContainer(seanceId = null) {
+  _getContainer() {
     return document.getElementById('page-supersets')
       || document.getElementById('stats-content')
       || document.getElementById('page-content');
@@ -367,36 +533,43 @@ const Superset = {
   render(container, seanceId = null) {
     if (!container) return;
 
+    // ✅ NOUVEAU v2.0 — Utiliser getAllSupersets() si pas de seanceId
     const supersets = seanceId
       ? this.getSupersets(seanceId)
-      : Object.values(this.PREDEFINIS).flat();
+      : this.getAllSupersets();
 
     const stats = this.getStats();
 
+    // ✅ Genre + Lieu pour info
+    let genre = 'homme', lieu = 'salle';
+    try {
+      const profil = Utils.storage.get('ft_profil_onboarding', {});
+      genre = profil.genre || 'homme';
+      lieu  = profil.lieu  || 'salle';
+    } catch(e) {}
+
     container.innerHTML = `
+
+      <!-- Stats rapides -->
       <div class="stats-grid mb-md">
         <div class="stat-card">
           <span class="stat-value" style="color:var(--fd-lavender)">
-            ${stats.total}
-          </span>
+            ${stats.total}</span>
           <span class="stat-label">Supersets</span>
         </div>
         <div class="stat-card">
           <span class="stat-value" style="color:var(--fd-mint)">
-            ${Utils.formatVolume(stats.volume)}
-          </span>
+            ${Utils.formatVolume(stats.volume)}</span>
           <span class="stat-label">Volume total</span>
         </div>
         <div class="stat-card">
           <span class="stat-value" style="color:var(--fd-lemon)">
-            ${stats.prs}
-          </span>
+            ${stats.prs}</span>
           <span class="stat-label">PRs en SS</span>
         </div>
         <div class="stat-card">
           <span class="stat-value" style="color:var(--fd-indigo)">
-            ${Object.keys(stats.types).length}
-          </span>
+            ${Object.keys(stats.types).length}</span>
           <span class="stat-label">Types utilisés</span>
         </div>
       </div>
@@ -413,7 +586,8 @@ const Superset = {
               <div style="flex:1">
                 <div style="font-size:.85rem;font-weight:700">
                   ${type.label}
-                  <span style="font-size:.65rem;color:var(--text-muted);
+                  <span style="font-size:.65rem;
+                               color:var(--text-muted);
                                font-weight:400;margin-left:6px">
                     Repos : ${type.repos}s
                   </span>
@@ -432,30 +606,35 @@ const Superset = {
 
       <!-- Créer custom -->
       <button class="btn-secondary mb-md" style="width:100%"
-        onclick="event.stopPropagation();
-                 Superset.renderFormCreation(
-                   document.getElementById('ss-form-container'),
-                   '${seanceId||''}')">
-  ➕ Créer un superset custom
-</button>
+              onclick="event.stopPropagation();
+                       Superset.renderFormCreation(
+                         document.getElementById('ss-form-container'),
+                         '${seanceId||''}')">
+        ➕ Créer un superset custom
+      </button>
       <div id="ss-form-container"></div>
 
       <!-- Supersets disponibles -->
       <div class="section-title">
         ⚡ Supersets disponibles
-        ${seanceId ? `(${supersets.length})` : ''}
+        ${genre === 'femme' ? '🌸' : ''}
+        ${lieu !== 'salle' ? `(${lieu === 'maison' ? '🏠' : '🌳'})` : ''}
+        (${supersets.length})
       </div>
 
       ${supersets.length === 0 ? `
         <div class="card" style="text-align:center;
                                   padding:var(--space-xl)">
-          <div style="font-size:2rem;margin-bottom:var(--space-sm)">⚡</div>
+          <div style="font-size:2rem;
+                      margin-bottom:var(--space-sm)">⚡</div>
           <p style="color:var(--text-muted);font-size:.88rem">
             Aucun superset pour cette séance.<br>
             Crée le tien !
           </p>
         </div>` :
-        supersets.map(ss => this._renderCard(ss, seanceId)).join('')}
+        supersets.map(ss =>
+          this._renderCard(ss, seanceId)
+        ).join('')}
     `;
   },
 
@@ -472,33 +651,37 @@ const Superset = {
               ${ss.emoji} ${ss.nom}
               ${ss.custom ? `
                 <span style="font-size:.6rem;
-                             color:var(--fd-lemon)">✏️ Custom</span>` : ''}
+                             color:var(--fd-lemon)">
+                  ✏️ Custom
+                </span>` : ''}
             </div>
             <div style="margin-top:4px">
               <span class="chip chip-lavender"
                     style="font-size:.62rem">
                 ${type.emoji} ${type.label}
               </span>
-              <span style="font-size:.65rem;color:var(--text-muted);
-                           margin-left:6px">
+              <span style="font-size:.65rem;
+                           color:var(--text-muted);margin-left:6px">
                 ${nbSeries} séries · Repos ${type.repos}s
               </span>
             </div>
           </div>
           <button onclick="event.stopPropagation();
-                 (() => {
-                   const sid = '${seanceId}'
-                     || localStorage.getItem('ft_seance_active')
-                     || localStorage.getItem('ft_timer_seance')
-                     || 'libre';
-                   Superset.lancerUI('${ss.id}', sid);
-                 })();"
-        style="padding:var(--space-sm) var(--space-md);
-               background:var(--fd-indigo);color:white;
-               border:none;border-radius:var(--radius-full);
-               font-size:.78rem;font-weight:700;cursor:pointer">
-  ▶ Lancer
-</button>
+                  (() => {
+                    const sid = '${seanceId}'
+                      || localStorage.getItem('ft_seance_active')
+                      || localStorage.getItem('ft_timer_seance')
+                      || 'libre';
+                    Superset.lancerUI('${ss.id}', sid);
+                  })();"
+                  style="padding:var(--space-sm) var(--space-md);
+                         background:var(--fd-indigo);color:white;
+                         border:none;
+                         border-radius:var(--radius-full);
+                         font-size:.78rem;font-weight:700;
+                         cursor:pointer">
+            ▶ Lancer
+          </button>
         </div>
 
         ${ss.exercices.map((ex, i) => {
@@ -513,7 +696,8 @@ const Superset = {
             <div style="display:flex;justify-content:space-between;
                         align-items:center;padding:var(--space-sm);
                         background:var(--bg-input);
-                        border-radius:var(--radius-sm);font-size:.82rem">
+                        border-radius:var(--radius-sm);
+                        font-size:.82rem">
               <div>
                 <span style="font-weight:600">
                   ${exo.emoji||'💪'} ${exo.nom||ex.ref}
@@ -550,7 +734,7 @@ const Superset = {
 
     const existant   = editId ? this.getSupersetById(editId) : null;
     const toutesExos = Object.entries(window.EXERCICES || {});
-    const formId     = 'ssform_' + Date.now(); // ✅ FIX ID unique
+    const formId     = 'ssform_' + Date.now();
 
     window._ssFormId     = formId;
     window._ssLigneCount = existant?.exercices?.length || 2;
@@ -563,7 +747,8 @@ const Superset = {
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;
-                    gap:var(--space-sm);margin:var(--space-md) 0">
+                    gap:var(--space-sm);
+                    margin:var(--space-md) 0">
           <div>
             <div class="input-label">Nom *</div>
             <input class="input" id="ss-nom"
@@ -582,14 +767,15 @@ const Superset = {
         <select class="input mb-md" id="ss-type">
           ${Object.entries(this.TYPES).map(([k, v]) => `
             <option value="${k}"
-              ${(existant?.type||'non_competitif')===k?'selected':''}>
+              ${(existant?.type||'non_competitif')===k
+                ? 'selected':''}>
               ${v.emoji} ${v.label} (repos ${v.repos}s)
             </option>`).join('')}
         </select>
 
         <div class="card-label mb-sm">🏋️ Exercices</div>
         <div id="ss-exos-list-${formId}">
-          ${(existant?.exercices||[
+          ${(existant?.exercices || [
             {ref:'', series:3, reps:'10', repos:0},
             {ref:'', series:3, reps:'12', repos:0}
           ]).map((ex, i) =>
@@ -619,7 +805,6 @@ const Superset = {
     container.scrollIntoView({ behavior:'smooth' });
   },
 
-  // ✅ FIX — formId dans les IDs pour éviter collisions
   _renderLigneExo(ex, idx, toutesExos, formId = '') {
     const uid = `${formId}_${idx}`;
     return `
@@ -674,31 +859,51 @@ const Superset = {
   },
 
   _sauvegarderForm(seanceId, editId, formId) {
-    const nom   = document.getElementById('ss-nom')?.value?.trim();
-    const emoji = document.getElementById('ss-emoji')?.value?.trim() || '⚡';
-    const type  = document.getElementById('ss-type')?.value || 'non_competitif';
+    const nom   = document.getElementById('ss-nom')
+      ?.value?.trim();
+    const emoji = document.getElementById('ss-emoji')
+      ?.value?.trim() || '⚡';
+    const type  = document.getElementById('ss-type')
+      ?.value || 'non_competitif';
 
-    if (!nom) { Utils.toast('Entre un nom !', 'error'); return; }
+    if (!nom) {
+      Utils.toast('Entre un nom !', 'error'); return;
+    }
 
     const exercices = [];
-    // ✅ FIX — sélectionner uniquement les lignes du bon form
-    const listEl = document.getElementById(`ss-exos-list-${formId}`);
+    const listEl    = document.getElementById(
+      `ss-exos-list-${formId}`
+    );
+
     if (listEl) {
       listEl.querySelectorAll('.ss-exo-ligne').forEach(ligne => {
         const uid    = ligne.dataset.idx;
-        const ref    = document.getElementById(`ss-ref-${uid}`)?.value;
-        const series = parseInt(document.getElementById(`ss-series-${uid}`)?.value) || 3;
-        const reps   = document.getElementById(`ss-reps-${uid}`)?.value || '10';
+        const ref    = document.getElementById(
+          `ss-ref-${uid}`
+        )?.value;
+        const series = parseInt(
+          document.getElementById(`ss-series-${uid}`)?.value
+        ) || 3;
+        const reps   = document.getElementById(
+          `ss-reps-${uid}`
+        )?.value || '10';
         if (ref) exercices.push({ ref, series, reps, repos:0 });
       });
     }
 
     if (exercices.length < 2) {
-      Utils.toast('Un superset nécessite au moins 2 exercices !', 'error');
+      Utils.toast(
+        'Un superset nécessite au moins 2 exercices !',
+        'error'
+      );
       return;
     }
 
-    const data = { nom, emoji, type, seanceId: seanceId || null, exercices };
+    const data = {
+      nom, emoji, type,
+      seanceId: seanceId || null,
+      exercices
+    };
 
     if (editId) {
       this.modifier(editId, data);
@@ -708,7 +913,9 @@ const Superset = {
       Utils.toast('✅ Superset créé !', 'success');
     }
 
-    const formContainer = document.getElementById('ss-form-container');
+    const formContainer = document.getElementById(
+      'ss-form-container'
+    );
     if (formContainer) formContainer.innerHTML = '';
 
     const container = this._getContainer();
@@ -722,7 +929,8 @@ const Superset = {
 
   async _confirmerSuppression(id) {
     const ok = await Utils.confirmer(
-      'Supprimer ce superset ?', 'Cette action est irréversible.'
+      'Supprimer ce superset ?',
+      'Cette action est irréversible.'
     );
     if (!ok) return;
     this.supprimer(id);
@@ -735,37 +943,39 @@ const Superset = {
   // UI SUPERSET EN SÉANCE LIVE
   // ════════════════════════════════════════════════════════
   lancerUI(ssId, seanceId) {
-  const ok = this.demarrer(ssId, seanceId);
-  if (!ok) { Utils.toast('Superset introuvable !', 'error'); return; }
+    const ok = this.demarrer(ssId, seanceId);
+    if (!ok) {
+      Utils.toast('Superset introuvable !', 'error');
+      return;
+    }
 
-  // ✅ Créer modal si absent
-  if (!document.getElementById('modal-info')) {
-    const modal    = document.createElement('div');
-    modal.id       = 'modal-info';
-    modal.dataset.dynamic = 'true';
-    modal.className = 'modal';
-    modal.innerHTML = `
-      <div class="modal-overlay"></div>
-      <div class="modal-content" style="position:relative">
-        <button id="modal-info-close"
-                style="position:absolute;top:12px;right:12px;
-                       background:none;border:none;
-                       color:var(--text-muted);font-size:1.4rem;
-                       cursor:pointer;z-index:10">✕</button>
-        <div id="modal-info-content"></div>
-      </div>`;
-    document.body.appendChild(modal);
-  }
+    if (!document.getElementById('modal-info')) {
+      const modal    = document.createElement('div');
+      modal.id       = 'modal-info';
+      modal.dataset.dynamic = 'true';
+      modal.className = 'modal';
+      modal.innerHTML = `
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="position:relative">
+          <button id="modal-info-close"
+                  style="position:absolute;top:12px;right:12px;
+                         background:none;border:none;
+                         color:var(--text-muted);font-size:1.4rem;
+                         cursor:pointer;z-index:10">✕</button>
+          <div id="modal-info-content"></div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
 
-  Utils.toast(
-    `⚡ Superset lancé : ${this._supersetActif.nom}`,
-    'info', 2000
-  );
-  this._renderUIActif(seanceId);
-},
+    Utils.toast(
+      `⚡ Superset lancé : ${this._supersetActif.nom}`,
+      'info', 2000
+    );
+    this._renderUIActif(seanceId);
+  },
 
   _renderUIActif(seanceId) {
-    const ss      = this._supersetActif;
+    const ss = this._supersetActif;
     if (!ss) return;
 
     const exo     = this.getExoActuel();
@@ -774,7 +984,7 @@ const Superset = {
     const type    = this.TYPES[ss.type] || {};
 
     let pr = null, derniere = null;
-    try { pr       = Tracker.getPR(exo?.ref);                } catch(e) {}
+    try { pr       = Tracker.getPR(exo?.ref);                    } catch(e) {}
     try { derniere = Tracker.getDernierePerf(seanceId, exo?.ref); } catch(e) {}
 
     const modal   = document.getElementById('modal-info');
@@ -788,59 +998,75 @@ const Superset = {
                     color:var(--fd-lavender)">
           ⚡ SUPERSET · ${ss.nom}
         </div>
-        <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">
+        <div style="font-size:.7rem;color:var(--text-muted);
+                    margin-top:4px">
           ${type.emoji||'⚡'} ${type.label||''}
           · Série ${prog.serieActuelle}/${prog.totalSeries}
         </div>
       </div>
 
+      <!-- Barre progression séries -->
       <div style="display:flex;gap:4px;margin-bottom:var(--space-md)">
         ${Array.from({length:prog.totalSeries}, (_,i) => `
           <div style="flex:1;height:6px;border-radius:3px;
-                      background:${i+1 < prog.serieActuelle
-                        ? 'var(--fd-mint)'
-                        : i+1 === prog.serieActuelle
-                          ? 'var(--fd-indigo)'
-                          : 'var(--border-color)'}">
+                      background:${
+                        i+1 < prog.serieActuelle
+                          ? 'var(--fd-mint)'
+                          : i+1 === prog.serieActuelle
+                            ? 'var(--fd-indigo)'
+                            : 'var(--border-color)'
+                      }">
           </div>`).join('')}
       </div>
 
+      <!-- Exercices -->
       ${ss.exercices.map((ex, i) => {
         const e       = (window.EXERCICES||{})[ex.ref] || {};
         const isActif = i === this._exoActuel;
         const isDone  = i < this._exoActuel;
         return `
-          <div style="padding:var(--space-sm);border-radius:var(--radius-md);
-                      background:${isActif
-                        ? 'rgba(75,75,249,0.15)'
-                        : isDone
-                          ? 'rgba(139,240,187,0.1)'
-                          : 'var(--bg-input)'};
-                      border:1px solid ${isActif
-                        ? 'var(--fd-indigo)'
-                        : isDone
-                          ? 'var(--fd-mint)'
-                          : 'var(--border-color)'};
+          <div style="padding:var(--space-sm);
+                      border-radius:var(--radius-md);
+                      background:${
+                        isActif
+                          ? 'rgba(75,75,249,0.15)'
+                          : isDone
+                            ? 'rgba(139,240,187,0.1)'
+                            : 'var(--bg-input)'
+                      };
+                      border:1px solid ${
+                        isActif ? 'var(--fd-indigo)'
+                        : isDone ? 'var(--fd-mint)'
+                        : 'var(--border-color)'
+                      };
                       margin-bottom:4px;transition:all .3s">
             <div class="flex justify-between items-center">
               <span style="font-size:.88rem;font-weight:700;
-                           color:${isActif ? 'var(--fd-indigo)'
+                           color:${
+                             isActif ? 'var(--fd-indigo)'
                              : isDone ? 'var(--fd-mint)'
-                             : 'var(--text-muted)'}">
+                             : 'var(--text-muted)'
+                           }">
                 ${isDone ? '✅' : isActif ? '▶' : '○'}
                 ${e.emoji||'💪'} ${e.nom||ex.ref}
               </span>
               <span style="font-size:.78rem;font-weight:600;
-                           color:${isActif ? 'var(--fd-indigo)' : 'var(--text-muted)'}">
+                           color:${isActif
+                             ? 'var(--fd-indigo)'
+                             : 'var(--text-muted)'}">
                 ${ex.series}×${ex.reps}
               </span>
             </div>
           </div>`;
       }).join('')}
 
+      <!-- Saisie poids / reps -->
       <div class="card mt-md mb-md">
-        <div style="text-align:center;margin-bottom:var(--space-md)">
-          <div style="font-size:2.5rem">${exoData.emoji||'💪'}</div>
+        <div style="text-align:center;
+                    margin-bottom:var(--space-md)">
+          <div style="font-size:2.5rem">
+            ${exoData.emoji||'💪'}
+          </div>
           <div style="font-weight:700;font-size:1.1rem;margin-top:4px">
             ${exoData.nom||exo?.ref}
           </div>
@@ -848,7 +1074,8 @@ const Superset = {
             ${exoData.muscle||''}
           </div>
           ${pr ? `
-            <div style="font-size:.72rem;color:var(--fd-lemon);margin-top:4px">
+            <div style="font-size:.72rem;
+                        color:var(--fd-lemon);margin-top:4px">
               🏆 PR: ${pr.poids}kg × ${pr.reps}
             </div>` : ''}
           ${derniere ? `
@@ -859,19 +1086,24 @@ const Superset = {
 
         <div class="input-group mb-md">
           <div style="flex:1">
-            <div class="input-label" style="text-align:center">Poids (kg)</div>
+            <div class="input-label" style="text-align:center">
+              Poids (kg)
+            </div>
             <input class="input" id="ss-inp-poids" type="number"
                    value="${derniere?.poids||pr?.poids||''}"
-                   placeholder="${pr?.poids||0}" step="2.5" />
+                   placeholder="${pr?.poids||0}" step="2.5"/>
           </div>
           <div style="flex:1">
-            <div class="input-label" style="text-align:center">Reps</div>
+            <div class="input-label" style="text-align:center">
+              Reps
+            </div>
             <input class="input" id="ss-inp-reps" type="number"
                    value="${derniere?.reps||''}"
-                   placeholder="${exo?.reps||10}" />
+                   placeholder="${exo?.reps||10}"/>
           </div>
         </div>
 
+        <!-- RPE -->
         <div style="margin-bottom:var(--space-md)">
           <div style="font-size:.72rem;color:var(--text-muted);
                       margin-bottom:6px;text-align:center">
@@ -893,14 +1125,17 @@ const Superset = {
           </div>
         </div>
 
+        <!-- ✅ FIX v2.0 — Bouton lit poids depuis input -->
         <button class="btn-primary"
-        onclick="
-          // ✅ Récupérer poids modifié si dispo
-          const p = window._timerPoidsModifie
-            || parseFloat(document.getElementById('ss-inp-poids')?.value)
-            || 0;
-          window._timerPoidsModifie = null;
-          Superset._validerSerieUI('${seanceId}', p);">
+                onclick="(() => {
+                  const poids = parseFloat(
+                    document.getElementById('ss-inp-poids')?.value
+                  ) || 0;
+                  const reps  = parseInt(
+                    document.getElementById('ss-inp-reps')?.value
+                  ) || 0;
+                  Superset._validerSerieUI('${seanceId}', poids, reps);
+                })()">
           ✅ Valider · ${exoData.nom||exo?.ref}
           <span style="font-size:.8rem;opacity:.8">
             (${this._exoActuel+1}/${ss.exercices.length})
@@ -908,7 +1143,8 @@ const Superset = {
         </button>
       </div>
 
-      <button class="btn-secondary" style="width:100%;font-size:.82rem"
+      <button class="btn-secondary"
+              style="width:100%;font-size:.82rem"
               onclick="Superset._annulerUI()">
         ✕ Abandonner le superset
       </button>
@@ -920,7 +1156,6 @@ const Superset = {
       this.annuler();
       modal.classList.add('hidden');
     };
-    // ✅ FIX — empêcher fermeture accidentelle de l'overlay
     const overlay = modal.querySelector('.modal-overlay');
     if (overlay) overlay.onclick = null;
   },
@@ -930,22 +1165,25 @@ const Superset = {
     [6,7,8,9,10].forEach(v => {
       const btn = document.getElementById(`ss-rpe-${v}`);
       if (!btn) return;
-      btn.style.background  = v === val ? 'var(--fd-indigo)' : 'var(--bg-input)';
-      btn.style.color       = v === val ? 'white' : 'var(--text-muted)';
-      btn.style.borderColor = v === val ? 'var(--fd-indigo)' : 'var(--border-color)';
+      btn.style.background  = v === val
+        ? 'var(--fd-indigo)' : 'var(--bg-input)';
+      btn.style.color       = v === val
+        ? 'white' : 'var(--text-muted)';
+      btn.style.borderColor = v === val
+        ? 'var(--fd-indigo)' : 'var(--border-color)';
     });
   },
 
-  _validerSerieUI(seanceId) {
-    const poids = parseFloat(document.getElementById('ss-inp-poids')?.value);
-    const reps  = parseInt(document.getElementById('ss-inp-reps')?.value);
-
+  // ✅ FIX v2.0 — Signature corrigée (poids et reps en paramètres)
+  _validerSerieUI(seanceId, poids, reps) {
     if (!poids || !reps) {
       Utils.toast('Entre le poids et les reps !', 'error');
       return;
     }
 
-    const result = this.validerSerie(seanceId, poids, reps, this._rpeActuel);
+    const result = this.validerSerie(
+      seanceId, poids, reps, this._rpeActuel
+    );
     this._rpeActuel = null;
     if (!result) return;
 
@@ -953,94 +1191,81 @@ const Superset = {
 
     if (result.isPR) {
       try { timerRepos.jouerSon('pr'); } catch(e) {}
-      Utils.toast(`🏆 NOUVEAU PR ! ${poids}kg × ${reps}`, 'pr', 3000);
+      Utils.toast(
+        `🏆 NOUVEAU PR ! ${poids}kg × ${reps}`, 'pr', 3000
+      );
     }
 
     switch(result.type) {
 
-  // ✅ Exercice suivant dans le superset → overlay ChronoSerie
-  case 'prochain_exo': {
-    const modal = document.getElementById('modal-info');
-    modal?.classList.add('hidden');
+      case 'prochain_exo': {
+        const modal = document.getElementById('modal-info');
+        modal?.classList.add('hidden');
 
-    const exoSuivant = result.exoSuivant;
-    const exoData    = (window.EXERCICES||{})[exoSuivant?.ref] || {};
-    const repsTarget = parseInt(exoSuivant?.reps)
-      || parseInt(exoSuivant?.reps?.split?.('-')?.[0])
-      || 10;
+        const exoSuivant = result.exoSuivant;
+        const repsTarget = parseInt(exoSuivant?.reps)
+          || parseInt(exoSuivant?.reps?.split?.('-')?.[0])
+          || 10;
 
-    // ✅ Lancer ChronoSerie pour l'exo suivant (repos 0 = direct)
-    setTimeout(() => {
-      if (typeof ChronoSerie !== 'undefined') {
-        ChronoSerie.demarrerApresRepos(
-          this._exoActuel,   // exoIdx
-          this._serieActuelle - 1, // serieIdx
-          repsTarget,
-          seanceId,
-          this._supersetActif?.exercices[0]?.series || 3,
-          this._supersetActif?.exercices?.length || 2,
-          0,                 // repos = 0 → direct
-          exoSuivant?.ref
-        );
-      } else {
-        // Fallback → re-render UI classique
-        this._renderUIActif(seanceId);
+        setTimeout(() => {
+          if (typeof ChronoSerie !== 'undefined') {
+            ChronoSerie.demarrerApresRepos(
+              this._exoActuel,
+              this._serieActuelle - 1,
+              repsTarget,
+              seanceId,
+              this._supersetActif?.exercices[0]?.series || 3,
+              this._supersetActif?.exercices?.length || 2,
+              0,
+              exoSuivant?.ref
+            );
+          } else {
+            this._renderUIActif(seanceId);
+          }
+        }, 300);
+        break;
       }
-    }, 300);
-    break;
-  }
 
-  // ✅ Repos entre séries → overlay repos Live
-  case 'repos': {
-    const modal = document.getElementById('modal-info');
-    modal?.classList.add('hidden');
+      case 'repos': {
+        const modal      = document.getElementById('modal-info');
+        modal?.classList.add('hidden');
+        const reposDuree = result.repos || 75;
 
-    const reposDuree = result.repos || 75;
+        if (typeof timerRepos !== 'undefined'
+            && typeof LiveRapide !== 'undefined') {
+          window._ssReposCallback = () => {
+            this._renderUIActif(seanceId);
+          };
+          LiveRapide.lancerReposAuto(
+            this._exoActuel,
+            this._serieActuelle - 2,
+            this._supersetActif?.exercices[0]?.series || 3,
+            seanceId,
+            reposDuree
+          );
+        } else {
+          this._lancerReposSuperset(
+            reposDuree, result.serie, seanceId
+          );
+        }
+        break;
+      }
 
-    // ✅ Utiliser timerRepos de Live si disponible
-    if (typeof timerRepos !== 'undefined'
-        && typeof LiveRapide !== 'undefined') {
-      // Stocker infos pour callback
-      window._ssReposCallback = () => {
-        this._renderUIActif(seanceId);
-      };
-
-      LiveRapide.lancerReposAuto(
-        this._exoActuel,
-        this._serieActuelle - 2,
-        this._supersetActif?.exercices[0]?.series || 3,
-        seanceId,
-        reposDuree
-      );
-
-    } else {
-      // Fallback → overlay repos custom
-      this._lancerReposSuperset(reposDuree, result.serie, seanceId);
+      case 'termine': {
+        const log   = this.terminer(seanceId);
+        const modal = document.getElementById('modal-info');
+        modal?.classList.add('hidden');
+        Utils.confetti(2000);
+        Utils.vibrer([200, 100, 200, 100, 300]);
+        Utils.toast(
+          `⚡ Superset terminé ! Volume : ${Utils.formatVolume(log?.volume||0)}`,
+          'success', 4000
+        );
+        this._renderResumeSuperset(log);
+        try { Gamification.ajouterXP(50, 'superset_complete'); } catch(e) {}
+        break;
+      }
     }
-    break;
-  }
-
-  // ✅ Superset terminé
-  case 'termine': {
-    const log   = this.terminer(seanceId);
-    const modal = document.getElementById('modal-info');
-    modal?.classList.add('hidden');
-
-    Utils.confetti(2000);
-    Utils.vibrer([200, 100, 200, 100, 300]);
-    Utils.toast(
-      `⚡ Superset terminé ! Volume : ${Utils.formatVolume(log?.volume||0)}`,
-      'success', 4000
-    );
-
-    // ✅ Overlay résumé
-    this._renderResumeSuperset(log);
-
-    try { Defis.mettreAJourProgression(); } catch(e) {}
-    try { Gamification.ajouterXP(50, 'superset_complete'); } catch(e) {}
-    break;
-  }
-}
   },
 
   _lancerReposSuperset(secondes, serieSuivante, seanceId) {
@@ -1056,7 +1281,8 @@ const Superset = {
     overlay.innerHTML = `
       <div style="font-size:.9rem;font-weight:700;
                   color:var(--fd-lavender);
-                  text-transform:uppercase;letter-spacing:.1em">
+                  text-transform:uppercase;
+                  letter-spacing:.1em">
         ⚡ Superset — Repos
       </div>
       <div style="font-size:5rem;font-weight:800;
@@ -1075,13 +1301,15 @@ const Superset = {
               style="padding:var(--space-md) var(--space-xl);
                      background:var(--fd-indigo);border:none;
                      border-radius:var(--radius-full);color:white;
-                     font-weight:700;font-size:.9rem;cursor:pointer">
+                     font-weight:700;font-size:.9rem;
+                     cursor:pointer">
         ⏭ Passer le repos
       </button>`;
 
     document.body.appendChild(overlay);
 
-    timerRepos.demarrer(secondes,
+    timerRepos.demarrer(
+      secondes,
       (r) => {
         const el = document.getElementById('ss-repos-display');
         if (el) el.textContent = Utils.formatDureeMin(r);
@@ -1095,17 +1323,14 @@ const Superset = {
 
   _annulerUI() {
     this.annuler();
-    // ✅ Supprimer le modal créé dynamiquement
     const modal = document.getElementById('modal-info');
     if (modal) {
       modal.classList.add('hidden');
-      // Si modal créé dynamiquement → le supprimer
       if (modal.dataset.dynamic === 'true') modal.remove();
     }
     Utils.toast('Superset abandonné.', 'info');
   },
 
-  // ✅ NOUVEAU — Résumé fin de superset  ← COLLE ICI
   _renderResumeSuperset(log) {
     if (!log) return;
 
@@ -1174,15 +1399,12 @@ const Superset = {
       </button>`;
 
     document.body.appendChild(overlay);
-
-    // ✅ Auto-remove après 8s
     setTimeout(() => overlay.remove(), 8000);
   },
 
   _getCustom()       { return Utils.storage.get('ft_supersets_custom', []); },
   _saveCustom(data)  { Utils.storage.set('ft_supersets_custom', data);      }
-   
 };
 
 window.Superset = Superset;
-console.log('✅ Superset.js v1.0 chargé');
+console.log('✅ Superset.js v2.0 chargé — Femme + Maison + Fix signature');
