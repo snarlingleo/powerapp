@@ -1459,15 +1459,29 @@ function _rendreHome(container) {
               ${m}
             </span>`).join('')}
         </div>
-        <button onclick="naviguer('live')"
-                style="display:flex;align-items:center;gap:8px;
-                       padding:12px 20px;background:var(--fd-indigo);
-                       color:white;border:none;border-radius:99px;
-                       font-size:.82rem;font-weight:700;cursor:pointer;
-                       white-space:nowrap;
-                       box-shadow:0 4px 20px rgba(75,75,249,0.5)">
-          ▶ Démarrer
-        </button>
+        <div style="display:flex;gap:6px;align-items:center">
+  <button onclick="naviguer('live')"
+          style="display:flex;align-items:center;gap:8px;
+                 padding:12px 20px;background:var(--fd-indigo);
+                 color:white;border:none;border-radius:99px;
+                 font-size:.82rem;font-weight:700;cursor:pointer;
+                 white-space:nowrap;
+                 box-shadow:0 4px 20px rgba(75,75,249,0.5)">
+    ▶ Démarrer
+  </button>
+
+  <!-- ✅ NOUVEAU — Bouton Ultra depuis Home -->
+  <button onclick="_lancerModeUltra('${seance.id}')"
+          style="padding:12px 14px;
+                 background:rgba(249,239,119,0.12);
+                 border:1px solid rgba(249,239,119,0.3);
+                 border-radius:99px;
+                 font-size:.82rem;font-weight:700;
+                 color:var(--fd-lemon);cursor:pointer;
+                 white-space:nowrap">
+    ⚡
+  </button>
+</div>
       </div>
     </div>` : `
     <div style="border-radius:var(--radius-xl);padding:20px;
@@ -4801,6 +4815,17 @@ window._liveExercices[seance.id] = seance.exercices || [];
                          margin-top:4px">
             🎙️ Mode guidé
           </button>
+             <button onclick="_lancerModeUltra('${seance.id}')"
+        style="display:flex;align-items:center;gap:4px;
+               padding:5px 10px;
+               background:rgba(249,239,119,0.12);
+               border:1px solid rgba(249,239,119,0.25);
+               border-radius:var(--radius-full);
+               font-size:.68rem;font-weight:700;
+               color:var(--fd-lemon);cursor:pointer;
+               margin-top:4px">
+  ⚡ Mode Ultra
+</button>
         </div>
       </div>
     </div>`;
@@ -9560,5 +9585,50 @@ const MenuGlobal = {
   }
 };
 window.MenuGlobal = MenuGlobal;
+// ════════════════════════════════════════════════════════════
+// ✅ MODE ULTRA-RAPIDE — Lancement
+// ════════════════════════════════════════════════════════════
+function _lancerModeUltra(seanceId) {
+  try {
+    if (typeof LiveUltra === 'undefined') {
+      Utils.toast('Module Ultra non chargé', 'error');
+      return;
+    }
+
+    const seanceComplete = Programme.getSeanceComplete(seanceId);
+    if (!seanceComplete) {
+      Utils.toast('Séance introuvable', 'error');
+      return;
+    }
+
+    const tempsSalle = Utils.storage.get('ft_temps_salle', 60);
+    const exercices  = getExercicesSelonTemps(
+      seanceComplete.exercicesDetails || [],
+      tempsSalle
+    );
+
+    if (!exercices.length) {
+      Utils.toast('Aucun exercice disponible', 'error');
+      return;
+    }
+
+    Utils.toast('⚡ Mode Ultra-Rapide !', 'success', 1500);
+    Utils.vibrer([50, 30, 100]);
+
+    try {
+      if (!Tracker._seanceEnCours) {
+        Tracker.demarrerSeance(seanceId);
+      }
+    } catch(e) {}
+
+    LiveUltra.demarrer(seanceId, exercices);
+
+  } catch(e) {
+    console.error('[App] Erreur mode ultra:', e);
+    Utils.toast('❌ Erreur lancement', 'error');
+  }
+}
+
+window._lancerModeUltra = _lancerModeUltra;
 
 console.log('✅ App.js v3.0 chargé');
