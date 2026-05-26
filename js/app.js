@@ -163,21 +163,7 @@ case 'live': {
   }
   break;
 }
-
-  const skipChecklist = options.skipChecklist
-    || Utils.storage.get('ft_skip_checklist', false);
-
-  if (!skipChecklist && options.seanceId
-      || (!skipChecklist && Programme.getSeanceduJour()?.id)) {
-    _rendreChecklistPreSeance(
-      container, options, options.seanceId
-        || Programme.getSeanceduJour()?.id
-    );
-  } else {
-    _rendreLive(container, options);
-  }
-  break;
-      case 'stats':
+        case 'stats':
   if (typeof Stats !== 'undefined') {
     Stats.render(container);
   } else {
