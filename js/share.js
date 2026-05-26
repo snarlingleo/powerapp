@@ -355,7 +355,7 @@ const Share = {
     ctx.font = '22px system-ui';
     ctx.textAlign = 'center';
     ctx.fillText(
-      'PowerApp · EverGPT · ' + Utils.aujourd_hui(),
+      'PowerApp · Othmane · ' + Utils.aujourd_hui(),
       W/2, H-40
     );
   },
@@ -455,7 +455,7 @@ const Share = {
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
     ctx.font = '22px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText('PowerApp · EverGPT', W/2, H-40);
+    ctx.fillText('PowerApp · Othmane', W/2, H-40);
   },
 
   // ════════════════════════════════════════════════════════
@@ -506,7 +506,7 @@ const Share = {
     );
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.font = '22px system-ui';
-    ctx.fillText('PowerApp · EverGPT', W/2, H-40);
+    ctx.fillText('PowerApp · Othmane', W/2, H-40);
   },
 
   // ════════════════════════════════════════════════════════
@@ -690,7 +690,7 @@ const Share = {
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.font = '22px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText('PowerApp · EverGPT', W/2, H-40);
+    ctx.fillText('PowerApp · Othmane', W/2, H-40);
   },
 
   // ════════════════════════════════════════════════════════
@@ -867,7 +867,7 @@ const Share = {
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.font = '22px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText('PowerApp · EverGPT', W/2, H-40);
+    ctx.fillText('PowerApp · Othmane', W/2, H-40);
   },
 
   // ════════════════════════════════════════════════════════
