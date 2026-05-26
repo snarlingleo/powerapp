@@ -1,9 +1,8 @@
 /* ============================================================
-   PowerApp — Gamification v4.0
-   XP + Niveaux + Trophées + Défis + Badges
-   + Trophées femme + Nutrition + Programme IA
-   + Maison/Dehors + Filtre catégories
-   + Prochain trophée + Confetti rare
+   PowerApp — Gamification v5.0
+   XP + Niveaux + Trophées + Badges
+   + Fix filtre onclick + getProchainTrophee() smart
+   + Fix hip_thrust_sol + nutrition_streak_14
    ============================================================ */
 
 const Gamification = {
@@ -69,19 +68,19 @@ const Gamification = {
       condition: d => d.streak >= 100 },
 
     // ── Séances ───────────────────────────────────────────
-    { id:'sessions_5', nom:'5 séances',
+    { id:'sessions_5',   nom:'5 séances',
       emoji:'💪', xp:100, categorie:'seances', rare:false,
       description:'5 séances totales',
       condition: d => d.totalSeances >= 5 },
-    { id:'sessions_10', nom:'10 séances',
+    { id:'sessions_10',  nom:'10 séances',
       emoji:'💪', xp:150, categorie:'seances', rare:false,
       description:'10 séances totales',
       condition: d => d.totalSeances >= 10 },
-    { id:'sessions_25', nom:'25 séances',
+    { id:'sessions_25',  nom:'25 séances',
       emoji:'🏋️', xp:300, categorie:'seances', rare:false,
       description:'25 séances totales',
       condition: d => d.totalSeances >= 25 },
-    { id:'sessions_50', nom:'50 séances',
+    { id:'sessions_50',  nom:'50 séances',
       emoji:'🎖️', xp:500, categorie:'seances', rare:false,
       description:'50 séances totales',
       condition: d => d.totalSeances >= 50 },
@@ -99,11 +98,11 @@ const Gamification = {
       condition: d => d.totalSeances >= 500 },
 
     // ── PRs ───────────────────────────────────────────────
-    { id:'prs_3', nom:'Premiers records',
+    { id:'prs_3',  nom:'Premiers records',
       emoji:'🏅', xp:150, categorie:'prs', rare:false,
       description:'3 records personnels',
       condition: d => d.totalPRs >= 3 },
-    { id:'prs_5', nom:'Collectionneur',
+    { id:'prs_5',  nom:'Collectionneur',
       emoji:'🏅', xp:200, categorie:'prs', rare:false,
       description:'5 records personnels',
       condition: d => d.totalPRs >= 5 },
@@ -117,39 +116,39 @@ const Gamification = {
       condition: d => d.totalPRs >= 20 },
 
     // ── Force ─────────────────────────────────────────────
-    { id:'bench_80', nom:'Pecto de feu',
+    { id:'bench_80',      nom:'Pecto de feu',
       emoji:'🔥', xp:300, categorie:'force', rare:false,
       description:'Développé couché 80kg',
       condition: d => (d.prs['bench_press']?.poids||0) >= 80 },
-    { id:'bench_100', nom:'Club des 100',
+    { id:'bench_100',     nom:'Club des 100',
       emoji:'💎', xp:600, categorie:'force', rare:false,
       description:'Développé couché 100kg',
       condition: d => (d.prs['bench_press']?.poids||0) >= 100 },
-    { id:'bench_120', nom:'Pectoraux d\'élite',
+    { id:'bench_120',     nom:'Pectoraux d\'élite',
       emoji:'💥', xp:1000, categorie:'force', rare:true,
       description:'Développé couché 120kg',
       condition: d => (d.prs['bench_press']?.poids||0) >= 120 },
-    { id:'squat_100', nom:'Jambes d\'acier',
+    { id:'squat_100',     nom:'Jambes d\'acier',
       emoji:'🦵', xp:600, categorie:'force', rare:false,
       description:'Squat 100kg',
       condition: d => (d.prs['squat']?.poids||0) >= 100 },
-    { id:'squat_140', nom:'Squat King',
+    { id:'squat_140',     nom:'Squat King',
       emoji:'👑', xp:1000, categorie:'force', rare:true,
       description:'Squat 140kg',
       condition: d => (d.prs['squat']?.poids||0) >= 140 },
-    { id:'deadlift_100', nom:'Terre ferme',
+    { id:'deadlift_100',  nom:'Terre ferme',
       emoji:'🏋️', xp:600, categorie:'force', rare:false,
       description:'Soulevé de terre 100kg',
       condition: d => (d.prs['soulevé_terre']?.poids||0) >= 100 },
-    { id:'deadlift_140', nom:'Force brute',
+    { id:'deadlift_140',  nom:'Force brute',
       emoji:'💥', xp:1000, categorie:'force', rare:true,
       description:'Soulevé de terre 140kg',
       condition: d => (d.prs['soulevé_terre']?.poids||0) >= 140 },
-    { id:'deadlift_180', nom:'Titan',
+    { id:'deadlift_180',  nom:'Titan',
       emoji:'⭐', xp:2000, categorie:'force', rare:true,
       description:'Soulevé de terre 180kg',
       condition: d => (d.prs['soulevé_terre']?.poids||0) >= 180 },
-    { id:'ohp_60', nom:'Épaules de fer',
+    { id:'ohp_60',        nom:'Épaules de fer',
       emoji:'💪', xp:300, categorie:'force', rare:false,
       description:'Développé militaire 60kg',
       condition: d => (d.prs['dev_militaire']?.poids||0) >= 60 },
@@ -208,7 +207,7 @@ const Gamification = {
       description:'10 séances express',
       condition: d => d.seancesExpress >= 10 },
 
-    // ✅ NOUVEAU v4.0 — Trophées FEMME
+    // ── Femme ─────────────────────────────────────────────
     { id:'lower_body_10', nom:'Reine du Lower',
       emoji:'🍑', xp:250, categorie:'femme', rare:false,
       description:'10 séances Lower Body',
@@ -220,15 +219,21 @@ const Gamification = {
     { id:'first_hip_thrust_pr', nom:'Hip Thrust Queen',
       emoji:'🍑', xp:300, categorie:'femme', rare:false,
       description:'Battre un PR au Hip Thrust',
-      condition: d => (d.prs['hip_thrust']?.poids||0) > 0 },
+      // ✅ FIX v5.0 — ref correcte hip_thrust_sol
+      condition: d => (d.prs['hip_thrust_sol']?.poids||0) > 0
+        || (d.prs['hip_thrust']?.poids||0) > 0 },
     { id:'hip_thrust_60', nom:'Fessiers de feu',
       emoji:'🔥', xp:400, categorie:'femme', rare:false,
       description:'Hip Thrust 60kg',
-      condition: d => (d.prs['hip_thrust']?.poids||0) >= 60 },
+      // ✅ FIX v5.0
+      condition: d => (d.prs['hip_thrust_sol']?.poids||0) >= 60
+        || (d.prs['hip_thrust']?.poids||0) >= 60 },
     { id:'hip_thrust_100', nom:'Puissance féminine',
       emoji:'💥', xp:800, categorie:'femme', rare:true,
       description:'Hip Thrust 100kg',
-      condition: d => (d.prs['hip_thrust']?.poids||0) >= 100 },
+      // ✅ FIX v5.0
+      condition: d => (d.prs['hip_thrust_sol']?.poids||0) >= 100
+        || (d.prs['hip_thrust']?.poids||0) >= 100 },
     { id:'avant_apres', nom:'Transformation',
       emoji:'🌟', xp:400, categorie:'femme', rare:false,
       description:'Ajouter 2+ photos de progression',
@@ -238,7 +243,7 @@ const Gamification = {
       description:'Atteindre 5 objectifs personnels',
       condition: d => d.objectifsAtteints >= 5 },
 
-    // ✅ NOUVEAU v4.0 — Trophées NUTRITION
+    // ── Nutrition ─────────────────────────────────────────
     { id:'first_log', nom:'Premier repas logué',
       emoji:'🍽️', xp:50, categorie:'nutrition', rare:false,
       description:'Logger son premier repas',
@@ -247,6 +252,11 @@ const Gamification = {
       emoji:'🥗', xp:200, categorie:'nutrition', rare:false,
       description:'Loguer ses repas 7 jours consécutifs',
       condition: d => d.streakNutrition >= 7 },
+    // ✅ NOUVEAU v5.0 — nutrition_streak_14
+    { id:'nutrition_14j', nom:'2 semaines propre',
+      emoji:'🥗', xp:350, categorie:'nutrition', rare:false,
+      description:'Loguer ses repas 14 jours consécutifs',
+      condition: d => d.streakNutrition >= 14 },
     { id:'nutrition_30j', nom:'Mois parfait',
       emoji:'💚', xp:500, categorie:'nutrition', rare:false,
       description:'Loguer ses repas 30 jours',
@@ -264,7 +274,7 @@ const Gamification = {
       description:'Logger 10 recettes différentes',
       condition: d => d.totalRecettesLoguees >= 10 },
 
-    // ✅ NOUVEAU v4.0 — Trophées PROGRAMME IA
+    // ── Programme IA ──────────────────────────────────────
     { id:'programme_ia_genere', nom:'Programme IA créé',
       emoji:'🧠', xp:200, categorie:'programme_ia', rare:false,
       description:'Générer son premier programme IA',
@@ -278,7 +288,7 @@ const Gamification = {
       description:'Suivre le programme IA pendant 16 semaines',
       condition: d => d.semainesProgrammeIA >= 16 },
 
-    // ✅ NOUVEAU v4.0 — Trophées MAISON / DEHORS
+    // ── Maison / Dehors ───────────────────────────────────
     { id:'maison_premier', nom:'Home Gym',
       emoji:'🏠', xp:150, categorie:'maison', rare:false,
       description:'Première séance à la maison',
@@ -298,9 +308,10 @@ const Gamification = {
     { id:'sans_salle_30', nom:'No Gym No Limit',
       emoji:'💥', xp:500, categorie:'maison', rare:true,
       description:'30 séances sans salle',
-      condition: d => (d.seancesMaison + d.seancesDehors) >= 30 },
+      condition: d =>
+        (d.seancesMaison + d.seancesDehors) >= 30 },
 
-    // ✅ NOUVEAU v4.0 — Trophées ADAPTATIF
+    // ── Adaptatif ─────────────────────────────────────────
     { id:'pr_seance', nom:'Séance record',
       emoji:'🏆', xp:300, categorie:'adaptatif', rare:false,
       description:'Battre 3 PRs dans une même séance',
@@ -346,7 +357,8 @@ const Gamification = {
 
       if (nivApres.numero > nivAvant.numero) {
         try {
-          timerRepos.jouerSon('pr');
+          if (window.Sounds) Sounds.jouer('levelup');
+          else timerRepos.jouerSon?.('pr');
           Utils.vibrer([200,100,200,100,400]);
           Utils.confetti(4000);
         } catch(e) {}
@@ -389,9 +401,8 @@ const Gamification = {
       let totalJournal = 0, objectifsAtteints = 0;
       let comeback = false, phasesTerminees = 0;
       let cyclesTermines = 0, volumeTotal = 0;
-      let totalPhotos = 0, semaineParf = 0, seancesExpress = 0;
-
-      // ✅ NOUVEAU v4.0 — Données enrichies
+      let totalPhotos = 0, semaineParf = 0;
+      let seancesExpress = 0;
       let seancesLowerBody   = 0;
       let seancesMaison      = 0;
       let seancesDehors      = 0;
@@ -406,33 +417,33 @@ const Gamification = {
       let joursProteines     = 0;
       let totalRecettesLoguees = 0;
 
-      try { totalSeances      = Tracker.getTotalSeances();                    } catch(e) {}
-      try { prs               = Tracker.getAllPRs();                          } catch(e) {}
-      try { totalPRs          = Object.keys(prs).length;                     } catch(e) {}
-      try { streak            = Tracker.getStreak().count;                   } catch(e) {}
-      try { seancesParSemaine = Tracker.getSeancesParSemaine();              } catch(e) {}
-      try { totalJournal      = Tracker.getJournal().length;                 } catch(e) {}
+      try { totalSeances      = Tracker.getTotalSeances();              } catch(e) {}
+      try { prs               = Tracker.getAllPRs();                    } catch(e) {}
+      try { totalPRs          = Object.keys(prs).length;               } catch(e) {}
+      try { streak            = Tracker.getStreak().count;             } catch(e) {}
+      try { seancesParSemaine = Tracker.getSeancesParSemaine();        } catch(e) {}
+      try { totalJournal      = Tracker.getJournal().length;           } catch(e) {}
       try {
         objectifsAtteints = Tracker.getObjectifs()
           .filter(o => o.complete).length;
       } catch(e) {}
-      try { comeback        = Utils.storage.get('ft_comeback', false);       } catch(e) {}
-      try { phasesTerminees = Utils.storage.get('ft_phases_terminees', 0);   } catch(e) {}
-      try { cyclesTermines  = Utils.storage.get('ft_cycles_termines', 0);    } catch(e) {}
-      try { semaineParf     = Utils.storage.get('ft_semaines_parf', 0);      } catch(e) {}
-      try { semDecharge     = Utils.storage.get('ft_semaines_decharge', 0);  } catch(e) {}
+      try { comeback = Utils.storage.get('ft_comeback', false);        } catch(e) {}
       try {
-        surmenagesEvites = Utils.storage.get(
-          'ft_surmenages_evites', 0
-        );
+        phasesTerminees = Utils.storage.get('ft_phases_terminees', 0);
+      } catch(e) {}
+      try {
+        cyclesTermines = Utils.storage.get('ft_cycles_termines', 0);
+      } catch(e) {}
+      try { semaineParf = Utils.storage.get('ft_semaines_parf', 0);    } catch(e) {}
+      try { semDecharge = Utils.storage.get('ft_semaines_decharge',0); } catch(e) {}
+      try {
+        surmenagesEvites = Utils.storage.get('ft_surmenages_evites', 0);
       } catch(e) {}
       try {
         totalPhotos = typeof Tracker.getPhotos === 'function'
-          ? (Tracker.getPhotos() || []).length
-          : 0;
+          ? (Tracker.getPhotos() || []).length : 0;
       } catch(e) {}
 
-      // ✅ Analyse séances enrichie
       try {
         const seancesHist = Tracker.getHistoriqueSeances(9999);
         volumeTotal = seancesHist.reduce(
@@ -441,28 +452,21 @@ const Gamification = {
         seancesExpress = seancesHist.filter(s =>
           s.id?.includes('express') || s.id?.includes('full_body')
         ).length;
-
-        // ✅ NOUVEAU — Séances Lower Body (fessiers)
         seancesLowerBody = seancesHist.filter(s =>
           s.id?.includes('lower') || s.id?.includes('fessier')
           || s.id?.includes('jambes') || s.id?.includes('legs')
         ).length;
-
-        // ✅ NOUVEAU — Séances maison/dehors
         seancesMaison = seancesHist.filter(s =>
           s.id?.includes('maison') || s.lieu === 'maison'
         ).length;
         seancesDehors = seancesHist.filter(s =>
           s.id?.includes('dehors') || s.lieu === 'dehors'
         ).length;
-
-        // ✅ NOUVEAU — Max PRs dans une séance
         maxPRsSeance = Math.max(
           ...seancesHist.map(s => (s.prs||[]).length), 0
         );
       } catch(e) {}
 
-      // ✅ NOUVEAU — Programme IA
       try {
         programmeIAGenere = !!Utils.storage.get(
           'ft_programme_ia_genere', null
@@ -473,44 +477,37 @@ const Gamification = {
         }
       } catch(e) {}
 
-      // ✅ NOUVEAU — Nutrition
       try {
-        // Compter jours avec logs nutrition
-        let streak_nutri = 0;
-        let jours_prot   = 0;
-        let jours_eau    = 0;
-        let recettes_ids = new Set();
-        let total_logs   = 0;
+        let streak_nutri  = 0;
+        let jours_prot    = 0;
+        let jours_eau     = 0;
+        let recettes_ids  = new Set();
+        let total_logs    = 0;
 
         for (let i = 0; i < 60; i++) {
-          const date = Utils.ajouterJours(Utils.aujourd_hui(), -i);
+          const date    = Utils.ajouterJours(Utils.aujourd_hui(), -i);
           const journal = Utils.storage.get(
             `ft_nutrition_journal_${date}`, []
           );
           if (journal.length > 0) {
             total_logs += journal.length;
             streak_nutri++;
-
-            // Vérifier protéines
             const totaux = journal.reduce(
-              (a,e) => ({ prot: a.prot + (e.prot||0) }), { prot:0 }
+              (a,e) => ({ prot: a.prot + (e.prot||0) }),
+              { prot:0 }
             );
-            const obj = Utils.storage.get('ft_nutrition_objectifs', {
-              proteines:160
-            });
+            const obj = Utils.storage.get(
+              'ft_nutrition_objectifs', { proteines:160 }
+            );
             if (totaux.prot >= obj.proteines * 0.9) jours_prot++;
-
-            // Recettes uniques
             journal.forEach(e => {
               if (!e.ref?.startsWith('custom_')) {
                 recettes_ids.add(e.ref);
               }
             });
           } else if (i > 0) {
-            break; // Streak brisé
+            break;
           }
-
-          // Vérifier eau
           const eau = Utils.storage.get(
             `ft_nutrition_eau_${date}`, 0
           );
@@ -520,11 +517,11 @@ const Gamification = {
           if (eau >= eauObj * 0.9) jours_eau++;
         }
 
-        totalLogsNutrition    = total_logs;
-        streakNutrition       = streak_nutri;
-        joursHydratation      = jours_eau;
-        joursProteines        = jours_prot;
-        totalRecettesLoguees  = recettes_ids.size;
+        totalLogsNutrition   = total_logs;
+        streakNutrition      = streak_nutri;
+        joursHydratation     = jours_eau;
+        joursProteines       = jours_prot;
+        totalRecettesLoguees = recettes_ids.size;
       } catch(e) {}
 
       const donnees = {
@@ -533,7 +530,6 @@ const Gamification = {
         objectifsAtteints, comeback, phasesTerminees,
         cyclesTermines, volumeTotal, totalPhotos,
         semaineParf, seancesExpress,
-        // ✅ NOUVEAU v4.0
         seancesLowerBody, seancesMaison, seancesDehors,
         maxPRsSeance, semDecharge, surmenagesEvites,
         programmeIAGenere, semainesProgrammeIA,
@@ -551,7 +547,8 @@ const Gamification = {
             debloquees.push(t.id);
             nouveaux.push(t);
             Utils.storage.set(
-              `ft_trophy_date_${t.id}`, Utils.aujourd_hui()
+              `ft_trophy_date_${t.id}`,
+              Utils.aujourd_hui()
             );
           }
         } catch(e) {}
@@ -561,7 +558,10 @@ const Gamification = {
         Utils.storage.set('ft_trophees', debloquees);
         nouveaux.forEach((t, i) => {
           setTimeout(() => {
-            try { timerRepos.jouerSon('pr'); } catch(e) {}
+            try {
+              if (window.Sounds) Sounds.jouer('trophee');
+              else timerRepos.jouerSon?.('pr');
+            } catch(e) {}
 
             Utils.toast(
               `🏆 Trophée : ${t.emoji} ${t.nom} — +${t.xp} XP`,
@@ -569,14 +569,12 @@ const Gamification = {
             );
             this.ajouterXP(t.xp, `Trophée ${t.nom}`);
 
-            // ✅ NOUVEAU v4.0 — Confetti pour trophées rares
             if (t.rare) {
               setTimeout(() => {
                 Utils.confetti(3000);
                 Utils.vibrer([200,100,200,100,400]);
               }, 200);
             }
-
           }, i * 1500);
         });
       }
@@ -591,29 +589,28 @@ const Gamification = {
   // ACTIONS XP
   // ════════════════════════════════════════════════════════
   XP_ACTIONS: {
-    SEANCE_COMPLETE:    100,
-    SERIE_COMPLETE:       5,
-    CIRCUIT_COMPLETE:   150,
-    JOURNAL:             25,
-    PR_BATTU:            50,
-    STREAK_7:           150,
-    DEFI_SEMAINE:       200,
-    HUMEUR:              10,
-    SEMAINE_PARF:       300,
-    PREMIERE_SEANCE:    200,
-    PHOTO_AJOUTEE:       30,
-    OBJECTIF_ATTEINT:   250,
-    MESURE_CORPORELLE:   20,
-    SUPERSET_COMPLETE:   15,
-    // ✅ NOUVEAU v4.0
-    NUTRITION_LOG:        5,
-    RECETTE_LOG:         10,
-    HYDRATATION:         20,
-    PROGRAMME_IA:       100,
-    SEANCE_MAISON:       80,
-    SEANCE_DEHORS:       80,
-    BLESSURE_DECLAREE:   30,
-    DECHARGE_COMPLETE:   50
+    SEANCE_COMPLETE:   100,
+    SERIE_COMPLETE:      5,
+    CIRCUIT_COMPLETE:  150,
+    JOURNAL:            25,
+    PR_BATTU:           50,
+    STREAK_7:          150,
+    DEFI_SEMAINE:      200,
+    HUMEUR:             10,
+    SEMAINE_PARF:      300,
+    PREMIERE_SEANCE:   200,
+    PHOTO_AJOUTEE:      30,
+    OBJECTIF_ATTEINT:  250,
+    MESURE_CORPORELLE:  20,
+    SUPERSET_COMPLETE:  15,
+    NUTRITION_LOG:       5,
+    RECETTE_LOG:        10,
+    HYDRATATION:        20,
+    PROGRAMME_IA:      100,
+    SEANCE_MAISON:      80,
+    SEANCE_DEHORS:      80,
+    BLESSURE_DECLAREE:  30,
+    DECHARGE_COMPLETE:  50
   },
 
   recompenser(action) {
@@ -639,7 +636,7 @@ const Gamification = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ NOUVEAU v4.0 — Catégories pour filtres
+  // CATÉGORIES
   // ════════════════════════════════════════════════════════
   CATEGORIES: {
     tous:         { label:'Tous',          emoji:'🏆' },
@@ -659,20 +656,128 @@ const Gamification = {
   },
 
   // ════════════════════════════════════════════════════════
-  // RENDER — GAMIFICATION TAB
+  // ✅ v5.0 — getProchainTrophee() SMART
+  // Score = proximité : progressionActuelle / cible
+  // ════════════════════════════════════════════════════════
+  getProchainTrophee() {
+    const non_debloquees = this.getTrophees().filter(
+      t => !t.debloquee
+    );
+    if (!non_debloquees.length) return null;
+
+    // Récupérer les données une seule fois
+    let totalSeances = 0, streak = 0, totalPRs = 0;
+    let totalPhotos = 0, volumeTotal = 0;
+    let seancesLowerBody = 0, streakNutrition = 0;
+    let seancesMaison = 0, seancesDehors = 0;
+
+    try { totalSeances    = Tracker.getTotalSeances();        } catch(e) {}
+    try { streak          = Tracker.getStreak().count;       } catch(e) {}
+    try { totalPRs        = Object.keys(
+      Tracker.getAllPRs()).length;                             } catch(e) {}
+    try { totalPhotos     = (Tracker.getPhotos?.() || [])
+      .length;                                               } catch(e) {}
+    try {
+      const hist = Tracker.getHistoriqueSeances(9999);
+      volumeTotal = hist.reduce(
+        (a,s) => a + (s.volumeTotal||0), 0
+      );
+      seancesLowerBody = hist.filter(s =>
+        s.id?.includes('lower') || s.id?.includes('fessier')
+      ).length;
+      seancesMaison = hist.filter(
+        s => s.lieu === 'maison'
+      ).length;
+      seancesDehors = hist.filter(
+        s => s.lieu === 'dehors'
+      ).length;
+    } catch(e) {}
+
+    // Scorer chaque trophée par proximité
+    const scores = non_debloquees.map(t => {
+      let pct = 0;
+
+      try {
+        // Trophées séances
+        if (t.id.startsWith('sessions_')) {
+          const cible = parseInt(t.id.split('_')[1]);
+          pct = cible > 0 ? totalSeances / cible : 0;
+        }
+        // Trophées streak
+        else if (t.id.startsWith('streak_')) {
+          const cible = parseInt(t.id.split('_')[1]);
+          pct = cible > 0 ? streak / cible : 0;
+        }
+        // Trophées PRs
+        else if (t.id.startsWith('prs_')) {
+          const cible = parseInt(t.id.split('_')[1]);
+          pct = cible > 0 ? totalPRs / cible : 0;
+        }
+        // Trophées photos
+        else if (t.id === 'photos_5' || t.id === 'avant_apres') {
+          const cible = t.id === 'photos_5' ? 5 : 2;
+          pct = cible > 0 ? totalPhotos / cible : 0;
+        }
+        // Trophées volume
+        else if (t.id === 'volume_10T') {
+          pct = volumeTotal / 10000;
+        } else if (t.id === 'volume_100T') {
+          pct = volumeTotal / 100000;
+        }
+        // Trophées Lower Body
+        else if (t.id.startsWith('lower_body_')) {
+          const cible = parseInt(t.id.split('_')[2]);
+          pct = cible > 0 ? seancesLowerBody / cible : 0;
+        }
+        // Trophées maison/dehors
+        else if (t.id === 'maison_20') {
+          pct = seancesMaison / 20;
+        } else if (t.id === 'dehors_10') {
+          pct = seancesDehors / 10;
+        } else if (t.id === 'sans_salle_30') {
+          pct = (seancesMaison + seancesDehors) / 30;
+        }
+        // Trophées nutrition
+        else if (t.id === 'nutrition_7j') {
+          pct = streakNutrition / 7;
+        } else if (t.id === 'nutrition_14j') {
+          pct = streakNutrition / 14;
+        } else if (t.id === 'nutrition_30j') {
+          pct = streakNutrition / 30;
+        }
+        // Défaut — score 0
+      } catch(e) {}
+
+      return { ...t, pct: Math.min(1, pct) };
+    });
+
+    // Retourner celui avec le pct le plus élevé (< 1)
+    return scores
+      .filter(t => t.pct < 1)
+      .sort((a,b) => b.pct - a.pct)[0]
+      || non_debloquees[0];
+  },
+
+  // ════════════════════════════════════════════════════════
+  // RENDER — ✅ v5.0 Fix onclick filtre
   // ════════════════════════════════════════════════════════
   _filtreCategorie: 'tous',
+
+  _getContainer() {
+    return document.getElementById('stats-content')
+      || document.getElementById('gamification-content')
+      || document.getElementById('page-content');
+  },
 
   renderGamificationTab(container) {
     if (!container) return;
 
-    const xp          = this.getXP();
-    const trophees    = this.getTrophees();
-    const debloquees  = trophees.filter(t =>  t.debloquee);
-    const verrous     = trophees.filter(t => !t.debloquee);
-    const prochain    = this.getProchainTrophee();
+    const xp         = this.getXP();
+    const trophees   = this.getTrophees();
+    const debloquees = trophees.filter(t =>  t.debloquee);
+    const verrous    = trophees.filter(t => !t.debloquee);
+    const prochain   = this.getProchainTrophee();
 
-    // ✅ Filtrer par catégorie
     const filtre = this._filtreCategorie || 'tous';
     const filtreDebloques = filtre === 'tous'
       ? debloquees
@@ -699,22 +804,26 @@ const Gamification = {
         </div>
         <div style="margin:var(--space-md) 0">
           <div style="display:flex;justify-content:space-between;
-                      font-size:.68rem;opacity:.7;margin-bottom:6px">
+                      font-size:.68rem;opacity:.7;
+                      margin-bottom:6px">
             <span>${xp.niveau.xpMin.toLocaleString('fr-FR')} XP</span>
             <span>${xp.pourcentage}%</span>
             <span>${xp.niveau.xpSuivant.toLocaleString('fr-FR')} XP</span>
           </div>
-          <div style="height:8px;background:rgba(255,255,255,0.2);
+          <div style="height:8px;
+                      background:rgba(255,255,255,0.2);
                       border-radius:99px;overflow:hidden">
             <div style="height:100%;width:${xp.pourcentage}%;
                         background:var(--fd-lemon);
-                        border-radius:99px;transition:width 1s ease">
+                        border-radius:99px;
+                        transition:width 1s ease">
             </div>
           </div>
         </div>
         ${xp.niveau.numero < 8 ? `
           <div style="font-size:.72rem;opacity:.7">
-            ${(xp.niveau.xpSuivant - xp.total).toLocaleString('fr-FR')}
+            ${(xp.niveau.xpSuivant - xp.total)
+              .toLocaleString('fr-FR')}
             XP jusqu'au niveau suivant
           </div>` : `
           <div style="font-size:.72rem;color:var(--fd-lemon);
@@ -727,7 +836,8 @@ const Gamification = {
       <div class="stats-grid mb-md">
         <div class="stat-card">
           <span class="stat-value" style="color:var(--fd-lemon)">
-            ${debloquees.length}</span>
+            ${debloquees.length}
+          </span>
           <span class="stat-label">Débloqués</span>
         </div>
         <div class="stat-card">
@@ -738,17 +848,19 @@ const Gamification = {
           <span class="stat-value" style="color:var(--fd-mint)">
             ${Math.round(
               (debloquees.length / Math.max(trophees.length,1)) * 100
-            )}%</span>
+            )}%
+          </span>
           <span class="stat-label">Complété</span>
         </div>
         <div class="stat-card">
           <span class="stat-value" style="color:var(--fd-indigo)">
-            ${xp.total.toLocaleString('fr-FR')}</span>
+            ${xp.total.toLocaleString('fr-FR')}
+          </span>
           <span class="stat-label">XP Total</span>
         </div>
       </div>
 
-      <!-- ✅ NOUVEAU v4.0 — Prochain trophée -->
+      <!-- Prochain trophée -->
       ${prochain ? `
         <div style="background:rgba(249,239,119,0.08);
                     border:1px solid rgba(249,239,119,0.25);
@@ -760,9 +872,12 @@ const Gamification = {
           </div>
           <div style="flex:1">
             <div style="font-size:.6rem;font-weight:700;
-                        text-transform:uppercase;letter-spacing:.08em;
+                        text-transform:uppercase;
+                        letter-spacing:.08em;
                         color:var(--fd-lemon);margin-bottom:3px">
               🎯 Prochain trophée
+              ${prochain.pct > 0 ? `
+                · ${Math.round(prochain.pct * 100)}% complété` : ''}
             </div>
             <div style="font-size:.88rem;font-weight:700">
               ${prochain.nom}
@@ -770,6 +885,17 @@ const Gamification = {
             <div style="font-size:.65rem;color:var(--text-muted)">
               ${prochain.description} · +${prochain.xp} XP
             </div>
+            ${prochain.pct > 0 ? `
+              <div style="height:4px;
+                          background:rgba(249,239,119,0.2);
+                          border-radius:99px;
+                          margin-top:6px;overflow:hidden">
+                <div style="height:100%;
+                            width:${Math.round(prochain.pct*100)}%;
+                            background:var(--fd-lemon);
+                            border-radius:99px">
+                </div>
+              </div>` : ''}
           </div>
           ${prochain.rare ? `
             <div style="padding:3px 8px;
@@ -782,7 +908,7 @@ const Gamification = {
             </div>` : ''}
         </div>` : ''}
 
-      <!-- Barre progression -->
+      <!-- Barre progression globale -->
       <div class="card mb-md">
         <div class="flex justify-between"
              style="font-size:.78rem;
@@ -795,21 +921,18 @@ const Gamification = {
         <div class="progress-bar">
           <div class="progress-fill"
                style="width:${Math.round(
-                 (debloquees.length / Math.max(trophees.length,1)) * 100
+                 (debloquees.length / Math.max(trophees.length,1))*100
                )}%;background:var(--fd-lemon)">
           </div>
         </div>
       </div>
 
-      <!-- ✅ NOUVEAU v4.0 — Filtres catégories -->
+      <!-- ✅ v5.0 — Filtres catégories Fix onclick -->
       <div class="muscle-filter-row mb-md">
         ${Object.entries(this.CATEGORIES).map(([id, cat]) => `
           <button onclick="Gamification._filtreCategorie='${id}';
-                           Gamification.renderGamificationTab(
-                             this.closest('[id*=stats-content]')
-                             || this.closest('.page')
-                             || document.getElementById('stats-content')
-                           )"
+                           const c = Gamification._getContainer();
+                           if (c) Gamification.renderGamificationTab(c);"
                   class="muscle-filter-btn ${
                     filtre === id ? 'active' : ''
                   }"
@@ -834,8 +957,7 @@ const Gamification = {
                           : 'rgba(249,239,119,0.3)'};
                         border-radius:var(--radius-md);
                         padding:var(--space-md) var(--space-xs);
-                        text-align:center;
-                        position:relative">
+                        text-align:center;position:relative">
               ${t.rare ? `
                 <div style="position:absolute;top:4px;right:4px;
                             font-size:.5rem;padding:1px 4px;
@@ -846,16 +968,19 @@ const Gamification = {
                   RARE
                 </div>` : ''}
               <div style="font-size:1.8rem;margin-bottom:4px">
-                ${t.emoji}</div>
+                ${t.emoji}
+              </div>
               <div style="font-size:.62rem;font-weight:700;
                           color:var(--fd-lemon);line-height:1.3">
-                ${t.nom}</div>
-              <div style="font-size:.58rem;
-                          color:var(--fd-mint);margin-top:2px">
-                +${t.xp} XP</div>
+                ${t.nom}
+              </div>
+              <div style="font-size:.58rem;color:var(--fd-mint);
+                          margin-top:2px">
+                +${t.xp} XP
+              </div>
               ${t.dateDeblocage ? `
-                <div style="font-size:.52rem;
-                            color:var(--text-muted);margin-top:2px">
+                <div style="font-size:.52rem;color:var(--text-muted);
+                            margin-top:2px">
                   ${Utils.formatDateCourt(t.dateDeblocage)}
                 </div>` : ''}
             </div>`).join('')}
@@ -866,8 +991,9 @@ const Gamification = {
         </div>` : `
         <div class="card mb-md"
              style="text-align:center;padding:var(--space-xl)">
-          <div style="font-size:2rem;
-                      margin-bottom:var(--space-sm)">🔒</div>
+          <div style="font-size:2rem;margin-bottom:var(--space-sm)">
+            🔒
+          </div>
           <p style="color:var(--text-muted);font-size:.88rem">
             Aucun trophée débloqué pour l'instant.<br>
             Lance ta première séance !
@@ -897,9 +1023,8 @@ const Gamification = {
                           : 'var(--border-color)'};
                         border-radius:var(--radius-md);
                         padding:var(--space-md) var(--space-xs);
-                        text-align:center;
-                        opacity:.4;filter:grayscale(1);
-                        position:relative">
+                        text-align:center;opacity:.4;
+                        filter:grayscale(1);position:relative">
               ${t.rare ? `
                 <div style="position:absolute;top:4px;right:4px;
                             font-size:.5rem;padding:1px 4px;
@@ -909,17 +1034,21 @@ const Gamification = {
                   RARE
                 </div>` : ''}
               <div style="font-size:1.8rem;margin-bottom:4px">
-                ${t.emoji}</div>
+                ${t.emoji}
+              </div>
               <div style="font-size:.62rem;font-weight:700;
                           color:var(--text-secondary);
                           line-height:1.3">
-                ${t.nom}</div>
-              <div style="font-size:.58rem;
-                          color:var(--text-muted);margin-top:2px">
-                +${t.xp} XP</div>
+                ${t.nom}
+              </div>
+              <div style="font-size:.58rem;color:var(--text-muted);
+                          margin-top:2px">
+                +${t.xp} XP
+              </div>
               <div style="font-size:.52rem;color:var(--text-muted);
                           margin-top:4px;line-height:1.3">
-                ${t.description}</div>
+                ${t.description}
+              </div>
             </div>`).join('')}
         </div>` : ''}
 
@@ -944,28 +1073,28 @@ const Gamification = {
 
   _labelAction(action) {
     const labels = {
-      SEANCE_COMPLETE:    '💪 Séance complétée',
-      SERIE_COMPLETE:     '✅ Série validée',
-      PR_BATTU:           '🏆 Record personnel battu',
-      STREAK_7:           '🔥 Streak de 7 jours',
-      DEFI_SEMAINE:       '🎯 Défi semaine accompli',
-      JOURNAL:            '📔 Entrée journal',
-      HUMEUR:             '😊 Humeur du jour',
-      SEMAINE_PARF:       '✨ Semaine parfaite',
-      PREMIERE_SEANCE:    '🎯 Première séance',
-      PHOTO_AJOUTEE:      '📸 Photo progression',
-      OBJECTIF_ATTEINT:   '🎯 Objectif atteint',
-      MESURE_CORPORELLE:  '⚖️ Mesure corporelle',
-      SUPERSET_COMPLETE:  '⚡ Superset complété',
-      CIRCUIT_COMPLETE:   '🔄 Circuit complété',
-      NUTRITION_LOG:      '🍽️ Repas logué',
-      RECETTE_LOG:        '🥗 Recette loguée',
-      HYDRATATION:        '💧 Objectif eau atteint',
-      PROGRAMME_IA:       '🧠 Programme IA généré',
-      SEANCE_MAISON:      '🏠 Séance à la maison',
-      SEANCE_DEHORS:      '🌳 Séance en extérieur',
-      BLESSURE_DECLAREE:  '🩹 Blessure déclarée',
-      DECHARGE_COMPLETE:  '😴 Décharge terminée'
+      SEANCE_COMPLETE:   '💪 Séance complétée',
+      SERIE_COMPLETE:    '✅ Série validée',
+      PR_BATTU:          '🏆 Record personnel battu',
+      STREAK_7:          '🔥 Streak de 7 jours',
+      DEFI_SEMAINE:      '🎯 Défi semaine accompli',
+      JOURNAL:           '📔 Entrée journal',
+      HUMEUR:            '😊 Humeur du jour',
+      SEMAINE_PARF:      '✨ Semaine parfaite',
+      PREMIERE_SEANCE:   '🎯 Première séance',
+      PHOTO_AJOUTEE:     '📸 Photo progression',
+      OBJECTIF_ATTEINT:  '🎯 Objectif atteint',
+      MESURE_CORPORELLE: '⚖️ Mesure corporelle',
+      SUPERSET_COMPLETE: '⚡ Superset complété',
+      CIRCUIT_COMPLETE:  '🔄 Circuit complété',
+      NUTRITION_LOG:     '🍽️ Repas logué',
+      RECETTE_LOG:       '🥗 Recette loguée',
+      HYDRATATION:       '💧 Objectif eau atteint',
+      PROGRAMME_IA:      '🧠 Programme IA généré',
+      SEANCE_MAISON:     '🏠 Séance à la maison',
+      SEANCE_DEHORS:     '🌳 Séance en extérieur',
+      BLESSURE_DECLAREE: '🩹 Blessure déclarée',
+      DECHARGE_COMPLETE: '😴 Décharge terminée'
     };
     return labels[action]
       || action.toLowerCase().replace(/_/g,' ');
@@ -981,12 +1110,6 @@ const Gamification = {
     return par;
   },
 
-  getProchainTrophee() {
-    return this.getTrophees()
-      .filter(t => !t.debloquee)
-      .sort((a,b) => a.xp - b.xp)[0] || null;
-  },
-
   _resetXP() {
     Utils.storage.set('ft_xp_total', 0);
     Utils.storage.set('ft_trophees', []);
@@ -995,4 +1118,7 @@ const Gamification = {
 };
 
 window.Gamification = Gamification;
-console.log('✅ Gamification v4.0 chargé — 60+ trophées + Filtres + Rare + Femme + Nutrition + IA');
+console.log(
+  `✅ Gamification v5.0 chargé — ${Gamification.TROPHEES_DEF.length} trophées`
+  + ' + Fix hip_thrust_sol + nutrition_14j + Smart prochain'
+);
