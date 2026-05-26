@@ -1,9 +1,10 @@
 /* ============================================================
-   PowerApp — Notifications v4.0
+   PowerApp — Notifications v5.0
    Rappels + Absence + Streak + PR + Motivation
    + Séance en cours + Surmenage + Milestone XP
    + Hydratation + Surcharge musculaire
    + Genre-aware + Interface settings
+   + Fix toggles + LevelUp notif + fin_repos
    ============================================================ */
 
 const Notifications = {
@@ -32,11 +33,11 @@ const Notifications = {
       nouveauPR:         true,
       trophee:           true,
       decharge:          true,
-      // ✅ NOUVEAU v4.0
       hydratation:       true,
       surcharge:         true,
+      levelUp:           true,   // ✅ NOUVEAU v5.0
       rappelHydratation: '10:00',
-      hydratationFreq:   2     // toutes les 2h
+      hydratationFreq:   2
     });
   },
 
@@ -107,13 +108,12 @@ const Notifications = {
   },
 
   // ════════════════════════════════════════════════════════
-  // MESSAGES PAR TON — ✅ v4.0 genre-aware
+  // MESSAGES PAR TON — genre-aware
   // ════════════════════════════════════════════════════════
   getMessage(type, contexte = {}) {
     const config = this.getConfig();
     const ton    = config.ton;
 
-    // ✅ NOUVEAU v4.0 — Récupérer genre onboarding
     let genre = 'homme';
     try {
       genre = Utils.storage.get(
@@ -126,17 +126,16 @@ const Notifications = {
       streak = 0,
       nom    = 'Athlète',
       pr     = '',
-      seance = ''
+      niveau = ''
     } = contexte;
 
-    // ✅ Suffixe genre pour messages
-    const e = genre === 'femme' ? 'e' : '';
+    const e        = genre === 'femme' ? 'e' : '';
     const champion = genre === 'femme' ? 'championne' : 'champion';
 
     const messages = {
       absence_1: {
         motivant: [
-          `Hé ${nom} ! T'as oublié quelque chose à la salle... tes muscles ! 💪`,
+          `Hé ${nom} ! T'as oublié quelque chose... tes muscles ! 💪`,
           `Un jour de repos c'est bien. Deux c'est une excuse. 😏`,
           `Ta prochaine séance s'impatiente ${champion} ! Tu viens ? 🏋️`
         ],
@@ -147,8 +146,8 @@ const Notifications = {
         ],
         severe: [
           `${nom} ! UNE séance manquée. C'est UNE de trop. On y va. 🔥`,
-          `Les excuses ne construisent pas de muscles. La salle, maintenant. ⚡`,
-          `Chaque jour sans entraînement est un jour de régression. BOUGE ! 💥`
+          `Les excuses ne construisent pas de muscles. BOUGE ! ⚡`,
+          `Chaque jour sans entraînement est un jour de régression. MAINTENANT. 💥`
         ]
       },
       absence_2: {
@@ -287,12 +286,29 @@ const Notifications = {
           `DÉCHARGE OBLIGATOIRE. Ignorer = surmenage = régression. Obéis. 💥`
         ]
       },
-      // ✅ NOUVEAU v4.0 — Messages hydratation
+      // ✅ NOUVEAU v5.0 — fin de repos timer
+      fin_repos: {
+        motivant: [
+          `⚡ C'est reparti ${nom} ! Prochain exercice maintenant ! 💪`,
+          `😤 Repos terminé ! On reprend les forces ! 🔥`,
+          `GO GO GO ${nom} ! La prochaine série t'attend ! ⚡`
+        ],
+        doux: [
+          `✅ Repos terminé ${nom} ! Quand tu es prêt${e} 🌟`,
+          `💫 Prêt${e} pour la prochaine série ${nom} ?`,
+          `🌸 Repos fini ! Prends ton temps ${nom} ✨`
+        ],
+        severe: [
+          `REPOS TERMINÉ. PROCHAINE SÉRIE. MAINTENANT. 🔥`,
+          `⚡ STOP REPOS. SÉRIE SUIVANTE. MAINTENANT. 💥`,
+          `TU TE REPOSES DEPUIS ASSEZ LONGTEMPS. BOUGEZ. 🔥`
+        ]
+      },
       hydratation: {
         motivant: [
           `💧 ${nom} ! N'oublie pas de t'hydrater. Ton corps te remerciera !`,
           `💧 Pause hydratation ${nom} ! Un verre d'eau = meilleure performance.`,
-          `💧 Ta bouteille, c'est ton meilleur équipement ${nom} ! Tu l'utilises ? 😄`
+          `💧 Ta bouteille, c'est ton meilleur équipement ${nom} ! 😄`
         ],
         doux: [
           `💧 Coucou ${nom} ! Pense à boire de l'eau 🌟`,
@@ -305,7 +321,6 @@ const Notifications = {
           `💧 BOIS DE L'EAU ${nom}. C'est non négociable. 🔥`
         ]
       },
-      // ✅ NOUVEAU v4.0 — Messages surcharge musculaire
       surcharge: {
         motivant: [
           `⚠️ ${nom} ! Attention à la surcharge. Ton corps demande du repos.`,
@@ -321,6 +336,24 @@ const Notifications = {
           `SURCHARGE ${nom}. REPOS IMPOSÉ. Sinon blessure garantie. 🔥`,
           `Ton corps crie stop. Écoute-le. REPOS MAINTENANT. ⚡`,
           `SURMENAGE MUSCULAIRE. UN JOUR DE REPOS. PAS DE NÉGOCIATION. 💥`
+        ]
+      },
+      // ✅ NOUVEAU v5.0 — Level Up
+      level_up: {
+        motivant: [
+          `🎉 NIVEAU ${niveau} atteint ${nom} ! Tu es INARRÊTABLE ! 🔥`,
+          `⭐ Level Up ${nom} ! ${niveau} - tu montes en puissance !`,
+          `🏆 Nouveau niveau ${nom} ! ${niveau} — la progression continue !`
+        ],
+        doux: [
+          `🌟 Bravo ${nom} ! Tu passes au niveau ${niveau} !`,
+          `✨ Nouveau niveau ${niveau} ${nom} ! Tu peux être fièr${e} de toi !`,
+          `💫 Niveau ${niveau} atteint ! Continue comme ça ${nom} 🌸`
+        ],
+        severe: [
+          `NIVEAU ${niveau} ${nom}. Bien. Maintenant vise le suivant. 🔥`,
+          `${niveau}. C'est bien. C'est insuffisant. Continue. ⚡`,
+          `LEVEL UP. ${niveau}. On ne s'arrête pas. PROCHAIN. 💥`
         ]
       }
     };
@@ -398,7 +431,8 @@ const Notifications = {
 
     let message = this.getMessage('rappel_quotidien', { nom });
     if (seance) {
-      message += `\n${seance.emoji} ${seance.nom} — ~${seance.duree_estimee}min`;
+      message +=
+        `\n${seance.emoji} ${seance.nom} — ~${seance.duree_estimee}min`;
     }
 
     await this.envoyer(
@@ -422,7 +456,8 @@ const Notifications = {
       texte:'La progression est un choix.', auteur:'Anonyme'
     };
     try {
-      if (typeof Coach !== 'undefined' && Coach.getCitationDuJour) {
+      if (typeof Coach !== 'undefined'
+          && Coach.getCitationDuJour) {
         citation = Coach.getCitationDuJour();
       }
     } catch(e) {}
@@ -489,8 +524,8 @@ const Notifications = {
         'ft_objectif_seances_semaine', 4
       );
     } catch(e) {}
-    try { seances  = Tracker.getSeancesParSemaine();        } catch(e) {}
-    try { nom      = Tracker.getProfil().nom || 'Athlète';  } catch(e) {}
+    try { seances = Tracker.getSeancesParSemaine();       } catch(e) {}
+    try { nom     = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
 
     if (seances < objectif) return;
 
@@ -544,7 +579,9 @@ const Notifications = {
 
     await this.envoyer(
       `✅ Séance terminée !`,
-      `${seanceNom} — ${Utils.formatDuree(duree)} · ${Utils.formatVolume(volume)} · ${this.getMessage('fin_seance', { nom })}`,
+      `${seanceNom} — ${Utils.formatDuree(duree)} · `
+      + `${Utils.formatVolume(volume)} · `
+      + this.getMessage('fin_seance', { nom }),
       {
         tag:     'fin-seance',
         vibrate: [100, 50, 100],
@@ -554,6 +591,32 @@ const Notifications = {
         ]
       }
     );
+  },
+
+  // ✅ NOUVEAU v5.0 — Notification Level Up
+  async notifierLevelUp(niveau) {
+    const config = this.getConfig();
+    if (!config.active || !config.levelUp) return;
+
+    let nom = 'Athlète';
+    try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
+
+    const cle = `ft_notif_level_${niveau.numero}`;
+    if (Utils.storage.get(cle, false)) return;
+
+    await this.envoyer(
+      `⭐ Niveau ${niveau.numero} — ${niveau.nom} !`,
+      this.getMessage('level_up', {
+        nom, niveau: `${niveau.emoji} ${niveau.nom}`
+      }),
+      {
+        tag:     `level-up-${niveau.numero}`,
+        vibrate: [200,100,200,100,400],
+        actions: [{ action:'stats', title:'🏆 Voir trophées' }]
+      }
+    );
+
+    Utils.storage.set(cle, true);
   },
 
   async notifierDecharge() {
@@ -580,16 +643,13 @@ const Notifications = {
     const config = this.getConfig();
     if (!config.active || !config.prProche) return;
 
-    // ✅ NOUVEAU v4.0 — Utiliser Tracker.getPRsProches()
     let alertes = [];
     try {
-      // Récupérer séance active si existe
       const seanceDuJour = Tracker.getSeanceDuJour?.();
       const seanceId     = seanceDuJour?.id || null;
       alertes = Tracker.getPRsProches(seanceId);
     } catch(e) {}
 
-    // Fallback ancien système
     if (!alertes.length) {
       try {
         const prs    = Tracker.getAllPRs();
@@ -637,7 +697,6 @@ const Notifications = {
     let nom = 'Athlète';
     try { nom = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
 
-    // Envoyer la plus proche
     const alerte = alertes[0];
     await this.envoyer(
       `📈 PR en vue sur ${alerte.nom} !`,
@@ -649,7 +708,6 @@ const Notifications = {
     );
   },
 
-  // ✅ NOUVEAU v4.0 — Rappel hydratation
   async verifierHydratation() {
     const config = this.getConfig();
     if (!config.active || !config.hydratation) return;
@@ -657,25 +715,21 @@ const Notifications = {
     const heure = Utils.heureActuelle();
     if (heure < 8 || heure > 21) return;
 
-    // Vérifier si objectif atteint
     let eauObj = 2.5, eauActuelle = 0;
     try {
       const obj = Utils.storage.get('ft_nutrition_objectifs', {});
-      eauObj = obj.eau || 2.5;
+      eauObj    = obj.eau || 2.5;
     } catch(e) {}
     try {
       const cleEau = `ft_nutrition_eau_${Utils.aujourd_hui()}`;
       eauActuelle  = Utils.storage.get(cleEau, 0);
     } catch(e) {}
 
-    // Objectif hydratation déjà atteint → pas de rappel
     if (eauActuelle >= eauObj * 1000 * 0.9) return;
 
-    // Vérifier si déjà notifié cette heure
     const cle = `ft_notif_eau_${Utils.aujourd_hui()}_${heure}`;
     if (Utils.storage.get(cle, false)) return;
 
-    // Fréquence : toutes les N heures
     const freq = config.hydratationFreq || 2;
     if (heure % freq !== 0) return;
 
@@ -697,7 +751,6 @@ const Notifications = {
     Utils.storage.set(cle, true);
   },
 
-  // ✅ NOUVEAU v4.0 — Surcharge musculaire
   async verifierSurchargeMusculaire() {
     const config = this.getConfig();
     if (!config.active || !config.surcharge) return;
@@ -722,8 +775,8 @@ const Notifications = {
         tag:     'surcharge',
         vibrate: [200, 100, 200],
         actions: [
-          { action:'stats',  title:'📊 Voir analyse' },
-          { action:'repos',  title:'😴 Repos demain' }
+          { action:'stats', title:'📊 Voir analyse' },
+          { action:'repos', title:'😴 Repos demain' }
         ]
       }
     );
@@ -786,7 +839,9 @@ const Notifications = {
     );
     if (!dejVerifPR) {
       await this.verifierPRsProches();
-      Utils.storage.set('ft_verif_pr_' + Utils.aujourd_hui(), true);
+      Utils.storage.set(
+        'ft_verif_pr_' + Utils.aujourd_hui(), true
+      );
     }
 
     try {
@@ -795,7 +850,6 @@ const Notifications = {
       }
     } catch(e) {}
 
-    // ✅ NOUVEAU v4.0
     await this.verifierSurchargeMusculaire();
   },
 
@@ -817,7 +871,6 @@ const Notifications = {
       const heure   = now.getHours();
       const minutes = now.getMinutes();
 
-      // Rappel quotidien
       if (heure === heureConf && minutes === minConf
           && config.rappelQuotidien) {
         const cle = 'ft_rappel_' + Utils.aujourd_hui();
@@ -827,7 +880,6 @@ const Notifications = {
         }
       }
 
-      // Motivation matin
       const minuteMotiv = (minConf + 30) % 60;
       const heureMotiv  = minConf + 30 >= 60
         ? heureConf + 1 : heureConf;
@@ -840,42 +892,34 @@ const Notifications = {
         }
       }
 
-      // Absence (toutes les 2h)
       if (minutes === 0 && heure % 2 === 0
           && heure >= 8 && heure <= 20) {
         await this.verifierAbsenceEtNotifier();
       }
 
-      // Streak danger (soir)
       if (heure >= 18 && heure <= 22 && minutes === 30) {
         await this.verifierStreakDanger();
       }
 
-      // PR proches (midi)
       if (heure === 12 && minutes === 0) {
         await this.verifierPRsProches();
       }
 
-      // Semaine parfaite (21h)
       if (heure === 21 && minutes === 0) {
         await this.verifierSemaineParf();
       }
 
-      // Surmenage + XP (22h)
       if (heure === 22 && minutes === 0) {
         await this.verifierSurmenage();
         await this.verifierMilestoneXP();
-        // ✅ NOUVEAU v4.0
         await this.verifierSurchargeMusculaire();
       }
 
-      // Rappels personnalisés (10h)
       if (heure === 10 && minutes === 0) {
         await this.envoyerRappelPersonnalise();
         await this.notifierComeback();
       }
 
-      // ✅ NOUVEAU v4.0 — Hydratation (toutes les heures)
       if (minutes === 0) {
         await this._verifierSeanceEnCours();
         await this.verifierHydratation();
@@ -883,14 +927,13 @@ const Notifications = {
 
     }, 60 * 1000);
 
-    console.log('[Notifs] Planification active');
+    console.log('[Notifs] Planification v5.0 active');
   },
 
   arreterPlanification() {
     if (this._intervalVerif) {
       clearInterval(this._intervalVerif);
       this._intervalVerif = null;
-      console.log('[Notifs] Planification arrêtée');
     }
   },
 
@@ -930,7 +973,7 @@ const Notifications = {
       setTimeout(() => this.verifierAuLancement(),    4000);
       setTimeout(() => this._analyserRoutine(),        8000);
       setTimeout(() => this._verifierSeanceEnCours(), 12000);
-      console.log('✅ Notifications v4.0 initialisées');
+      console.log('✅ Notifications v5.0 initialisées');
     } else {
       console.log('[Notifs] Permissions non accordées');
     }
@@ -939,12 +982,9 @@ const Notifications = {
   // ════════════════════════════════════════════════════════
   // SMART IA
   // ════════════════════════════════════════════════════════
-  // ✅ FIX v4.0 — _analyserRoutine sans s.heureDebut
   _analyserRoutine() {
     try {
-      const hist = Tracker.getHistoriqueSeances(30);
-
-      // ✅ FIX — Utiliser timestamp debut au lieu de heureDebut
+      const hist  = Tracker.getHistoriqueSeances(30);
       const heures = hist
         .filter(s => s.debut)
         .map(s => new Date(s.debut).getHours())
@@ -1048,7 +1088,7 @@ const Notifications = {
 
       let nom = 'Athlète', seance = null;
       try { nom    = Tracker.getProfil().nom || 'Athlète'; } catch(e) {}
-      try { seance = Programme.getSeanceduJour();           } catch(e) {}
+      try { seance = Programme.getSeanceduJour();          } catch(e) {}
 
       const streak = (() => {
         try { return Tracker.getStreak().count; } catch(e) { return 0; }
@@ -1083,7 +1123,9 @@ const Notifications = {
       const cle = 'ft_notif_comeback_' + Utils.aujourd_hui();
       if (Utils.storage.get(cle, false)) return;
 
-      const vientDeRevenir = Utils.storage.get('ft_comeback', false);
+      const vientDeRevenir = Utils.storage.get(
+        'ft_comeback', false
+      );
       if (!vientDeRevenir) return;
 
       let nom = 'Athlète', jours = 7;
@@ -1105,8 +1147,15 @@ const Notifications = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ NOUVEAU v4.0 — RENDER PAGE PARAMÈTRES
+  // ✅ v5.0 — RENDER PAGE — Fix toggles _getContainer()
   // ════════════════════════════════════════════════════════
+  _getContainer() {
+    return document.getElementById('page-notifications')
+      || document.getElementById('notifs-content')
+      || document.getElementById('settings-notifications')
+      || document.getElementById('page-content');
+  },
+
   renderPage(container) {
     if (!container) return;
 
@@ -1144,8 +1193,13 @@ const Notifications = {
         ${!perm ? `
           <button onclick="Notifications.demanderPermission()
             .then(ok => {
-              if(ok) { Utils.toast('✅ Notifications activées!','success'); Notifications.renderPage(this.closest('.page') || document.getElementById('page-notifications')); }
-              else Utils.toast('❌ Refusé dans les paramètres','error');
+              if (ok) {
+                Utils.toast('✅ Notifications activées!','success');
+                const c = Notifications._getContainer();
+                if (c) Notifications.renderPage(c);
+              } else {
+                Utils.toast('❌ Refusé dans les paramètres','error');
+              }
             })"
                   class="btn-primary"
                   style="font-size:.72rem;flex-shrink:0">
@@ -1186,15 +1240,15 @@ const Notifications = {
         <div style="display:grid;
                     grid-template-columns:repeat(3,1fr);gap:6px">
           ${['motivant','doux','severe'].map(ton => `
-            <button onclick="Notifications.sauvegarderConfig({ton:'${ton}'});
-                            document.querySelectorAll('.btn-ton')
-                              .forEach(b=>{
-                                b.style.background='rgba(255,255,255,0.04)';
-                                b.style.borderColor='rgba(255,255,255,0.1)';
-                              });
-                            this.style.background='rgba(75,75,249,0.2)';
-                            this.style.borderColor='var(--fd-indigo)';
-                            Utils.toast('Ton ${ton} sélectionné','success',1500)"
+            <button onclick="
+              Notifications.sauvegarderConfig({ton:'${ton}'});
+              document.querySelectorAll('.btn-ton').forEach(b => {
+                b.style.background = 'rgba(255,255,255,0.04)';
+                b.style.borderColor = 'rgba(255,255,255,0.1)';
+              });
+              this.style.background = 'rgba(75,75,249,0.2)';
+              this.style.borderColor = 'var(--fd-indigo)';
+              Utils.toast('Ton ${ton} sélectionné','success',1500)"
                     class="btn-ton"
                     style="padding:10px 6px;text-align:center;
                            background:${config.ton === ton
@@ -1207,16 +1261,14 @@ const Notifications = {
                            cursor:pointer">
               <div style="font-size:1rem;margin-bottom:3px">
                 ${ton === 'motivant' ? '🔥'
-                : ton === 'doux'     ? '🌸'
-                : '⚡'}
+                : ton === 'doux'     ? '🌸' : '⚡'}
               </div>
               <div style="font-size:.68rem;font-weight:700;
                           color:${config.ton === ton
                             ? 'var(--fd-indigo)'
                             : 'var(--text-muted)'}">
                 ${ton === 'motivant' ? 'Motivant'
-                : ton === 'doux'     ? 'Doux'
-                : 'Sévère'}
+                : ton === 'doux'     ? 'Doux' : 'Sévère'}
               </div>
             </button>`).join('')}
         </div>
@@ -1245,7 +1297,8 @@ const Notifications = {
                  style="padding:8px;background:var(--bg-input);
                         border:1px solid var(--border-color);
                         border-radius:var(--radius-md);
-                        color:var(--text-primary);font-size:.82rem"/>
+                        color:var(--text-primary);
+                        font-size:.82rem"/>
         </div>
       </div>
 
@@ -1260,19 +1313,77 @@ const Notifications = {
           📋 Types de notifications
         </div>
         ${[
-          { cle:'rappelQuotidien',  label:'🌅 Rappel quotidien',      desc:'Séance du jour'           },
-          { cle:'absence1j',        label:'💪 Absence 1 jour',        desc:'Si tu n\'as pas traîné'   },
-          { cle:'absence2j',        label:'🔥 Absence 2 jours',       desc:'Relance urgente'          },
-          { cle:'absence5j',        label:'😢 Absence longue',        desc:'5+ jours sans séance'     },
-          { cle:'streakDanger',     label:'⚠️ Streak en danger',      desc:'Fin de journée'           },
-          { cle:'motivationMatin',  label:'🌟 Motivation matin',      desc:'Citation du jour'         },
-          { cle:'prProche',         label:'📈 PR en vue',             desc:'Record accessible'        },
-          { cle:'nouveauPR',        label:'🏆 Nouveau PR',            desc:'Record battu'             },
-          { cle:'finSeance',        label:'✅ Fin de séance',         desc:'Résumé post-séance'       },
-          { cle:'semaineParf',      label:'🏆 Semaine parfaite',      desc:'Objectif semaine atteint' },
-          { cle:'decharge',         label:'😴 Semaine de décharge',   desc:'Rappel décharge'          },
-          { cle:'hydratation',      label:'💧 Rappel hydratation',    desc:'Toutes les 2h'            },
-          { cle:'surcharge',        label:'⚠️ Surcharge musculaire',  desc:'Alerte récupération'      }
+          {
+            cle:'rappelQuotidien',
+            label:'🌅 Rappel quotidien',
+            desc:'Séance du jour'
+          },
+          {
+            cle:'absence1j',
+            label:'💪 Absence 1 jour',
+            desc:'Si tu n\'as pas traîné'
+          },
+          {
+            cle:'absence2j',
+            label:'🔥 Absence 2 jours',
+            desc:'Relance urgente'
+          },
+          {
+            cle:'absence5j',
+            label:'😢 Absence longue',
+            desc:'5+ jours sans séance'
+          },
+          {
+            cle:'streakDanger',
+            label:'⚠️ Streak en danger',
+            desc:'Fin de journée'
+          },
+          {
+            cle:'motivationMatin',
+            label:'🌟 Motivation matin',
+            desc:'Citation du jour'
+          },
+          {
+            cle:'prProche',
+            label:'📈 PR en vue',
+            desc:'Record accessible'
+          },
+          {
+            cle:'nouveauPR',
+            label:'🏆 Nouveau PR',
+            desc:'Record battu'
+          },
+          {
+            cle:'finSeance',
+            label:'✅ Fin de séance',
+            desc:'Résumé post-séance'
+          },
+          {
+            cle:'semaineParf',
+            label:'🏆 Semaine parfaite',
+            desc:'Objectif semaine atteint'
+          },
+          {
+            cle:'decharge',
+            label:'😴 Semaine de décharge',
+            desc:'Rappel décharge'
+          },
+          {
+            cle:'hydratation',
+            label:'💧 Rappel hydratation',
+            desc:'Toutes les 2h'
+          },
+          {
+            cle:'surcharge',
+            label:'⚠️ Surcharge musculaire',
+            desc:'Alerte récupération'
+          },
+          // ✅ NOUVEAU v5.0
+          {
+            cle:'levelUp',
+            label:'⭐ Nouveau niveau XP',
+            desc:'Level Up atteint'
+          }
         ].map(n => `
           <div style="display:flex;align-items:center;
                       justify-content:space-between;
@@ -1281,9 +1392,11 @@ const Notifications = {
                         rgba(255,255,255,0.06)">
             <div style="flex:1">
               <div style="font-size:.82rem;font-weight:600">
-                ${n.label}</div>
+                ${n.label}
+              </div>
               <div style="font-size:.6rem;color:var(--text-muted)">
-                ${n.desc}</div>
+                ${n.desc}
+              </div>
             </div>
             ${this._renderToggle(n.cle, config[n.cle])}
           </div>`).join('')}
@@ -1306,12 +1419,15 @@ const Notifications = {
           <div style="display:flex;align-items:center;
                       justify-content:space-between;
                       padding:8px 0;
-                      border-bottom:1px solid rgba(255,255,255,0.06)">
+                      border-bottom:1px solid
+                        rgba(255,255,255,0.06)">
             <div style="flex:1">
               <div style="font-size:.82rem;font-weight:600">
-                ${n.label}</div>
+                ${n.label}
+              </div>
               <div style="font-size:.6rem;color:var(--text-muted)">
-                ${n.desc}</div>
+                ${n.desc}
+              </div>
             </div>
             ${this._renderToggle(n.cle, config[n.cle])}
           </div>`).join('')}
@@ -1331,7 +1447,7 @@ const Notifications = {
         </button>
       </div>
 
-      <!-- Stats -->
+      <!-- Stats du jour -->
       <div style="background:rgba(255,255,255,0.03);
                   border:1px solid rgba(255,255,255,0.08);
                   border-radius:var(--radius-xl);
@@ -1354,15 +1470,18 @@ const Notifications = {
     `;
   },
 
-  // ✅ Helper toggle switch
+  // ✅ v5.0 — _renderToggle Fix _getContainer()
   _renderToggle(cle, valeur) {
     return `
       <div onclick="(() => {
-               const v = !${valeur};
+               const v = !${valeur ? 'true' : 'false'};
                Notifications.sauvegarderConfig({${cle}: v});
-               Utils.toast(v ? '✅ Activé' : '❌ Désactivé', 'success', 1000);
-               const p = this.closest('[id*=notif]') || this.closest('.page');
-               if(p) Notifications.renderPage(p);
+               Utils.toast(
+                 v ? '✅ Activé' : '❌ Désactivé',
+                 'success', 1000
+               );
+               const c = Notifications._getContainer();
+               if (c) Notifications.renderPage(c);
              })()"
            style="position:relative;width:48px;height:26px;
                   cursor:pointer;flex-shrink:0">
@@ -1397,9 +1516,12 @@ const Notifications = {
     const today = Utils.aujourd_hui();
     const stats = {};
     [
-      'ft_rappel_', 'ft_motiv_',
-      'ft_verif_pr_', 'ft_notif_semaine_parf_',
-      'ft_notif_decharge_', 'ft_notif_surcharge_'
+      'ft_rappel_',
+      'ft_motiv_',
+      'ft_verif_pr_',
+      'ft_notif_semaine_parf_',
+      'ft_notif_decharge_',
+      'ft_notif_surcharge_'
     ].forEach(cle => {
       stats[
         cle.replace('ft_','').replace(/_/g,' ').trim()
@@ -1411,13 +1533,19 @@ const Notifications = {
   _resetNotifsJour() {
     const today = Utils.aujourd_hui();
     [
-      'ft_rappel_', 'ft_motiv_',
-      'ft_verif_pr_', 'ft_notif_semaine_parf_',
-      'ft_notif_decharge_', 'ft_notif_surcharge_'
+      'ft_rappel_',
+      'ft_motiv_',
+      'ft_verif_pr_',
+      'ft_notif_semaine_parf_',
+      'ft_notif_decharge_',
+      'ft_notif_surcharge_'
     ].forEach(cle => Utils.storage.remove(cle + today));
     Utils.toast('Notifs du jour réinitialisées', 'info');
   }
 };
 
 window.Notifications = Notifications;
-console.log('✅ Notifications v4.0 chargé — Hydratation + Surcharge + Genre-aware + Interface');
+console.log(
+  '✅ Notifications v5.0 chargé'
+  + ' — Fix toggles + LevelUp + fin_repos + genre-aware'
+);
