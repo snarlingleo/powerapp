@@ -1,6 +1,7 @@
 /* ============================================================
-   PowerApp — TimerManager v1.1 CORRIGÉ
+   PowerApp — TimerManager v2.0
    Timer reps + Timer repos + Alarme forte répétée
+   + Fix toggle alarme + Sounds.js + async permission
    ============================================================ */
 
 'use strict';
@@ -16,21 +17,26 @@ const TimerManager = {
   _phase:             null,
   _enPause:           false,
   _alarmeInterval:    null,
+  _poidsActuel:       null,
+  _repsActuel:        null,
+  _nomExo:            null,
 
   CLE_ALARME: 'ft_alarme_rappel',
 
   // ════════════════════════════════════════════════════════
   // TIMER REPS — Manuel
   // ════════════════════════════════════════════════════════
-  lancerTimerReps(exoIdx, serieIdx, poids = null, reps = null, nomExo = null) {
-  const duree = 40;
-  // ✅ Stocker les infos pour l'overlay
-  this._poidsActuel = poids;
-  this._repsActuel  = reps;
-  this._nomExo      = nomExo;
-  this._afficherOverlay('reps', duree, exoIdx, serieIdx);
-  this._demarrer(duree, 'reps');
-},
+  lancerTimerReps(
+    exoIdx, serieIdx,
+    poids = null, reps = null, nomExo = null
+  ) {
+    const duree        = 40;
+    this._poidsActuel  = poids;
+    this._repsActuel   = reps;
+    this._nomExo       = nomExo;
+    this._afficherOverlay('reps', duree, exoIdx, serieIdx);
+    this._demarrer(duree, 'reps');
+  },
 
   // ════════════════════════════════════════════════════════
   // TIMER REPOS — Auto après validation série
@@ -60,10 +66,14 @@ const TimerManager = {
       this._mettreAJourDisplay();
       this._mettreAJourCercle();
 
-      // ✅ Sons d'alerte 3 dernières secondes
+      // ✅ Sons 3 dernières secondes
       if (this._secondesRestantes <= 3
           && this._secondesRestantes > 0) {
-        try { timerRepos.jouerSon('bip'); } catch(e) {}
+        // ✅ v2.0 — Priorité Sounds.js, fallback timerRepos
+        try {
+          if (window.Sounds) Sounds.jouer('bip');
+          else timerRepos.jouerSon('bip');
+        } catch(e) {}
         Utils.vibrer([50]);
       }
 
@@ -84,16 +94,25 @@ const TimerManager = {
     this._arreter();
     const phase = this._phase;
 
+    // ✅ v2.0 — Sounds.js avec fallback
     try {
-      timerRepos.jouerSon(phase === 'repos' ? 'rest' : 'go');
+      if (window.Sounds) {
+        Sounds.jouer(phase === 'repos' ? 'rest' : 'go');
+      } else {
+        timerRepos.jouerSon(phase === 'repos' ? 'rest' : 'go');
+      }
     } catch(e) {}
 
     Utils.vibrer([200, 100, 200]);
 
     if (phase === 'repos') {
       Utils.toast('✅ Repos terminé — Go !', 'success', 2000);
-       // ✅ Annonce vocale fin de repos
-try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
+      // ✅ Annonce vocale fin de repos (si disponible)
+      try {
+        if (typeof SeanceGuidee !== 'undefined') {
+          SeanceGuidee.annoncerFinRepos();
+        }
+      } catch(e) {}
     } else {
       Utils.toast('⏹ Timer terminé !', 'info', 1500);
     }
@@ -147,15 +166,17 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
                        color:var(--text-muted);font-size:1rem;
                        cursor:pointer;padding:4px">✕</button>
       </div>
+
       <!-- Infos exercice -->
-      ${(this._nomExo || this._poidsActuel) ? `
+      ${(this._nomExo || this._poidsActuel !== null) ? `
         <div style="text-align:center;margin-bottom:10px">
           ${this._nomExo ? `
             <div style="font-size:.82rem;font-weight:700;
-                        color:var(--text-primary);margin-bottom:4px">
+                        color:var(--text-primary);
+                        margin-bottom:4px">
               ${this._nomExo}
             </div>` : ''}
-          ${this._poidsActuel ? `
+          ${this._poidsActuel !== null ? `
             <div style="display:inline-flex;align-items:center;
                         gap:8px;padding:8px 20px;
                         background:rgba(75,75,249,0.15);
@@ -165,13 +186,16 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
                            color:var(--fd-indigo)">
                 ${this._poidsActuel}kg
               </span>
-              <span style="color:var(--text-muted);font-size:.9rem">×</span>
+              <span style="color:var(--text-muted);font-size:.9rem">
+                ×
+              </span>
               <span style="font-size:1.3rem;font-weight:800;
                            color:var(--fd-lemon)">
                 ${this._repsActuel || '—'}
               </span>
             </div>` : ''}
         </div>` : ''}
+
       <!-- Cercle SVG -->
       <div style="position:relative;width:140px;height:140px;
                   margin:0 auto 12px">
@@ -242,7 +266,8 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
           ✕ Stop
         </button>
       </div>
-      <!-- Modifier charge pendant série -->
+
+      <!-- Modifier charge (mode reps) -->
       ${phase === 'reps' ? `
         <div style="margin-bottom:10px">
           <div style="font-size:.6rem;font-weight:700;
@@ -261,13 +286,14 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
                            color:var(--fd-coral);
                            font-size:.85rem;font-weight:700;
                            cursor:pointer">
-              -2.5
+              −2.5
             </button>
             <div id="timer-poids-display"
                  style="font-size:1.4rem;font-weight:800;
                         color:var(--fd-indigo);
                         min-width:80px;text-align:center">
-              ${this._poidsActuel ? `${this._poidsActuel}kg` : '—kg'}
+              ${this._poidsActuel !== null
+                ? `${this._poidsActuel}kg` : '—kg'}
             </div>
             <button onclick="TimerManager._modifierPoids(2.5)"
                     style="width:60px;height:44px;
@@ -282,8 +308,8 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
           </div>
         </div>` : ''}
 
+      <!-- Presets repos -->
       ${phase === 'repos' ? `
-              <!-- Presets repos -->
         <div style="display:flex;gap:6px">
           ${[45, 60, 90, 120].map(s => `
             <button onclick="TimerManager._resetAvec(${s})"
@@ -322,8 +348,8 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
     this._enPause = !this._enPause;
     const btn = document.getElementById('timer-btn-pause');
     if (btn) {
-      btn.textContent   = this._enPause ? '▶ Go'    : '⏸ Pause';
-      btn.style.color   = this._enPause
+      btn.textContent       = this._enPause ? '▶ Go'    : '⏸ Pause';
+      btn.style.color       = this._enPause
         ? 'var(--fd-coral)'   : 'var(--fd-indigo)';
       btn.style.borderColor = this._enPause
         ? 'var(--fd-coral)'   : 'var(--fd-indigo)';
@@ -343,41 +369,29 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
     Utils.vibrer([30]);
   },
 
-   _modifierPoids(delta) {
-  if (this._poidsActuel === null) {
-    this._poidsActuel = 0;
-  }
-  this._poidsActuel = Math.max(0,
-    Math.round((this._poidsActuel + delta) * 10) / 10
-  );
-
-  // ✅ Mettre à jour l'affichage
-  const el = document.getElementById('timer-poids-display');
-  if (el) el.textContent = `${this._poidsActuel}kg`;
-
-  // ✅ Sauvegarder pour récupérer après validation
-  window._timerPoidsModifie = this._poidsActuel;
-
-  Utils.vibrer([30]);
-  Utils.toast(
-    `Charge : ${this._poidsActuel}kg`, 'info', 800
-  );
-},
+  _modifierPoids(delta) {
+    if (this._poidsActuel === null) this._poidsActuel = 0;
+    this._poidsActuel = Math.max(
+      0, Math.round((this._poidsActuel + delta) * 10) / 10
+    );
+    const el = document.getElementById('timer-poids-display');
+    if (el) el.textContent = `${this._poidsActuel}kg`;
+    window._timerPoidsModifie = this._poidsActuel;
+    Utils.vibrer([30]);
+    Utils.toast(`Charge : ${this._poidsActuel}kg`, 'info', 800);
+  },
 
   _resetAvec(secondes) {
     this._arreter();
     this._dureeInitiale = secondes;
-
-    // ✅ Mettre à jour visuellement les presets
     document.querySelectorAll('[data-preset]').forEach(btn => {
       const val     = parseInt(btn.dataset.preset);
       const couleur = 'var(--fd-mint)';
       const actif   = val === secondes;
-      btn.style.background  = actif ? couleur    : 'var(--bg-input)';
-      btn.style.color       = actif ? '#09092d'  : 'var(--text-muted)';
-      btn.style.borderColor = actif ? couleur    : 'var(--border-color)';
+      btn.style.background  = actif ? couleur   : 'var(--bg-input)';
+      btn.style.color       = actif ? '#09092d' : 'var(--text-muted)';
+      btn.style.borderColor = actif ? couleur   : 'var(--border-color)';
     });
-
     this._demarrer(secondes, this._phase || 'repos');
   },
 
@@ -425,7 +439,6 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
   sauvegarderAlarme(data) {
     Utils.storage.set(this.CLE_ALARME, data);
 
-    // ✅ Envoyer au Service Worker pour alarme téléphone verrouillé
     try {
       if ('serviceWorker' in navigator
           && navigator.serviceWorker.controller) {
@@ -444,7 +457,6 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
       }
     } catch(e) {}
 
-    // Aussi planifier en JS pour quand l'app est ouverte
     if (data.active) {
       this._planifierAlarme(data.heure);
     } else {
@@ -452,9 +464,6 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
     }
   },
 
-  // ════════════════════════════════════════════════════════
-  // PLANIFICATION — vérifie toutes les 5s
-  // ════════════════════════════════════════════════════════
   _planifierAlarme(heure) {
     this._annulerAlarme();
 
@@ -484,59 +493,50 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
     }
   },
 
-  // ════════════════════════════════════════════════════════
-  // DÉCLENCHEMENT — Fort + Répété
-  // ════════════════════════════════════════════════════════
   _declencherAlarme(alarme) {
     const msg         = alarme.message
       || '⚡ C\'est l\'heure de t\'entraîner !';
     const repetitions = alarme.repetitions || 3;
 
-    // ✅ Répéter toutes les 2 minutes
     Array.from({ length: repetitions }, (_, i) => i * 120000)
       .forEach(delai => {
         setTimeout(() => {
           const check = this.getAlarme();
           if (!check.active) return;
 
-          // ✅ Notification persistante avec requireInteraction
           try {
             if (Notification.permission === 'granted') {
-              new Notification('⚡ PowerApp — Go t\'entraîner !', {
-                body:               msg,
-                icon:               './assets/icons/icon-192.png',
-                badge:              './assets/icons/icon-72.png',
-                // ✅ Vibrations longues et répétées
-                vibrate: [
-                  500, 200, 500, 200, 500,
-                  500, 200, 500, 200, 500,
-                  500, 200, 500
-                ],
-                requireInteraction: true,  // ✅ Reste affichée
-                renotify:           true,
-                tag:                'powerapp-alarme',
-                silent:             false
-              });
+              new Notification(
+                '⚡ PowerApp — Go t\'entraîner !',
+                {
+                  body:               msg,
+                  icon:               './assets/icons/icon-192.png',
+                  badge:              './assets/icons/icon-72.png',
+                  vibrate: [
+                    500, 200, 500, 200, 500,
+                    500, 200, 500, 200, 500,
+                    500, 200, 500
+                  ],
+                  requireInteraction: true,
+                  renotify:           true,
+                  tag:                'powerapp-alarme',
+                  silent:             false
+                }
+              );
             }
           } catch(e) {}
 
-          // ✅ Toast persistant dans l'app
           Utils.toast(`⏰ ${msg}`, 'success', 15000);
-
-          // ✅ Vibrations longues
           Utils.vibrer([
             500, 200, 500, 200, 500,
             200, 500, 200, 500, 200, 500
           ]);
-
-          // ✅ Son fort répété 3×
           this._jouerSonAlarme();
 
         }, delai);
       });
   },
 
-  // ✅ Son alarme — 3 bips forts successifs
   _jouerSonAlarme() {
     [0, 800, 1600].forEach(delai => {
       setTimeout(() => {
@@ -549,7 +549,6 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
           osc.connect(gain);
           gain.connect(ctx.destination);
 
-          // ✅ Son perçant type alarme
           osc.type = 'square';
           osc.frequency.setValueAtTime(880,  ctx.currentTime);
           osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.15);
@@ -568,39 +567,38 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
   },
 
   // ════════════════════════════════════════════════════════
-  // INIT — Au démarrage de l'app
+  // INIT — ✅ v2.0 async permission
   // ════════════════════════════════════════════════════════
-  initAlarme() {
+  async initAlarme() {
     const alarme = this.getAlarme();
 
     if (alarme.active) {
       this._planifierAlarme(alarme.heure);
 
-      // ✅ Aussi envoyer au SW
       try {
-        navigator.serviceWorker?.ready.then(reg => {
-          reg.active?.postMessage({
-            type:    'PLANIFIER_ALARME',
-            payload: {
-              heure:       alarme.heure,
-              message:     alarme.message,
-              repetitions: alarme.repetitions || 3
-            }
-          });
+        const reg = await navigator.serviceWorker?.ready;
+        reg?.active?.postMessage({
+          type:    'PLANIFIER_ALARME',
+          payload: {
+            heure:       alarme.heure,
+            message:     alarme.message,
+            repetitions: alarme.repetitions || 3
+          }
         });
       } catch(e) {}
     }
 
-    // Permission notifications
+    // ✅ v2.0 — Demande permission async propre
     try {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission();
+      if ('Notification' in window
+          && Notification.permission === 'default') {
+        await Notification.requestPermission();
       }
     } catch(e) {}
   },
 
   // ════════════════════════════════════════════════════════
-  // RENDER ALARME — Settings
+  // RENDER ALARME — ✅ v2.0 Fix toggle
   // ════════════════════════════════════════════════════════
   renderAlarme(container) {
     if (!container) return;
@@ -612,7 +610,7 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
            style="border-color:${alarme.active
              ? 'var(--fd-lemon)' : 'var(--border-color)'}">
 
-        <!-- Header toggle -->
+        <!-- Header + Toggle -->
         <div class="flex justify-between items-center mb-md">
           <div>
             <div class="card-label" style="margin:0">
@@ -624,24 +622,27 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
             </div>
           </div>
 
-          <!-- ✅ Toggle inline — pas de dépendance CSS -->
+          <!-- ✅ v2.0 — Toggle sans id alarme-toggle -->
           <div onclick="TimerManager._toggleAlarme(${!alarme.active})"
                style="position:relative;width:48px;height:26px;
                       cursor:pointer;flex-shrink:0">
             <div style="position:absolute;inset:0;
                         background:${alarme.active
-                          ? 'var(--fd-lemon)' : 'rgba(255,255,255,0.1)'};
+                          ? 'var(--fd-lemon)'
+                          : 'rgba(255,255,255,0.1)'};
                         border:2px solid ${alarme.active
-                          ? 'var(--fd-lemon)' : 'rgba(255,255,255,0.2)'};
-                        border-radius:99px;transition:all .25s">
+                          ? 'var(--fd-lemon)'
+                          : 'rgba(255,255,255,0.2)'};
+                        border-radius:99px;
+                        transition:all .25s">
             </div>
-            <div style="position:absolute;
-                        top:50%;
+            <div style="position:absolute;top:50%;
                         left:${alarme.active ? '24px' : '2px'};
                         transform:translateY(-50%);
                         width:18px;height:18px;
                         background:${alarme.active
-                          ? '#09092d' : 'rgba(255,255,255,0.4)'};
+                          ? '#09092d'
+                          : 'rgba(255,255,255,0.4)'};
                         border-radius:50%;
                         transition:left .25s;
                         pointer-events:none">
@@ -657,7 +658,7 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
                value="${alarme.heure}"
                style="font-size:1.2rem;font-weight:700;
                       text-align:center;letter-spacing:.1em;
-                      color:var(--fd-lemon)" />
+                      color:var(--fd-lemon)"/>
 
         <!-- Message -->
         <div class="input-label">💬 Message</div>
@@ -665,12 +666,13 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
                id="alarme-message"
                class="input mt-sm mb-md"
                value="${alarme.message || ''}"
-               placeholder="⚡ C'est l'heure de t'entraîner !" />
+               placeholder="⚡ C'est l'heure de t'entraîner !"/>
 
-        <!-- ✅ Répétitions -->
+        <!-- Répétitions -->
         <div class="input-label">🔁 Répéter l'alarme</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);
-                    gap:6px;margin-top:8px;margin-bottom:var(--space-md)">
+                    gap:6px;margin-top:8px;
+                    margin-bottom:var(--space-md)">
           ${[1, 3, 5].map(r => `
             <button onclick="TimerManager._setRepetitions(${r})"
                     style="padding:8px 4px;
@@ -680,21 +682,24 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
                            color:${(alarme.repetitions||3) === r
                              ? '#09092d' : 'var(--text-muted)'};
                            border:1px solid ${(alarme.repetitions||3) === r
-                             ? 'var(--fd-lemon)' : 'var(--border-color)'};
+                             ? 'var(--fd-lemon)'
+                             : 'var(--border-color)'};
                            border-radius:99px;cursor:pointer">
-              ${r === 1 ? '1× seulement' : r === 3 ? '3× (recommandé)' : '5× (max)'}
+              ${r === 1
+                ? '1× seulement'
+                : r === 3 ? '3× (recommandé)' : '5× (max)'}
             </button>`).join('')}
         </div>
 
         <!-- Sauvegarder -->
         <button onclick="TimerManager._sauvegarderAlarme()"
-                class="btn-primary"
-                style="width:100%">
+                class="btn-primary" style="width:100%">
           💾 Sauvegarder
         </button>
 
         ${alarme.active ? `
-          <div style="margin-top:var(--space-sm);text-align:center;
+          <div style="margin-top:var(--space-sm);
+                      text-align:center;
                       font-size:.75rem;color:var(--fd-lemon)">
             ⏰ Alarme active à ${alarme.heure}
             · ${alarme.repetitions||3}× toutes les 2 min
@@ -712,7 +717,8 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
           </strong><br>
           • Active les notifications dans les réglages<br>
           • Garde l'app ouverte en arrière-plan<br>
-          • Son fort + vibrations longues + notification persistante<br>
+          • Son fort + vibrations longues +
+            notification persistante<br>
           • Se répète toutes les 2 minutes
         </div>
         <button onclick="TimerManager._testerAlarme()"
@@ -742,22 +748,25 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
     );
   },
 
+  // ✅ v2.0 — Fix : lit active depuis getAlarme()
   _sauvegarderAlarme() {
     const heure   = document.getElementById('alarme-heure')?.value;
     const message = document.getElementById('alarme-message')
-      ?.value?.trim() || '⚡ C\'est l\'heure de t\'entraîner !';
-    const active  = document.getElementById('alarme-toggle')
-      ?.checked ?? this.getAlarme().active;
-    const alarme  = this.getAlarme();
+      ?.value?.trim()
+      || '⚡ C\'est l\'heure de t\'entraîner !';
 
     if (!heure) {
       Utils.toast('Choisis une heure !', 'error');
       return;
     }
 
+    // ✅ v2.0 — Récupérer active depuis storage (pas depuis input)
+    const alarmeExistante = this.getAlarme();
+
     this.sauvegarderAlarme({
-      ...alarme,
-      active, heure, message
+      ...alarmeExistante,
+      heure,
+      message
     });
 
     Utils.toast(`✅ Alarme sauvegardée à ${heure} !`, 'success');
@@ -781,32 +790,28 @@ try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
     );
   },
 
-  // ✅ Test avec le vrai système d'alarme fort
-  _testerAlarme() {
-    const alarme = this.getAlarme();
-    this._declencherAlarme({
-      ...alarme,
-      repetitions: 1  // 1 seule fois pour le test
-    });
-    Utils.toast('🔔 Test alarme lancé !', 'info', 2000);
+  async _testerAlarme() {
+    // ✅ v2.0 — Demander permission si nécessaire
+    if ('Notification' in window
+        && Notification.permission !== 'granted') {
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          Utils.toast(
+            '⚠️ Active les notifications dans les réglages !',
+            'warning', 5000
+          );
+          return;
+        }
+        Utils.toast('✅ Notifications activées !', 'success');
+      } catch(e) {}
+    }
 
-    // Demander permission si pas encore accordée
-    try {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission().then(perm => {
-          if (perm === 'granted') {
-            Utils.toast('✅ Notifications activées !', 'success');
-          } else {
-            Utils.toast(
-              '⚠️ Active les notifications dans les réglages !',
-              'warning', 5000
-            );
-          }
-        });
-      }
-    } catch(e) {}
+    const alarme = this.getAlarme();
+    this._declencherAlarme({ ...alarme, repetitions: 1 });
+    Utils.toast('🔔 Test alarme lancé !', 'info', 2000);
   }
 };
 
 window.TimerManager = TimerManager;
-console.log('✅ TimerManager v1.1 chargé');
+console.log('✅ TimerManager v2.0 chargé — Fix toggle + async permission + Sounds.js');
