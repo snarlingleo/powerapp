@@ -174,7 +174,10 @@ case 'live': {
   }
   break;
       case 'profil':       _rendreProfil(container);                      break;
-      case 'coach':        Coach.renderCoachTab(container);               break;
+      case 'coach':
+  try { Coach.renderCoachTabV7(container); }
+  catch(e) { Coach.renderCoachTab(container); }
+  break;
       case 'defis':        Defis.render(container);                       break;
       case 'predict':      Predict.render(container);                     break;
       case 'share':        Share.render(container);                       break;
