@@ -1,12 +1,9 @@
 /* ============================================================
-   PowerApp — Tracker v4.0
-   Suivi progression, PRs, streak, volume, historique
-   + Photos + Supersets + Stats avancées
-   + Historique charges Live
-   + Détection surcharge musculaire
-   + Score récupération enrichi
-   + Heatmap musculaire
-   + PRs proches (notifications)
+   PowerApp — Tracker v5.0
+   + Fix getDernierePerf() sans seanceId
+   + getVolumeSemaineParMuscle() NOUVEAU
+   + getSurchargeMusculaire() unifié avec Programme
+   + semainesDepuis() NOUVEAU
    ============================================================ */
 
 const Tracker = {
@@ -30,7 +27,6 @@ const Tracker = {
     PHOTOS:    ()                 => 'ft_photos',
     SUPERSETS: (date, id)         => `ft_superset_${date}_${id}`,
     NOTES_EXO: (ref)              => `ft_notes_exo_${ref}`,
-    // ✅ NOUVEAU v4.0
     CACHE_HIST: (ref)             => `ft_cache_hist_${ref}`,
     SURCHARGE:  ()                => 'ft_surcharge_musculaire',
     RECUP:      (date)            => `ft_recup_${date}`
@@ -42,7 +38,7 @@ const Tracker = {
   init() {
     try { this._nettoyerDonneesOrphelines(); } catch(e) {}
     try { this._invaliderCacheHistorique();  } catch(e) {}
-    console.log('[Tracker] Init v4.0 OK');
+    console.log('[Tracker] Init v5.0 OK');
   },
 
   _nettoyerDonneesOrphelines() {
@@ -64,12 +60,10 @@ const Tracker = {
     }
   },
 
-  // ✅ NOUVEAU — Invalider le cache historique au démarrage
   _invaliderCacheHistorique() {
-    const today = Utils.aujourd_hui();
+    const today     = Utils.aujourd_hui();
     const cacheDate = Utils.storage.get('ft_cache_date', null);
     if (cacheDate !== today) {
-      // Supprimer tous les caches d'hier
       for (let i = localStorage.length - 1; i >= 0; i--) {
         const cle = localStorage.key(i);
         if (cle?.startsWith('ft_cache_hist_')) {
@@ -109,14 +103,11 @@ const Tracker = {
     const cle  = this.CLE.SEANCE(d, seanceId);
     let   data = Utils.storage.get(cle, null);
 
-    if (!data) {
-      data = this.demarrerSeance(seanceId, d);
-    }
+    if (!data) data = this.demarrerSeance(seanceId, d);
 
     if (!data.debut) {
       data.debut = Utils.storage.get(
-        `ft_seance_start_${d}_${seanceId}`,
-        Date.now()
+        `ft_seance_start_${d}_${seanceId}`, Date.now()
       );
     }
 
@@ -134,7 +125,6 @@ const Tracker = {
 
     this.mettreAJourStreak(d);
 
-    // ✅ NOUVEAU v4.0 — Analyser surcharge après chaque séance
     try { this._analyserSurchargeMusculaire(data); } catch(e) {}
 
     return data;
@@ -208,22 +198,15 @@ const Tracker = {
     }
 
     Utils.storage.set(seanceCle, seanceData);
-
-    // ✅ NOUVEAU v4.0 — Invalider cache historique de cet exo
     localStorage.removeItem(this.CLE.CACHE_HIST(exerciceRef));
 
     return { ...data, isPR };
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ NOUVEAU v4.0 — HISTORIQUE CHARGES LIVE
-  // Retourne les 3 dernières séances pour un exercice
-  // Utilisé dans app.js pour afficher l'historique
-  // pendant la séance
+  // HISTORIQUE CHARGES LIVE
   // ════════════════════════════════════════════════════════
   getHistoriqueChargesLive(exerciceRef, nbSeances = 3) {
-
-    // ✅ Cache pour éviter de boucler localStorage à chaque série
     const cacheCle = this.CLE.CACHE_HIST(exerciceRef);
     const cache    = Utils.storage.get(cacheCle, null);
     if (cache?.date === Utils.aujourd_hui() && cache?.data) {
@@ -260,7 +243,6 @@ const Tracker = {
       if (result.length >= nbSeances) break;
     }
 
-    // ✅ Mettre en cache
     Utils.storage.set(cacheCle, {
       date: Utils.aujourd_hui(),
       data: result
@@ -270,22 +252,24 @@ const Tracker = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ NOUVEAU v4.0 — SUGGESTION CHARGE
-  // Suggère poids + reps pour la prochaine séance
+  // SUGGESTION CHARGE
   // ════════════════════════════════════════════════════════
   getSuggestionCharge(exerciceRef) {
+    // ✅ Déléguer à Calculateur.js si disponible
+    if (window.Calculateur?.getSuggestionCharge) {
+      return Calculateur.getSuggestionCharge(exerciceRef);
+    }
+
     const hist = this.getHistoriqueChargesLive(exerciceRef, 3);
     if (!hist.length) return null;
 
-    const derniere = hist[0];
+    const derniere      = hist[0];
     const avantDerniere = hist[1] || null;
+    const maxPoids      = derniere.maxPoids;
+    const maxRM1        = derniere.maxRM1;
 
-    const maxPoids  = derniere.maxPoids;
-    const maxRM1    = derniere.maxRM1;
-
-    // ✅ Progression automatique selon RPE moyen
     const dernieresSeries = derniere.series || [];
-    const rpeMoyen = dernieresSeries.filter(s => s.rpe)
+    const rpeMoyen        = dernieresSeries.filter(s => s.rpe)
       .reduce((acc, s, _, arr) =>
         acc + (s.rpe / arr.length), 0
       ) || 0;
@@ -294,21 +278,18 @@ const Tracker = {
 
     if (rpeMoyen > 0) {
       if (rpeMoyen >= 9) {
-        // Trop dur → maintenir ou baisser
         suggestion = {
           poids:  maxPoids,
           action: 'maintenir',
           raison: 'RPE élevé la dernière fois'
         };
       } else if (rpeMoyen <= 6) {
-        // Trop facile → augmenter
         suggestion = {
           poids:  maxPoids + 2.5,
           action: 'augmenter',
           raison: 'RPE faible → progression possible'
         };
       } else {
-        // RPE 7-8 → progression légère
         suggestion = {
           poids:  maxPoids + 2.5,
           action: 'augmenter',
@@ -316,7 +297,6 @@ const Tracker = {
         };
       }
     } else if (avantDerniere) {
-      // Pas de RPE → comparer avec séance précédente
       if (maxPoids > avantDerniere.maxPoids) {
         suggestion = {
           poids:  maxPoids + 2.5,
@@ -383,7 +363,9 @@ const Tracker = {
 
   getSuperset(supersetId, date = null) {
     const d = date || Utils.aujourd_hui();
-    return Utils.storage.get(this.CLE.SUPERSETS(d, supersetId), null);
+    return Utils.storage.get(
+      this.CLE.SUPERSETS(d, supersetId), null
+    );
   },
 
   // ════════════════════════════════════════════════════════
@@ -391,13 +373,21 @@ const Tracker = {
   // ════════════════════════════════════════════════════════
   verifierEtSauvegarderPR(exerciceRef, { poids, reps, rm1 }) {
     const cle    = this.CLE.PR(exerciceRef);
-    const actuel = Utils.storage.get(cle, { poids:0, reps:0, rm1:0 });
+    const actuel = Utils.storage.get(cle, {
+      poids:0, reps:0, rm1:0
+    });
     let   nouveau = false;
     const updates = {};
 
-    if (poids > (actuel.poids||0)) { updates.poids = poids; nouveau = true; }
-    if (reps  > (actuel.reps ||0)) { updates.reps  = reps;  nouveau = true; }
-    if (rm1   > (actuel.rm1  ||0)) { updates.rm1   = rm1;   nouveau = true; }
+    if (poids > (actuel.poids||0)) {
+      updates.poids = poids; nouveau = true;
+    }
+    if (reps  > (actuel.reps ||0)) {
+      updates.reps  = reps;  nouveau = true;
+    }
+    if (rm1   > (actuel.rm1  ||0)) {
+      updates.rm1   = rm1;   nouveau = true;
+    }
 
     if (nouveau) {
       Utils.storage.set(cle, {
@@ -449,22 +439,20 @@ const Tracker = {
     return prs.slice(-limite);
   },
 
-  // ✅ NOUVEAU v4.0 — PRs proches (pour notifications)
-  // Retourne les exercices à 90%+ de leur PR
+  // PRs proches (pour notifications)
   getPRsProches(seanceId = null) {
-    const alertes = [];
-    const prs     = this.getAllPRs();
-
-    let seriesRecentes = [];
+    const alertes      = [];
+    const prs          = this.getAllPRs();
+    let   seriesRec    = [];
 
     if (seanceId) {
       const seance = Utils.storage.get(
         this.CLE.SEANCE(Utils.aujourd_hui(), seanceId), null
       );
-      seriesRecentes = seance?.series || [];
+      seriesRec = seance?.series || [];
     }
 
-    seriesRecentes.forEach(serie => {
+    seriesRec.forEach(serie => {
       const pr = prs[serie.exerciceRef];
       if (!pr?.rm1 || !serie.rm1) return;
 
@@ -514,24 +502,35 @@ const Tracker = {
       .slice(0, limite);
   },
 
-  getDernierePerf(seanceId, exerciceRef) {
+  // ✅ FIX v5.0 — getDernierePerf() sans seanceId obligatoire
+  getDernierePerf(seanceId = null, exerciceRef) {
     const today     = Utils.aujourd_hui();
     const resultats = [];
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const cle = localStorage.key(i);
-      if (!cle) continue;
-      if (cle.includes(`_${seanceId}_${exerciceRef}_s1`)
-          && cle.startsWith('ft_')) {
-        const parts = cle.split('_');
-        const date  = parts[1];
-        if (date < today) {
-          try {
-            const data = JSON.parse(localStorage.getItem(cle));
-            resultats.push({ date, ...data });
-          } catch(e) {}
+    if (seanceId) {
+      // Mode original avec seanceId
+      for (let i = 0; i < localStorage.length; i++) {
+        const cle = localStorage.key(i);
+        if (!cle) continue;
+        if (cle.includes(`_${seanceId}_${exerciceRef}_s1`)
+            && cle.startsWith('ft_')) {
+          const parts = cle.split('_');
+          const date  = parts[1];
+          if (date < today) {
+            try {
+              const data = JSON.parse(localStorage.getItem(cle));
+              resultats.push({ date, ...data });
+            } catch(e) {}
+          }
         }
       }
+    } else {
+      // ✅ NOUVEAU v5.0 — Fallback sans seanceId
+      // Chercher dans l'historique de l'exercice directement
+      const hist = this.getHistoriqueExercice(exerciceRef, 5);
+      const passe = hist.filter(h => h.date < today);
+      if (passe.length) return passe[0];
+      return null;
     }
 
     if (!resultats.length) return null;
@@ -565,8 +564,9 @@ const Tracker = {
       ];
 
       const resume = exercicesUniques.map(ref => {
-        const ex     = window.EXERCICES?.[ref];
-        const series = (s.series||[]).filter(sr => sr.exerciceRef === ref);
+        const ex       = window.EXERCICES?.[ref];
+        const series   = (s.series||[])
+          .filter(sr => sr.exerciceRef === ref);
         const maxPoids = Math.max(...series.map(sr => sr.poids||0), 0);
         const totalVol = series.reduce(
           (a,sr) => a + (sr.poids||0)*(sr.reps||0), 0
@@ -577,8 +577,7 @@ const Tracker = {
           emoji:    ex?.emoji  || '💪',
           muscle:   ex?.muscle || '',
           nbSeries: series.length,
-          maxPoids,
-          totalVol
+          maxPoids, totalVol
         };
       });
 
@@ -592,7 +591,6 @@ const Tracker = {
     return new Date(seances[0].date + 'T00:00:00').getTime();
   },
 
-  // ✅ Alias pour compatibilité
   getDerniereSéance() { return this.getDerniereSeance(); },
 
   getSeanceDuJour(date = null) {
@@ -609,8 +607,8 @@ const Tracker = {
   },
 
   getSeancesMois(mois = null) {
-    const now    = new Date();
-    const m      = mois || `${now.getFullYear()}-${
+    const now     = new Date();
+    const m       = mois || `${now.getFullYear()}-${
       String(now.getMonth()+1).padStart(2,'0')}`;
     const seances = this.getHistoriqueSeances(999);
     return seances.filter(s => s.date?.startsWith(m));
@@ -642,7 +640,9 @@ const Tracker = {
   },
 
   getStreak() {
-    return Utils.storage.get(this.CLE.STREAK(), { count:0, max:0 });
+    return Utils.storage.get(this.CLE.STREAK(), {
+      count:0, max:0
+    });
   },
 
   getJoursAbsence() {
@@ -692,7 +692,7 @@ const Tracker = {
   },
 
   // ════════════════════════════════════════════════════════
-  // PHOTOS DE PROGRESSION
+  // PHOTOS
   // ════════════════════════════════════════════════════════
   getPhotos() {
     return Utils.storage.get(this.CLE.PHOTOS(), []);
@@ -758,7 +758,7 @@ const Tracker = {
   },
 
   // ════════════════════════════════════════════════════════
-  // NOTES PAR EXERCICE
+  // NOTES EXERCICE
   // ════════════════════════════════════════════════════════
   ajouterNoteExercice(ref, note) {
     const notes = Utils.storage.get(this.CLE.NOTES_EXO(ref), []);
@@ -800,6 +800,37 @@ const Tracker = {
     }
 
     return total;
+  },
+
+  // ✅ NOUVEAU v5.0 — Volume semaine par muscle
+  getVolumeSemaineParMuscle(dateStr = null) {
+    const debut   = Utils.debutSemaine(dateStr || Utils.aujourd_hui());
+    const fin     = Utils.finSemaine(dateStr   || Utils.aujourd_hui());
+    const muscles = {};
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const cle = localStorage.key(i);
+      if (!cle?.startsWith('ft_seance_')) continue;
+      try {
+        const data = JSON.parse(localStorage.getItem(cle));
+        if (!data?.complete) continue;
+        if (data?.date < debut || data?.date > fin) continue;
+
+        (data.series||[]).forEach(sr => {
+          const ex     = window.EXERCICES?.[sr.exerciceRef];
+          const muscle = ex?.muscle || 'Autre';
+          const vol    = (sr.poids||0) * (sr.reps||0);
+          muscles[muscle] = (muscles[muscle]||0) + vol;
+          if (ex?.muscles_sec?.length) {
+            ex.muscles_sec.forEach(ms => {
+              muscles[ms] = (muscles[ms]||0) + (vol * 0.5);
+            });
+          }
+        });
+      } catch(e) {}
+    }
+
+    return muscles;
   },
 
   getVolumeParSemaine(nbSemaines = 8) {
@@ -864,7 +895,10 @@ const Tracker = {
     const delta    = volPrec > 0
       ? Math.round(((volCette - volPrec) / volPrec) * 100)
       : 0;
-    return { cette: volCette, prec: volPrec, delta, hausse: delta > 0 };
+    return {
+      cette: volCette, prec: volPrec,
+      delta, hausse: delta > 0
+    };
   },
 
   getRPEMoyen7Jours() {
@@ -887,21 +921,18 @@ const Tracker = {
 
   getHeatmapData(nbJours = 84) {
     const data = {};
-
     const dateDebut = (() => {
-      try { return Utils.storage.get('ft_date_debut', null); }
-      catch(e) { return null; }
+      try {
+        return Utils.storage.get('ft_date_debut', null);
+      } catch(e) { return null; }
     })();
 
     for (let i = 0; i < nbJours; i++) {
-      const date = Utils.ajouterJours(Utils.aujourd_hui(), -i);
-
-      // ✅ FIX v4.0 — Vérifier si PLANNING_SEMAINE existe
+      const date    = Utils.ajouterJours(Utils.aujourd_hui(), -i);
       const planning = window.PLANNING_SEMAINE
         ? window.PLANNING_SEMAINE[Utils.indexJourSemaine(date)]
         : null;
-
-      const seance = this.getSeanceDuJour(date);
+      const seance  = this.getSeanceDuJour(date);
 
       if (dateDebut && date < dateDebut) {
         data[date] = 'none';
@@ -923,14 +954,14 @@ const Tracker = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ NOUVEAU v4.0 — VOLUME PAR MUSCLE (Heatmap musculaire)
-  // Retourne volume par muscle pour la semaine en cours
+  // VOLUME PAR MUSCLE (Heatmap musculaire)
   // ════════════════════════════════════════════════════════
   getVolumeParMuscle(nbJours = 7) {
-    const dateMin = Utils.ajouterJours(Utils.aujourd_hui(), -(nbJours-1));
+    const dateMin = Utils.ajouterJours(
+      Utils.aujourd_hui(), -(nbJours-1)
+    );
     const seances = this.getHistoriqueSeances(50)
       .filter(s => s.date >= dateMin);
-
     const muscles = {};
 
     seances.forEach(s => {
@@ -939,8 +970,6 @@ const Tracker = {
         const muscle = ex?.muscle || 'Autre';
         const vol    = (sr.poids||0) * (sr.reps||0);
         muscles[muscle] = (muscles[muscle]||0) + vol;
-
-        // Muscles secondaires à 50%
         if (ex?.muscles_sec?.length) {
           ex.muscles_sec.forEach(ms => {
             muscles[ms] = (muscles[ms]||0) + (vol * 0.5);
@@ -949,7 +978,6 @@ const Tracker = {
       });
     });
 
-    // ✅ Normaliser sur 100 pour affichage heatmap
     const maxVol = Math.max(...Object.values(muscles), 1);
 
     return Object.entries(muscles)
@@ -957,19 +985,30 @@ const Tracker = {
       .sort((a,b) => b[1] - a[1])
       .map(([muscle, volume]) => ({
         muscle,
-        volume:     Math.round(volume),
+        volume:      Math.round(volume),
         pourcentage: Math.round((volume / maxVol) * 100),
-        intensite:  volume > maxVol * 0.7 ? 'haute'
-                  : volume > maxVol * 0.4 ? 'moyenne'
-                  : 'faible'
+        intensite:   volume > maxVol * 0.7 ? 'haute'
+                   : volume > maxVol * 0.4 ? 'moyenne'
+                   : 'faible'
       }));
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ NOUVEAU v4.0 — DÉTECTION SURCHARGE MUSCULAIRE
-  // Analyse les muscles trop sollicités cette semaine
+  // SURCHARGE MUSCULAIRE — ✅ v5.0 unifié
   // ════════════════════════════════════════════════════════
   _analyserSurchargeMusculaire(seanceData) {
+    // ✅ v5.0 — Déléguer à Programme si disponible
+    if (window.Programme?.getSurchargeMusculaire) {
+      const alertes = Programme.getSurchargeMusculaire();
+      Utils.storage.set(this.CLE.SURCHARGE(), {
+        date:      Utils.aujourd_hui(),
+        alertes,
+        timestamp: Date.now()
+      });
+      return alertes;
+    }
+
+    // Fallback interne
     const volumeMuscle = this.getVolumeParMuscle(7);
     const alertes      = [];
 
@@ -984,7 +1023,7 @@ const Tracker = {
     });
 
     Utils.storage.set(this.CLE.SURCHARGE(), {
-      date:    Utils.aujourd_hui(),
+      date:      Utils.aujourd_hui(),
       alertes,
       timestamp: Date.now()
     });
@@ -993,10 +1032,14 @@ const Tracker = {
   },
 
   getSurchargeMusculaire() {
+    // ✅ v5.0 — Déléguer à Programme si disponible
+    if (window.Programme?.getSurchargeMusculaire) {
+      return Programme.getSurchargeMusculaire();
+    }
+
     const data = Utils.storage.get(this.CLE.SURCHARGE(), null);
     if (!data) return [];
 
-    // ✅ Données valides seulement si moins de 24h
     const age = Date.now() - (data.timestamp || 0);
     if (age > 24 * 60 * 60 * 1000) return [];
 
@@ -1005,31 +1048,28 @@ const Tracker = {
 
   _getConseilSurcharge(muscle) {
     const conseils = {
-      'Pectoraux':        'Évite les exercices de poussée demain',
-      'Épaules':          'Laisse 48h de récupération aux épaules',
-      'Biceps':           'Évite les tirages et curls demain',
-      'Triceps':          'Repos des bras recommandé',
-      'Dos':              'Évite les exercices de tirage demain',
-      'Quadriceps':       'Repos jambes recommandé',
-      'Ischio-jambiers':  'Évite les exercices de jambes demain',
-      'Fessiers':         'Repos des fessiers recommandé',
-      'Abdominaux':       'Laisse 48h aux abdos',
-      'Mollets':          'Repos mollets recommandé'
+      'Pectoraux':       'Évite les exercices de poussée demain',
+      'Épaules':         'Laisse 48h de récupération aux épaules',
+      'Biceps':          'Évite les tirages et curls demain',
+      'Triceps':         'Repos des bras recommandé',
+      'Dos':             'Évite les exercices de tirage demain',
+      'Quadriceps':      'Repos jambes recommandé',
+      'Ischio-jambiers': 'Évite les exercices de jambes demain',
+      'Fessiers':        'Repos des fessiers recommandé',
+      'Abdominaux':      'Laisse 48h aux abdos',
+      'Mollets':         'Repos mollets recommandé'
     };
-    return conseils[muscle]
-      || `Repos de ${muscle} recommandé demain`;
+    return conseils[muscle] || `Repos de ${muscle} recommandé demain`;
   },
 
   // ════════════════════════════════════════════════════════
-  // SCORE FORME — ✅ ENRICHI v4.0
+  // SCORE FORME — enrichi v4.0
   // ════════════════════════════════════════════════════════
   calculerScoreForme() {
-    const joursAbsence    = this.getJoursAbsence();
-    const fatigue         = this.getFatigue();
-    const niveauFat       = fatigue ? fatigue.niveau : 2;
-
-    // ✅ Score récupération enrichi
-    const surcharge    = this.getSurchargeMusculaire();
+    const joursAbsence   = this.getJoursAbsence();
+    const fatigue        = this.getFatigue();
+    const niveauFat      = fatigue ? fatigue.niveau : 2;
+    const surcharge      = this.getSurchargeMusculaire();
     const penalSurcharge = Math.min(20, surcharge.length * 7);
 
     const recup = Math.min(100, Math.max(0,
@@ -1050,7 +1090,6 @@ const Tracker = {
     const prs         = Object.keys(this.getAllPRs()).length;
     const progression = Math.min(100, prs * 12);
 
-    // ✅ NOUVEAU — Bonus streak
     const streak      = this.getStreak();
     const bonusStreak = Math.min(10, streak.count * 2);
 
@@ -1064,19 +1103,15 @@ const Tracker = {
     const s = Math.max(0, Math.min(100, score));
 
     return {
-      score: s,
-      recup,
-      assiduite,
-      progression,
-      bonusStreak,
-      surcharge,
+      score: s, recup, assiduite,
+      progression, bonusStreak, surcharge,
       niveau: s >= 80 ? '🟢 Excellent'
             : s >= 60 ? '🟡 Bon'
             : s >= 40 ? '🟠 Moyen'
             :           '🔴 Bas',
-      // ✅ NOUVEAU — Conseil personnalisé
-      conseil: this._getConseilForme(s, joursAbsence,
-                 niveauFat, surcharge)
+      conseil: this._getConseilForme(
+        s, joursAbsence, niveauFat, surcharge
+      )
     };
   },
 
@@ -1088,7 +1123,8 @@ const Tracker = {
       return '😴 Fatigue élevée — Séance légère ou repos recommandé';
     }
     if (joursAbsence >= 3) {
-      return '💪 Ça fait ' + joursAbsence + ' jours — Retour à l\'entraînement !';
+      return '💪 Ça fait ' + joursAbsence
+        + ' jours — Retour à l\'entraînement !';
     }
     if (score >= 80) {
       return '🔥 Tu es en pleine forme — Pousse fort aujourd\'hui !';
@@ -1245,7 +1281,6 @@ const Tracker = {
     Utils.storage.set(this.CLE.BLESSURES(), blessures);
   },
 
-  // ✅ NOUVEAU v4.0 — Blessures actives avec conseils
   getBlessuresActives() {
     return this.getBlessures()
       .filter(b => b.active)
@@ -1258,27 +1293,27 @@ const Tracker = {
 
   _getExercicesAEviter(zone) {
     const map = {
-      'epaule':     ['Développé couché','Press épaules','Élévations'],
-      'genou':      ['Squat','Fentes','Presse jambes'],
-      'dos':        ['Soulevé de terre','Rowing barre','Hyperextension'],
-      'coude':      ['Curl barre','Skull crusher','Dips'],
-      'cheville':   ['Mollets','Sauts','Course'],
-      'poignet':    ['Curl barre','Développé','Push-up'],
-      'hanche':     ['Fentes','Hip thrust','Squat sumo'],
-      'cou':        ['Shrug','Développé nuque']
+      'epaule':   ['Développé couché','Press épaules','Élévations'],
+      'genou':    ['Squat','Fentes','Presse jambes'],
+      'dos':      ['Soulevé de terre','Rowing barre','Hyperextension'],
+      'coude':    ['Curl barre','Skull crusher','Dips'],
+      'cheville': ['Mollets','Sauts','Course'],
+      'poignet':  ['Curl barre','Développé','Push-up'],
+      'hanche':   ['Fentes','Hip thrust','Squat sumo'],
+      'cou':      ['Shrug','Développé nuque']
     };
     return map[zone?.toLowerCase()] || [];
   },
 
   _getAlternativesBlessure(zone) {
     const map = {
-      'epaule':  ['Gainage','Jambes','Cardio vélo'],
-      'genou':   ['Upper body','Natation','Gainage'],
-      'dos':     ['Membres isolés','Cardio léger','Étirements'],
-      'coude':   ['Jambes','Cardio','Gainage'],
-      'cheville':['Upper body','Natation','Vélo assis'],
-      'poignet': ['Jambes','Cardio','Abdos'],
-      'hanche':  ['Upper body','Natation','Gainage']
+      'epaule':   ['Gainage','Jambes','Cardio vélo'],
+      'genou':    ['Upper body','Natation','Gainage'],
+      'dos':      ['Membres isolés','Cardio léger','Étirements'],
+      'coude':    ['Jambes','Cardio','Gainage'],
+      'cheville': ['Upper body','Natation','Vélo assis'],
+      'poignet':  ['Jambes','Cardio','Abdos'],
+      'hanche':   ['Upper body','Natation','Gainage']
     };
     return map[zone?.toLowerCase()] || ['Cardio léger','Étirements'];
   },
@@ -1380,7 +1415,6 @@ const Tracker = {
       }
     }
   }
-
 };
 
 // ════════════════════════════════════════════════════════
@@ -1409,7 +1443,20 @@ if (typeof Utils !== 'undefined') {
       return d.toISOString().split('T')[0];
     };
   }
+  // ✅ NOUVEAU v5.0 — semainesDepuis() utilisé par Gamification
+  if (!Utils.semainesDepuis) {
+    Utils.semainesDepuis = (dateStr) => {
+      try {
+        const debut = new Date(dateStr + 'T00:00:00');
+        const now   = new Date();
+        const diff  = now - debut;
+        return Math.max(0,
+          Math.floor(diff / (1000 * 60 * 60 * 24 * 7))
+        );
+      } catch(e) { return 0; }
+    };
+  }
 }
 
 window.Tracker = Tracker;
-console.log('✅ Tracker v4.0 chargé');
+console.log('✅ Tracker v5.0 chargé — Fix getDernierePerf + getVolumeSemaineParMuscle + semainesDepuis');
