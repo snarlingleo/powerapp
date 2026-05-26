@@ -445,7 +445,7 @@ const Photos = {
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.font      = '22px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText('PowerApp · Généré par EverGPT', 540, 1175);
+    ctx.fillText('PowerApp · Othmane', 540, 1175);
 
     return canvas;
   },
