@@ -1,12 +1,9 @@
 /* ============================================================
-   PowerApp — Programme v4.0
-   Exercices + Séances + Cycles + Planning custom
-   + Supersets + Décharge auto + Progression intelligente
-   + Exercices maison/extérieur
-   + Séances femme spécifiques
-   + Filtre équipement
-   + Remplacement exercice Live
-   + Génération programme depuis onboarding
+   PowerApp — Programme v5.0
+   + Fix mountain_climbers_core
+   + Fix verifierDechargeAuto() reset semaine
+   + getPRsProches() NOUVEAU
+   + getSurchargeMusculaire() NOUVEAU
    ============================================================ */
 
 // ════════════════════════════════════════════════════════════
@@ -14,9 +11,6 @@
 // ════════════════════════════════════════════════════════════
 const EXERCICES = {
 
-  // ══════════════════════════════════════════
-  // PECTORAUX (9 exercices)
-  // ══════════════════════════════════════════
   bench_press: {
     nom:'Développé couché', muscle:'Pectoraux',
     muscles_sec:['Triceps','Épaules'],
@@ -117,9 +111,6 @@ const EXERCICES = {
     conseils:['Pieds sur une surface stable','Corps bien droit','Amplitude complète']
   },
 
-  // ══════════════════════════════════════════
-  // DOS (10 exercices)
-  // ══════════════════════════════════════════
   tractions: {
     nom:'Tractions', muscle:'Grand Dorsal',
     muscles_sec:['Biceps','Rhomboïdes'],
@@ -230,7 +221,6 @@ const EXERCICES = {
     description:'Tractions prise supination (paumes vers soi).',
     conseils:['Prise supination','Biceps fortement sollicités','Descente complète']
   },
-  // ✅ NOUVEAU — Exercices maison/extérieur dos
   superman: {
     nom:'Superman', muscle:'Lombaires',
     muscles_sec:['Fessiers','Dos'],
@@ -265,9 +255,6 @@ const EXERCICES = {
     conseils:['Corps rigide','Amplitude complète','Serrer les omoplates']
   },
 
-  // ══════════════════════════════════════════
-  // ÉPAULES (8 exercices)
-  // ══════════════════════════════════════════
   dev_militaire: {
     nom:'Développé militaire', muscle:'Épaules',
     muscles_sec:['Triceps','Trapèzes'],
@@ -356,7 +343,6 @@ const EXERCICES = {
     description:'Hausser les épaules vers les oreilles avec charge.',
     conseils:['Mouvement vertical uniquement','Tenir 1s en position haute']
   },
-  // ✅ NOUVEAU — Pike push-up (maison/dehors)
   pike_pushup: {
     nom:'Pike Push-up', muscle:'Épaules',
     muscles_sec:['Triceps'],
@@ -369,9 +355,6 @@ const EXERCICES = {
     conseils:['Hanches hautes','Tête entre les bras','Amplitude maximale']
   },
 
-  // ══════════════════════════════════════════
-  // BICEPS (6 exercices)
-  // ══════════════════════════════════════════
   curl_halteres: {
     nom:'Curl haltères', muscle:'Biceps',
     muscles_sec:['Avant-bras'],
@@ -439,9 +422,6 @@ const EXERCICES = {
     conseils:['Dos contre le banc','Amplitude maximale','Mouvement lent']
   },
 
-  // ══════════════════════════════════════════
-  // TRICEPS (5 exercices)
-  // ══════════════════════════════════════════
   ext_triceps_poulie: {
     nom:'Extension triceps poulie', muscle:'Triceps',
     muscles_sec:[],
@@ -497,7 +477,6 @@ const EXERCICES = {
     description:'Développé couché prise serrée, focus triceps.',
     conseils:['Prise légèrement plus étroite','Coudes proches du corps']
   },
-  // ✅ NOUVEAU — Diamond push-up maison
   diamond_pushup: {
     nom:'Pompes diamant', muscle:'Triceps',
     muscles_sec:['Pectoraux'],
@@ -510,9 +489,6 @@ const EXERCICES = {
     conseils:['Coudes proches du corps','Amplitude complète','Corps rigide']
   },
 
-  // ══════════════════════════════════════════
-  // JAMBES (13 exercices)
-  // ══════════════════════════════════════════
   squat: {
     nom:'Squat', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Ischio-jambiers','Core'],
@@ -645,7 +621,6 @@ const EXERCICES = {
     description:'Debout face au câble, extension de la jambe vers l\'arrière.',
     conseils:['Core gainé','Squeeze fessier en haut']
   },
-  // ✅ NOUVEAU — Exercices femme / maison jambes
   squat_poids_corps: {
     nom:'Squat poids du corps', muscle:'Quadriceps',
     muscles_sec:['Fessiers','Core'],
@@ -713,9 +688,6 @@ const EXERCICES = {
     conseils:['Atterrissage doux','Amplitude complète','Explosivité']
   },
 
-  // ══════════════════════════════════════════
-  // ABDOMINAUX (7 exercices)
-  // ══════════════════════════════════════════
   planche: {
     nom:'Planche', muscle:'Core',
     muscles_sec:['Épaules','Fessiers'],
@@ -793,7 +765,6 @@ const EXERCICES = {
     description:'Appui sur un avant-bras, corps latéralement en ligne.',
     conseils:['Hanches bien alignées','Respirer normalement']
   },
-  // ✅ NOUVEAU — Crunch classique maison
   crunch: {
     nom:'Crunch', muscle:'Abdominaux',
     muscles_sec:[],
@@ -805,6 +776,7 @@ const EXERCICES = {
     description:'Flexion partielle du tronc au sol.',
     conseils:['Mains derrière la tête','Ne pas tirer le cou','Expirer en montant']
   },
+  // ✅ FIX v5.0 — ref correcte utilisée dans séances
   mountain_climbers_core: {
     nom:'Mountain Climbers', muscle:'Core / Cardio',
     muscles_sec:['Épaules','Hip Flexors'],
@@ -817,9 +789,6 @@ const EXERCICES = {
     conseils:['Hanches basses','Corps rigide','Rythme rapide']
   },
 
-  // ══════════════════════════════════════════
-  // CARDIO (5 exercices)
-  // ══════════════════════════════════════════
   rameur: {
     nom:'Rameur', muscle:'Full Body Cardio',
     muscles_sec:['Dos','Jambes','Bras'],
@@ -876,9 +845,6 @@ const EXERCICES = {
     conseils:['Hanches basses','Corps rigide','Rythme rapide']
   },
 
-  // ══════════════════════════════════════════
-  // FULL BODY (4 exercices)
-  // ══════════════════════════════════════════
   clean_press: {
     nom:'Clean & Press', muscle:'Full Body',
     muscles_sec:['Épaules','Quadriceps','Dos'],
@@ -926,11 +892,9 @@ const EXERCICES = {
 };
 
 // ════════════════════════════════════════════════════════════
-// ✅ NOUVEAU v4.0 — FILTRE EXERCICES
+// ExercicesFilter (identique v4.0)
 // ════════════════════════════════════════════════════════════
 const ExercicesFilter = {
-
-  // Filtrer par lieu
   parLieu(lieu) {
     if (!lieu || lieu === 'tous') return EXERCICES;
     return Object.fromEntries(
@@ -938,8 +902,6 @@ const ExercicesFilter = {
         .filter(([,ex]) => ex.lieux?.includes(lieu))
     );
   },
-
-  // Filtrer par muscle
   parMuscle(muscle) {
     if (!muscle || muscle === 'tous') return EXERCICES;
     const m = muscle.toLowerCase();
@@ -947,13 +909,10 @@ const ExercicesFilter = {
       Object.entries(EXERCICES)
         .filter(([,ex]) =>
           ex.muscle?.toLowerCase().includes(m)
-          || ex.muscles_sec?.some(ms =>
-              ms.toLowerCase().includes(m))
+          || ex.muscles_sec?.some(ms => ms.toLowerCase().includes(m))
         )
     );
   },
-
-  // Filtrer par groupe
   parGroupe(groupe) {
     if (!groupe || groupe === 'tous') return EXERCICES;
     return Object.fromEntries(
@@ -961,8 +920,6 @@ const ExercicesFilter = {
         .filter(([,ex]) => ex.groupe === groupe)
     );
   },
-
-  // ✅ Filtre combiné lieu + muscle + groupe
   filtrer({ lieu, muscle, groupe, difficulteMax } = {}) {
     return Object.fromEntries(
       Object.entries(EXERCICES).filter(([,ex]) => {
@@ -979,43 +936,37 @@ const ExercicesFilter = {
       })
     );
   },
-
-  // ✅ NOUVEAU — Trouver exercice similaire (pour remplacer)
   getSimilaires(ref, lieu = null) {
     const exo = EXERCICES[ref];
     if (!exo) return [];
-
     return Object.entries(EXERCICES)
       .filter(([key, ex]) => {
         if (key === ref) return false;
-        // Même muscle principal OU même groupe
         const memeMuscle = ex.muscle === exo.muscle;
         const memeGroupe = ex.groupe === exo.groupe;
-        // Filtre lieu si spécifié
-        const lieuOK = !lieu || lieu === 'tous'
+        const lieuOK     = !lieu || lieu === 'tous'
           || ex.lieux?.includes(lieu);
         return (memeMuscle || memeGroupe) && lieuOK;
       })
       .sort(([,a],[,b]) => {
-        // Prioriser même muscle exact
         const aScore = a.muscle === exo.muscle ? 1 : 0;
         const bScore = b.muscle === exo.muscle ? 1 : 0;
         return bScore - aScore;
       })
       .slice(0, 5)
       .map(([key, ex]) => ({
-        ref:   key,
-        nom:   ex.nom,
-        emoji: ex.emoji,
-        muscle: ex.muscle,
+        ref:        key,
+        nom:        ex.nom,
+        emoji:      ex.emoji,
+        muscle:     ex.muscle,
         difficulte: ex.difficulte,
-        lieux: ex.lieux
+        lieux:      ex.lieux
       }));
   }
 };
 
 // ════════════════════════════════════════════════════════════
-// SÉANCES DE BASE — HOMME
+// SÉANCES DE BASE
 // ════════════════════════════════════════════════════════════
 const SEANCES_BASE = {
   pec_tri: {
@@ -1103,8 +1054,6 @@ const SEANCES_BASE = {
       {ref:'dragon_flag',    series:3, reps:'5-8',    repos:60 }
     ]
   },
-
-  // ✅ NOUVEAU v4.0 — SÉANCES FEMME SPÉCIFIQUES
   lower_body_femme: {
     id:'lower_body_femme', nom:'Lower Body 🍑', emoji:'🍑',
     muscles:['Fessiers','Quadriceps','Ischio-jambiers','Mollets'],
@@ -1112,15 +1061,15 @@ const SEANCES_BASE = {
     duree_estimee:60,
     description:'Programme galbe et renforcement bas du corps',
     exercices:[
-      {ref:'hip_thrust',       series:4, reps:'12-15', repos:75},
-      {ref:'fentes_bulgares',  series:3, reps:'12/j',  repos:75},
-      {ref:'squat_poids_corps',series:3, reps:'15-20', repos:60},
-      {ref:'donkey_kick',      series:3, reps:'15/j',  repos:45},
-      {ref:'clamshell',        series:3, reps:'15/j',  repos:45},
-      {ref:'hip_thrust_sol',   series:3, reps:'20',    repos:45},
-      {ref:'squat_saute',      series:3, reps:'15',    repos:60},
-      {ref:'planche',          series:3, reps:'30-45s',repos:45},
-      {ref:'crunch',           series:3, reps:'20',    repos:45}
+      {ref:'hip_thrust',            series:4, reps:'12-15', repos:75},
+      {ref:'fentes_bulgares',       series:3, reps:'12/j',  repos:75},
+      {ref:'squat_poids_corps',     series:3, reps:'15-20', repos:60},
+      {ref:'donkey_kick',           series:3, reps:'15/j',  repos:45},
+      {ref:'clamshell',             series:3, reps:'15/j',  repos:45},
+      {ref:'hip_thrust_sol',        series:3, reps:'20',    repos:45},
+      {ref:'squat_saute',           series:3, reps:'15',    repos:60},
+      {ref:'planche',               series:3, reps:'30-45s',repos:45},
+      {ref:'crunch',                series:3, reps:'20',    repos:45}
     ]
   },
   upper_body_femme: {
@@ -1148,17 +1097,16 @@ const SEANCES_BASE = {
     duree_estimee:45,
     description:'Gainage et sculpture abdominale féminine',
     exercices:[
-      {ref:'planche',          series:4, reps:'30-45s',repos:45},
-      {ref:'crunch',           series:3, reps:'20',    repos:45},
-      {ref:'russian_twist',    series:3, reps:'20',    repos:45},
-      {ref:'side_plank',       series:3, reps:'30s/c', repos:45},
-      {ref:'hollow_body',      series:3, reps:'20s',   repos:45},
-      {ref:'mountain_climbers',series:3, reps:'20',    repos:45},
-      {ref:'hip_thrust_sol',   series:3, reps:'20',    repos:45}
+      {ref:'planche',               series:4, reps:'30-45s',repos:45},
+      {ref:'crunch',                series:3, reps:'20',     repos:45},
+      {ref:'russian_twist',         series:3, reps:'20',     repos:45},
+      {ref:'side_plank',            series:3, reps:'30s/c',  repos:45},
+      {ref:'hollow_body',           series:3, reps:'20s',    repos:45},
+      // ✅ FIX v5.0 — ref correcte
+      {ref:'mountain_climbers_core',series:3, reps:'20',     repos:45},
+      {ref:'hip_thrust_sol',        series:3, reps:'20',     repos:45}
     ]
   },
-
-  // ✅ NOUVEAU v4.0 — SÉANCES MAISON
   maison_push: {
     id:'maison_push', nom:'Push Maison', emoji:'🏠',
     muscles:['Pectoraux','Épaules','Triceps'],
@@ -1198,19 +1146,19 @@ const SEANCES_BASE = {
     lieu:['maison','dehors'],
     duree_estimee:45,
     exercices:[
-      {ref:'squat_poids_corps',series:4, reps:'20',    repos:60},
-      {ref:'fentes_bulgares',  series:3, reps:'12/j',  repos:75},
-      {ref:'hip_thrust_sol',   series:3, reps:'20',    repos:60},
-      {ref:'donkey_kick',      series:3, reps:'15/j',  repos:45},
-      {ref:'squat_saute',      series:3, reps:'15',    repos:60},
-      {ref:'nordic_curl',      series:3, reps:'5-8',   repos:90},
-      {ref:'clamshell',        series:3, reps:'15/j',  repos:45}
+      {ref:'squat_poids_corps', series:4, reps:'20',   repos:60},
+      {ref:'fentes_bulgares',   series:3, reps:'12/j', repos:75},
+      {ref:'hip_thrust_sol',    series:3, reps:'20',   repos:60},
+      {ref:'donkey_kick',       series:3, reps:'15/j', repos:45},
+      {ref:'squat_saute',       series:3, reps:'15',   repos:60},
+      {ref:'nordic_curl',       series:3, reps:'5-8',  repos:90},
+      {ref:'clamshell',         series:3, reps:'15/j', repos:45}
     ]
   }
 };
 
 // ════════════════════════════════════════════════════════════
-// PLANNING HEBDOMADAIRE
+// PLANNING (identique v4.0)
 // ════════════════════════════════════════════════════════════
 const PLANNING_SEMAINE_DEFAUT = [
   {jour:0, label:'LUN', seanceId:'pec_tri'      },
@@ -1222,18 +1170,16 @@ const PLANNING_SEMAINE_DEFAUT = [
   {jour:6, label:'DIM', seanceId:null           }
 ];
 
-// ✅ NOUVEAU — Planning femme
 const PLANNING_FEMME_DEFAUT = [
   {jour:0, label:'LUN', seanceId:'lower_body_femme'},
   {jour:1, label:'MAR', seanceId:'upper_body_femme'},
   {jour:2, label:'MER', seanceId:null              },
   {jour:3, label:'JEU', seanceId:'lower_body_femme'},
   {jour:4, label:'VEN', seanceId:'core_femme'      },
-  {jour:5, label:'SAM', seanceId:'full_body'        },
+  {jour:5, label:'SAM', seanceId:'full_body'       },
   {jour:6, label:'DIM', seanceId:null              }
 ];
 
-// ✅ NOUVEAU — Planning maison
 const PLANNING_MAISON_DEFAUT = [
   {jour:0, label:'LUN', seanceId:'maison_push'},
   {jour:1, label:'MAR', seanceId:'maison_pull'},
@@ -1254,7 +1200,7 @@ let PLANNING_SEMAINE = (() => {
 })();
 
 // ════════════════════════════════════════════════════════════
-// WARM-UP
+// WARMUP / ETIREMENTS / SUPERSETS (identiques v4.0)
 // ════════════════════════════════════════════════════════════
 const WARMUP = {
   general: [
@@ -1271,9 +1217,9 @@ const WARMUP = {
     {nom:'Bench barre vide',  duree:60,  description:'20 reps, technique'}
   ],
   dos_bi: [
-    {nom:'Rameur',              duree:300, description:'5 min léger'       },
-    {nom:'Rotations épaules',   duree:30,  description:'10 reps'           },
-    {nom:'Tractions assistées', duree:60,  description:'5 reps faciles'    }
+    {nom:'Rameur',              duree:300, description:'5 min léger'    },
+    {nom:'Rotations épaules',   duree:30,  description:'10 reps'        },
+    {nom:'Tractions assistées', duree:60,  description:'5 reps faciles' }
   ],
   epaules_bras: [
     {nom:'Vélo',            duree:300, description:'5 min léger'           },
@@ -1291,43 +1237,39 @@ const WARMUP = {
     {nom:'Hip hinge barre vide', duree:60,  description:'10 reps, technique'   },
     {nom:'Squats poids du corps',duree:60,  description:'10 reps'              }
   ],
-  // ✅ NOUVEAU — Warm-up femme/maison
   lower_body_femme: [
-    {nom:'Marche rapide / Vélo', duree:300, description:'5 min'},
-    {nom:'Leg swing',            duree:30,  description:'10 reps chaque jambe'},
-    {nom:'Hip circles',          duree:30,  description:'10 reps chaque sens' },
-    {nom:'Squat poids du corps', duree:60,  description:'10 reps lentes'      }
+    {nom:'Marche rapide / Vélo', duree:300, description:'5 min'                },
+    {nom:'Leg swing',            duree:30,  description:'10 reps chaque jambe' },
+    {nom:'Hip circles',          duree:30,  description:'10 reps chaque sens'  },
+    {nom:'Squat poids du corps', duree:60,  description:'10 reps lentes'       }
   ],
   upper_body_femme: [
-    {nom:'Jumping jacks',      duree:120, description:'2 min'},
-    {nom:'Rotations épaules',  duree:30,  description:'10 reps chaque sens'},
-    {nom:'Pompes légères',     duree:60,  description:'10 reps faciles'    }
+    {nom:'Jumping jacks',     duree:120, description:'2 min'               },
+    {nom:'Rotations épaules', duree:30,  description:'10 reps chaque sens' },
+    {nom:'Pompes légères',    duree:60,  description:'10 reps faciles'     }
   ],
   core_femme: [
-    {nom:'Marche sur place',  duree:120, description:'2 min'},
-    {nom:'Cat-Cow stretch',   duree:60,  description:'10 reps'},
-    {nom:'Planche légère',    duree:30,  description:'15s'}
+    {nom:'Marche sur place', duree:120, description:'2 min'   },
+    {nom:'Cat-Cow stretch',  duree:60,  description:'10 reps' },
+    {nom:'Planche légère',   duree:30,  description:'15s'     }
   ],
   maison_push: [
-    {nom:'Jumping jacks',  duree:120, description:'2 min'},
-    {nom:'Rotations bras', duree:30,  description:'10 reps'},
-    {nom:'Pompes légères', duree:60,  description:'10 reps'}
+    {nom:'Jumping jacks',  duree:120, description:'2 min'   },
+    {nom:'Rotations bras', duree:30,  description:'10 reps' },
+    {nom:'Pompes légères', duree:60,  description:'10 reps' }
   ],
   maison_pull: [
-    {nom:'Jumping jacks',     duree:120, description:'2 min'},
-    {nom:'Rotations épaules', duree:30,  description:'10 reps'},
-    {nom:'Superman',          duree:30,  description:'10 reps'}
+    {nom:'Jumping jacks',     duree:120, description:'2 min'   },
+    {nom:'Rotations épaules', duree:30,  description:'10 reps' },
+    {nom:'Superman',          duree:30,  description:'10 reps' }
   ],
   maison_legs: [
-    {nom:'Marche rapide',     duree:300, description:'5 min'},
-    {nom:'Leg swing',         duree:30,  description:'10 reps'},
-    {nom:'Squat poids corps', duree:60,  description:'10 reps'}
+    {nom:'Marche rapide',     duree:300, description:'5 min'   },
+    {nom:'Leg swing',         duree:30,  description:'10 reps' },
+    {nom:'Squat poids corps', duree:60,  description:'10 reps' }
   ]
 };
 
-// ════════════════════════════════════════════════════════════
-// ÉTIREMENTS POST-SÉANCE
-// ════════════════════════════════════════════════════════════
 const ETIREMENTS = {
   pec_tri: [
     {nom:'Étirement pectoraux au mur', duree:30, gif:'🧘'},
@@ -1355,11 +1297,10 @@ const ETIREMENTS = {
     {nom:'Cat-Cow stretch',       duree:30, gif:'🧘'},
     {nom:'Étirement hip flexors', duree:45, gif:'🧘'}
   ],
-  // ✅ NOUVEAU — Étirements femme/maison
   lower_body_femme: [
-    {nom:'Pigeon pose fessiers',         duree:45, gif:'🧘'},
-    {nom:'Étirement ischio au sol',      duree:45, gif:'🧘'},
-    {nom:'Hip flexor stretch',           duree:30, gif:'🧘'},
+    {nom:'Pigeon pose fessiers',            duree:45, gif:'🧘'},
+    {nom:'Étirement ischio au sol',         duree:45, gif:'🧘'},
+    {nom:'Hip flexor stretch',              duree:30, gif:'🧘'},
     {nom:'Étirement adducteurs (papillon)', duree:30, gif:'🧘'}
   ],
   upper_body_femme: [
@@ -1373,25 +1314,22 @@ const ETIREMENTS = {
     {nom:'Cobra stretch',   duree:30, gif:'🧘'}
   ],
   maison_push: [
-    {nom:'Étirement pectoraux',  duree:30, gif:'🧘'},
-    {nom:'Étirement triceps',    duree:30, gif:'🧘'},
-    {nom:'Cobra stretch',        duree:30, gif:'🧘'}
+    {nom:'Étirement pectoraux', duree:30, gif:'🧘'},
+    {nom:'Étirement triceps',   duree:30, gif:'🧘'},
+    {nom:'Cobra stretch',       duree:30, gif:'🧘'}
   ],
   maison_pull: [
-    {nom:'Child pose',         duree:45, gif:'🧘'},
-    {nom:'Torsion assis',      duree:30, gif:'🧘'},
-    {nom:'Étirement biceps',   duree:30, gif:'🧘'}
+    {nom:'Child pose',       duree:45, gif:'🧘'},
+    {nom:'Torsion assis',    duree:30, gif:'🧘'},
+    {nom:'Étirement biceps', duree:30, gif:'🧘'}
   ],
   maison_legs: [
-    {nom:'Pigeon pose',                    duree:45, gif:'🧘'},
-    {nom:'Étirement quadriceps debout',    duree:30, gif:'🧘'},
-    {nom:'Étirement ischio',               duree:45, gif:'🧘'}
+    {nom:'Pigeon pose',                  duree:45, gif:'🧘'},
+    {nom:'Étirement quadriceps debout',  duree:30, gif:'🧘'},
+    {nom:'Étirement ischio',             duree:45, gif:'🧘'}
   ]
 };
 
-// ════════════════════════════════════════════════════════════
-// SUPERSETS RECOMMANDÉS
-// ════════════════════════════════════════════════════════════
 const SUPERSETS_RECOMMANDES = {
   pec_tri: [{
     id:'ss_bench_dips', nom:'Superset Pec+Tri', emoji:'⚡',
@@ -1414,7 +1352,6 @@ const SUPERSETS_RECOMMANDES = {
       {ref:'face_pull',      series:3, reps:'15', repos:75}
     ]
   }],
-  // ✅ NOUVEAU — Supersets femme
   lower_body_femme: [{
     id:'ss_hipthrustdonkey', nom:'Superset Fessiers', emoji:'⚡',
     exercices:[
@@ -1432,7 +1369,7 @@ const SUPERSETS_RECOMMANDES = {
 };
 
 // ════════════════════════════════════════════════════════════
-// PROGRAMME — SYSTÈME CYCLES INFINIS
+// PROGRAMME
 // ════════════════════════════════════════════════════════════
 const Programme = {
 
@@ -1440,22 +1377,18 @@ const Programme = {
     return Utils.storage.get('ft_date_debut')
       || Utils.aujourd_hui();
   },
-
   setDateDebut(date) {
     Utils.storage.set('ft_date_debut', date);
   },
-
   getSemaineActuelle() {
     try {
       const debut = this.getDateDebut();
       return Math.max(1, Utils.semainesDepuis(debut));
     } catch(e) { return 1; }
   },
-
   getCycleActuel() {
     return Math.floor((this.getSemaineActuelle() - 1) / 16) + 1;
   },
-
   getSemaineDansCycle() {
     return ((this.getSemaineActuelle() - 1) % 16) + 1;
   },
@@ -1463,7 +1396,6 @@ const Programme = {
   getPhaseActuelle() {
     const s    = this.getSemaineDansCycle();
     const mult = 1 + (this.getCycleActuel() - 1) * 0.05;
-
     if (s <= 4)  return { nom:'Reprise',      numero:1,
       description:'Technique & Adaptation',
       intensite:Math.min(0.65 * mult, 0.75),
@@ -1491,15 +1423,18 @@ const Programme = {
       || this.getPhaseActuelle().decharge === true;
   },
 
-  // ✅ NOUVEAU v4.0 — Décharge auto déclenchée
+  // ✅ FIX v5.0 — verifierDechargeAuto() avec reset semaine
   verifierDechargeAuto() {
-    const rpe7j      = window.Tracker?.getRPEMoyen7Jours() || 0;
-    const seances7j  = window.Tracker?.getSeancesParSemaine() || 0;
-    const dejaFait   = Utils.storage.get('ft_decharge_cette_semaine', false);
+    const semaine  = Utils.debutSemaine(Utils.aujourd_hui());
+    const cleDeja  = `ft_decharge_sem_${semaine}`;
+    const dejaFait = Utils.storage.get(cleDeja, false);
 
-    // ✅ Déclencher si RPE > 8.5 ou 6+ séances en 7 jours
+    const rpe7j    = window.Tracker?.getRPEMoyen7Jours() || 0;
+    const seances7j = window.Tracker?.getSeancesParSemaine() || 0;
+
     if (!dejaFait && (rpe7j > 8.5 || seances7j >= 6)) {
-      Utils.storage.set('ft_decharge_cette_semaine', true);
+      // ✅ Clé avec semaine → reset automatique semaine suivante
+      Utils.storage.set(cleDeja, true);
       return true;
     }
 
@@ -1516,21 +1451,24 @@ const Programme = {
       const seance = this._getSeanceById(planning.seanceId);
       if (!seance) return null;
 
-      // ✅ NOUVEAU — Adapter si décharge
       const enDecharge = this.verifierDechargeAuto();
 
       return {
         ...Utils.clone(seance),
-        dateStr: dateStr || Utils.aujourd_hui(),
-        phase:   this.getPhaseActuelle(),
-        semaine: this.getSemaineActuelle(),
-        cycle:   this.getCycleActuel(),
+        dateStr:    dateStr || Utils.aujourd_hui(),
+        phase:      this.getPhaseActuelle(),
+        semaine:    this.getSemaineActuelle(),
+        cycle:      this.getCycleActuel(),
         enDecharge,
-        // ✅ Réduire volume si décharge
-        exercices: enDecharge
+        exercices:  enDecharge
           ? (seance.exercices || [])
-              .slice(0, Math.ceil((seance.exercices?.length||0) * 0.6))
-              .map(ex => ({ ...ex, series: Math.max(2, (ex.series||3) - 1) }))
+              .slice(0, Math.ceil(
+                (seance.exercices?.length||0) * 0.6
+              ))
+              .map(ex => ({
+                ...ex,
+                series: Math.max(2, (ex.series||3) - 1)
+              }))
           : seance.exercices
       };
     } catch(e) { return null; }
@@ -1553,9 +1491,9 @@ const Programme = {
       return PLANNING_SEMAINE.map(p => {
         const date = Utils.ajouterJours(debut, p.jour);
         return {
-          ...p,
-          date,
-          seance:        p.seanceId ? this._getSeanceById(p.seanceId) : null,
+          ...p, date,
+          seance:        p.seanceId
+            ? this._getSeanceById(p.seanceId) : null,
           estRepos:      !p.seanceId,
           estAujourdhui: date === Utils.aujourd_hui(),
           estPasse:      date < Utils.aujourd_hui()
@@ -1572,8 +1510,7 @@ const Programme = {
       return {
         ...clone,
         exercicesDetails: (seance.exercices||[]).map(ex => ({
-          ...ex,
-          details: EXERCICES[ex.ref] || {}
+          ...ex, details: EXERCICES[ex.ref] || {}
         })),
         warmup:     WARMUP[seanceId]                || WARMUP.general,
         etirements: ETIREMENTS[seanceId]            || [],
@@ -1588,16 +1525,20 @@ const Programme = {
       const base       = Object.values(SEANCES_BASE);
       const customList = Object.values(customs);
       const ids        = new Set(base.map(s => s.id));
-      return [...base, ...customList.filter(s => !ids.has(s.id))];
+      return [
+        ...base,
+        ...customList.filter(s => !ids.has(s.id))
+      ];
     } catch(e) {
       return Object.values(SEANCES_BASE);
     }
   },
 
-  // ✅ NOUVEAU v4.0 — Séances filtrées par genre et lieu
   getSeancesParGenre(genre = 'homme') {
     return Object.values(SEANCES_BASE).filter(s =>
-      !s.genre || s.genre.includes(genre) || s.genre.includes('mixte')
+      !s.genre
+      || s.genre.includes(genre)
+      || s.genre.includes('mixte')
     );
   },
 
@@ -1637,7 +1578,9 @@ const Programme = {
       const phase = this.getPhaseActuelle();
       const pr    = window.Tracker?.getPR(exerciceRef);
       if (!pr?.rm1) return null;
-      const charge = Math.round(pr.rm1 * phase.intensite / 2.5) * 2.5;
+      const charge = Math.round(
+        pr.rm1 * phase.intensite / 2.5
+      ) * 2.5;
       return {
         charge,
         pourcentage: Math.round(phase.intensite * 100),
@@ -1657,6 +1600,110 @@ const Programme = {
     } catch(e) { return ss; }
   },
 
+  // ✅ NOUVEAU v5.0 — getPRsProches(seanceId)
+  // Appelé par Notifications.js + Tracker
+  getPRsProches(seanceId = null) {
+    try {
+      const alertes = [];
+      const prs     = window.Tracker?.getAllPRs() || {};
+      const phase   = this.getPhaseActuelle();
+
+      // Exercices à analyser
+      let exercices = [];
+      if (seanceId) {
+        const seance = this._getSeanceById(seanceId);
+        exercices = (seance?.exercices || []).map(e => e.ref);
+      } else {
+        exercices = Object.keys(prs);
+      }
+
+      exercices.forEach(ref => {
+        const pr = prs[ref];
+        if (!pr?.rm1) return;
+
+        // Charge de travail prévue
+        const chargeObj = Math.round(pr.rm1 * phase.intensite);
+        const diff      = pr.rm1 - chargeObj;
+
+        // PR "proche" si charge objectif > 90% du 1RM
+        if (diff <= 5 && diff >= 0 && phase.intensite >= 0.85) {
+          const ex = EXERCICES[ref] || {};
+          alertes.push({
+            exerciceRef: ref,
+            nom:         ex.nom   || ref,
+            emoji:       ex.emoji || '💪',
+            rm1Actuel:   pr.rm1,
+            chargeObj,
+            diff
+          });
+        }
+      });
+
+      // Trier par diff (les plus proches en premier)
+      return alertes.sort((a,b) => a.diff - b.diff);
+    } catch(e) { return []; }
+  },
+
+  // ✅ NOUVEAU v5.0 — getSurchargeMusculaire()
+  // Appelé par Coach.js + Notifications.js + Tracker
+  getSurchargeMusculaire() {
+    try {
+      const alertes    = [];
+      const hist       = window.Tracker?.getHistoriqueSeances(7) || [];
+      const volumeParMuscle = {};
+
+      hist.forEach(seance => {
+        (seance.series || []).forEach(serie => {
+          const ex = EXERCICES[serie.exerciceRef];
+          if (!ex) return;
+          const muscle = ex.muscle || 'Autre';
+          if (!volumeParMuscle[muscle]) {
+            volumeParMuscle[muscle] = { volume:0, series:0 };
+          }
+          volumeParMuscle[muscle].volume +=
+            (serie.poids || 0) * (serie.reps || 0);
+          volumeParMuscle[muscle].series++;
+        });
+      });
+
+      // Seuils par muscle
+      const SEUILS = {
+        'Pectoraux':            { series: 20, volume: 15000 },
+        'Grand Dorsal':         { series: 20, volume: 15000 },
+        'Dos Moyen':            { series: 20, volume: 15000 },
+        'Quadriceps':           { series: 20, volume: 20000 },
+        'Ischio-jambiers':      { series: 15, volume: 12000 },
+        'Fessiers':             { series: 20, volume: 15000 },
+        'Épaules':              { series: 18, volume: 8000  },
+        'Biceps':               { series: 15, volume: 5000  },
+        'Triceps':              { series: 15, volume: 5000  },
+        'Chaîne postérieure':   { series: 15, volume: 20000 }
+      };
+
+      Object.entries(volumeParMuscle).forEach(([muscle, data]) => {
+        const seuil = SEUILS[muscle];
+        if (!seuil) return;
+
+        if (data.series >= seuil.series
+            || data.volume >= seuil.volume) {
+          alertes.push({
+            muscle,
+            series:  data.series,
+            volume:  data.volume,
+            conseil: data.series >= seuil.series
+              ? `${data.series} séries en 7j — repos recommandé`
+              : `Volume élevé (${Math.round(data.volume/1000)}T)`
+          });
+        }
+      });
+
+      return alertes;
+    } catch(e) { return []; }
+  },
+
+  // ════════════════════════════════════════
+  // PLANNING
+  // ════════════════════════════════════════
   getPlanningActuel() { return PLANNING_SEMAINE; },
 
   sauvegarderPlanning(planning) {
@@ -1671,10 +1718,8 @@ const Programme = {
     window.PLANNING_SEMAINE = PLANNING_SEMAINE;
   },
 
-  // ✅ NOUVEAU v4.0 — Appliquer planning par genre/lieu
   appliquerPlanningGenre(genre, lieu = 'salle') {
     let planning;
-
     if (lieu === 'maison' || lieu === 'dehors') {
       planning = [...PLANNING_MAISON_DEFAUT];
     } else if (genre === 'femme') {
@@ -1682,7 +1727,6 @@ const Programme = {
     } else {
       planning = [...PLANNING_SEMAINE_DEFAUT];
     }
-
     this.sauvegarderPlanning(planning);
     return planning;
   },
@@ -1785,14 +1829,14 @@ const Programme = {
       return {
         totalSeancesBase: Object.keys(SEANCES_BASE).length,
         totalExercices:   Object.keys(EXERCICES).length,
-        cycleActuel: 1, semaineActuelle: 1, progression: 0
+        cycleActuel:1, semaineActuelle:1, progression:0
       };
     }
   }
 };
 
 // ════════════════════════════════════════════════════════════
-// PROGRAMME AUTO-ADAPTATIF
+// PROGRAMME ADAPTATIF (identique v4.0 + utilise Programme)
 // ════════════════════════════════════════════════════════════
 const ProgrammeAdaptatif = {
 
@@ -1821,13 +1865,14 @@ const ProgrammeAdaptatif = {
         const hist = Tracker.getHistoriqueExercice(ref, 60);
         if (hist.length < 2) return;
 
-        const recents  = hist.slice(0, 6);
-        const anciens  = hist.slice(6, 12);
-        const moyRec   = recents.reduce(
+        const recents = hist.slice(0, 6);
+        const anciens = hist.slice(6, 12);
+        const moyRec  = recents.reduce(
           (a,h) => a + (h.rm1||0), 0
         ) / recents.length;
-        const moyAnc   = anciens.length
-          ? anciens.reduce((a,h) => a + (h.rm1||0), 0) / anciens.length
+        const moyAnc  = anciens.length
+          ? anciens.reduce((a,h) => a + (h.rm1||0), 0)
+            / anciens.length
           : moyRec;
         const delta    = moyRec - moyAnc;
         const tendance = delta > 2
@@ -1836,11 +1881,11 @@ const ProgrammeAdaptatif = {
 
         analyses[ref] = {
           ref,
-          nom:     window.EXERCICES[ref]?.nom   || ref,
-          emoji:   window.EXERCICES[ref]?.emoji || '💪',
+          nom:    window.EXERCICES[ref]?.nom   || ref,
+          emoji:  window.EXERCICES[ref]?.emoji || '💪',
           tendance, delta: Math.round(delta * 10) / 10,
-          rm1:     prs[ref]?.rm1 || 0,
-          rm1Moy:  Math.round(moyRec)
+          rm1:    prs[ref]?.rm1 || 0,
+          rm1Moy: Math.round(moyRec)
         };
       } catch(e) {}
     });
@@ -1900,17 +1945,16 @@ const ProgrammeAdaptatif = {
   },
 
   getVariations(ref) {
-    // ✅ NOUVEAU — Utiliser ExercicesFilter pour les variations
     const lieu = Utils.storage.get('ft_lieu_entrainement', null);
     return ExercicesFilter.getSimilaires(ref, lieu);
   },
 
-  // ✅ NOUVEAU v4.0 — Remplacer un exercice Live
   getRemplacementsLive(ref, lieu = null) {
     const lieuActuel = lieu
       || Utils.storage.get('ft_lieu_entrainement', 'salle');
-    const similaires = ExercicesFilter.getSimilaires(ref, lieuActuel);
-
+    const similaires = ExercicesFilter.getSimilaires(
+      ref, lieuActuel
+    );
     return similaires.map(s => ({
       ...s,
       raison: s.muscle === EXERCICES[ref]?.muscle
@@ -1932,8 +1976,6 @@ const ProgrammeAdaptatif = {
       .filter(a => a.tendance === 'progression');
     const stagnations  = Object.values(analyses)
       .filter(a => a.tendance === 'stagnation');
-    const regressions  = Object.values(analyses)
-      .filter(a => a.tendance === 'regression');
 
     container.innerHTML = `
       ${surmenage ? `
@@ -1944,8 +1986,7 @@ const ProgrammeAdaptatif = {
             <div style="font-size:2rem">⚠️</div>
             <div>
               <div style="font-weight:700;color:var(--fd-coral)">
-                Surmenage détecté !
-              </div>
+                Surmenage détecté !</div>
               <div style="font-size:.78rem;color:var(--text-muted)">
                 RPE élevé ou trop de séances cette semaine.
                 Prends 1-2 jours de repos.
@@ -1971,7 +2012,9 @@ const ProgrammeAdaptatif = {
           </div>
           <div class="stat-card">
             <span class="stat-value" style="color:var(--fd-coral)">
-              ${regressions.length}</span>
+              ${Object.values(analyses)
+                .filter(a => a.tendance === 'regression')
+                .length}</span>
             <span class="stat-label">En baisse</span>
           </div>
           <div class="stat-card">
@@ -1994,7 +2037,8 @@ const ProgrammeAdaptatif = {
                   <div style="font-weight:700;font-size:.9rem">
                     ${s.nom}</div>
                   <div style="font-size:.72rem;color:${s.color};
-                              font-weight:600">${s.message}</div>
+                              font-weight:600">
+                    ${s.message}</div>
                 </div>
               </div>
               ${s.type === 'variation' ? `
@@ -2073,9 +2117,10 @@ const ProgrammeAdaptatif = {
           {cle:'surmenageProtection', label:'Protection surmenage'         }
         ].map(p => `
           <div class="score-row">
-            <span class="score-row-label"
-                  style="font-size:.82rem">${p.label}</span>
-            <div onclick="ProgrammeAdaptatif._toggleConfig('${p.cle}', ${!config[p.cle]})"
+            <span class="score-row-label" style="font-size:.82rem">
+              ${p.label}</span>
+            <div onclick="ProgrammeAdaptatif._toggleConfig(
+                   '${p.cle}', ${!config[p.cle]})"
                  style="position:relative;width:48px;height:26px;
                         cursor:pointer;flex-shrink:0">
               <div style="position:absolute;inset:0;
@@ -2085,8 +2130,8 @@ const ProgrammeAdaptatif = {
                           border:2px solid ${config[p.cle]
                             ? 'var(--fd-indigo)'
                             : 'rgba(255,255,255,0.2)'};
-                          border-radius:99px;transition:all .25s">
-              </div>
+                          border-radius:99px;
+                          transition:all .25s"></div>
               <div style="position:absolute;top:50%;
                           left:${config[p.cle] ? '24px' : '2px'};
                           transform:translateY(-50%);
@@ -2095,8 +2140,7 @@ const ProgrammeAdaptatif = {
                             ? 'white'
                             : 'rgba(255,255,255,0.4)'};
                           border-radius:50%;transition:left .25s;
-                          pointer-events:none">
-              </div>
+                          pointer-events:none"></div>
             </div>
           </div>`).join('')}
       </div>
@@ -2141,7 +2185,8 @@ const ProgrammeAdaptatif = {
               Essayer
             </button>
           </div>`).join('')}
-        <button onclick="document.getElementById('variations-panel').innerHTML=''"
+        <button onclick="
+            document.getElementById('variations-panel').innerHTML=''"
                 class="btn-secondary mt-md"
                 style="width:100%;font-size:.78rem">
           Fermer
@@ -2159,7 +2204,9 @@ const ProgrammeAdaptatif = {
       || document.getElementById('stats-content');
     if (container) this.render(container);
     Utils.toast(
-      `${val ? '✅' : '❌'} ${cle.replace(/([A-Z])/g,' $1').toLowerCase()} ${val ? 'activé' : 'désactivé'}`,
+      `${val ? '✅' : '❌'} ${
+        cle.replace(/([A-Z])/g,' $1').toLowerCase()
+      } ${val ? 'activé' : 'désactivé'}`,
       'success', 1500
     );
   }
@@ -2183,8 +2230,8 @@ window.Programme               = Programme;
 window.ExercicesFilter         = ExercicesFilter;
 
 console.log(
-  `✅ Programme v4.0 chargé — ` +
-  `${Object.keys(EXERCICES).length} exercices, ` +
-  `${Object.keys(SEANCES_BASE).length} séances ` +
-  `(homme + femme + maison)`
+  `✅ Programme v5.0 chargé — `
+  + `${Object.keys(EXERCICES).length} exercices, `
+  + `${Object.keys(SEANCES_BASE).length} séances `
+  + `+ Fix mountain_climbers_core + getPRsProches + getSurchargeMusculaire`
 );
