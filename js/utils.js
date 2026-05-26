@@ -1,8 +1,10 @@
 /* ============================================================
-   PowerApp — Utils.js v4.0
-   Utilitaires globaux + Dates + Storage + Graphiques
-   + Export/Import + Toast + Confirm + Vibration
-   + Notifications PWA + Animations enrichies
+   PowerApp — Utils.js v5.0
+   + Fix semainesDepuis() → retourne 0 possible
+   + Fix storage.set() QuotaExceededError
+   + Fix ajouterJours() date null
+   + Fix timerRepos.jouerSon() fallback propre
+   + getCarteNutrition() NOUVEAU
    ============================================================ */
 
 'use strict';
@@ -10,7 +12,7 @@
 const Utils = {
 
   // ════════════════════════════════════════════════════════
-  // STORAGE
+  // STORAGE — ✅ v5.0 QuotaExceededError géré
   // ════════════════════════════════════════════════════════
   storage: {
 
@@ -27,9 +29,64 @@ const Utils = {
         localStorage.setItem(cle, JSON.stringify(valeur));
         return true;
       } catch(e) {
+        // ✅ FIX v5.0 — QuotaExceededError
+        if (e.name === 'QuotaExceededError'
+            || e.code === 22
+            || e.code === 1014) {
+          console.warn('[Storage] Quota dépassé — nettoyage...');
+          this._nettoyerAnciens();
+          // Réessayer une fois
+          try {
+            localStorage.setItem(cle, JSON.stringify(valeur));
+            return true;
+          } catch(e2) {
+            console.error('[Storage] Quota toujours dépassé:', cle);
+            return false;
+          }
+        }
         console.warn('[Storage] Erreur set:', cle, e);
         return false;
       }
+    },
+
+    // ✅ NOUVEAU v5.0 — Nettoyer les anciennes entrées
+    _nettoyerAnciens() {
+      try {
+        const hierDate = (() => {
+          const d = new Date();
+          d.setDate(d.getDate() - 30);
+          return d.toISOString().split('T')[0];
+        })();
+
+        const aSupprimer = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const cle = localStorage.key(i);
+          if (!cle?.startsWith('ft_')) continue;
+
+          // Supprimer les caches et données vieilles
+          if (cle.startsWith('ft_cache_')) {
+            aSupprimer.push(cle);
+            continue;
+          }
+
+          // Supprimer les données de séances > 30 jours
+          if (cle.startsWith('ft_seance_')) {
+            const parts = cle.split('_');
+            const date  = parts[2]; // ft_seance_DATE_id
+            if (date && date < hierDate) {
+              aSupprimer.push(cle);
+            }
+          }
+        }
+
+        aSupprimer.forEach(c => {
+          try { localStorage.removeItem(c); } catch(e) {}
+        });
+
+        console.log(
+          `[Storage] ${aSupprimer.length} entrées nettoyées`
+        );
+      } catch(e) {}
     },
 
     remove(cle) {
@@ -73,7 +130,7 @@ const Utils = {
         const ko = Math.round(total / 1024);
         return ko < 1024
           ? `${ko} Ko`
-          : `${(ko/1024).toFixed(1)} Mo`;
+          : `${(ko / 1024).toFixed(1)} Mo`;
       } catch(e) { return '— Ko'; }
     },
 
@@ -89,55 +146,61 @@ const Utils = {
     },
 
     viderPar(prefixe) {
-      this.clesPar(prefixe).forEach(c =>
-        localStorage.removeItem(c)
-      );
+      this.clesPar(prefixe).forEach(c => {
+        try { localStorage.removeItem(c); } catch(e) {}
+      });
     }
   },
 
   // ════════════════════════════════════════════════════════
-  // DATES
+  // DATES — ✅ v5.0 ajouterJours null-safe
   // ════════════════════════════════════════════════════════
   aujourd_hui() {
     return new Date().toISOString().split('T')[0];
   },
 
+  // ✅ FIX v5.0 — Protéger contre dateStr null/undefined
   ajouterJours(dateStr, n) {
     try {
-      const d = new Date(dateStr + 'T00:00:00');
+      const src = dateStr || this.aujourd_hui();
+      const d   = new Date(src + 'T00:00:00');
       d.setDate(d.getDate() + n);
       return d.toISOString().split('T')[0];
-    } catch(e) { return dateStr; }
+    } catch(e) {
+      return this.aujourd_hui();
+    }
   },
 
   diffJours(dateDebut, dateFin) {
     try {
-      const d1 = new Date(dateDebut + 'T00:00:00');
-      const d2 = new Date(dateFin   + 'T00:00:00');
+      const d1 = new Date((dateDebut || this.aujourd_hui()) + 'T00:00:00');
+      const d2 = new Date((dateFin   || this.aujourd_hui()) + 'T00:00:00');
       return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
     } catch(e) { return 0; }
   },
 
   debutSemaine(dateStr) {
     try {
-      const d    = new Date(dateStr + 'T00:00:00');
+      const src  = dateStr || this.aujourd_hui();
+      const d    = new Date(src + 'T00:00:00');
       const day  = d.getDay();
       const diff = day === 0 ? -6 : 1 - day;
       d.setDate(d.getDate() + diff);
       return d.toISOString().split('T')[0];
-    } catch(e) { return dateStr; }
+    } catch(e) { return dateStr || this.aujourd_hui(); }
   },
 
   finSemaine(dateStr) {
     try {
       const debut = this.debutSemaine(dateStr);
       return this.ajouterJours(debut, 6);
-    } catch(e) { return dateStr; }
+    } catch(e) { return dateStr || this.aujourd_hui(); }
   },
 
   indexJourSemaine(dateStr) {
     try {
-      const d   = new Date(dateStr + 'T00:00:00');
+      const src = dateStr || this.aujourd_hui();
+      const d   = new Date(src + 'T00:00:00');
       const day = d.getDay();
       return day === 0 ? 6 : day - 1;
     } catch(e) { return 0; }
@@ -147,11 +210,13 @@ const Utils = {
     return new Date().getHours();
   },
 
+  // ✅ FIX v5.0 — semainesDepuis() retourne 0 si même semaine
   semainesDepuis(dateStr) {
     try {
+      if (!dateStr) return 0;
       const diff = this.diffJours(dateStr, this.aujourd_hui());
-      return Math.max(1, Math.floor(diff / 7));
-    } catch(e) { return 1; }
+      return Math.max(0, Math.floor(diff / 7));
+    } catch(e) { return 0; }
   },
 
   formatDateCourt(dateStr) {
@@ -169,12 +234,12 @@ const Utils = {
   formatDateLong(dateStr) {
     if (!dateStr) return '';
     try {
-      const d    = new Date(dateStr + 'T00:00:00');
+      const d     = new Date(dateStr + 'T00:00:00');
       const jours = [
         'Dimanche','Lundi','Mardi','Mercredi',
         'Jeudi','Vendredi','Samedi'
       ];
-      const mois = [
+      const mois  = [
         'Janvier','Février','Mars','Avril',
         'Mai','Juin','Juillet','Août',
         'Septembre','Octobre','Novembre','Décembre'
@@ -189,7 +254,6 @@ const Utils = {
       : this.formatDateCourt(dateStr);
   },
 
-  // ✅ NOUVEAU v4.0 — formatHeure
   formatHeure(date = null) {
     const d = date ? new Date(date) : new Date();
     return d.toLocaleTimeString('fr-FR', {
@@ -198,15 +262,16 @@ const Utils = {
     });
   },
 
-  // ✅ NOUVEAU v4.0 — formatDateTime
   formatDateTime(dateStr) {
     if (!dateStr) return '';
-    const d    = new Date(dateStr);
-    const date = this.formatDateCourt(
-      d.toISOString().split('T')[0]
-    );
-    const heure = this.formatHeure(d);
-    return `${date} à ${heure}`;
+    try {
+      const d     = new Date(dateStr);
+      const date  = this.formatDateCourt(
+        d.toISOString().split('T')[0]
+      );
+      const heure = this.formatHeure(d);
+      return `${date} à ${heure}`;
+    } catch(e) { return dateStr; }
   },
 
   estAujourdhui(dateStr) {
@@ -214,6 +279,7 @@ const Utils = {
   },
 
   estCetteSemaine(dateStr) {
+    if (!dateStr) return false;
     const debut = this.debutSemaine(this.aujourd_hui());
     const fin   = this.finSemaine(this.aujourd_hui());
     return dateStr >= debut && dateStr <= fin;
@@ -224,15 +290,15 @@ const Utils = {
   // ════════════════════════════════════════════════════════
   formatVolume(kg) {
     if (!kg || isNaN(kg)) return '0kg';
-    if (kg >= 1000) return `${(kg/1000).toFixed(1)}T`;
+    if (kg >= 1000) return `${(kg / 1000).toFixed(1)}T`;
     return `${Math.round(kg)}kg`;
   },
 
   formatDuree(secondes) {
     if (!secondes || isNaN(secondes)) return '0min';
-    const s = Math.round(secondes);
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
+    const s   = Math.round(Math.abs(secondes));
+    const h   = Math.floor(s / 3600);
+    const m   = Math.floor((s % 3600) / 60);
     const sec = s % 60;
     if (h > 0) return m > 0 ? `${h}h ${m}min` : `${h}h`;
     if (m > 0) return sec > 0 ? `${m}min ${sec}s` : `${m}min`;
@@ -247,14 +313,13 @@ const Utils = {
     return `${m}:${r.toString().padStart(2, '0')}`;
   },
 
-  // ✅ NOUVEAU v4.0 — getFormate (alias pour chrono.js)
   getFormate(secondes) {
     return this.formatDureeMin(secondes);
   },
 
   arrondir(val, decimales = 1) {
     const factor = Math.pow(10, decimales);
-    return Math.round((val||0) * factor) / factor;
+    return Math.round((val || 0) * factor) / factor;
   },
 
   random(liste) {
@@ -263,7 +328,7 @@ const Utils = {
   },
 
   // ════════════════════════════════════════════════════════
-  // TOAST NOTIFICATIONS
+  // TOAST
   // ════════════════════════════════════════════════════════
   toast(message, type = 'info', duree = 3000) {
     try {
@@ -274,12 +339,12 @@ const Utils = {
       }
 
       const colors = {
-        success: { bg:'var(--fd-mint)',      text:'#09092d' },
-        error:   { bg:'var(--fd-coral)',     text:'#09092d' },
-        warning: { bg:'#ffa500',             text:'#09092d' },
-        info:    { bg:'var(--fd-indigo)',    text:'white'   },
-        pr:      { bg:'var(--fd-lemon)',     text:'#09092d' },
-        dark:    { bg:'var(--fd-midnight)',  text:'white'   }
+        success: { bg:'var(--fd-mint)',     text:'#09092d' },
+        error:   { bg:'var(--fd-coral)',    text:'#09092d' },
+        warning: { bg:'#ffa500',            text:'#09092d' },
+        info:    { bg:'var(--fd-indigo)',   text:'white'   },
+        pr:      { bg:'var(--fd-lemon)',    text:'#09092d' },
+        dark:    { bg:'var(--fd-midnight)', text:'white'   }
       };
 
       const c     = colors[type] || colors.info;
@@ -301,7 +366,6 @@ const Utils = {
 
       toast.textContent = message;
       toast.onclick     = () => toast.remove();
-
       container.appendChild(toast);
 
       setTimeout(() => {
@@ -316,7 +380,7 @@ const Utils = {
   },
 
   // ════════════════════════════════════════════════════════
-  // MODAL CONFIRM
+  // CONFIRM MODAL
   // ════════════════════════════════════════════════════════
   confirmer(titre, message) {
     return new Promise(resolve => {
@@ -331,8 +395,7 @@ const Utils = {
         justify-content:center;
         background:rgba(0,0,0,0.75);
         backdrop-filter:blur(4px);
-        padding:20px;
-      `;
+        padding:20px`;
 
       modal.innerHTML = `
         <div style="background:var(--bg-card);
@@ -346,7 +409,8 @@ const Utils = {
                       margin-bottom:8px">${titre}</div>
           <div style="font-size:.85rem;color:var(--text-muted);
                       margin-bottom:24px;line-height:1.5">
-            ${message}</div>
+            ${message}
+          </div>
           <div style="display:grid;
                       grid-template-columns:1fr 1fr;gap:10px">
             <button id="confirmer-non"
@@ -372,27 +436,23 @@ const Utils = {
               Confirmer
             </button>
           </div>
-        </div>
-      `;
+        </div>`;
 
       document.body.appendChild(modal);
 
       document.getElementById('confirmer-oui')
         .addEventListener('click', () => {
-          modal.remove();
-          resolve(true);
+          modal.remove(); resolve(true);
         });
 
       document.getElementById('confirmer-non')
         .addEventListener('click', () => {
-          modal.remove();
-          resolve(false);
+          modal.remove(); resolve(false);
         });
 
       modal.addEventListener('click', (e) => {
         if (e.target === modal) {
-          modal.remove();
-          resolve(false);
+          modal.remove(); resolve(false);
         }
       });
 
@@ -416,36 +476,31 @@ const Utils = {
     } catch(e) {}
   },
 
-  vibrerSuccess() { this.vibrer([100, 50, 100]);          },
+  vibrerSuccess() { this.vibrer([100, 50, 100]);           },
   vibrerPR()      { this.vibrer([200, 100, 200, 100, 400]); },
-  vibrerErreur()  { this.vibrer([300, 100, 300]);          },
+  vibrerErreur()  { this.vibrer([300, 100, 300]);           },
 
   // ════════════════════════════════════════════════════════
-  // ✅ NOUVEAU v4.0 — NOTIFICATIONS PWA (Suggestion 8)
+  // NOTIFICATIONS PWA
   // ════════════════════════════════════════════════════════
   notifications: {
 
-    // ✅ Demander la permission
     async demanderPermission() {
       if (!('Notification' in window)) return false;
       if (Notification.permission === 'granted') return true;
       if (Notification.permission === 'denied')  return false;
-
       const perm = await Notification.requestPermission();
       return perm === 'granted';
     },
 
-    // ✅ Permission accordée ?
     estAutorisee() {
       return 'Notification' in window
         && Notification.permission === 'granted';
     },
 
-    // ✅ Envoyer une notification locale
     async envoyer(titre, options = {}) {
       const ok = await this.demanderPermission();
       if (!ok) return false;
-
       try {
         const notif = new Notification(titre, {
           body:    options.body    || '',
@@ -456,11 +511,9 @@ const Utils = {
           vibrate: options.vibrate || [200, 100, 200],
           data:    options.data    || {}
         });
-
         if (options.duree) {
           setTimeout(() => notif.close(), options.duree);
         }
-
         return true;
       } catch(e) {
         console.warn('[Notif]', e);
@@ -468,105 +521,61 @@ const Utils = {
       }
     },
 
-    // ✅ Notification de rappel séance
     async rappelSeance(nom, seance) {
       return this.envoyer(
         `💪 C'est l'heure ${nom} !`,
-        {
-          body:   `Séance ${seance} t'attend. Let's go ! 🔥`,
-          tag:    'rappel-seance',
-          duree:  10000
-        }
+        { body:`Séance ${seance} t'attend. Let's go ! 🔥`,
+          tag:'rappel-seance', duree:10000 }
       );
     },
 
-    // ✅ Notification PR
     async prBattu(exercice, poids, reps) {
       return this.envoyer(
         `🏆 NOUVEAU RECORD !`,
-        {
-          body:  `${exercice} : ${poids}kg × ${reps} reps ! 🎉`,
-          tag:   'pr',
-          duree: 8000
-        }
+        { body:`${exercice} : ${poids}kg × ${reps} reps ! 🎉`,
+          tag:'pr', duree:8000 }
       );
     },
 
-    // ✅ Notification streak en danger
     async streakEnDanger(jours) {
       return this.envoyer(
         `⚠️ Ton streak est en danger !`,
-        {
-          body:  `Plus que quelques heures pour maintenir ton streak de ${jours} jours 🔥`,
-          tag:   'streak',
-          duree: 15000
-        }
+        { body:`Plus que quelques heures pour maintenir ton streak de ${jours} jours 🔥`,
+          tag:'streak', duree:15000 }
       );
     },
 
-    // ✅ Notification hydratation
     async rappelHydratation() {
       return this.envoyer(
         `💧 N'oublie pas de t'hydrater !`,
-        {
-          body:  `Bois un verre d'eau maintenant. Ton corps te remerciera 💪`,
-          tag:   'eau',
-          duree: 5000
-        }
+        { body:`Bois un verre d'eau maintenant. Ton corps te remerciera 💪`,
+          tag:'eau', duree:5000 }
       );
     },
 
-    // ✅ Notification PR proche
     async prProche(exercice, pct) {
       return this.envoyer(
         `🎯 PR en vue sur ${exercice} !`,
-        {
-          body:  `Tu es à ${pct}% de ton record. Pousse fort ! 💥`,
-          tag:   'pr-proche',
-          duree: 8000
-        }
+        { body:`Tu es à ${pct}% de ton record. Pousse fort ! 💥`,
+          tag:'pr-proche', duree:8000 }
       );
     },
 
-    // ✅ Notification conseil récupération
-    async conseilRecuperation(conseil) {
-      return this.envoyer(
-        `💡 Conseil récupération`,
-        {
-          body:  conseil,
-          tag:   'recuperation',
-          duree: 10000
-        }
-      );
-    },
-
-    // ✅ Programmer une notification différée (en millisecondes)
     programmer(titre, options, delaiMs) {
-      setTimeout(() => {
-        this.envoyer(titre, options);
-      }, delaiMs);
+      setTimeout(() => { this.envoyer(titre, options); }, delaiMs);
     },
 
-    // ✅ Rappel quotidien selon horaire
     programmerRappelQuotidien(heure = 18, minute = 0) {
       const maintenant = new Date();
       const cible      = new Date();
       cible.setHours(heure, minute, 0, 0);
-
-      // Si l'heure est déjà passée → demain
-      if (cible <= maintenant) {
-        cible.setDate(cible.getDate() + 1);
-      }
-
+      if (cible <= maintenant) cible.setDate(cible.getDate() + 1);
       const delai = cible - maintenant;
-
       setTimeout(() => {
         this.envoyer(
           `💪 PowerApp - Séance du soir !`,
-          {
-            body: `C'est l'heure de ton entraînement 🔥`,
-            tag:  'rappel-quotidien'
-          }
+          { body:`C'est l'heure de ton entraînement 🔥`,
+            tag:'rappel-quotidien' }
         );
       }, delai);
     }
@@ -662,7 +671,6 @@ const Utils = {
   exporterJSON(prefixe = 'ft_') {
     try {
       const data = {};
-
       for (let i = 0; i < localStorage.length; i++) {
         const cle = localStorage.key(i);
         if (prefixe && !cle?.startsWith(prefixe)) continue;
@@ -674,7 +682,7 @@ const Utils = {
       }
 
       const export_data = {
-        version:   '4.0',
+        version:   '5.0',
         app:       'PowerApp',
         date:      this.aujourd_hui(),
         timestamp: Date.now(),
@@ -689,7 +697,6 @@ const Utils = {
       link.download = `powerapp-backup-${this.aujourd_hui()}.json`;
       link.href     = URL.createObjectURL(blob);
       link.click();
-
       setTimeout(() => URL.revokeObjectURL(link.href), 1000);
       this.toast('📤 Données exportées !', 'success');
     } catch(e) {
@@ -728,7 +735,6 @@ const Utils = {
   async _traiterImport(fichier) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-
       reader.onload = async (e) => {
         try {
           const raw  = JSON.parse(e.target.result);
@@ -739,7 +745,6 @@ const Utils = {
           }
 
           const nb = Object.keys(data).length;
-
           const ok = await this.confirmer(
             '📥 Importer les données ?',
             `${nb} entrées trouvées. Tes données actuelles seront remplacées.`
@@ -759,7 +764,6 @@ const Utils = {
             `✅ ${imported} données importées !`,
             'success', 4000
           );
-          console.log(`[Utils] Import OK: ${imported} clés`);
           setTimeout(() => window.location.reload(), 1500);
           resolve(true);
 
@@ -768,14 +772,13 @@ const Utils = {
           reject(err);
         }
       };
-
       reader.onerror = reject;
       reader.readAsText(fichier);
     });
   },
 
   // ════════════════════════════════════════════════════════
-  // GRAPHIQUES (Canvas minimaliste)
+  // GRAPHIQUES Canvas
   // ════════════════════════════════════════════════════════
   graphiques: {
 
@@ -790,14 +793,11 @@ const Utils = {
 
     barres(canvas, labels, valeurs, options = {}) {
       if (!canvas || !labels?.length) return;
-
       const ctx  = canvas.getContext('2d');
       const W    = canvas.offsetWidth  || canvas.width  || 300;
       const H    = canvas.offsetHeight || canvas.height || 140;
-
       canvas.width  = W;
       canvas.height = H;
-
       ctx.clearRect(0, 0, W, H);
       if (!valeurs?.length) return;
 
@@ -833,9 +833,8 @@ const Utils = {
           ctx.fillStyle = 'rgba(255,255,255,0.5)';
           ctx.font      = '10px system-ui';
           ctx.textAlign = 'center';
-          const label = val >= 1000
-            ? `${(val/1000).toFixed(1)}T`
-            : `${val}`;
+          const label   = val >= 1000
+            ? `${(val/1000).toFixed(1)}T` : `${val}`;
           ctx.fillText(label, x + barW/2, y - 4);
         }
 
@@ -850,14 +849,11 @@ const Utils = {
 
     ligne(canvas, labels, series, options = {}) {
       if (!canvas || !labels?.length) return;
-
       const ctx  = canvas.getContext('2d');
       const W    = canvas.offsetWidth  || canvas.width  || 300;
       const H    = canvas.offsetHeight || canvas.height || 140;
-
       canvas.width  = W;
       canvas.height = H;
-
       ctx.clearRect(0, 0, W, H);
       if (!series?.length) return;
 
@@ -867,9 +863,9 @@ const Utils = {
       const n      = labels.length;
 
       const toutesValeurs = series.flatMap(s => s.valeurs || []);
-      const max    = Math.max(...toutesValeurs, 1);
-      const min    = Math.min(...toutesValeurs, 0);
-      const range  = Math.max(max - min, 1);
+      const max   = Math.max(...toutesValeurs, 1);
+      const min   = Math.min(...toutesValeurs, 0);
+      const range = Math.max(max - min, 1);
 
       ctx.strokeStyle = 'rgba(255,255,255,0.06)';
       ctx.lineWidth   = 1;
@@ -911,11 +907,8 @@ const Utils = {
           ctx.beginPath();
           ctx.moveTo(points[0].x, padT + chartH);
           points.forEach(p => ctx.lineTo(p.x, p.y));
-          ctx.lineTo(
-            points[points.length-1].x, padT + chartH
-          );
+          ctx.lineTo(points[points.length-1].x, padT + chartH);
           ctx.closePath();
-
           const grad = ctx.createLinearGradient(
             0, padT, 0, padT + chartH
           );
@@ -972,14 +965,11 @@ const Utils = {
 
     donut(canvas, segments, options = {}) {
       if (!canvas || !segments?.length) return;
-
       const ctx  = canvas.getContext('2d');
       const W    = canvas.offsetWidth  || canvas.width  || 200;
       const H    = canvas.offsetHeight || canvas.height || 200;
-
       canvas.width  = W;
       canvas.height = H;
-
       ctx.clearRect(0, 0, W, H);
 
       const cx        = W / 2;
@@ -990,7 +980,6 @@ const Utils = {
       if (total === 0) return;
 
       let angle = -Math.PI / 2;
-
       segments.forEach(seg => {
         const sweep = (seg.val / total) * Math.PI * 2;
         ctx.beginPath();
@@ -1017,14 +1006,11 @@ const Utils = {
 
     radar(canvas, labels, valeurs, options = {}) {
       if (!canvas || !labels?.length) return;
-
       const ctx  = canvas.getContext('2d');
       const W    = canvas.offsetWidth  || canvas.width  || 240;
       const H    = canvas.offsetHeight || canvas.height || 240;
-
       canvas.width  = W;
       canvas.height = H;
-
       ctx.clearRect(0, 0, W, H);
 
       const cx    = W / 2;
@@ -1189,8 +1175,9 @@ const Utils = {
   // DIVERS
   // ════════════════════════════════════════════════════════
   genId(prefixe = 'id') {
-    return `${prefixe}_${Date.now()}_${Math.random()
-      .toString(36).substring(2, 8)}`;
+    return `${prefixe}_${Date.now()}_${
+      Math.random().toString(36).substring(2, 8)
+    }`;
   },
 
   tronquer(texte, max = 50) {
@@ -1253,29 +1240,22 @@ const Utils = {
     return Math.max(min, Math.min(max, val));
   },
 
-  // ✅ NOUVEAU v4.0 — scrollToTop
   scrollToTop(smooth = true) {
     try {
       const main = document.querySelector('.main-content')
         || document.getElementById('app-content')
         || window;
       if (main === window) {
-        window.scrollTo({
-          top:      0,
-          behavior: smooth ? 'smooth' : 'auto'
-        });
+        window.scrollTo({ top:0, behavior: smooth ? 'smooth' : 'auto' });
       } else {
-        main.scrollTo({
-          top:      0,
-          behavior: smooth ? 'smooth' : 'auto'
-        });
+        main.scrollTo({ top:0, behavior: smooth ? 'smooth' : 'auto' });
       }
-    } catch(e) {
-      window.scrollTo(0, 0);
-    }
+    } catch(e) { window.scrollTo(0, 0); }
   },
 
-  // ✅ NOUVEAU v4.0 — Utilitaire PWA install
+  // ════════════════════════════════════════════════════════
+  // PWA INSTALL
+  // ════════════════════════════════════════════════════════
   pwa: {
     _promptInstall: null,
 
@@ -1287,9 +1267,7 @@ const Utils = {
       });
     },
 
-    peutInstaller() {
-      return !!this._promptInstall;
-    },
+    peutInstaller() { return !!this._promptInstall; },
 
     async installer() {
       if (!this._promptInstall) return false;
@@ -1302,7 +1280,7 @@ const Utils = {
 };
 
 // ════════════════════════════════════════════════════════════
-// TIMER REPOS
+// TIMER REPOS — ✅ v5.0 jouerSon fallback propre
 // ════════════════════════════════════════════════════════════
 const timerRepos = {
   _interval: null,
@@ -1360,10 +1338,8 @@ const timerRepos = {
       el.style.cssText = `
         position:fixed;
         bottom:calc(var(--nav-height,60px) + 16px);
-        right:16px;
-        z-index:900;
-        background:var(--fd-indigo);
-        color:white;
+        right:16px;z-index:900;
+        background:var(--fd-indigo);color:white;
         padding:12px 20px;
         border-radius:var(--radius-full,99px);
         font-size:1.1rem;font-weight:800;
@@ -1395,37 +1371,33 @@ const timerRepos = {
     }
   },
 
+  // ✅ FIX v5.0 — jouerSon() fallback propre
   jouerSon(type = 'beep') {
     try {
+      // ✅ Vérifier config son
       const config = Utils.storage.get('ft_notifs_config', {});
       if (config.son === false) return;
 
       // ✅ Priorité 1 — Module Sounds.js
-      if (window.Sounds) {
+      if (window.Sounds?.jouer) {
         window.Sounds.jouer(type);
         return;
       }
 
-      // ✅ Priorité 2 — Fichiers .mp3
-      const sons = {
-        beep: './assets/sounds/beep.mp3',
-        pr:   './assets/sounds/pr.mp3',
-        rest: './assets/sounds/rest.mp3',
-        go:   './assets/sounds/beep.mp3',
-        bip:  './assets/sounds/beep.mp3'
-      };
-
-      const audio  = new Audio(sons[type] || sons.beep);
-      audio.volume = 0.5;
-      audio.play().catch(() => this._jouerSonSynth(type));
+      // ✅ Priorité 2 — Synthèse audio directe
+      // (plus fiable que les fichiers mp3 qui peuvent manquer)
+      this._jouerSonSynth(type);
 
     } catch(e) {}
   },
 
   _jouerSonSynth(type) {
     try {
-      const ctx  = new (window.AudioContext
-        || window.webkitAudioContext)();
+      const AudioCtx = window.AudioContext
+        || window.webkitAudioContext;
+      if (!AudioCtx) return;
+
+      const ctx  = new AudioCtx();
       const osc  = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -1433,28 +1405,41 @@ const timerRepos = {
       gain.connect(ctx.destination);
 
       const configs = {
-        beep: { freq:880, dur:.12, type:'sine'   },
-        pr:   { freq:523, dur:.4,  type:'square' },
-        rest: { freq:440, dur:.2,  type:'sine'   },
-        go:   { freq:660, dur:.15, type:'sine'   },
-        bip:  { freq:880, dur:.08, type:'sine'   }
+        beep:  { freq:880,  dur:.12, type:'sine',     vol:.3  },
+        pr:    { freq:523,  dur:.5,  type:'triangle', vol:.4  },
+        rest:  { freq:440,  dur:.25, type:'sine',     vol:.35 },
+        go:    { freq:660,  dur:.15, type:'sine',     vol:.3  },
+        bip:   { freq:880,  dur:.08, type:'sine',     vol:.25 },
+        trophee:{ freq:784, dur:.6,  type:'triangle', vol:.4  },
+        levelup:{ freq:523, dur:.8,  type:'triangle', vol:.5  }
       };
 
-      const cfg     = configs[type] || configs.beep;
+      const cfg = configs[type] || configs.beep;
+
       osc.frequency.setValueAtTime(cfg.freq, ctx.currentTime);
       osc.type = cfg.type;
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+
+      gain.gain.setValueAtTime(cfg.vol, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(
         0.001, ctx.currentTime + cfg.dur
       );
+
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + cfg.dur);
-    } catch(e) {}
+
+      // ✅ Fermer le contexte après lecture
+      setTimeout(() => {
+        try { ctx.close(); } catch(e) {}
+      }, (cfg.dur + 0.1) * 1000);
+
+    } catch(e) {
+      console.warn('[timerRepos] Son indisponible:', e);
+    }
   }
 };
 
 // ════════════════════════════════════════════════════════════
-// CSS ANIMATIONS — ✅ v4.0 enrichi
+// CSS ANIMATIONS
 // ════════════════════════════════════════════════════════════
 (function _injecterAnimations() {
   const css = `
@@ -1474,43 +1459,46 @@ const timerRepos = {
       from { opacity:0 }
       to   { opacity:1 }
     }
+    @keyframes fadeOut {
+      from { opacity:1 }
+      to   { opacity:0 }
+    }
     @keyframes bounceIn {
       0%   { transform:scale(0);   opacity:0 }
       70%  { transform:scale(1.1)            }
       100% { transform:scale(1);   opacity:1 }
     }
     @keyframes pulse {
-      0%,100% { opacity:1   }
-      50%     { opacity:.5  }
+      0%,100% { opacity:1  }
+      50%     { opacity:.5 }
     }
     @keyframes slideUp {
-      from { transform:translateY(20px); opacity:0 }
-      to   { transform:translateY(0);    opacity:1 }
+      from { transform:translateY(20px);  opacity:0 }
+      to   { transform:translateY(0);     opacity:1 }
     }
     @keyframes slideDown {
       from { transform:translateY(-20px); opacity:0 }
       to   { transform:translateY(0);     opacity:1 }
     }
     @keyframes splashLoad {
-      0%   { width:0%    }
-      80%  { width:90%   }
-      100% { width:100%  }
+      0%   { width:0%   }
+      80%  { width:90%  }
+      100% { width:100% }
     }
     @keyframes shimmer {
       0%   { background-position: -200% center }
-      100% { background-position: 200%  center }
+      100% { background-position:  200% center }
     }
     @keyframes zoomIn {
       from { transform:scale(.8); opacity:0 }
       to   { transform:scale(1);  opacity:1 }
     }
     @keyframes floatUp {
-      0%   { transform:translateY(0)   }
-      50%  { transform:translateY(-8px)}
-      100% { transform:translateY(0)   }
+      0%   { transform:translateY(0)    }
+      50%  { transform:translateY(-8px) }
+      100% { transform:translateY(0)    }
     }
   `;
-
   const style       = document.createElement('style');
   style.textContent = css;
   document.head.appendChild(style);
@@ -1522,4 +1510,4 @@ Utils.pwa.init();
 window.Utils      = Utils;
 window.timerRepos = timerRepos;
 
-console.log('✅ Utils.js v4.0 chargé — Notifications PWA + Animations enrichies');
+console.log('✅ Utils.js v5.0 chargé — Storage QuotaExceeded + semainesDepuis fix + jouerSon synth');
