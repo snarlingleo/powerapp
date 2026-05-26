@@ -1,6 +1,9 @@
 /* ============================================================
-   FitTracker Pro — Gamification v3.0 CORRIGÉ
+   PowerApp — Gamification v4.0
    XP + Niveaux + Trophées + Défis + Badges
+   + Trophées femme + Nutrition + Programme IA
+   + Maison/Dehors + Filtre catégories
+   + Prochain trophée + Confetti rare
    ============================================================ */
 
 const Gamification = {
@@ -18,132 +21,298 @@ const Gamification = {
 
   TROPHEES_DEF: [
     // ── Premiers pas ──────────────────────────────────────
-    { id:'first_session', nom:'Première séance',   emoji:'🎯', xp:100, categorie:'debut',
+    { id:'first_session', nom:'Première séance',
+      emoji:'🎯', xp:100, categorie:'debut', rare:false,
       description:'Terminer sa première séance',
       condition: d => d.totalSeances >= 1 },
-    { id:'first_pr',      nom:'Premier record',    emoji:'🏆', xp:150, categorie:'debut',
+    { id:'first_pr', nom:'Premier record',
+      emoji:'🏆', xp:150, categorie:'debut', rare:false,
       description:'Battre un premier PR',
       condition: d => d.totalPRs >= 1 },
-    { id:'first_week',    nom:'Première semaine',  emoji:'📅', xp:200, categorie:'debut',
+    { id:'first_week', nom:'Première semaine',
+      emoji:'📅', xp:200, categorie:'debut', rare:false,
       description:'Compléter 4 séances en une semaine',
       condition: d => d.seancesParSemaine >= 4 },
-    { id:'first_journal', nom:'Premiers mots',     emoji:'📔', xp:75,  categorie:'debut',
+    { id:'first_journal', nom:'Premiers mots',
+      emoji:'📔', xp:75, categorie:'debut', rare:false,
       description:'Écrire dans le journal',
       condition: d => d.totalJournal >= 1 },
-    { id:'first_photo',   nom:'Première photo',    emoji:'📸', xp:100, categorie:'debut',
+    { id:'first_photo', nom:'Première photo',
+      emoji:'📸', xp:100, categorie:'debut', rare:false,
       description:'Ajouter une photo de progression',
       condition: d => d.totalPhotos >= 1 },
 
     // ── Streak ────────────────────────────────────────────
-    { id:'streak_3',   nom:'3 jours d\'affilée',   emoji:'🔥', xp:100,  categorie:'streak',
-      description:'Streak de 3 jours',   condition: d => d.streak >= 3   },
-    { id:'streak_7',   nom:'Une semaine pleine',   emoji:'🔥', xp:200,  categorie:'streak',
-      description:'Streak de 7 jours',   condition: d => d.streak >= 7   },
-    { id:'streak_14',  nom:'2 semaines non-stop',  emoji:'🔥', xp:350,  categorie:'streak',
-      description:'Streak de 14 jours',  condition: d => d.streak >= 14  },
-    { id:'streak_30',  nom:'Mois de fer',          emoji:'💎', xp:600,  categorie:'streak',
-      description:'Streak de 30 jours',  condition: d => d.streak >= 30  },
-    { id:'streak_60',  nom:'Machine de guerre',    emoji:'⚡', xp:1000, categorie:'streak',
-      description:'Streak de 60 jours',  condition: d => d.streak >= 60  },
-    { id:'streak_100', nom:'Centurion du fitness', emoji:'👑', xp:2000, categorie:'streak',
-      description:'Streak de 100 jours', condition: d => d.streak >= 100 },
+    { id:'streak_3', nom:'3 jours d\'affilée',
+      emoji:'🔥', xp:100, categorie:'streak', rare:false,
+      description:'Streak de 3 jours',
+      condition: d => d.streak >= 3 },
+    { id:'streak_7', nom:'Une semaine pleine',
+      emoji:'🔥', xp:200, categorie:'streak', rare:false,
+      description:'Streak de 7 jours',
+      condition: d => d.streak >= 7 },
+    { id:'streak_14', nom:'2 semaines non-stop',
+      emoji:'🔥', xp:350, categorie:'streak', rare:false,
+      description:'Streak de 14 jours',
+      condition: d => d.streak >= 14 },
+    { id:'streak_30', nom:'Mois de fer',
+      emoji:'💎', xp:600, categorie:'streak', rare:false,
+      description:'Streak de 30 jours',
+      condition: d => d.streak >= 30 },
+    { id:'streak_60', nom:'Machine de guerre',
+      emoji:'⚡', xp:1000, categorie:'streak', rare:true,
+      description:'Streak de 60 jours',
+      condition: d => d.streak >= 60 },
+    { id:'streak_100', nom:'Centurion du fitness',
+      emoji:'👑', xp:2000, categorie:'streak', rare:true,
+      description:'Streak de 100 jours',
+      condition: d => d.streak >= 100 },
 
     // ── Séances ───────────────────────────────────────────
-    { id:'sessions_5',   nom:'5 séances',       emoji:'💪', xp:100,  categorie:'seances',
-      description:'5 séances totales',   condition: d => d.totalSeances >= 5   },
-    { id:'sessions_10',  nom:'10 séances',      emoji:'💪', xp:150,  categorie:'seances',
-      description:'10 séances totales',  condition: d => d.totalSeances >= 10  },
-    { id:'sessions_25',  nom:'25 séances',      emoji:'🏋️', xp:300,  categorie:'seances',
-      description:'25 séances totales',  condition: d => d.totalSeances >= 25  },
-    { id:'sessions_50',  nom:'50 séances',      emoji:'🎖️', xp:500,  categorie:'seances',
-      description:'50 séances totales',  condition: d => d.totalSeances >= 50  },
-    { id:'sessions_100', nom:'Centurion',       emoji:'💯', xp:1000, categorie:'seances',
-      description:'100 séances totales', condition: d => d.totalSeances >= 100 },
-    { id:'sessions_200', nom:'Légende vivante', emoji:'👑', xp:2000, categorie:'seances',
-      description:'200 séances totales', condition: d => d.totalSeances >= 200 },
-    { id:'sessions_500', nom:'Immortel',        emoji:'⭐', xp:5000, categorie:'seances',
-      description:'500 séances totales', condition: d => d.totalSeances >= 500 },
+    { id:'sessions_5', nom:'5 séances',
+      emoji:'💪', xp:100, categorie:'seances', rare:false,
+      description:'5 séances totales',
+      condition: d => d.totalSeances >= 5 },
+    { id:'sessions_10', nom:'10 séances',
+      emoji:'💪', xp:150, categorie:'seances', rare:false,
+      description:'10 séances totales',
+      condition: d => d.totalSeances >= 10 },
+    { id:'sessions_25', nom:'25 séances',
+      emoji:'🏋️', xp:300, categorie:'seances', rare:false,
+      description:'25 séances totales',
+      condition: d => d.totalSeances >= 25 },
+    { id:'sessions_50', nom:'50 séances',
+      emoji:'🎖️', xp:500, categorie:'seances', rare:false,
+      description:'50 séances totales',
+      condition: d => d.totalSeances >= 50 },
+    { id:'sessions_100', nom:'Centurion',
+      emoji:'💯', xp:1000, categorie:'seances', rare:true,
+      description:'100 séances totales',
+      condition: d => d.totalSeances >= 100 },
+    { id:'sessions_200', nom:'Légende vivante',
+      emoji:'👑', xp:2000, categorie:'seances', rare:true,
+      description:'200 séances totales',
+      condition: d => d.totalSeances >= 200 },
+    { id:'sessions_500', nom:'Immortel',
+      emoji:'⭐', xp:5000, categorie:'seances', rare:true,
+      description:'500 séances totales',
+      condition: d => d.totalSeances >= 500 },
 
     // ── PRs ───────────────────────────────────────────────
-    { id:'prs_3',  nom:'Premiers records',    emoji:'🏅', xp:150, categorie:'prs',
-      description:'3 records personnels',  condition: d => d.totalPRs >= 3  },
-    { id:'prs_5',  nom:'Collectionneur',      emoji:'🏅', xp:200, categorie:'prs',
-      description:'5 records personnels',  condition: d => d.totalPRs >= 5  },
-    { id:'prs_10', nom:'Record Man',          emoji:'🎯', xp:400, categorie:'prs',
-      description:'10 records personnels', condition: d => d.totalPRs >= 10 },
-    { id:'prs_20', nom:'Maître des records',  emoji:'👑', xp:800, categorie:'prs',
-      description:'20 records personnels', condition: d => d.totalPRs >= 20 },
+    { id:'prs_3', nom:'Premiers records',
+      emoji:'🏅', xp:150, categorie:'prs', rare:false,
+      description:'3 records personnels',
+      condition: d => d.totalPRs >= 3 },
+    { id:'prs_5', nom:'Collectionneur',
+      emoji:'🏅', xp:200, categorie:'prs', rare:false,
+      description:'5 records personnels',
+      condition: d => d.totalPRs >= 5 },
+    { id:'prs_10', nom:'Record Man',
+      emoji:'🎯', xp:400, categorie:'prs', rare:false,
+      description:'10 records personnels',
+      condition: d => d.totalPRs >= 10 },
+    { id:'prs_20', nom:'Maître des records',
+      emoji:'👑', xp:800, categorie:'prs', rare:true,
+      description:'20 records personnels',
+      condition: d => d.totalPRs >= 20 },
 
     // ── Force ─────────────────────────────────────────────
-    { id:'bench_80',     nom:'Pecto de feu',         emoji:'🔥', xp:300,  categorie:'force',
+    { id:'bench_80', nom:'Pecto de feu',
+      emoji:'🔥', xp:300, categorie:'force', rare:false,
       description:'Développé couché 80kg',
-      condition: d => (d.prs['bench_press']?.poids||0) >= 80   },
-    { id:'bench_100',    nom:'Club des 100',          emoji:'💎', xp:600,  categorie:'force',
+      condition: d => (d.prs['bench_press']?.poids||0) >= 80 },
+    { id:'bench_100', nom:'Club des 100',
+      emoji:'💎', xp:600, categorie:'force', rare:false,
       description:'Développé couché 100kg',
-      condition: d => (d.prs['bench_press']?.poids||0) >= 100  },
-    { id:'bench_120',    nom:'Pectoraux d\'élite',    emoji:'💥', xp:1000, categorie:'force',
+      condition: d => (d.prs['bench_press']?.poids||0) >= 100 },
+    { id:'bench_120', nom:'Pectoraux d\'élite',
+      emoji:'💥', xp:1000, categorie:'force', rare:true,
       description:'Développé couché 120kg',
-      condition: d => (d.prs['bench_press']?.poids||0) >= 120  },
-    { id:'squat_100',    nom:'Jambes d\'acier',       emoji:'🦵', xp:600,  categorie:'force',
+      condition: d => (d.prs['bench_press']?.poids||0) >= 120 },
+    { id:'squat_100', nom:'Jambes d\'acier',
+      emoji:'🦵', xp:600, categorie:'force', rare:false,
       description:'Squat 100kg',
-      condition: d => (d.prs['squat']?.poids||0) >= 100        },
-    { id:'squat_140',    nom:'Squat King',            emoji:'👑', xp:1000, categorie:'force',
+      condition: d => (d.prs['squat']?.poids||0) >= 100 },
+    { id:'squat_140', nom:'Squat King',
+      emoji:'👑', xp:1000, categorie:'force', rare:true,
       description:'Squat 140kg',
-      condition: d => (d.prs['squat']?.poids||0) >= 140        },
-    { id:'deadlift_100', nom:'Terre ferme',           emoji:'🏋️', xp:600,  categorie:'force',
+      condition: d => (d.prs['squat']?.poids||0) >= 140 },
+    { id:'deadlift_100', nom:'Terre ferme',
+      emoji:'🏋️', xp:600, categorie:'force', rare:false,
       description:'Soulevé de terre 100kg',
       condition: d => (d.prs['soulevé_terre']?.poids||0) >= 100 },
-    { id:'deadlift_140', nom:'Force brute',           emoji:'💥', xp:1000, categorie:'force',
+    { id:'deadlift_140', nom:'Force brute',
+      emoji:'💥', xp:1000, categorie:'force', rare:true,
       description:'Soulevé de terre 140kg',
       condition: d => (d.prs['soulevé_terre']?.poids||0) >= 140 },
-    { id:'deadlift_180', nom:'Titan',                 emoji:'⭐', xp:2000, categorie:'force',
+    { id:'deadlift_180', nom:'Titan',
+      emoji:'⭐', xp:2000, categorie:'force', rare:true,
       description:'Soulevé de terre 180kg',
       condition: d => (d.prs['soulevé_terre']?.poids||0) >= 180 },
-    { id:'ohp_60',       nom:'Épaules de fer',        emoji:'💪', xp:300,  categorie:'force',
+    { id:'ohp_60', nom:'Épaules de fer',
+      emoji:'💪', xp:300, categorie:'force', rare:false,
       description:'Développé militaire 60kg',
-      condition: d => (d.prs['dev_militaire']?.poids||0) >= 60  },
+      condition: d => (d.prs['dev_militaire']?.poids||0) >= 60 },
 
     // ── Programme ─────────────────────────────────────────
-    { id:'phase_1', nom:'Phase 1 terminée', emoji:'🌱', xp:400,  categorie:'programme',
+    { id:'phase_1', nom:'Phase 1 terminée',
+      emoji:'🌱', xp:400, categorie:'programme', rare:false,
       description:'Compléter la Phase Reprise',
       condition: d => d.phasesTerminees >= 1 },
-    { id:'cycle_1', nom:'Cycle complet',    emoji:'🏆', xp:1000, categorie:'programme',
+    { id:'cycle_1', nom:'Cycle complet',
+      emoji:'🏆', xp:1000, categorie:'programme', rare:true,
       description:'Compléter un cycle de 16 semaines',
-      condition: d => d.cyclesTermines >= 1  },
-    { id:'cycle_3', nom:'Triplé',           emoji:'🎖️', xp:2500, categorie:'programme',
+      condition: d => d.cyclesTermines >= 1 },
+    { id:'cycle_3', nom:'Triplé',
+      emoji:'🎖️', xp:2500, categorie:'programme', rare:true,
       description:'Compléter 3 cycles',
-      condition: d => d.cyclesTermines >= 3  },
+      condition: d => d.cyclesTermines >= 3 },
 
     // ── Volume ────────────────────────────────────────────
-    { id:'volume_10T',  nom:'10 tonnes',  emoji:'💎', xp:300,  categorie:'volume',
+    { id:'volume_10T', nom:'10 tonnes',
+      emoji:'💎', xp:300, categorie:'volume', rare:false,
       description:'Atteindre 10 tonnes de volume total',
-      condition: d => d.volumeTotal >= 10000  },
-    { id:'volume_100T', nom:'100 tonnes', emoji:'👑', xp:1000, categorie:'volume',
+      condition: d => d.volumeTotal >= 10000 },
+    { id:'volume_100T', nom:'100 tonnes',
+      emoji:'👑', xp:1000, categorie:'volume', rare:true,
       description:'Atteindre 100 tonnes de volume total',
       condition: d => d.volumeTotal >= 100000 },
 
     // ── Spéciaux ──────────────────────────────────────────
-    { id:'comeback',         nom:'Le Retour',       emoji:'🦅', xp:200, categorie:'special',
+    { id:'comeback', nom:'Le Retour',
+      emoji:'🦅', xp:200, categorie:'special', rare:false,
       description:'Reprendre après 7+ jours d\'absence',
-      condition: d => d.comeback                    },
-    { id:'journal_10',       nom:'Chroniqueur',     emoji:'📔', xp:150, categorie:'special',
+      condition: d => d.comeback },
+    { id:'journal_10', nom:'Chroniqueur',
+      emoji:'📔', xp:150, categorie:'special', rare:false,
       description:'10 entrées dans le journal',
-      condition: d => d.totalJournal >= 10          },
-    { id:'journal_50',       nom:'Mémorialiste',    emoji:'📚', xp:400, categorie:'special',
+      condition: d => d.totalJournal >= 10 },
+    { id:'journal_50', nom:'Mémorialiste',
+      emoji:'📚', xp:400, categorie:'special', rare:false,
       description:'50 entrées dans le journal',
-      condition: d => d.totalJournal >= 50          },
-    { id:'objectif_atteint', nom:'Objectif accompli',emoji:'🎯', xp:500, categorie:'special',
+      condition: d => d.totalJournal >= 50 },
+    { id:'objectif_atteint', nom:'Objectif accompli',
+      emoji:'🎯', xp:500, categorie:'special', rare:false,
       description:'Atteindre un objectif personnel',
-      condition: d => d.objectifsAtteints >= 1      },
-    { id:'perfect_week',     nom:'Semaine parfaite',emoji:'✨', xp:300, categorie:'special',
+      condition: d => d.objectifsAtteints >= 1 },
+    { id:'perfect_week', nom:'Semaine parfaite',
+      emoji:'✨', xp:300, categorie:'special', rare:false,
       description:'Compléter toutes les séances planifiées',
-      condition: d => d.semaineParf >= 1            },
-    { id:'photos_5',         nom:'Photographe',     emoji:'📸', xp:200, categorie:'special',
+      condition: d => d.semaineParf >= 1 },
+    { id:'photos_5', nom:'Photographe',
+      emoji:'📸', xp:200, categorie:'special', rare:false,
       description:'5 photos de progression',
-      condition: d => d.totalPhotos >= 5            },
-    { id:'express_10',       nom:'Speed Runner',    emoji:'⚡', xp:250, categorie:'special',
+      condition: d => d.totalPhotos >= 5 },
+    { id:'express_10', nom:'Speed Runner',
+      emoji:'⚡', xp:250, categorie:'special', rare:false,
       description:'10 séances express',
-      condition: d => d.seancesExpress >= 10        }
+      condition: d => d.seancesExpress >= 10 },
+
+    // ✅ NOUVEAU v4.0 — Trophées FEMME
+    { id:'lower_body_10', nom:'Reine du Lower',
+      emoji:'🍑', xp:250, categorie:'femme', rare:false,
+      description:'10 séances Lower Body',
+      condition: d => d.seancesLowerBody >= 10 },
+    { id:'lower_body_50', nom:'Légende des fessiers',
+      emoji:'👑', xp:600, categorie:'femme', rare:true,
+      description:'50 séances Lower Body',
+      condition: d => d.seancesLowerBody >= 50 },
+    { id:'first_hip_thrust_pr', nom:'Hip Thrust Queen',
+      emoji:'🍑', xp:300, categorie:'femme', rare:false,
+      description:'Battre un PR au Hip Thrust',
+      condition: d => (d.prs['hip_thrust']?.poids||0) > 0 },
+    { id:'hip_thrust_60', nom:'Fessiers de feu',
+      emoji:'🔥', xp:400, categorie:'femme', rare:false,
+      description:'Hip Thrust 60kg',
+      condition: d => (d.prs['hip_thrust']?.poids||0) >= 60 },
+    { id:'hip_thrust_100', nom:'Puissance féminine',
+      emoji:'💥', xp:800, categorie:'femme', rare:true,
+      description:'Hip Thrust 100kg',
+      condition: d => (d.prs['hip_thrust']?.poids||0) >= 100 },
+    { id:'avant_apres', nom:'Transformation',
+      emoji:'🌟', xp:400, categorie:'femme', rare:false,
+      description:'Ajouter 2+ photos de progression',
+      condition: d => d.totalPhotos >= 2 },
+    { id:'objectifs_femme_5', nom:'Détermination',
+      emoji:'💪', xp:350, categorie:'femme', rare:false,
+      description:'Atteindre 5 objectifs personnels',
+      condition: d => d.objectifsAtteints >= 5 },
+
+    // ✅ NOUVEAU v4.0 — Trophées NUTRITION
+    { id:'first_log', nom:'Premier repas logué',
+      emoji:'🍽️', xp:50, categorie:'nutrition', rare:false,
+      description:'Logger son premier repas',
+      condition: d => d.totalLogsNutrition >= 1 },
+    { id:'nutrition_7j', nom:'Semaine propre',
+      emoji:'🥗', xp:200, categorie:'nutrition', rare:false,
+      description:'Loguer ses repas 7 jours consécutifs',
+      condition: d => d.streakNutrition >= 7 },
+    { id:'nutrition_30j', nom:'Mois parfait',
+      emoji:'💚', xp:500, categorie:'nutrition', rare:false,
+      description:'Loguer ses repas 30 jours',
+      condition: d => d.streakNutrition >= 30 },
+    { id:'hydratation_7j', nom:'Source de vie',
+      emoji:'💧', xp:150, categorie:'nutrition', rare:false,
+      description:'Atteindre objectif eau 7 jours',
+      condition: d => d.joursHydratation >= 7 },
+    { id:'proteines_obj', nom:'Machine à protéines',
+      emoji:'💪', xp:200, categorie:'nutrition', rare:false,
+      description:'Atteindre objectif protéines 14 jours',
+      condition: d => d.joursProteines >= 14 },
+    { id:'recettes_10', nom:'Chef sportif',
+      emoji:'👨‍🍳', xp:250, categorie:'nutrition', rare:false,
+      description:'Logger 10 recettes différentes',
+      condition: d => d.totalRecettesLoguees >= 10 },
+
+    // ✅ NOUVEAU v4.0 — Trophées PROGRAMME IA
+    { id:'programme_ia_genere', nom:'Programme IA créé',
+      emoji:'🧠', xp:200, categorie:'programme_ia', rare:false,
+      description:'Générer son premier programme IA',
+      condition: d => d.programmeIAGenere },
+    { id:'programme_ia_complet', nom:'Fidèle au programme',
+      emoji:'🎯', xp:500, categorie:'programme_ia', rare:false,
+      description:'Suivre le programme IA pendant 4 semaines',
+      condition: d => d.semainesProgrammeIA >= 4 },
+    { id:'programme_ia_expert', nom:'Maître IA',
+      emoji:'⚡', xp:1000, categorie:'programme_ia', rare:true,
+      description:'Suivre le programme IA pendant 16 semaines',
+      condition: d => d.semainesProgrammeIA >= 16 },
+
+    // ✅ NOUVEAU v4.0 — Trophées MAISON / DEHORS
+    { id:'maison_premier', nom:'Home Gym',
+      emoji:'🏠', xp:150, categorie:'maison', rare:false,
+      description:'Première séance à la maison',
+      condition: d => d.seancesMaison >= 1 },
+    { id:'maison_20', nom:'Home Warrior',
+      emoji:'🏠', xp:300, categorie:'maison', rare:false,
+      description:'20 séances à la maison',
+      condition: d => d.seancesMaison >= 20 },
+    { id:'dehors_premier', nom:'Outdoor Fighter',
+      emoji:'🌳', xp:150, categorie:'maison', rare:false,
+      description:'Première séance en extérieur',
+      condition: d => d.seancesDehors >= 1 },
+    { id:'dehors_10', nom:'Nature Warrior',
+      emoji:'🌳', xp:250, categorie:'maison', rare:false,
+      description:'10 séances en extérieur',
+      condition: d => d.seancesDehors >= 10 },
+    { id:'sans_salle_30', nom:'No Gym No Limit',
+      emoji:'💥', xp:500, categorie:'maison', rare:true,
+      description:'30 séances sans salle',
+      condition: d => (d.seancesMaison + d.seancesDehors) >= 30 },
+
+    // ✅ NOUVEAU v4.0 — Trophées ADAPTATIF
+    { id:'pr_seance', nom:'Séance record',
+      emoji:'🏆', xp:300, categorie:'adaptatif', rare:false,
+      description:'Battre 3 PRs dans une même séance',
+      condition: d => d.maxPRsSeance >= 3 },
+    { id:'decharge_faite', nom:'Stratège',
+      emoji:'🧘', xp:200, categorie:'adaptatif', rare:false,
+      description:'Compléter une semaine de décharge',
+      condition: d => d.semDecharge >= 1 },
+    { id:'surmenage_evite', nom:'Sage athlète',
+      emoji:'🦉', xp:300, categorie:'adaptatif', rare:false,
+      description:'Éviter un surmenage grâce aux alertes',
+      condition: d => d.surmenagesEvites >= 1 }
   ],
 
   // ════════════════════════════════════════════════════════
@@ -190,7 +359,6 @@ const Gamification = {
         }, 300);
 
       } else if (raison && montant >= 100) {
-        // ✅ Seuil 100 — évite le spam pour les séries (+5 XP)
         Utils.toast(`+${montant} XP — ${raison}`, 'info', 2000);
       }
 
@@ -206,7 +374,9 @@ const Gamification = {
     return this.TROPHEES_DEF.map(t => ({
       ...t,
       debloquee:     debloquees.includes(t.id),
-      dateDeblocage: Utils.storage.get(`ft_trophy_date_${t.id}`, null)
+      dateDeblocage: Utils.storage.get(
+        `ft_trophy_date_${t.id}`, null
+      )
     }));
   },
 
@@ -221,6 +391,21 @@ const Gamification = {
       let cyclesTermines = 0, volumeTotal = 0;
       let totalPhotos = 0, semaineParf = 0, seancesExpress = 0;
 
+      // ✅ NOUVEAU v4.0 — Données enrichies
+      let seancesLowerBody   = 0;
+      let seancesMaison      = 0;
+      let seancesDehors      = 0;
+      let maxPRsSeance       = 0;
+      let semDecharge        = 0;
+      let surmenagesEvites   = 0;
+      let programmeIAGenere  = false;
+      let semainesProgrammeIA = 0;
+      let totalLogsNutrition = 0;
+      let streakNutrition    = 0;
+      let joursHydratation   = 0;
+      let joursProteines     = 0;
+      let totalRecettesLoguees = 0;
+
       try { totalSeances      = Tracker.getTotalSeances();                    } catch(e) {}
       try { prs               = Tracker.getAllPRs();                          } catch(e) {}
       try { totalPRs          = Object.keys(prs).length;                     } catch(e) {}
@@ -228,25 +413,118 @@ const Gamification = {
       try { seancesParSemaine = Tracker.getSeancesParSemaine();              } catch(e) {}
       try { totalJournal      = Tracker.getJournal().length;                 } catch(e) {}
       try {
-        objectifsAtteints = Tracker.getObjectifs().filter(o => o.complete).length;
+        objectifsAtteints = Tracker.getObjectifs()
+          .filter(o => o.complete).length;
       } catch(e) {}
       try { comeback        = Utils.storage.get('ft_comeback', false);       } catch(e) {}
       try { phasesTerminees = Utils.storage.get('ft_phases_terminees', 0);   } catch(e) {}
       try { cyclesTermines  = Utils.storage.get('ft_cycles_termines', 0);    } catch(e) {}
       try { semaineParf     = Utils.storage.get('ft_semaines_parf', 0);      } catch(e) {}
+      try { semDecharge     = Utils.storage.get('ft_semaines_decharge', 0);  } catch(e) {}
+      try {
+        surmenagesEvites = Utils.storage.get(
+          'ft_surmenages_evites', 0
+        );
+      } catch(e) {}
       try {
         totalPhotos = typeof Tracker.getPhotos === 'function'
           ? (Tracker.getPhotos() || []).length
           : 0;
       } catch(e) {}
 
+      // ✅ Analyse séances enrichie
       try {
         const seancesHist = Tracker.getHistoriqueSeances(9999);
-        volumeTotal = seancesHist.reduce((a,s) => a + (s.volumeTotal||0), 0);
-        // ✅ FIX — séances express
+        volumeTotal = seancesHist.reduce(
+          (a,s) => a + (s.volumeTotal||0), 0
+        );
         seancesExpress = seancesHist.filter(s =>
           s.id?.includes('express') || s.id?.includes('full_body')
         ).length;
+
+        // ✅ NOUVEAU — Séances Lower Body (fessiers)
+        seancesLowerBody = seancesHist.filter(s =>
+          s.id?.includes('lower') || s.id?.includes('fessier')
+          || s.id?.includes('jambes') || s.id?.includes('legs')
+        ).length;
+
+        // ✅ NOUVEAU — Séances maison/dehors
+        seancesMaison = seancesHist.filter(s =>
+          s.id?.includes('maison') || s.lieu === 'maison'
+        ).length;
+        seancesDehors = seancesHist.filter(s =>
+          s.id?.includes('dehors') || s.lieu === 'dehors'
+        ).length;
+
+        // ✅ NOUVEAU — Max PRs dans une séance
+        maxPRsSeance = Math.max(
+          ...seancesHist.map(s => (s.prs||[]).length), 0
+        );
+      } catch(e) {}
+
+      // ✅ NOUVEAU — Programme IA
+      try {
+        programmeIAGenere = !!Utils.storage.get(
+          'ft_programme_ia_genere', null
+        );
+        const dateDebut = Utils.storage.get('ft_date_debut', null);
+        if (programmeIAGenere && dateDebut) {
+          semainesProgrammeIA = Utils.semainesDepuis(dateDebut);
+        }
+      } catch(e) {}
+
+      // ✅ NOUVEAU — Nutrition
+      try {
+        // Compter jours avec logs nutrition
+        let streak_nutri = 0;
+        let jours_prot   = 0;
+        let jours_eau    = 0;
+        let recettes_ids = new Set();
+        let total_logs   = 0;
+
+        for (let i = 0; i < 60; i++) {
+          const date = Utils.ajouterJours(Utils.aujourd_hui(), -i);
+          const journal = Utils.storage.get(
+            `ft_nutrition_journal_${date}`, []
+          );
+          if (journal.length > 0) {
+            total_logs += journal.length;
+            streak_nutri++;
+
+            // Vérifier protéines
+            const totaux = journal.reduce(
+              (a,e) => ({ prot: a.prot + (e.prot||0) }), { prot:0 }
+            );
+            const obj = Utils.storage.get('ft_nutrition_objectifs', {
+              proteines:160
+            });
+            if (totaux.prot >= obj.proteines * 0.9) jours_prot++;
+
+            // Recettes uniques
+            journal.forEach(e => {
+              if (!e.ref?.startsWith('custom_')) {
+                recettes_ids.add(e.ref);
+              }
+            });
+          } else if (i > 0) {
+            break; // Streak brisé
+          }
+
+          // Vérifier eau
+          const eau = Utils.storage.get(
+            `ft_nutrition_eau_${date}`, 0
+          );
+          const eauObj = (Utils.storage.get(
+            'ft_nutrition_objectifs', { eau:2.5 }
+          ).eau || 2.5) * 1000;
+          if (eau >= eauObj * 0.9) jours_eau++;
+        }
+
+        totalLogsNutrition    = total_logs;
+        streakNutrition       = streak_nutri;
+        joursHydratation      = jours_eau;
+        joursProteines        = jours_prot;
+        totalRecettesLoguees  = recettes_ids.size;
       } catch(e) {}
 
       const donnees = {
@@ -254,7 +532,14 @@ const Gamification = {
         seancesParSemaine, prs, totalJournal,
         objectifsAtteints, comeback, phasesTerminees,
         cyclesTermines, volumeTotal, totalPhotos,
-        semaineParf, seancesExpress
+        semaineParf, seancesExpress,
+        // ✅ NOUVEAU v4.0
+        seancesLowerBody, seancesMaison, seancesDehors,
+        maxPRsSeance, semDecharge, surmenagesEvites,
+        programmeIAGenere, semainesProgrammeIA,
+        totalLogsNutrition, streakNutrition,
+        joursHydratation, joursProteines,
+        totalRecettesLoguees
       };
 
       const nouveaux = [];
@@ -265,7 +550,9 @@ const Gamification = {
           if (t.condition(donnees)) {
             debloquees.push(t.id);
             nouveaux.push(t);
-            Utils.storage.set(`ft_trophy_date_${t.id}`, Utils.aujourd_hui());
+            Utils.storage.set(
+              `ft_trophy_date_${t.id}`, Utils.aujourd_hui()
+            );
           }
         } catch(e) {}
       });
@@ -275,11 +562,21 @@ const Gamification = {
         nouveaux.forEach((t, i) => {
           setTimeout(() => {
             try { timerRepos.jouerSon('pr'); } catch(e) {}
+
             Utils.toast(
               `🏆 Trophée : ${t.emoji} ${t.nom} — +${t.xp} XP`,
               'pr', 5000
             );
             this.ajouterXP(t.xp, `Trophée ${t.nom}`);
+
+            // ✅ NOUVEAU v4.0 — Confetti pour trophées rares
+            if (t.rare) {
+              setTimeout(() => {
+                Utils.confetti(3000);
+                Utils.vibrer([200,100,200,100,400]);
+              }, 200);
+            }
+
           }, i * 1500);
         });
       }
@@ -291,36 +588,47 @@ const Gamification = {
   },
 
   // ════════════════════════════════════════════════════════
-  // ACTIONS XP — ✅ FIX : SERIE_COMPLETE ajoutée, SEANCE_COMPLETE séparé
+  // ACTIONS XP
   // ════════════════════════════════════════════════════════
   XP_ACTIONS: {
-    SEANCE_COMPLETE:   100,
-    SERIE_COMPLETE:      5,
-    CIRCUIT_COMPLETE:  150,
-    JOURNAL:            25,
-    PR_BATTU:           50,
-    STREAK_7:          150,
-    DEFI_SEMAINE:      200,
-    HUMEUR:             10,
-    SEMAINE_PARF:      300,
-    PREMIERE_SEANCE:   200,
-    PHOTO_AJOUTEE:      30,
-    OBJECTIF_ATTEINT:  250,
-    MESURE_CORPORELLE:  20,
-    SUPERSET_COMPLETE:  15
+    SEANCE_COMPLETE:    100,
+    SERIE_COMPLETE:       5,
+    CIRCUIT_COMPLETE:   150,
+    JOURNAL:             25,
+    PR_BATTU:            50,
+    STREAK_7:           150,
+    DEFI_SEMAINE:       200,
+    HUMEUR:              10,
+    SEMAINE_PARF:       300,
+    PREMIERE_SEANCE:    200,
+    PHOTO_AJOUTEE:       30,
+    OBJECTIF_ATTEINT:   250,
+    MESURE_CORPORELLE:   20,
+    SUPERSET_COMPLETE:   15,
+    // ✅ NOUVEAU v4.0
+    NUTRITION_LOG:        5,
+    RECETTE_LOG:         10,
+    HYDRATATION:         20,
+    PROGRAMME_IA:       100,
+    SEANCE_MAISON:       80,
+    SEANCE_DEHORS:       80,
+    BLESSURE_DECLAREE:   30,
+    DECHARGE_COMPLETE:   50
   },
 
   recompenser(action) {
     try {
       const montant = this.XP_ACTIONS[action] || 0;
       if (montant > 0) {
-        this.ajouterXP(montant, action.toLowerCase().replace(/_/g,' '));
+        this.ajouterXP(
+          montant,
+          action.toLowerCase().replace(/_/g,' ')
+        );
       }
-      // ✅ FIX — Ne vérifier les trophées que pour les actions importantes
-      // pas pour chaque série (trop fréquent)
       const actionsImportantes = [
         'SEANCE_COMPLETE','PR_BATTU','STREAK_7',
-        'SEMAINE_PARF','PREMIERE_SEANCE','OBJECTIF_ATTEINT'
+        'SEMAINE_PARF','PREMIERE_SEANCE','OBJECTIF_ATTEINT',
+        'PROGRAMME_IA','DEFI_SEMAINE'
       ];
       if (actionsImportantes.includes(action)) {
         setTimeout(() => {
@@ -331,15 +639,47 @@ const Gamification = {
   },
 
   // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v4.0 — Catégories pour filtres
+  // ════════════════════════════════════════════════════════
+  CATEGORIES: {
+    tous:         { label:'Tous',          emoji:'🏆' },
+    debut:        { label:'Premiers pas',  emoji:'🎯' },
+    streak:       { label:'Streak',        emoji:'🔥' },
+    seances:      { label:'Séances',       emoji:'💪' },
+    prs:          { label:'Records',       emoji:'🏅' },
+    force:        { label:'Force',         emoji:'🏋️' },
+    volume:       { label:'Volume',        emoji:'💎' },
+    programme:    { label:'Programme',     emoji:'📅' },
+    programme_ia: { label:'Programme IA',  emoji:'🧠' },
+    nutrition:    { label:'Nutrition',     emoji:'🥗' },
+    femme:        { label:'Féminin',       emoji:'🌸' },
+    maison:       { label:'Maison/Dehors', emoji:'🏠' },
+    adaptatif:    { label:'Adaptatif',     emoji:'⚡' },
+    special:      { label:'Spéciaux',      emoji:'✨' }
+  },
+
+  // ════════════════════════════════════════════════════════
   // RENDER — GAMIFICATION TAB
   // ════════════════════════════════════════════════════════
+  _filtreCategorie: 'tous',
+
   renderGamificationTab(container) {
     if (!container) return;
 
-    const xp         = this.getXP();
-    const trophees   = this.getTrophees();
-    const debloquees = trophees.filter(t =>  t.debloquee);
-    const verrous    = trophees.filter(t => !t.debloquee);
+    const xp          = this.getXP();
+    const trophees    = this.getTrophees();
+    const debloquees  = trophees.filter(t =>  t.debloquee);
+    const verrous     = trophees.filter(t => !t.debloquee);
+    const prochain    = this.getProchainTrophee();
+
+    // ✅ Filtrer par catégorie
+    const filtre = this._filtreCategorie || 'tous';
+    const filtreDebloques = filtre === 'tous'
+      ? debloquees
+      : debloquees.filter(t => t.categorie === filtre);
+    const filtreVerrous = filtre === 'tous'
+      ? verrous
+      : verrous.filter(t => t.categorie === filtre);
 
     container.innerHTML = `
 
@@ -357,7 +697,6 @@ const Gamification = {
         <div style="font-size:.78rem;opacity:.8;margin-top:4px">
           ${xp.total.toLocaleString('fr-FR')} XP total
         </div>
-
         <div style="margin:var(--space-md) 0">
           <div style="display:flex;justify-content:space-between;
                       font-size:.68rem;opacity:.7;margin-bottom:6px">
@@ -373,13 +712,13 @@ const Gamification = {
             </div>
           </div>
         </div>
-
         ${xp.niveau.numero < 8 ? `
           <div style="font-size:.72rem;opacity:.7">
             ${(xp.niveau.xpSuivant - xp.total).toLocaleString('fr-FR')}
             XP jusqu'au niveau suivant
           </div>` : `
-          <div style="font-size:.72rem;color:var(--fd-lemon);font-weight:700">
+          <div style="font-size:.72rem;color:var(--fd-lemon);
+                      font-weight:700">
             ⭐ Niveau maximum — Immortel !
           </div>`}
       </div>
@@ -388,8 +727,7 @@ const Gamification = {
       <div class="stats-grid mb-md">
         <div class="stat-card">
           <span class="stat-value" style="color:var(--fd-lemon)">
-            ${debloquees.length}
-          </span>
+            ${debloquees.length}</span>
           <span class="stat-label">Débloqués</span>
         </div>
         <div class="stat-card">
@@ -398,23 +736,58 @@ const Gamification = {
         </div>
         <div class="stat-card">
           <span class="stat-value" style="color:var(--fd-mint)">
-            ${Math.round((debloquees.length / Math.max(trophees.length,1)) * 100)}%
-          </span>
+            ${Math.round(
+              (debloquees.length / Math.max(trophees.length,1)) * 100
+            )}%</span>
           <span class="stat-label">Complété</span>
         </div>
         <div class="stat-card">
           <span class="stat-value" style="color:var(--fd-indigo)">
-            ${xp.total.toLocaleString('fr-FR')}
-          </span>
+            ${xp.total.toLocaleString('fr-FR')}</span>
           <span class="stat-label">XP Total</span>
         </div>
       </div>
 
+      <!-- ✅ NOUVEAU v4.0 — Prochain trophée -->
+      ${prochain ? `
+        <div style="background:rgba(249,239,119,0.08);
+                    border:1px solid rgba(249,239,119,0.25);
+                    border-radius:var(--radius-xl);
+                    padding:14px;margin-bottom:14px;
+                    display:flex;align-items:center;gap:12px">
+          <div style="font-size:2rem;flex-shrink:0">
+            ${prochain.emoji}
+          </div>
+          <div style="flex:1">
+            <div style="font-size:.6rem;font-weight:700;
+                        text-transform:uppercase;letter-spacing:.08em;
+                        color:var(--fd-lemon);margin-bottom:3px">
+              🎯 Prochain trophée
+            </div>
+            <div style="font-size:.88rem;font-weight:700">
+              ${prochain.nom}
+            </div>
+            <div style="font-size:.65rem;color:var(--text-muted)">
+              ${prochain.description} · +${prochain.xp} XP
+            </div>
+          </div>
+          ${prochain.rare ? `
+            <div style="padding:3px 8px;
+                        background:rgba(255,141,150,0.15);
+                        border:1px solid rgba(255,141,150,0.3);
+                        border-radius:99px;font-size:.6rem;
+                        color:var(--fd-coral);font-weight:700;
+                        flex-shrink:0">
+              ⭐ RARE
+            </div>` : ''}
+        </div>` : ''}
+
       <!-- Barre progression -->
       <div class="card mb-md">
         <div class="flex justify-between"
-             style="font-size:.78rem;margin-bottom:var(--space-sm)">
-          <span style="font-weight:600">🏆 Progression trophées</span>
+             style="font-size:.78rem;
+                    margin-bottom:var(--space-sm)">
+          <span style="font-weight:600">🏆 Progression</span>
           <span style="color:var(--text-muted)">
             ${debloquees.length} / ${trophees.length}
           </span>
@@ -428,36 +801,73 @@ const Gamification = {
         </div>
       </div>
 
+      <!-- ✅ NOUVEAU v4.0 — Filtres catégories -->
+      <div class="muscle-filter-row mb-md">
+        ${Object.entries(this.CATEGORIES).map(([id, cat]) => `
+          <button onclick="Gamification._filtreCategorie='${id}';
+                           Gamification.renderGamificationTab(
+                             this.closest('[id*=stats-content]')
+                             || this.closest('.page')
+                             || document.getElementById('stats-content')
+                           )"
+                  class="muscle-filter-btn ${
+                    filtre === id ? 'active' : ''
+                  }"
+                  style="font-size:.6rem">
+            ${cat.emoji} ${cat.label}
+          </button>`).join('')}
+      </div>
+
       <!-- Trophées débloqués -->
-      ${debloquees.length > 0 ? `
+      ${filtreDebloques.length > 0 ? `
         <div class="card-label mb-sm">
-          🏆 Trophées débloqués (${debloquees.length})
+          🏆 Débloqués (${filtreDebloques.length})
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);
-                    gap:var(--space-sm);margin-bottom:var(--space-md)">
-          ${debloquees.map(t => `
+        <div style="display:grid;
+                    grid-template-columns:repeat(3,1fr);
+                    gap:var(--space-sm);
+                    margin-bottom:var(--space-md)">
+          ${filtreDebloques.map(t => `
             <div style="background:rgba(249,239,119,0.08);
-                        border:1px solid rgba(249,239,119,0.3);
+                        border:1px solid ${t.rare
+                          ? 'rgba(255,141,150,0.4)'
+                          : 'rgba(249,239,119,0.3)'};
                         border-radius:var(--radius-md);
                         padding:var(--space-md) var(--space-xs);
-                        text-align:center">
-              <div style="font-size:1.8rem;margin-bottom:4px">${t.emoji}</div>
+                        text-align:center;
+                        position:relative">
+              ${t.rare ? `
+                <div style="position:absolute;top:4px;right:4px;
+                            font-size:.5rem;padding:1px 4px;
+                            background:rgba(255,141,150,0.2);
+                            border:1px solid rgba(255,141,150,0.4);
+                            border-radius:99px;
+                            color:var(--fd-coral);font-weight:700">
+                  RARE
+                </div>` : ''}
+              <div style="font-size:1.8rem;margin-bottom:4px">
+                ${t.emoji}</div>
               <div style="font-size:.62rem;font-weight:700;
                           color:var(--fd-lemon);line-height:1.3">
-                ${t.nom}
-              </div>
-              <div style="font-size:.58rem;color:var(--fd-mint);margin-top:2px">
-                +${t.xp} XP
-              </div>
+                ${t.nom}</div>
+              <div style="font-size:.58rem;
+                          color:var(--fd-mint);margin-top:2px">
+                +${t.xp} XP</div>
               ${t.dateDeblocage ? `
-                <div style="font-size:.52rem;color:var(--text-muted);margin-top:2px">
+                <div style="font-size:.52rem;
+                            color:var(--text-muted);margin-top:2px">
                   ${Utils.formatDateCourt(t.dateDeblocage)}
                 </div>` : ''}
             </div>`).join('')}
+        </div>` : filtre !== 'tous' ? `
+        <div style="text-align:center;padding:16px;
+                    color:var(--text-muted);font-size:.82rem">
+          Aucun trophée débloqué dans cette catégorie
         </div>` : `
         <div class="card mb-md"
              style="text-align:center;padding:var(--space-xl)">
-          <div style="font-size:2rem;margin-bottom:var(--space-sm)">🔒</div>
+          <div style="font-size:2rem;
+                      margin-bottom:var(--space-sm)">🔒</div>
           <p style="color:var(--text-muted);font-size:.88rem">
             Aucun trophée débloqué pour l'instant.<br>
             Lance ta première séance !
@@ -471,30 +881,47 @@ const Gamification = {
         </div>`}
 
       <!-- Trophées verrouillés -->
-      <div class="card-label mb-sm">🔒 À débloquer (${verrous.length})</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);
-                  gap:var(--space-sm);margin-bottom:var(--space-md)">
-        ${verrous.map(t => `
-          <div title="${t.description}"
-               style="background:var(--bg-card);
-                      border:1px solid var(--border-color);
-                      border-radius:var(--radius-md);
-                      padding:var(--space-md) var(--space-xs);
-                      text-align:center;opacity:.4;filter:grayscale(1)">
-            <div style="font-size:1.8rem;margin-bottom:4px">${t.emoji}</div>
-            <div style="font-size:.62rem;font-weight:700;
-                        color:var(--text-secondary);line-height:1.3">
-              ${t.nom}
-            </div>
-            <div style="font-size:.58rem;color:var(--text-muted);margin-top:2px">
-              +${t.xp} XP
-            </div>
-            <div style="font-size:.52rem;color:var(--text-muted);
-                        margin-top:4px;line-height:1.3">
-              ${t.description}
-            </div>
-          </div>`).join('')}
-      </div>
+      ${filtreVerrous.length > 0 ? `
+        <div class="card-label mb-sm">
+          🔒 À débloquer (${filtreVerrous.length})
+        </div>
+        <div style="display:grid;
+                    grid-template-columns:repeat(3,1fr);
+                    gap:var(--space-sm);
+                    margin-bottom:var(--space-md)">
+          ${filtreVerrous.map(t => `
+            <div title="${t.description}"
+                 style="background:var(--bg-card);
+                        border:1px solid ${t.rare
+                          ? 'rgba(255,141,150,0.15)'
+                          : 'var(--border-color)'};
+                        border-radius:var(--radius-md);
+                        padding:var(--space-md) var(--space-xs);
+                        text-align:center;
+                        opacity:.4;filter:grayscale(1);
+                        position:relative">
+              ${t.rare ? `
+                <div style="position:absolute;top:4px;right:4px;
+                            font-size:.5rem;padding:1px 4px;
+                            background:rgba(255,141,150,0.1);
+                            border-radius:99px;
+                            color:var(--fd-coral);font-weight:700">
+                  RARE
+                </div>` : ''}
+              <div style="font-size:1.8rem;margin-bottom:4px">
+                ${t.emoji}</div>
+              <div style="font-size:.62rem;font-weight:700;
+                          color:var(--text-secondary);
+                          line-height:1.3">
+                ${t.nom}</div>
+              <div style="font-size:.58rem;
+                          color:var(--text-muted);margin-top:2px">
+                +${t.xp} XP</div>
+              <div style="font-size:.52rem;color:var(--text-muted);
+                          margin-top:4px;line-height:1.3">
+                ${t.description}</div>
+            </div>`).join('')}
+        </div>` : ''}
 
       <!-- Comment gagner des XP -->
       <div class="card">
@@ -517,21 +944,31 @@ const Gamification = {
 
   _labelAction(action) {
     const labels = {
-      SEANCE_COMPLETE:   '💪 Séance complétée',
-      SERIE_COMPLETE:    '✅ Série validée',
-      PR_BATTU:          '🏆 Record personnel battu',
-      STREAK_7:          '🔥 Streak de 7 jours',
-      DEFI_SEMAINE:      '🎯 Défi semaine accompli',
-      JOURNAL:           '📔 Entrée journal',
-      HUMEUR:            '😊 Humeur du jour',
-      SEMAINE_PARF:      '✨ Semaine parfaite',
-      PREMIERE_SEANCE:   '🎯 Première séance',
-      PHOTO_AJOUTEE:     '📸 Photo progression',
-      OBJECTIF_ATTEINT:  '🎯 Objectif atteint',
-      MESURE_CORPORELLE: '⚖️ Mesure corporelle',
-      SUPERSET_COMPLETE: '⚡ Superset complété'
+      SEANCE_COMPLETE:    '💪 Séance complétée',
+      SERIE_COMPLETE:     '✅ Série validée',
+      PR_BATTU:           '🏆 Record personnel battu',
+      STREAK_7:           '🔥 Streak de 7 jours',
+      DEFI_SEMAINE:       '🎯 Défi semaine accompli',
+      JOURNAL:            '📔 Entrée journal',
+      HUMEUR:             '😊 Humeur du jour',
+      SEMAINE_PARF:       '✨ Semaine parfaite',
+      PREMIERE_SEANCE:    '🎯 Première séance',
+      PHOTO_AJOUTEE:      '📸 Photo progression',
+      OBJECTIF_ATTEINT:   '🎯 Objectif atteint',
+      MESURE_CORPORELLE:  '⚖️ Mesure corporelle',
+      SUPERSET_COMPLETE:  '⚡ Superset complété',
+      CIRCUIT_COMPLETE:   '🔄 Circuit complété',
+      NUTRITION_LOG:      '🍽️ Repas logué',
+      RECETTE_LOG:        '🥗 Recette loguée',
+      HYDRATATION:        '💧 Objectif eau atteint',
+      PROGRAMME_IA:       '🧠 Programme IA généré',
+      SEANCE_MAISON:      '🏠 Séance à la maison',
+      SEANCE_DEHORS:      '🌳 Séance en extérieur',
+      BLESSURE_DECLAREE:  '🩹 Blessure déclarée',
+      DECHARGE_COMPLETE:  '😴 Décharge terminée'
     };
-    return labels[action] || action.toLowerCase().replace(/_/g,' ');
+    return labels[action]
+      || action.toLowerCase().replace(/_/g,' ');
   },
 
   getXPParCategorie() {
@@ -558,4 +995,4 @@ const Gamification = {
 };
 
 window.Gamification = Gamification;
-console.log('✅ Gamification v3.0 chargé');
+console.log('✅ Gamification v4.0 chargé — 60+ trophées + Filtres + Rare + Femme + Nutrition + IA');
