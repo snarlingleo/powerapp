@@ -8053,14 +8053,9 @@ function _obValiderProgramme() {
 
 // ✅ Ouvrir le questionnaire IA complet
 function _obModifierProgramme() {
-  // Rediriger vers le questionnaire IA après l'onboarding
   window._obOuvrirIA = true;
-  Utils.toast(
-    '💡 Tu pourras personnaliser depuis Coach IA',
-    'info', 2500
-  );
-  // Passer quand même à l'étape suivante
-  _suivantOb(4);
+  Utils.toast('💡 Tu pourras personnaliser depuis Coach IA', 'info', 2500);
+  _terminerOb(); // ← Correct
 }
 
 // ════════════════════════════════════════════════════════
