@@ -180,7 +180,10 @@ case 'live': {
   catch(e) { Coach.renderCoachTab(container); }
   break;
       case 'defis':        Defis.render(container);                       break;
-      case 'predict':      Predict.render(container);                     break;
+      case 'predict':
+  try { Predict.render(container); }
+  catch(e) { _rendrePlaceholder(container,'🔮','Prédictions IA',''); }
+  break;
       case 'share':        Share.render(container);                       break;
       case 'gamification': Gamification.renderGamificationTab(container); break;
       case 'history':      History.render(container);                     break;
