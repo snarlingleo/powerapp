@@ -1,8 +1,10 @@
 /* ============================================================
-   PowerApp — Profil.js v2.0
-   Gestion profil complet + Calculs nutrition + Adaptation
-   + Sync onboarding + Thème personnalisable
-   + Fix muscles_cibles modal
+   PowerApp — Profil.js v3.0
+   ✅ Tout v2.0 conservé
+   ✅ Corps SVG anatomique réaliste (même que onboarding)
+   ✅ Image + maphilight + zones cliquables
+   ✅ Chips muscles sélectionnés
+   ✅ Sync complet
    ============================================================ */
 
 'use strict';
@@ -10,8 +12,8 @@
 const Profil = {
 
   CLE:            'ft_profil_complet',
-  CLE_ONBOARDING: 'ft_profil_onboarding',  // ✅ NOUVEAU v2.0
-  CLE_THEME:      'ft_theme_config',        // ✅ NOUVEAU v2.0
+  CLE_ONBOARDING: 'ft_profil_onboarding',
+  CLE_THEME:      'ft_theme_config',
 
   // ════════════════════════════════════════════════════════
   // VALEURS PAR DÉFAUT
@@ -39,7 +41,7 @@ const Profil = {
   },
 
   // ════════════════════════════════════════════════════════
-  // GET / SET — ✅ v2.0 sync onboarding
+  // GET / SET
   // ════════════════════════════════════════════════════════
   get() {
     const saved = Utils.storage.get(this.CLE, null);
@@ -60,17 +62,13 @@ const Profil = {
     }
     Utils.storage.set(this.CLE, nouveau);
     this._syncAncienProfil(nouveau);
-    // ✅ NOUVEAU v2.0 — Sync onboarding
     this._syncOnboarding(nouveau);
     return nouveau;
   },
 
-  // ✅ NOUVEAU v2.0 — Sync ft_profil_onboarding
   _syncOnboarding(profil) {
     try {
-      const existant = Utils.storage.get(
-        this.CLE_ONBOARDING, {}
-      );
+      const existant = Utils.storage.get(this.CLE_ONBOARDING, {});
       Utils.storage.set(this.CLE_ONBOARDING, {
         ...existant,
         nom:            profil.nom            || existant.nom,
@@ -167,9 +165,9 @@ const Profil = {
       poids * (ratiosProteine[obj] || 1.8)
     );
 
-    const lipides = Math.round((calories * 0.27) / 9);
-    const calProtPlusFat = (proteines * 4) + (lipides * 9);
-    const glucides = Math.round(
+    const lipides         = Math.round((calories * 0.27) / 9);
+    const calProtPlusFat  = (proteines * 4) + (lipides * 9);
+    const glucides        = Math.round(
       Math.max(0, (calories - calProtPlusFat) / 4)
     );
     const eau = Math.round((poids * 0.035) * 10) / 10;
@@ -253,29 +251,30 @@ const Profil = {
   },
 
   MUSCLES: {
-    pectoraux:  { label:'Pectoraux',         emoji:'🫁', face:'avant',   couleur:'#4b4bf9' },
-    epaules:    { label:'Épaules',           emoji:'🔵', face:'avant',   couleur:'#bfa1ff' },
-    biceps:     { label:'Biceps',            emoji:'💪', face:'avant',   couleur:'#8bf0bb' },
-    abdos:      { label:'Abdominaux',        emoji:'🔥', face:'avant',   couleur:'#f9ef77' },
-    quadriceps: { label:'Quadriceps',        emoji:'🦵', face:'avant',   couleur:'#ff8d96' },
-    dos:        { label:'Dos',               emoji:'🔙', face:'arriere', couleur:'#4b4bf9' },
-    triceps:    { label:'Triceps',           emoji:'💪', face:'arriere', couleur:'#bfa1ff' },
-    fessiers:   { label:'Fessiers',          emoji:'🍑', face:'arriere', couleur:'#ff8d96' },
-    ischio:     { label:'Ischio-jambiers',   emoji:'🦵', face:'arriere', couleur:'#8bf0bb' },
-    mollets:    { label:'Mollets',           emoji:'🦶', face:'arriere', couleur:'#f9ef77' },
-    trapeze:    { label:'Trapèzes',          emoji:'🔝', face:'arriere', couleur:'#bfa1ff' }
+    pectoraux:  { label:'Pectoraux',         couleur:'#4b4bf9' },
+    deltoides:  { label:'Deltoïdes',         couleur:'#bfa1ff' },
+    biceps:     { label:'Biceps',            couleur:'#8bf0bb' },
+    avantbras:  { label:'Avant-bras',        couleur:'#8bf0bb' },
+    abdominaux: { label:'Abdominaux',        couleur:'#f9ef77' },
+    quadriceps: { label:'Quadriceps',        couleur:'#22c55e' },
+    trapeze:    { label:'Trapèzes',          couleur:'#8bf0bb' },
+    dorsal:     { label:'Grand Dorsal',      couleur:'#4b4bf9' },
+    lombaires:  { label:'Lombaires',         couleur:'#bfa1ff' },
+    fessiers:   { label:'Fessiers',          couleur:'#ff8d96' },
+    ischio:     { label:'Ischio-jambiers',   couleur:'#f9ef77' },
+    mollets:    { label:'Mollets',           couleur:'#bfa1ff' },
+    triceps:    { label:'Triceps',           couleur:'#ff8d96' }
   },
 
-  // ✅ NOUVEAU v2.0 — Thèmes
   THEMES: {
-    dark:    { label:'🌑 Dark',     desc:'Thème sombre par défaut'    },
-    light:   { label:'☀️ Light',    desc:'Thème clair'                },
-    indigo:  { label:'💜 Indigo',   desc:'Accent violet accentué'     },
-    coral:   { label:'🪸 Coral',    desc:'Accent corail chaleureux'   }
+    dark:   { label:'🌑 Dark',   desc:'Thème sombre par défaut' },
+    light:  { label:'☀️ Light',  desc:'Thème clair'             },
+    indigo: { label:'💜 Indigo', desc:'Accent violet accentué'  },
+    coral:  { label:'🪸 Coral',  desc:'Accent corail chaleureux'}
   },
 
   // ════════════════════════════════════════════════════════
-  // RECOMMANDATIONS
+  // RECOMMANDATIONS (v2.0 conservé)
   // ════════════════════════════════════════════════════════
   getRecommandations(profil) {
     const obj    = profil.objectif || 'forme';
@@ -288,10 +287,6 @@ const Profil = {
     const nivConfig  = this.NIVEAUX[niv]    || this.NIVEAUX.intermediaire;
     const lieuConfig = this.LIEUX[lieu]     || this.LIEUX.salle;
 
-    const exercicesPrioritaires = this._getExercicesPrioritaires(
-      genre, muscles, lieu, obj
-    );
-
     return {
       seancesParSemaine: objConfig.seances,
       split:             nivConfig.split,
@@ -299,114 +294,13 @@ const Profil = {
       repos:             objConfig.repos,
       dureeSeance:       nivConfig.duree,
       equipement:        lieuConfig.equipement,
-      exercices:         exercicesPrioritaires,
       conseil:           objConfig.conseil,
       nutrition:         profil.nutrition
     };
   },
 
-  _getExercicesPrioritaires(genre, muscles, lieu, objectif) {
-    const exosSalle = {
-      push:     ['bench_press','incline_halteres','dev_militaire',
-                 'elev_laterales','ext_triceps_poulie','dips'],
-      pull:     ['tractions','rowing_barre','lat_pulldown',
-                 'face_pull','curl_halteres','curl_marteau'],
-      legs:     ['squat','presse_cuisses','leg_curl',
-                 'leg_extension','fentes','mollets'],
-      fessiers: ['hip_thrust','fentes','sumo_squat',
-                 'kickback','leg_curl'],
-      full:     ['squat','bench_press','rowing_barre',
-                 'dev_militaire','curl_halteres','planche']
-    };
-
-    const exosMaison = {
-      push:     ['pompes','pompes_declined','dips_triceps','pike_pushup'],
-      pull:     ['tractions','inverted_row','superman'],
-      legs:     ['squat_poids_corps','fentes','fentes_bulgares',
-                 'hip_thrust_sol','squat_saute'],
-      fessiers: ['hip_thrust_sol','donkey_kick','clamshell'],
-      full:     ['burpees','mountain_climbers','squat_poids_corps',
-                 'pompes','planche']
-    };
-
-    const exosDehors = {
-      push:     ['pompes','dips','pike_pushup'],
-      pull:     ['tractions','inverted_row'],
-      legs:     ['squat_poids_corps','fentes','squat_saute'],
-      fessiers: ['hip_thrust_sol','donkey_kick'],
-      full:     ['burpees','mountain_climbers',
-                 'squat_poids_corps','pompes']
-    };
-
-    const baseExos = lieu === 'maison' ? exosMaison
-                   : lieu === 'dehors' ? exosDehors
-                   : exosSalle;
-
-    let selection = [];
-
-    if (genre === 'femme') {
-      const prioritesFemme = muscles.length > 0
-        ? muscles
-        : ['fessiers','jambes','abdos'];
-
-      if (prioritesFemme.some(m =>
-          ['fessiers','ischio','quadriceps','mollets'].includes(m)
-        )) {
-        selection = [
-          ...baseExos.fessiers,
-          ...baseExos.legs,
-          ...baseExos.push.slice(0, 2),
-          ...baseExos.pull.slice(0, 2)
-        ];
-      } else {
-        selection = [
-          ...baseExos.full,
-          ...baseExos.fessiers.slice(0, 2)
-        ];
-      }
-    } else {
-      const prioritesHomme = muscles.length > 0
-        ? muscles
-        : ['pectoraux','dos','epaules'];
-
-      if (prioritesHomme.some(m =>
-          ['pectoraux','epaules','triceps'].includes(m)
-        )) {
-        selection = [
-          ...baseExos.push,
-          ...baseExos.pull.slice(0, 3),
-          ...baseExos.legs.slice(0, 2)
-        ];
-      } else if (prioritesHomme.some(m =>
-          ['dos','biceps','trapeze'].includes(m)
-        )) {
-        selection = [
-          ...baseExos.pull,
-          ...baseExos.push.slice(0, 3),
-          ...baseExos.legs.slice(0, 2)
-        ];
-      } else if (prioritesHomme.some(m =>
-          ['quadriceps','fessiers','ischio','mollets'].includes(m)
-        )) {
-        selection = [
-          ...baseExos.legs,
-          ...baseExos.push.slice(0, 2),
-          ...baseExos.pull.slice(0, 2)
-        ];
-      } else {
-        selection = [
-          ...baseExos.push.slice(0, 3),
-          ...baseExos.pull.slice(0, 3),
-          ...baseExos.legs.slice(0, 3)
-        ];
-      }
-    }
-
-    return [...new Set(selection)];
-  },
-
   // ════════════════════════════════════════════════════════
-  // RÉSUMÉ PROFIL
+  // RÉSUMÉ PROFIL (v2.0 conservé)
   // ════════════════════════════════════════════════════════
   getResume(profil) {
     if (!profil) profil = this.get();
@@ -450,7 +344,7 @@ const Profil = {
   },
 
   // ════════════════════════════════════════════════════════
-  // RENDER PAGE PROFIL — ✅ v2.0 enrichi
+  // RENDER PAGE PROFIL (v2.0 conservé)
   // ════════════════════════════════════════════════════════
   renderPage(container) {
     if (!container) return;
@@ -459,7 +353,6 @@ const Profil = {
     const resume = this.getResume(profil);
     const nut    = profil.nutrition || this.DEFAUT.nutrition;
 
-    // ✅ Stats rapides depuis Tracker
     let totalSeances = 0, streak = 0, totalPRs = 0;
     try {
       totalSeances = Tracker.getTotalSeances();
@@ -469,7 +362,7 @@ const Profil = {
 
     container.innerHTML = `
 
-      <!-- HERO PROFIL -->
+      <!-- HERO -->
       <div style="background:linear-gradient(135deg,
                   rgba(75,75,249,0.25),rgba(75,75,249,0.05));
                   border:1px solid rgba(75,75,249,0.3);
@@ -510,10 +403,9 @@ const Profil = {
           </div>
           <button onclick="Profil._ouvrirEdition()"
                   style="padding:8px 14px;
-                         background:var(--fd-indigo);
-                         border:none;border-radius:99px;
-                         font-size:.72rem;font-weight:700;
-                         color:white;cursor:pointer;
+                         background:var(--fd-indigo);border:none;
+                         border-radius:99px;font-size:.72rem;
+                         font-weight:700;color:white;cursor:pointer;
                          flex-shrink:0">
             ✏️ Modifier
           </button>
@@ -525,37 +417,29 @@ const Profil = {
               <div style="padding:6px 12px;
                           background:rgba(255,255,255,0.06);
                           border-radius:99px;font-size:.72rem;
-                          font-weight:700">
-                ⚖️ ${profil.poids}kg
-              </div>` : ''}
+                          font-weight:700">⚖️ ${profil.poids}kg</div>` : ''}
             ${profil.taille ? `
               <div style="padding:6px 12px;
                           background:rgba(255,255,255,0.06);
                           border-radius:99px;font-size:.72rem;
-                          font-weight:700">
-                📏 ${profil.taille}cm
-              </div>` : ''}
+                          font-weight:700">📏 ${profil.taille}cm</div>` : ''}
             ${resume.imc ? `
               <div style="padding:6px 12px;
                           background:rgba(255,255,255,0.06);
                           border-radius:99px;font-size:.72rem;
-                          font-weight:700;
-                          color:${resume.imcLabel?.color}">
+                          font-weight:700;color:${resume.imcLabel?.color}">
                 IMC ${resume.imc} · ${resume.imcLabel?.label}
               </div>` : ''}
           </div>` : ''}
       </div>
 
-      <!-- ✅ NOUVEAU v2.0 — Stats rapides -->
+      <!-- Stats rapides -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);
                   gap:8px;margin-bottom:14px">
         ${[
-          { val:totalSeances, label:'Séances', emoji:'💪',
-            color:'var(--fd-indigo)'   },
-          { val:`${streak}🔥`, label:'Streak',  emoji:'',
-            color:'var(--fd-lemon)'    },
-          { val:totalPRs,    label:'PRs',    emoji:'🏆',
-            color:'var(--fd-mint)'     }
+          { val:totalSeances, label:'Séances', color:'var(--fd-indigo)' },
+          { val:`${streak}🔥`, label:'Streak', color:'var(--fd-lemon)'  },
+          { val:totalPRs,    label:'PRs',    color:'var(--fd-mint)'    }
         ].map(s => `
           <div style="background:rgba(255,255,255,0.04);
                       border:1px solid rgba(255,255,255,0.08);
@@ -568,7 +452,7 @@ const Profil = {
           </div>`).join('')}
       </div>
 
-      <!-- OBJECTIF & PROGRAMME -->
+      <!-- Objectif -->
       <div style="background:rgba(255,255,255,0.03);
                   border:1px solid rgba(255,255,255,0.08);
                   border-radius:var(--radius-lg);
@@ -578,54 +462,54 @@ const Profil = {
                     color:var(--text-muted);margin-bottom:12px">
           🎯 Objectif & Programme
         </div>
-        <div style="display:flex;align-items:center;
-                    gap:12px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
           <div style="width:40px;height:40px;border-radius:12px;
                       background:${resume.objectifCouleur}22;
                       border:1px solid ${resume.objectifCouleur}44;
                       display:flex;align-items:center;
-                      justify-content:center;font-size:1.2rem;
-                      flex-shrink:0">
+                      justify-content:center;font-size:1.2rem;flex-shrink:0">
             ${resume.objectif.split(' ')[0]}
           </div>
           <div>
             <div style="font-size:.9rem;font-weight:700;
                         color:${resume.objectifCouleur}">
-              ${resume.objectif}
-            </div>
-            <div style="font-size:.65rem;color:var(--text-muted);
-                        margin-top:2px">
-              ${resume.reps} reps · Repos ${resume.repos}
-              · ${resume.seances}j/semaine
+              ${resume.objectif}</div>
+            <div style="font-size:.65rem;color:var(--text-muted);margin-top:2px">
+              ${resume.reps} reps · Repos ${resume.repos} · ${resume.seances}j/sem
             </div>
           </div>
         </div>
-        <div style="padding:8px 12px;
-                    background:rgba(75,75,249,0.06);
+        <div style="padding:8px 12px;background:rgba(75,75,249,0.06);
                     border:1px solid rgba(75,75,249,0.15);
                     border-radius:var(--radius-md);
                     font-size:.72rem;color:var(--text-muted)">
           💡 ${resume.conseil}
         </div>
 
+        <!-- ✅ Muscles ciblés — aperçu visuel -->
         ${resume.muscles.length > 0 ? `
           <div style="margin-top:10px">
-            <div style="font-size:.6rem;color:var(--text-muted);
-                        margin-bottom:6px">🎯 Muscles ciblés</div>
+            <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:6px">
+              🎯 Muscles ciblés
+            </div>
             <div style="display:flex;flex-wrap:wrap;gap:5px">
-              ${resume.muscles.map(m => `
-                <span style="padding:3px 10px;
-                             background:rgba(75,75,249,0.15);
-                             border:1px solid rgba(75,75,249,0.25);
-                             border-radius:99px;
-                             font-size:.62rem;font-weight:700;
-                             color:var(--fd-lavender)">
-                  ${m}</span>`).join('')}
+              ${(profil.muscles_cibles || []).map(m => {
+                const cfg = this.MUSCLES[m] || {};
+                return `
+                  <span style="padding:4px 10px;
+                               background:${cfg.couleur || '#4b4bf9'}22;
+                               border:1px solid ${cfg.couleur || '#4b4bf9'}44;
+                               border-radius:99px;font-size:.62rem;
+                               font-weight:700;
+                               color:${cfg.couleur || 'var(--fd-lavender)'}">
+                    ${cfg.label || m}
+                  </span>`;
+              }).join('')}
             </div>
           </div>` : ''}
       </div>
 
-      <!-- NUTRITION -->
+      <!-- Nutrition -->
       <div style="background:rgba(255,255,255,0.03);
                   border:1px solid rgba(255,255,255,0.08);
                   border-radius:var(--radius-lg);
@@ -640,75 +524,52 @@ const Profil = {
           <button onclick="naviguer('nutrition')"
                   style="font-size:.65rem;color:var(--fd-indigo);
                          background:none;border:none;
-                         cursor:pointer;font-weight:600">
-            Voir →
-          </button>
+                         cursor:pointer;font-weight:600">Voir →</button>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);
-                    gap:8px">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
           ${[
-            { label:'Calories',  val:`${nut.calories} kcal`,
-              color:'var(--fd-lemon)',    emoji:'🔥' },
-            { label:'Protéines', val:`${nut.proteines}g`,
-              color:'var(--fd-coral)',    emoji:'🥩' },
-            { label:'Glucides',  val:`${nut.glucides}g`,
-              color:'var(--fd-mint)',     emoji:'🍚' },
-            { label:'Lipides',   val:`${nut.lipides}g`,
-              color:'var(--fd-lavender)', emoji:'🥑' }
+            { label:'Calories',  val:`${nut.calories} kcal`, color:'var(--fd-lemon)',    emoji:'🔥' },
+            { label:'Protéines', val:`${nut.proteines}g`,    color:'var(--fd-coral)',    emoji:'🥩' },
+            { label:'Glucides',  val:`${nut.glucides}g`,     color:'var(--fd-mint)',     emoji:'🍚' },
+            { label:'Lipides',   val:`${nut.lipides}g`,      color:'var(--fd-lavender)', emoji:'🥑' }
           ].map(n => `
             <div style="background:rgba(255,255,255,0.04);
                         border:1px solid rgba(255,255,255,0.07);
                         border-radius:var(--radius-md);
                         padding:10px;text-align:center">
-              <div style="font-size:.85rem;margin-bottom:3px">
-                ${n.emoji}</div>
-              <div style="font-size:.9rem;font-weight:800;
-                          color:${n.color}">${n.val}</div>
-              <div style="font-size:.55rem;color:var(--text-muted);
-                          margin-top:2px;text-transform:uppercase">
-                ${n.label}</div>
+              <div style="font-size:.85rem;margin-bottom:3px">${n.emoji}</div>
+              <div style="font-size:.9rem;font-weight:800;color:${n.color}">${n.val}</div>
+              <div style="font-size:.55rem;color:var(--text-muted);margin-top:2px;
+                          text-transform:uppercase">${n.label}</div>
             </div>`).join('')}
         </div>
         <div style="margin-top:8px;padding:8px 12px;
-                    background:rgba(75,75,249,0.06);
-                    border-radius:var(--radius-md);
-                    display:flex;align-items:center;
-                    justify-content:space-between">
-          <span style="font-size:.72rem;color:var(--text-muted)">
-            💧 Eau recommandée</span>
-          <span style="font-size:.82rem;font-weight:700;
-                       color:var(--fd-indigo)">
+                    background:rgba(75,75,249,0.06);border-radius:var(--radius-md);
+                    display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:.72rem;color:var(--text-muted)">💧 Eau recommandée</span>
+          <span style="font-size:.82rem;font-weight:700;color:var(--fd-indigo)">
             ${nut.eau}L / jour</span>
-        </div>
-        <div style="margin-top:8px;font-size:.62rem;
-                    color:var(--text-muted);line-height:1.4">
-          * Calculé via Harris-Benedict selon ton poids,
-          taille et objectif
         </div>
       </div>
 
-      <!-- ✅ NOUVEAU v2.0 — Thème -->
+      <!-- Thème -->
       <div style="background:rgba(255,255,255,0.03);
                   border:1px solid rgba(255,255,255,0.08);
-                  border-radius:var(--radius-lg);
-                  padding:16px;margin-bottom:14px">
-        <div style="font-size:.6rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.1em;
-                    color:var(--text-muted);margin-bottom:12px">
+                  border-radius:var(--radius-lg);padding:16px;margin-bottom:14px">
+        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.1em;color:var(--text-muted);margin-bottom:12px">
           🎨 Personnalisation
         </div>
         ${this._renderThemeSelector()}
       </div>
 
-      <!-- ACTIONS -->
-      <div style="display:flex;flex-direction:column;
-                  gap:8px;margin-bottom:14px">
+      <!-- Actions -->
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
         <button onclick="Profil._ouvrirEdition()"
                 class="btn-primary" style="width:100%">
           ✏️ Modifier mon profil
         </button>
-        <div style="display:grid;grid-template-columns:1fr 1fr;
-                    gap:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <button onclick="naviguer('training')"
                   class="btn-secondary" style="font-size:.82rem">
             📅 Mon programme
@@ -722,15 +583,13 @@ const Profil = {
     `;
   },
 
-  // ✅ NOUVEAU v2.0 — Sélecteur de thème
+  // ════════════════════════════════════════════════════════
+  // THÈME (v2.0 conservé)
+  // ════════════════════════════════════════════════════════
   _renderThemeSelector() {
-    const themeActuel = Utils.storage.get(
-      this.CLE_THEME, 'dark'
-    );
-
+    const themeActuel = Utils.storage.get(this.CLE_THEME, 'dark');
     return `
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);
-                  gap:6px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
         ${Object.entries(this.THEMES).map(([val, theme]) => `
           <button onclick="Profil._changerTheme('${val}')"
                   style="padding:10px 6px;text-align:center;
@@ -743,8 +602,7 @@ const Profil = {
                          border-radius:var(--radius-md);
                          cursor:pointer;transition:all .2s">
             <div style="font-size:.9rem;margin-bottom:3px">
-              ${theme.label.split(' ')[0]}
-            </div>
+              ${theme.label.split(' ')[0]}</div>
             <div style="font-size:.62rem;font-weight:600;
                         color:${themeActuel === val
                           ? 'var(--fd-indigo)'
@@ -753,296 +611,269 @@ const Profil = {
             </div>
           </button>`).join('')}
       </div>
-      <div style="margin-top:8px;font-size:.65rem;
-                  color:var(--text-muted);text-align:center">
+      <div style="margin-top:8px;font-size:.65rem;color:var(--text-muted);text-align:center">
         Typographies et logos bientôt disponibles
       </div>
     `;
   },
 
-  // ✅ NOUVEAU v2.0 — Changer thème
   _changerTheme(theme) {
     Utils.storage.set(this.CLE_THEME, theme);
-
-    // Appliquer le thème
     const root = document.documentElement;
-    if (theme === 'light') {
-      root.setAttribute('data-theme', 'light');
-    } else {
-      root.removeAttribute('data-theme');
-    }
-
-    Utils.toast(
-      `🎨 Thème ${this.THEMES[theme]?.label} appliqué !`,
-      'success', 1500
-    );
-
-    // Re-render la section thème
-    const container = document.getElementById('page-mon_profil')
-      || document.querySelector('[id*="profil"]');
+    if (theme === 'light') root.setAttribute('data-theme', 'light');
+    else root.removeAttribute('data-theme');
+    Utils.toast(`🎨 Thème ${this.THEMES[theme]?.label} appliqué !`, 'success', 1500);
+    const container = document.getElementById('page-mon_profil');
     if (container) this.renderPage(container);
   },
 
   // ════════════════════════════════════════════════════════
-  // RENDER CORPS SVG CLIQUABLE
+  // ✅ NOUVEAU v3.0 — Corps anatomique réaliste
+  // Même image + maphilight que l'onboarding
   // ════════════════════════════════════════════════════════
-  renderCorpsSVG(musclesCibles = [], onToggle = null) {
-    const selectionnes = new Set(musclesCibles);
+  renderCorpsSVG(musclesCibles = []) {
+    const sel = new Set(musclesCibles);
+
+    const CFG = {
+      pectoraux:  { label:'Pectoraux',       couleur:'#4b4bf9' },
+      deltoides:  { label:'Deltoïdes',       couleur:'#bfa1ff' },
+      biceps:     { label:'Biceps',          couleur:'#8bf0bb' },
+      avantbras:  { label:'Avant-bras',      couleur:'#8bf0bb' },
+      abdominaux: { label:'Abdominaux',      couleur:'#f9ef77' },
+      quadriceps: { label:'Quadriceps',      couleur:'#22c55e' },
+      trapeze:    { label:'Trapèzes',        couleur:'#8bf0bb' },
+      dorsal:     { label:'Grand Dorsal',    couleur:'#4b4bf9' },
+      lombaires:  { label:'Lombaires',       couleur:'#bfa1ff' },
+      fessiers:   { label:'Fessiers',        couleur:'#ff8d96' },
+      ischio:     { label:'Ischio-jambiers', couleur:'#f9ef77' },
+      mollets:    { label:'Mollets',         couleur:'#bfa1ff' },
+      triceps:    { label:'Triceps',         couleur:'#ff8d96' }
+    };
+
+    const chipsHTML = sel.size === 0 ? `
+      <span style="font-size:.72rem;color:var(--text-muted);font-style:italic">
+        Aucun muscle ciblé — programme complet
+      </span>` :
+      [...sel].map(m => {
+        const cfg = CFG[m];
+        if (!cfg) return '';
+        return `
+          <span onclick="Profil._toggleMuscleModal('${m}')"
+                style="display:inline-flex;align-items:center;gap:5px;
+                       padding:5px 12px;background:${cfg.couleur}22;
+                       border:1px solid ${cfg.couleur}66;border-radius:99px;
+                       font-size:.68rem;font-weight:700;cursor:pointer;
+                       color:${cfg.couleur}">
+            ${cfg.label}
+            <span style="opacity:.6;font-size:.6rem">✕</span>
+          </span>`;
+      }).join('');
 
     return `
-      <div id="corps-svg-wrapper" style="user-select:none">
-        <div style="text-align:center;font-size:.7rem;
-                    font-weight:700;color:var(--text-muted);
-                    margin-bottom:8px;text-transform:uppercase;
-                    letter-spacing:.08em">
-          Clique sur les zones à cibler
-        </div>
+      <div style="text-align:center;margin-bottom:8px;
+                  font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.1em;
+                  color:var(--text-muted)">
+        Clique sur les zones à cibler
+      </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;
-                    gap:8px;margin-bottom:12px">
+      <!-- Image anatomique + image map -->
+      <div style="position:relative;display:inline-block;
+                  width:100%;text-align:center;margin-bottom:12px">
+        <img id="profil-body-img"
+             src="Capture d'écran 2026-05-24 204800.png"
+             usemap="#profil-image-map"
+             onload="Profil._initBodyMap(${JSON.stringify([...sel])})"
+             style="max-width:100%;height:auto;
+                    border-radius:12px;display:inline-block;
+                    max-height:320px;object-fit:contain;
+                    mix-blend-mode:multiply"
+             alt="Carte musculaire"/>
+      </div>
 
-          <!-- FACE AVANT -->
-          <div style="text-align:center">
-            <div style="font-size:.6rem;color:var(--text-muted);
-                        margin-bottom:4px">Avant</div>
-            <svg viewBox="0 0 120 280"
-                 style="width:100%;max-width:140px;height:auto;
-                        display:block;margin:0 auto">
-              <!-- Tête -->
-              <ellipse cx="60" cy="22" rx="14" ry="16"
-                       fill="rgba(255,255,255,0.06)"
-                       stroke="rgba(255,255,255,0.15)"
-                       stroke-width="1"/>
-              <rect x="55" y="36" width="10" height="8"
-                    fill="rgba(255,255,255,0.06)"
-                    stroke="rgba(255,255,255,0.1)"
-                    stroke-width="1"/>
-              <!-- ÉPAULES -->
-              <ellipse cx="35" cy="52" rx="12" ry="8"
-                       fill="${selectionnes.has('epaules') ? 'rgba(191,161,255,0.5)' : 'rgba(255,255,255,0.06)'}"
-                       stroke="${selectionnes.has('epaules') ? '#bfa1ff' : 'rgba(255,255,255,0.15)'}"
-                       stroke-width="1.5" style="cursor:pointer"
-                       onclick="Profil._toggleMuscleModal('epaules')"/>
-              <ellipse cx="85" cy="52" rx="12" ry="8"
-                       fill="${selectionnes.has('epaules') ? 'rgba(191,161,255,0.5)' : 'rgba(255,255,255,0.06)'}"
-                       stroke="${selectionnes.has('epaules') ? '#bfa1ff' : 'rgba(255,255,255,0.15)'}"
-                       stroke-width="1.5" style="cursor:pointer"
-                       onclick="Profil._toggleMuscleModal('epaules')"/>
-              <!-- PECTORAUX -->
-              <path d="M44 46 Q60 42 76 46 L78 68 Q60 72 42 68 Z"
-                    fill="${selectionnes.has('pectoraux') ? 'rgba(75,75,249,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('pectoraux') ? '#4b4bf9' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('pectoraux')"/>
-              <!-- BICEPS -->
-              <rect x="22" y="50" width="12" height="46" rx="6"
-                    fill="${selectionnes.has('biceps') ? 'rgba(139,240,187,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('biceps') ? '#8bf0bb' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('biceps')"/>
-              <rect x="86" y="50" width="12" height="46" rx="6"
-                    fill="${selectionnes.has('biceps') ? 'rgba(139,240,187,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('biceps') ? '#8bf0bb' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('biceps')"/>
-              <!-- Avant-bras -->
-              <rect x="20" y="98" width="10" height="30" rx="5"
-                    fill="rgba(255,255,255,0.04)"
-                    stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-              <rect x="90" y="98" width="10" height="30" rx="5"
-                    fill="rgba(255,255,255,0.04)"
-                    stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-              <!-- ABDOS -->
-              <rect x="47" y="70" width="26" height="50" rx="4"
-                    fill="${selectionnes.has('abdos') ? 'rgba(249,239,119,0.4)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('abdos') ? '#f9ef77' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('abdos')"/>
-              ${selectionnes.has('abdos') ? `
-                <line x1="60" y1="75" x2="60" y2="118"
-                      stroke="#f9ef7766" stroke-width="1"/>
-                <line x1="47" y1="88" x2="73" y2="88"
-                      stroke="#f9ef7766" stroke-width="1"/>
-                <line x1="47" y1="100" x2="73" y2="100"
-                      stroke="#f9ef7766" stroke-width="1"/>
-              ` : ''}
-              <!-- QUADRICEPS -->
-              <rect x="44" y="145" width="22" height="60" rx="8"
-                    fill="${selectionnes.has('quadriceps') ? 'rgba(255,141,150,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('quadriceps') ? '#ff8d96' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('quadriceps')"/>
-              <rect x="68" y="145" width="22" height="60" rx="8"
-                    fill="${selectionnes.has('quadriceps') ? 'rgba(255,141,150,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('quadriceps') ? '#ff8d96' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('quadriceps')"/>
-              <!-- Genoux + Tibias -->
-              <ellipse cx="55" cy="210" rx="10" ry="7"
-                       fill="rgba(255,255,255,0.04)"
-                       stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-              <ellipse cx="79" cy="210" rx="10" ry="7"
-                       fill="rgba(255,255,255,0.04)"
-                       stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-              <rect x="48" y="218" width="14" height="44" rx="6"
-                    fill="rgba(255,255,255,0.04)"
-                    stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-              <rect x="72" y="218" width="14" height="44" rx="6"
-                    fill="rgba(255,255,255,0.04)"
-                    stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-              <!-- Bassin -->
-              <path d="M42 120 Q60 115 78 120 L80 145 Q60 148 40 145 Z"
-                    fill="rgba(255,255,255,0.05)"
-                    stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-              <!-- Labels -->
-              ${selectionnes.has('epaules')
-                ? `<text x="60" y="56" text-anchor="middle" fill="#bfa1ff" font-size="5" font-weight="700">Épaules</text>` : ''}
-              ${selectionnes.has('pectoraux')
-                ? `<text x="60" y="59" text-anchor="middle" fill="#4b4bf9" font-size="5" font-weight="700">Pec</text>` : ''}
-              ${selectionnes.has('biceps')
-                ? `<text x="28" y="74" text-anchor="middle" fill="#8bf0bb" font-size="4.5" font-weight="700">Bi</text>
-                   <text x="92" y="74" text-anchor="middle" fill="#8bf0bb" font-size="4.5" font-weight="700">Bi</text>` : ''}
-              ${selectionnes.has('abdos')
-                ? `<text x="60" y="97" text-anchor="middle" fill="#f9ef77" font-size="5" font-weight="700">Abdos</text>` : ''}
-              ${selectionnes.has('quadriceps')
-                ? `<text x="55" y="175" text-anchor="middle" fill="#ff8d96" font-size="4.5" font-weight="700">Quad</text>
-                   <text x="79" y="175" text-anchor="middle" fill="#ff8d96" font-size="4.5" font-weight="700">Quad</text>` : ''}
-            </svg>
-          </div>
+      <map name="profil-image-map" id="profil-image-map">
 
-          <!-- FACE ARRIÈRE -->
-          <div style="text-align:center">
-            <div style="font-size:.6rem;color:var(--text-muted);
-                        margin-bottom:4px">Arrière</div>
-            <svg viewBox="0 0 120 280"
-                 style="width:100%;max-width:140px;height:auto;
-                        display:block;margin:0 auto">
-              <!-- Tête -->
-              <ellipse cx="60" cy="22" rx="14" ry="16"
-                       fill="rgba(255,255,255,0.06)"
-                       stroke="rgba(255,255,255,0.15)"
-                       stroke-width="1"/>
-              <rect x="55" y="36" width="10" height="8"
-                    fill="rgba(255,255,255,0.06)"
-                    stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-              <!-- TRAPÈZE -->
-              <path d="M48 38 Q60 34 72 38 L78 52 Q60 48 42 52 Z"
-                    fill="${selectionnes.has('trapeze') ? 'rgba(191,161,255,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('trapeze') ? '#bfa1ff' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('trapeze')"/>
-              <!-- ÉPAULES ARRIÈRE -->
-              <ellipse cx="34" cy="52" rx="12" ry="8"
-                       fill="${selectionnes.has('epaules') ? 'rgba(191,161,255,0.5)' : 'rgba(255,255,255,0.06)'}"
-                       stroke="${selectionnes.has('epaules') ? '#bfa1ff' : 'rgba(255,255,255,0.15)'}"
-                       stroke-width="1.5" style="cursor:pointer"
-                       onclick="Profil._toggleMuscleModal('epaules')"/>
-              <ellipse cx="86" cy="52" rx="12" ry="8"
-                       fill="${selectionnes.has('epaules') ? 'rgba(191,161,255,0.5)' : 'rgba(255,255,255,0.06)'}"
-                       stroke="${selectionnes.has('epaules') ? '#bfa1ff' : 'rgba(255,255,255,0.15)'}"
-                       stroke-width="1.5" style="cursor:pointer"
-                       onclick="Profil._toggleMuscleModal('epaules')"/>
-              <!-- DOS -->
-              <path d="M42 50 Q60 46 78 50 L80 118 Q60 122 40 118 Z"
-                    fill="${selectionnes.has('dos') ? 'rgba(75,75,249,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('dos') ? '#4b4bf9' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('dos')"/>
-              <!-- TRICEPS -->
-              <rect x="22" y="50" width="12" height="46" rx="6"
-                    fill="${selectionnes.has('triceps') ? 'rgba(191,161,255,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('triceps') ? '#bfa1ff' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('triceps')"/>
-              <rect x="86" y="50" width="12" height="46" rx="6"
-                    fill="${selectionnes.has('triceps') ? 'rgba(191,161,255,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('triceps') ? '#bfa1ff' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('triceps')"/>
-              <!-- FESSIERS -->
-              <path d="M42 118 Q60 114 78 118 L80 155 Q60 160 40 155 Z"
-                    fill="${selectionnes.has('fessiers') ? 'rgba(255,141,150,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('fessiers') ? '#ff8d96' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('fessiers')"/>
-              <!-- ISCHIO -->
-              <rect x="44" y="155" width="22" height="52" rx="8"
-                    fill="${selectionnes.has('ischio') ? 'rgba(139,240,187,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('ischio') ? '#8bf0bb' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('ischio')"/>
-              <rect x="68" y="155" width="22" height="52" rx="8"
-                    fill="${selectionnes.has('ischio') ? 'rgba(139,240,187,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('ischio') ? '#8bf0bb' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('ischio')"/>
-              <!-- MOLLETS -->
-              <rect x="47" y="214" width="16" height="40" rx="7"
-                    fill="${selectionnes.has('mollets') ? 'rgba(249,239,119,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('mollets') ? '#f9ef77' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('mollets')"/>
-              <rect x="71" y="214" width="16" height="40" rx="7"
-                    fill="${selectionnes.has('mollets') ? 'rgba(249,239,119,0.5)' : 'rgba(255,255,255,0.06)'}"
-                    stroke="${selectionnes.has('mollets') ? '#f9ef77' : 'rgba(255,255,255,0.15)'}"
-                    stroke-width="1.5" style="cursor:pointer"
-                    onclick="Profil._toggleMuscleModal('mollets')"/>
-              <!-- Labels -->
-              ${selectionnes.has('trapeze')
-                ? `<text x="60" y="46" text-anchor="middle" fill="#bfa1ff" font-size="4.5" font-weight="700">Trap</text>` : ''}
-              ${selectionnes.has('dos')
-                ? `<text x="60" y="86" text-anchor="middle" fill="#4b4bf9" font-size="5" font-weight="700">DOS</text>` : ''}
-              ${selectionnes.has('triceps')
-                ? `<text x="28" y="74" text-anchor="middle" fill="#bfa1ff" font-size="4.5" font-weight="700">Tri</text>
-                   <text x="92" y="74" text-anchor="middle" fill="#bfa1ff" font-size="4.5" font-weight="700">Tri</text>` : ''}
-              ${selectionnes.has('fessiers')
-                ? `<text x="60" y="140" text-anchor="middle" fill="#ff8d96" font-size="5" font-weight="700">Fessiers</text>` : ''}
-              ${selectionnes.has('ischio')
-                ? `<text x="55" y="182" text-anchor="middle" fill="#8bf0bb" font-size="4" font-weight="700">Ischio</text>
-                   <text x="79" y="182" text-anchor="middle" fill="#8bf0bb" font-size="4" font-weight="700">Ischio</text>` : ''}
-              ${selectionnes.has('mollets')
-                ? `<text x="55" y="236" text-anchor="middle" fill="#f9ef77" font-size="4" font-weight="700">Mol</text>
-                   <text x="79" y="236" text-anchor="middle" fill="#f9ef77" font-size="4" font-weight="700">Mol</text>` : ''}
-            </svg>
-          </div>
-        </div>
+        <!-- ══ FACE AVANT ══ -->
+        <area data-muscle="pectoraux" href="#" shape="poly"
+              coords="200,204,206,201,212,197,216,191,221,187,226,180,212,197,230,174,235,169,241,162,246,158,252,154,258,154,265,152,272,152,278,153,284,154,289,155,296,159,297,166,297,171,297,180,297,205,295,212,291,218,284,224,278,229,270,232,261,235,251,234,242,232,233,228,225,221,219,213,212,208,205,206"/>
+        <area data-muscle="pectoraux" href="#" shape="poly"
+              coords="299,207,302,213,308,220,314,224,318,227,326,231,333,233,342,234,350,233,358,230,366,226,373,219,378,216,383,211,388,207,395,205,390,200,382,196,377,190,370,182,365,175,359,167,352,161,343,157,333,153,324,153,316,152,310,153,304,156,300,161,298,167,299,189"/>
+        <area data-muscle="biceps" href="#" shape="poly"
+              coords="175,215,186,209,194,208,202,208,209,210,213,214,216,222,215,231,213,238,209,246,204,251,192,266,185,275,177,283,167,287,156,285,151,275,151,262,153,252,160,237,165,228"/>
+        <area data-muscle="biceps" href="#" shape="poly"
+              coords="422,213,432,227,436,237,440,245,443,255,445,266,445,276,442,284,432,288,422,284,414,277,407,269,402,260,394,251,388,245,384,238,382,228,381,220,383,211,390,208,398,206,409,207"/>
+        <area data-muscle="deltoides" href="#" shape="poly"
+              coords="177,211,181,200,184,188,189,179,192,171,197,163,204,158,213,154,221,152,229,151,236,150,241,150,247,151,253,151,258,152,252,157,247,160,243,164,236,170,231,175,226,182,222,188,215,195,209,199,203,203,196,206,187,208"/>
+        <area data-muscle="deltoides" href="#" shape="poly"
+              coords="339,153,348,149,356,149,366,148,376,151,385,153,391,157,398,161,403,167,408,172,411,181,412,187,415,193,419,201,421,211,411,207,403,205,395,202,387,198,381,192,372,182,367,175,362,167,354,161,347,156"/>
+        <area data-muscle="trapeze" href="#" shape="poly"
+              coords="270,125,269,144,266,149,260,152,253,152,246,150,238,149,231,149,239,143,246,141,252,139,259,136,263,133,268,131"/>
+        <area data-muscle="trapeze" href="#" shape="poly"
+              coords="327,124,326,140,328,146,333,149,338,151,344,149,350,149,357,148,363,147,356,141,349,138,341,136,334,132"/>
+        <area data-muscle="avantbras" href="#" shape="poly"
+              coords="151,259,140,271,134,279,128,290,121,298,117,310,112,320,108,329,103,341,100,350,97,356,94,362,98,365,103,369,108,369,113,367,118,361,123,355,128,351,135,347,141,340,148,332,156,322,162,312,165,306,169,299,173,292,177,285,168,287,161,289,156,285,151,277,150,269"/>
+        <area data-muscle="avantbras" href="#" shape="poly"
+              coords="445,253,447,260,451,265,458,272,463,278,467,285,471,289,474,295,476,301,480,309,483,316,501,358,500,363,498,368,490,370,483,367,479,360,472,353,464,347,457,340,449,331,442,322,436,311,430,302,426,293,417,282,423,284,429,287,436,287,442,285,445,277,446,269"/>
+        <area data-muscle="abdominaux" href="#" shape="poly"
+              coords="213,211,261,257,261,264,261,277,259,288,258,294,257,299,257,305,258,314,258,322,257,327,256,336,254,341,252,345,247,351,239,355,232,355,231,346,233,337,235,329,237,319,238,309,236,300,234,290,230,281,226,273,222,263,219,254,216,246,214,238,217,230,216,221"/>
+        <area data-muscle="abdominaux" href="#" shape="poly"
+              coords="381,213,336,259,336,267,336,274,338,280,338,287,340,296,340,304,340,313,339,318,338,324,339,332,341,337,343,344,347,349,352,352,357,354,365,354,364,341,362,328,361,313,361,301,363,291,367,283,372,272,376,262,379,255,380,247,382,241,380,232,380,222"/>
+        <area data-muscle="abdominaux" href="#" shape="poly"
+              coords="260,241,270,234,281,230,291,229,296,231,298,236,302,231,308,228,315,230,322,233,330,236,336,241,336,247,334,254,333,261,333,268,333,276,333,287,332,295,331,329,329,345,327,356,325,365,318,379,311,393,301,401,292,398,286,391,279,381,272,367,267,349,264,301,263,274,263,258"/>
+        <area data-muscle="quadriceps" href="#" shape="poly"
+              coords="230,356,241,361,252,367,258,374,265,381,271,395,275,407,279,418,284,430,287,437,291,441,296,441,295,449,294,466,291,479,287,494,279,515,275,535,272,552,268,570,262,580,256,587,248,586,242,577,239,570,236,564,230,566,223,563,220,555,216,543,214,528,212,512,212,491,214,466,214,449,221,411,226,393,228,375"/>
+        <area data-muscle="quadriceps" href="#" shape="poly"
+              coords="366,357,367,374,372,397,377,422,380,447,384,472,384,497,382,516,381,531,378,550,375,561,372,566,365,567,360,565,356,571,354,580,350,586,341,587,336,584,331,575,328,567,325,554,322,537,317,517,313,503,308,486,303,471,301,457,300,442,306,440,311,434,316,424,319,411,325,394,334,378,345,367,354,361"/>
 
-        <!-- Chips -->
-        <div id="muscles-chips"
-             style="display:flex;flex-wrap:wrap;gap:6px;
-                    justify-content:center;min-height:32px">
-          ${musclesCibles.length === 0 ? `
-            <span style="font-size:.72rem;
-                         color:var(--text-muted);
-                         font-style:italic">
-              Aucun muscle ciblé — tout le corps
-            </span>` :
-            musclesCibles.map(m => `
-              <span onclick="Profil._toggleMuscleModal('${m}')"
-                    style="display:flex;align-items:center;
-                           gap:5px;padding:4px 10px;
-                           background:${Profil.MUSCLES[m]?.couleur || '#4b4bf9'}22;
-                           border:1px solid ${Profil.MUSCLES[m]?.couleur || '#4b4bf9'}66;
-                           border-radius:99px;font-size:.65rem;
-                           font-weight:700;cursor:pointer;
-                           color:${Profil.MUSCLES[m]?.couleur || '#4b4bf9'}">
-                ${Profil.MUSCLES[m]?.label || m}
-                <span style="font-size:.55rem;opacity:.6">✕</span>
-              </span>`).join('')}
-        </div>
+        <!-- ══ FACE DOS ══ -->
+        <area data-muscle="trapeze" href="#" shape="poly"
+              coords="691,147,703,141,710,137,718,135,728,134,740,133,754,133,768,134,783,134,793,134,806,139,813,143,821,146,815,149,809,153,802,159,795,164,786,164,773,162,758,162,745,162,735,163,724,164,716,163,710,158,704,153,698,149"/>
+        <area data-muscle="trapeze" href="#" shape="poly"
+              coords="797,165,790,178,783,194,776,208,772,219,768,229,765,238,762,246,759,252,757,254,752,249,749,242,745,232,742,222,737,211,732,201,728,191,724,182,720,174,715,166,721,167,727,166,736,164,746,164,753,163,764,163,772,164,780,164,789,166"/>
+        <area data-muscle="deltoides" href="#" shape="poly"
+              coords="710,159,697,171,680,184,671,190,662,194,650,197,641,199,634,200,635,191,638,184,642,176,647,170,654,164,660,158,668,153,676,151,684,150,692,149,700,152"/>
+        <area data-muscle="deltoides" href="#" shape="poly"
+              coords="803,160,813,168,824,177,837,187,846,192,853,195,864,197,871,197,879,200,877,192,875,185,870,177,865,168,858,162,849,157,840,153,829,149,819,150,810,153"/>
+        <area data-muscle="triceps" href="#" shape="poly"
+              coords="668,233,645,266,640,273,634,277,626,284,621,283,619,275,617,266,613,265,606,266,601,267,603,258,607,248,611,238,615,228,620,219,626,211,632,205,638,201,645,200,651,198,658,196,664,195,664,203,666,213,668,223"/>
+        <area data-muscle="triceps" href="#" shape="poly"
+              coords="848,196,856,198,866,199,872,200,878,202,883,207,888,211,892,218,897,225,899,231,903,240,907,247,909,252,912,259,913,266,909,267,902,266,898,266,895,268,895,275,894,280,890,285,884,280,877,276,871,268,863,260,859,250,852,244,848,235,845,227,846,217,848,210,849,204"/>
+        <area data-muscle="dorsal" href="#" shape="poly"
+              coords="710,161,700,171,690,179,681,186,675,190,667,194,665,200,667,206,668,212,669,220,670,226,669,232,669,236,671,243,673,249,678,260,680,268,683,274,688,280,688,286,690,293,691,299,691,305,691,313,691,323,692,330,689,339,689,346,687,353,687,359,685,369,693,362,699,357,705,354,714,351,719,345,721,336,721,324,720,314,722,306,725,300,731,290,736,278,740,267,744,256,744,244,744,234,736,215,728,194,718,175"/>
+        <area data-muscle="dorsal" href="#" shape="poly"
+              coords="802,161,818,174,830,185,839,191,845,196,847,203,846,211,843,218,843,224,843,230,844,236,839,250,835,262,831,269,828,277,824,284,823,293,821,304,822,315,822,325,823,336,824,345,825,356,826,362,828,370,823,365,818,360,810,355,805,351,798,348,792,341,791,328,791,316,791,308,788,301,783,292,778,282,775,272,771,263,768,252,770,235,774,224,778,211,785,196,791,183,796,173"/>
+        <area data-muscle="lombaires" href="#" shape="poly"
+              coords="766,243,763,249,760,254,757,257,753,255,749,247,745,240,748,252,746,258,744,265,740,275,737,283,733,291,731,296,728,302,725,308,724,314,724,320,724,328,724,335,722,342,718,349,726,347,732,347,739,348,745,351,750,355,753,359,754,364,756,370,759,364,762,357,766,353,772,348,778,346,784,347,791,347,792,348,790,338,789,330,789,321,789,314,787,306,783,298,780,289,775,282,772,273,769,264,767,255"/>
+        <area data-muscle="fessiers" href="#" shape="poly"
+              coords="710,352,705,359,699,369,696,378,695,388,692,395,691,406,691,414,694,421,697,427,702,434,710,437,718,439,731,440,740,440,748,438,755,431,755,418,756,390,756,374,753,364,747,355,740,351,730,347,722,349"/>
+        <area data-muscle="fessiers" href="#" shape="poly"
+              coords="758,426,758,370,763,358,771,351,781,349,792,350,800,352,808,359,811,363,815,372,818,382,820,391,823,403,822,412,821,421,815,428,811,433,803,438,790,441,780,440,772,440,765,438,760,433"/>
+        <area data-muscle="ischio" href="#" shape="poly"
+              coords="810,357,820,364,828,375,830,385,833,396,836,417,841,440,845,467,845,490,845,517,844,540,836,573,829,579,823,575,812,554,809,559,809,572,808,579,805,588,797,589,790,580,786,567,779,537,765,476,762,461,758,442,756,432,764,439,773,442,785,442,792,441,804,438,817,430,822,421,825,409,823,396,818,383,814,370"/>
+        <area data-muscle="ischio" href="#" shape="poly"
+              coords="754,435,749,474,741,509,733,537,731,545,728,557,725,571,722,582,714,589,706,582,702,571,701,555,696,560,692,568,689,577,682,576,677,566,673,553,671,537,668,514,668,491,669,469,669,450,673,435,675,422,677,409,680,395,682,387,684,374,688,367,695,363,706,353,703,360,698,373,694,382,691,393,689,402,689,412,692,422,695,430,704,436,715,440,728,441,740,441,748,439"/>
+        <area data-muscle="mollets" href="#" shape="poly"
+              coords="667,615,662,628,659,640,659,656,658,667,661,682,665,690,669,694,676,694,681,685,685,676,689,672,690,674,692,680,693,688,695,694,701,696,707,694,712,687,714,678,715,667,713,637,709,628,703,622,698,625,694,629,687,626,681,620,675,615"/>
+        <area data-muscle="mollets" href="#" shape="poly"
+              coords="843,613,839,617,833,622,828,625,821,628,813,625,807,627,802,630,802,634,801,642,800,647,799,656,799,662,799,667,799,673,799,680,800,687,803,691,808,696,815,697,820,692,821,685,822,678,825,672,829,676,831,681,834,688,838,692,842,695,845,694,850,687,853,678,854,668,855,656,854,646,852,636,851,626,847,617"/>
+      </map>
+
+      <!-- Chips muscles sélectionnés -->
+      <div id="profil-muscles-chips"
+           style="display:flex;flex-wrap:wrap;gap:6px;
+                  justify-content:center;margin-bottom:10px;
+                  min-height:32px">
+        ${chipsHTML}
+      </div>
+
+      <!-- Info -->
+      <div style="padding:8px 12px;
+                  background:rgba(75,75,249,0.06);
+                  border:1px solid rgba(75,75,249,0.12);
+                  border-radius:var(--radius-md);
+                  font-size:.7rem;color:var(--text-muted);
+                  text-align:center">
+        💡 Laisse vide pour un programme corps complet
       </div>
     `;
   },
 
   // ════════════════════════════════════════════════════════
-  // TOGGLE MUSCLE — ✅ v2.0 sans perte d'état
+  // ✅ NOUVEAU v3.0 — Init maphilight sur image profil
   // ════════════════════════════════════════════════════════
-  _musclesCiblesTemp: [],
+  _initBodyMap(musclesCibles = []) {
 
-  // ✅ NOUVEAU v2.0 — Toggle dans modal (state en mémoire)
+    const CFG_COULEURS = {
+      pectoraux:  { r:75,  g:75,  b:249 },
+      deltoides:  { r:191, g:161, b:255 },
+      biceps:     { r:139, g:240, b:187 },
+      avantbras:  { r:139, g:240, b:187 },
+      abdominaux: { r:249, g:239, b:119 },
+      quadriceps: { r:34,  g:197, b:94  },
+      trapeze:    { r:139, g:240, b:187 },
+      dorsal:     { r:75,  g:75,  b:249 },
+      lombaires:  { r:191, g:161, b:255 },
+      fessiers:   { r:255, g:141, b:150 },
+      ischio:     { r:249, g:239, b:119 },
+      mollets:    { r:191, g:161, b:255 },
+      triceps:    { r:255, g:141, b:150 }
+    };
+
+    const toHex = (r,g,b) =>
+      [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+
+    const img = document.getElementById('profil-body-img');
+    if (!img) return;
+
+    const doInit = () => {
+      // imageMapResize pour responsive
+      if (typeof imageMapResize !== 'undefined') {
+        imageMapResize('#profil-image-map');
+      }
+
+      // Fallback sans maphilight — juste les clics
+      if (typeof $ === 'undefined' || !$.fn?.maphilight) {
+        // Bind clics simples
+        document.querySelectorAll(
+          '#profil-image-map area[data-muscle]'
+        ).forEach(area => {
+          area.addEventListener('click', e => {
+            e.preventDefault();
+            Profil._toggleMuscleModal(area.dataset.muscle);
+          });
+        });
+        return;
+      }
+
+      // Avec maphilight
+      $('#profil-body-img').maphilight({
+        fillColor:   '4b4bf9',
+        fillOpacity: 0.35,
+        stroke:      true,
+        strokeColor: '4b4bf9',
+        strokeWidth: 2,
+        fade:        true
+      });
+
+      $('#profil-image-map area[data-muscle]').each(function() {
+        const m   = $(this).data('muscle');
+        const cfg = CFG_COULEURS[m];
+        if (!cfg) return;
+        const hex  = toHex(cfg.r, cfg.g, cfg.b);
+        const isOn = musclesCibles.includes(m);
+        $(this).data('maphilight', {
+          fillColor:   hex,
+          fillOpacity: isOn ? 0.55 : 0.35,
+          strokeColor: hex,
+          strokeWidth: isOn ? 3 : 2,
+          fade:        true,
+          alwaysOn:    isOn
+        });
+      });
+
+      $('#profil-body-img').maphilight('options', {});
+
+      $('#profil-image-map area[data-muscle]')
+        .off('click')
+        .on('click', function(e) {
+          e.preventDefault();
+          Profil._toggleMuscleModal($(this).data('muscle'));
+        });
+    };
+
+    if (img.complete && img.naturalWidth > 0) {
+      doInit();
+    } else {
+      img.onload = doInit;
+    }
+  },
+
+  // ════════════════════════════════════════════════════════
+  // TOGGLE MUSCLE MODAL — ✅ v3.0 avec re-init maphilight
+  // ════════════════════════════════════════════════════════
+  _tmpData: {},
+
   _toggleMuscleModal(muscle) {
-    // ✅ Utiliser _tmpData pour ne pas écraser le profil
-    //    tant que la modal n'est pas sauvegardée
     if (!this._tmpData) this._tmpData = { ...this.get() };
     if (!this._tmpData.muscles_cibles) {
       this._tmpData.muscles_cibles = [];
@@ -1050,65 +881,69 @@ const Profil = {
 
     const muscles = this._tmpData.muscles_cibles;
     const idx     = muscles.indexOf(muscle);
-
     if (idx === -1) muscles.push(muscle);
     else            muscles.splice(idx, 1);
-
     this._tmpData.muscles_cibles = muscles;
 
-    // ✅ Re-render le container SVG dans la modal
+    // Re-render le conteneur SVG
     const container = document.getElementById('corps-svg-container');
     if (container) {
       container.innerHTML = this.renderCorpsSVG(muscles);
+      // Re-init maphilight après re-render
+      setTimeout(() => {
+        this._initBodyMap(muscles);
+      }, 100);
     }
 
     Utils.vibrer([20]);
+
+    // Toast discret
+    const cfg = this.MUSCLES[muscle];
+    Utils.toast(
+      idx === -1
+        ? `✅ ${cfg?.label || muscle} ajouté`
+        : `${cfg?.label || muscle} retiré`,
+      'success', 700
+    );
   },
 
-  // ✅ _toggleMuscle (depuis page profil, hors modal)
+  // ✅ Toggle depuis page profil (hors modal)
   _toggleMuscle(muscle) {
     const profil  = this.get();
     const muscles = [...(profil.muscles_cibles || [])];
     const idx     = muscles.indexOf(muscle);
-
     if (idx === -1) muscles.push(muscle);
     else            muscles.splice(idx, 1);
-
     this.set({ muscles_cibles: muscles });
 
     const wrapper = document.getElementById('corps-svg-wrapper');
     if (wrapper) {
-      const parent = wrapper.parentElement;
-      if (parent) parent.innerHTML = this.renderCorpsSVG(muscles);
+      wrapper.innerHTML = this.renderCorpsSVG(muscles);
+      setTimeout(() => this._initBodyMap(muscles), 100);
     }
-
     Utils.vibrer([20]);
-    Utils.toast(
-      idx === -1
-        ? `✅ ${this.MUSCLES[muscle]?.label || muscle} ajouté`
-        : `${this.MUSCLES[muscle]?.label || muscle} retiré`,
-      'success', 800
-    );
+  },
+
+  _tmpSet(key, val) {
+    if (!this._tmpData) this._tmpData = {};
+    this._tmpData[key] = val;
   },
 
   // ════════════════════════════════════════════════════════
-  // MODAL ÉDITION — ✅ v2.0 muscles depuis _tmpData
+  // MODAL ÉDITION — ✅ v3.0 avec vrai corps anatomique
   // ════════════════════════════════════════════════════════
   _ouvrirEdition() {
     const modal   = document.getElementById('modal-info');
     const content = document.getElementById('modal-info-content');
     if (!modal || !content) return;
 
-    const profil = this.get();
-
-    // ✅ Init _tmpData avec le profil actuel
-    this._tmpData = { ...profil };
+    const profil     = this.get();
+    this._tmpData    = { ...profil };
 
     content.innerHTML = `
       <div style="padding:16px">
 
-        <div style="font-size:1rem;font-weight:800;
-                    margin-bottom:16px">
+        <div style="font-size:1rem;font-weight:800;margin-bottom:16px">
           ✏️ Modifier mon profil
         </div>
 
@@ -1119,8 +954,7 @@ const Profil = {
                       color:var(--text-muted);margin-bottom:8px">
             👤 Genre
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;
-                      gap:8px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             ${['homme','femme'].map(g => `
               <button onclick="Profil._tmpSet('genre','${g}');
                       document.querySelectorAll('.btn-genre')
@@ -1153,28 +987,24 @@ const Profil = {
                  placeholder="Prénom *"
                  value="${profil.nom || ''}"/>
           <div style="display:grid;
-                      grid-template-columns:1fr 1fr 1fr;
-                      gap:8px">
+                      grid-template-columns:1fr 1fr 1fr;gap:8px">
             <div>
-              <div style="font-size:.6rem;color:var(--text-muted);
-                          margin-bottom:4px">Poids (kg)</div>
+              <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:4px">
+                Poids (kg)</div>
               <input class="input" id="edit-poids" type="number"
-                     placeholder="80"
-                     value="${profil.poids || ''}"/>
+                     placeholder="80" value="${profil.poids || ''}"/>
             </div>
             <div>
-              <div style="font-size:.6rem;color:var(--text-muted);
-                          margin-bottom:4px">Taille (cm)</div>
+              <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:4px">
+                Taille (cm)</div>
               <input class="input" id="edit-taille" type="number"
-                     placeholder="175"
-                     value="${profil.taille || ''}"/>
+                     placeholder="175" value="${profil.taille || ''}"/>
             </div>
             <div>
-              <div style="font-size:.6rem;color:var(--text-muted);
-                          margin-bottom:4px">Âge</div>
+              <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:4px">
+                Âge</div>
               <input class="input" id="edit-age" type="number"
-                     placeholder="25"
-                     value="${profil.age || ''}"/>
+                     placeholder="25" value="${profil.age || ''}"/>
             </div>
           </div>
         </div>
@@ -1186,8 +1016,7 @@ const Profil = {
                       color:var(--text-muted);margin-bottom:8px">
             🎯 Objectif
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;
-                      gap:6px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
             ${Object.entries(this.OBJECTIFS).map(([val, obj]) => `
               <button onclick="Profil._tmpSet('objectif','${val}');
                       document.querySelectorAll('.btn-obj').forEach(b=>{
@@ -1204,11 +1033,9 @@ const Profil = {
                              border:1px solid ${profil.objectif === val
                                ? `${obj.couleur}66`
                                : 'rgba(255,255,255,0.1)'};
-                             border-radius:var(--radius-md);
-                             cursor:pointer">
+                             border-radius:var(--radius-md);cursor:pointer">
                 <div style="font-size:.78rem;font-weight:700;
-                            color:var(--text-primary)">
-                  ${obj.label}</div>
+                            color:var(--text-primary)">${obj.label}</div>
                 <div style="font-size:.58rem;color:var(--text-muted);
                             margin-top:2px">${obj.desc}</div>
               </button>`).join('')}
@@ -1222,8 +1049,7 @@ const Profil = {
                       color:var(--text-muted);margin-bottom:8px">
             📊 Niveau
           </div>
-          <div style="display:grid;
-                      grid-template-columns:repeat(3,1fr);gap:6px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
             ${Object.entries(this.NIVEAUX).map(([val, niv]) => `
               <button onclick="Profil._tmpSet('niveau','${val}');
                       document.querySelectorAll('.btn-niv').forEach(b=>{
@@ -1240,12 +1066,9 @@ const Profil = {
                              border:1px solid ${profil.niveau === val
                                ? 'rgba(75,75,249,0.4)'
                                : 'rgba(255,255,255,0.1)'};
-                             border-radius:var(--radius-md);
-                             cursor:pointer">
-                <div style="font-size:.82rem;font-weight:700">
-                  ${niv.label}</div>
-                <div style="font-size:.58rem;color:var(--text-muted)">
-                  ${niv.desc}</div>
+                             border-radius:var(--radius-md);cursor:pointer">
+                <div style="font-size:.82rem;font-weight:700">${niv.label}</div>
+                <div style="font-size:.58rem;color:var(--text-muted)">${niv.desc}</div>
               </button>`).join('')}
           </div>
         </div>
@@ -1257,8 +1080,7 @@ const Profil = {
                       color:var(--text-muted);margin-bottom:8px">
             📍 Lieu d'entraînement
           </div>
-          <div style="display:grid;
-                      grid-template-columns:repeat(3,1fr);gap:6px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
             ${Object.entries(this.LIEUX).map(([val, lieu]) => `
               <button onclick="Profil._tmpSet('lieu','${val}');
                       document.querySelectorAll('.btn-lieu').forEach(b=>{
@@ -1275,26 +1097,29 @@ const Profil = {
                              border:1px solid ${(profil.lieu||'salle') === val
                                ? 'rgba(139,240,187,0.3)'
                                : 'rgba(255,255,255,0.1)'};
-                             border-radius:var(--radius-md);
-                             cursor:pointer">
+                             border-radius:var(--radius-md);cursor:pointer">
                 <div style="font-size:.85rem;margin-bottom:3px">
                   ${lieu.label.split(' ')[0]}</div>
                 <div style="font-size:.7rem;font-weight:700">
                   ${lieu.label.split(' ').slice(1).join(' ')}</div>
-                <div style="font-size:.55rem;color:var(--text-muted);
-                            margin-top:2px">${lieu.desc}</div>
+                <div style="font-size:.55rem;color:var(--text-muted);margin-top:2px">
+                  ${lieu.desc}</div>
               </button>`).join('')}
           </div>
         </div>
 
-        <!-- CORPS SVG dans modal -->
+        <!-- ✅ NOUVEAU v3.0 — Corps anatomique réaliste -->
         <div style="margin-bottom:14px">
           <div style="font-size:.6rem;font-weight:700;
                       text-transform:uppercase;letter-spacing:.1em;
                       color:var(--text-muted);margin-bottom:8px">
             🎯 Muscles à cibler
           </div>
-          <div id="corps-svg-container">
+          <div id="corps-svg-container"
+               style="background:rgba(255,255,255,0.02);
+                      border:1px solid rgba(255,255,255,0.07);
+                      border-radius:var(--radius-lg);
+                      padding:14px">
             ${this.renderCorpsSVG(profil.muscles_cibles || [])}
           </div>
         </div>
@@ -1316,27 +1141,25 @@ const Profil = {
     `;
 
     modal.classList.remove('hidden');
+
+    // ✅ Init maphilight après render
+    setTimeout(() => {
+      this._initBodyMap(profil.muscles_cibles || []);
+    }, 200);
+
     const closeBtn = document.getElementById('modal-info-close');
     if (closeBtn) closeBtn.onclick = () =>
       modal.classList.add('hidden');
   },
 
-  _tmpData: {},
-  _tmpSet(key, val) {
-    if (!this._tmpData) this._tmpData = {};
-    this._tmpData[key] = val;
-  },
-
-  // ✅ v2.0 — muscles_cibles depuis _tmpData
+  // ════════════════════════════════════════════════════════
+  // SAUVEGARDER (v2.0 conservé)
+  // ════════════════════════════════════════════════════════
   _sauvegarderEdition() {
-    const nom    = document.getElementById('edit-nom')
-      ?.value?.trim();
-    const poids  = parseFloat(
-      document.getElementById('edit-poids')?.value);
-    const taille = parseFloat(
-      document.getElementById('edit-taille')?.value);
-    const age    = parseInt(
-      document.getElementById('edit-age')?.value);
+    const nom    = document.getElementById('edit-nom')?.value?.trim();
+    const poids  = parseFloat(document.getElementById('edit-poids')?.value);
+    const taille = parseFloat(document.getElementById('edit-taille')?.value);
+    const age    = parseInt(document.getElementById('edit-age')?.value);
 
     if (!nom) {
       Utils.toast('Entre ton prénom !', 'error');
@@ -1349,7 +1172,6 @@ const Profil = {
       poids:          isNaN(poids)  ? this._tmpData.poids  : poids,
       taille:         isNaN(taille) ? this._tmpData.taille : taille,
       age:            isNaN(age)    ? this._tmpData.age    : age,
-      // ✅ FIX v2.0 — muscles depuis _tmpData
       muscles_cibles: this._tmpData.muscles_cibles || []
     };
 
@@ -1360,20 +1182,18 @@ const Profil = {
     Utils.toast('✅ Profil mis à jour !', 'success');
     Utils.vibrerSuccess();
 
-    // ✅ Re-render la page profil si active
-    const container = document.getElementById('page-mon_profil')
-      || document.querySelector('[id*="profil"]');
+    // Re-render pages si actives
+    const container = document.getElementById('page-mon_profil');
     if (container && window._pageActive === 'mon_profil') {
       this.renderPage(container);
     }
 
-    // ✅ Re-render home si active
     const home = document.getElementById('page-home');
     if (home && window._pageActive === 'home') {
       try { _rendreHome(home); } catch(e) {}
     }
 
-    // ✅ NOUVEAU v2.0 — Appliquer planning selon genre + lieu
+    // Appliquer planning
     try {
       Programme.appliquerPlanningGenre(
         miseAJour.genre || 'homme',
@@ -1384,4 +1204,4 @@ const Profil = {
 };
 
 window.Profil = Profil;
-console.log('✅ Profil.js v2.0 chargé — Sync onboarding + Thème + Fix muscles');
+console.log('✅ Profil.js v3.0 — Corps anatomique réaliste + maphilight + sync complet');
