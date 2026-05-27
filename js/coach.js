@@ -699,7 +699,11 @@ const Coach = {
       return `${this._salutation()} ${nom} ! ${genre==='femme'?'🌸':'👋'}\n\nJe suis ton Coach IA PowerApp.\n\nJe peux t'aider avec :\n  💪 Tes records & progression\n  📅 Ton planning & programme\n  🥗 Nutrition\n  😴 Récupération & décharge\n  🔮 Prédictions de PRs\n  🔥 Motivation\n  💪 Tes muscles ciblés\n  🧠 Générer un programme IA\n\nDe quoi as-tu besoin ? 🎯`;
     }
 
-    return Utils## 🤖 Feature 1 — Coach IA Conversationnel v7.0
+    return Utils.random([
+      `${nom} — je peux t'aider sur :\n  💪 Records / PRs\n  📈 Volume / Programme\n  😴 Récupération\n  🥗 Nutrition\n  🔥 Motivation\n  💪 Muscles ciblés\n  🧠 Générer un programme IA\n\nPrécise ! 🎯`,
+      `Pour te donner les meilleurs conseils ${nom}, dis-moi ce que tu cherches : force, volume, récupération, nutrition ou programme ?`
+    ]);
+  },
 
 Le coach actuel est bon mais je vais l'**upgrader massivement** avec :
 ---
