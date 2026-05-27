@@ -1087,9 +1087,7 @@ getAnalyseSemaine() {
     } catch(e) {
       return { oui: false, raison: '' };
     }
-  }
-
-};
+  },
 
 // ════════════════════════════════════════════════════════════
 // COACH PROGRAMME IA — Générateur de programmes personnalisés
