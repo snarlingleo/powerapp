@@ -1547,6 +1547,275 @@ Coach.ProgrammeIA = {
 };
 
 // ════════════════════════════════════════════════════════════
-window.Coach = Coach;
+// ════════════════════════════════════════════════════════════
+// renderCoachTab — Page principale Coach IA
+// ════════════════════════════════════════════════════════════
+renderCoachTab(container) {
+  if (!container) return;
 
+  this._chargerHistorique();
+  const ctx    = this._getContexteComplet();
+  const msg    = this.getMessageDuJour();
+  const proact = this.getMessagesProactifs();
+
+  container.innerHTML = `
+
+    <!-- Message du jour -->
+    <div style="background:linear-gradient(135deg,
+                rgba(75,75,249,0.15),rgba(75,75,249,0.05));
+                border:1px solid rgba(75,75,249,0.3);
+                border-radius:var(--radius-xl);
+                padding:16px;margin-bottom:14px">
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.1em;
+                  color:var(--fd-indigo);margin-bottom:6px">
+        ${msg.emoji} Coach IA — Message du jour
+      </div>
+      <p style="font-size:.85rem;color:var(--text-secondary);
+                line-height:1.6;margin:0;white-space:pre-line">
+        ${msg.message}
+      </p>
+    </div>
+
+    <!-- Alertes proactives -->
+    ${proact.length > 0 ? proact.map(p => `
+      <div style="background:${p.type === 'alerte' || p.type === 'urgence'
+          ? 'rgba(255,141,150,0.08)'
+          : 'rgba(75,75,249,0.06)'};
+                  border:1px solid ${p.type === 'alerte' || p.type === 'urgence'
+          ? 'rgba(255,141,150,0.25)'
+          : 'rgba(75,75,249,0.2)'};
+                  border-left:3px solid ${p.type === 'alerte' || p.type === 'urgence'
+          ? 'var(--fd-coral)'
+          : 'var(--fd-indigo)'};
+                  border-radius:var(--radius-lg);
+                  padding:12px 14px;margin-bottom:8px">
+        <div style="font-size:.72rem;font-weight:700;
+                    color:${p.type === 'alerte' || p.type === 'urgence'
+                      ? 'var(--fd-coral)' : 'var(--fd-indigo)'};
+                    margin-bottom:3px">
+          ${p.emoji} ${p.titre}
+        </div>
+        <div style="font-size:.72rem;color:var(--text-secondary)">
+          ${p.message}
+        </div>
+        ${p.action ? `
+          <button onclick="naviguer('${p.action.page}')"
+                  style="margin-top:8px;padding:5px 12px;
+                         font-size:.65rem;font-weight:700;
+                         background:rgba(75,75,249,0.15);
+                         border:1px solid rgba(75,75,249,0.3);
+                         border-radius:99px;
+                         color:var(--fd-indigo);cursor:pointer">
+            ${p.action.label} →
+          </button>` : ''}
+      </div>`).join('') : ''}
+
+    <!-- Accès rapides -->
+    <div style="background:rgba(255,255,255,0.03);
+                border:1px solid rgba(255,255,255,0.07);
+                border-radius:var(--radius-xl);
+                padding:14px;margin-bottom:14px">
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.1em;
+                  color:var(--text-muted);margin-bottom:10px">
+        ⚡ Accès rapides
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${[
+          { emoji:'🔮', label:'Prédictions',      page:'predict'   },
+          { emoji:'🏆', label:'Défis',            page:'defis'     },
+          { emoji:'🧠', label:'Programme IA',     page:'adaptatif' },
+          { emoji:'📊', label:'Statistiques',     page:'stats'     },
+          { emoji:'🥗', label:'Nutrition',        page:'nutrition' },
+          { emoji:'📈', label:'Progression',      page:'history'   }
+        ].map(s => `
+          <div onclick="naviguer('${s.page}')"
+               style="display:flex;align-items:center;gap:10px;
+                      padding:10px 12px;cursor:pointer;
+                      background:rgba(255,255,255,0.03);
+                      border:1px solid rgba(255,255,255,0.07);
+                      border-radius:var(--radius-md);
+                      transition:all .2s"
+               onmouseenter="this.style.borderColor='rgba(75,75,249,0.3)';
+                             this.style.background='rgba(75,75,249,0.06)'"
+               onmouseleave="this.style.borderColor='rgba(255,255,255,0.07)';
+                             this.style.background='rgba(255,255,255,0.03)'">
+            <span style="font-size:1.1rem">${s.emoji}</span>
+            <span style="font-size:.78rem;font-weight:600">${s.label}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Stats rapides -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                gap:8px;margin-bottom:14px">
+      ${[
+        { emoji:'🔥', val:`${ctx.streak}j`,          label:'Streak',    color:'var(--fd-lemon)'    },
+        { emoji:'📊', val:`${ctx.scoreForme}/100`,    label:'Forme',     color:'var(--fd-indigo)'   },
+        { emoji:'🏆', val:`${ctx.nbPRs}`,             label:'Records',   color:'var(--fd-mint)'     }
+      ].map(s => `
+        <div style="background:rgba(255,255,255,0.04);
+                    border:1px solid rgba(255,255,255,0.08);
+                    border-radius:var(--radius-lg);
+                    padding:12px;text-align:center">
+          <div style="font-size:.85rem;margin-bottom:3px">${s.emoji}</div>
+          <div style="font-size:.95rem;font-weight:800;color:${s.color}">
+            ${s.val}</div>
+          <div style="font-size:.58rem;color:var(--text-muted);margin-top:2px">
+            ${s.label}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Chat Coach IA -->
+    <div style="background:rgba(255,255,255,0.03);
+                border:1px solid rgba(255,255,255,0.07);
+                border-radius:var(--radius-xl);
+                padding:14px;margin-bottom:14px">
+      <div style="font-size:.6rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.1em;
+                  color:var(--text-muted);margin-bottom:10px">
+        💬 Pose une question au Coach IA
+      </div>
+
+      <!-- Historique chat -->
+      <div id="coach-chat-messages"
+           style="max-height:300px;overflow-y:auto;
+                  margin-bottom:10px;scrollbar-width:thin">
+        ${this._historique.length === 0 ? `
+          <div style="text-align:center;padding:20px;
+                      color:var(--text-muted);font-size:.78rem">
+            👋 Pose-moi n'importe quelle question sur ton entraînement !
+          </div>` :
+          this._historique.map(m => `
+            <div style="margin-bottom:8px;
+                        text-align:${m.role === 'user' ? 'right' : 'left'}">
+              <div style="display:inline-block;max-width:85%;
+                          padding:10px 14px;
+                          background:${m.role === 'user'
+                            ? 'var(--fd-indigo)'
+                            : 'rgba(255,255,255,0.06)'};
+                          border-radius:${m.role === 'user'
+                            ? '14px 14px 4px 14px'
+                            : '14px 14px 14px 4px'};
+                          font-size:.78rem;
+                          color:${m.role === 'user'
+                            ? 'white' : 'var(--text-primary)'};
+                          white-space:pre-line;
+                          text-align:left">
+                ${m.content}
+              </div>
+            </div>`).join('')}
+      </div>
+
+      <!-- Questions suggérées -->
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
+        ${[
+          'Charge pour bench ?',
+          'Plan semaine',
+          'Mes records',
+          'Prédictions',
+          'Récupération',
+          '🧠 Programme IA'
+        ].map(q => `
+          <button onclick="Coach._envoyerChat('${q}')"
+                  style="padding:4px 10px;font-size:.65rem;
+                         font-weight:600;cursor:pointer;
+                         background:rgba(75,75,249,0.1);
+                         border:1px solid rgba(75,75,249,0.2);
+                         border-radius:99px;
+                         color:var(--fd-indigo)">
+            ${q}
+          </button>`).join('')}
+      </div>
+
+      <!-- Input chat -->
+      <div style="display:flex;gap:8px">
+        <input id="coach-input"
+               type="text"
+               placeholder="Pose ta question..."
+               style="flex:1;padding:10px 14px;
+                      background:var(--bg-input);
+                      border:1px solid var(--border-color);
+                      border-radius:var(--radius-full);
+                      color:var(--text-primary);
+                      font-size:.82rem;outline:none"
+               onkeydown="if(event.key==='Enter'){
+                 Coach._envoyerChat(this.value);
+                 this.value='';
+               }"/>
+        <button onclick="const inp=document.getElementById('coach-input');
+                         Coach._envoyerChat(inp.value);
+                         inp.value=''"
+                style="padding:10px 18px;background:var(--fd-indigo);
+                       border:none;border-radius:var(--radius-full);
+                       color:white;font-size:.82rem;
+                       font-weight:700;cursor:pointer">
+          ▶
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Scroll vers le bas du chat
+  requestAnimationFrame(() => {
+    const chatEl = document.getElementById('coach-chat-messages');
+    if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
+  });
+},
+
+// ─── Envoyer un message depuis le chat ──────────────────
+async _envoyerChat(question) {
+  if (!question?.trim()) return;
+  const q = question.trim();
+
+  // Ajouter le message utilisateur
+  const hist = this._historique;
+  hist.push({ role:'user', content:q });
+  this._historique = hist;
+
+  // Afficher "en cours"
+  const chatEl = document.getElementById('coach-chat-messages');
+  if (chatEl) {
+    chatEl.innerHTML += `
+      <div style="margin-bottom:8px;text-align:right">
+        <div style="display:inline-block;max-width:85%;
+                    padding:10px 14px;background:var(--fd-indigo);
+                    border-radius:14px 14px 4px 14px;
+                    font-size:.78rem;color:white">
+          ${q}
+        </div>
+      </div>
+      <div id="coach-typing" style="margin-bottom:8px">
+        <div style="display:inline-block;padding:10px 14px;
+                    background:rgba(255,255,255,0.06);
+                    border-radius:14px 14px 14px 4px;
+                    font-size:.78rem;color:var(--text-muted)">
+          🤖 Coach réfléchit...
+        </div>
+      </div>`;
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  // Obtenir la réponse
+  const reponse = await this.envoyerMessage(q);
+
+  // Remplacer le "en cours"
+  const typing = document.getElementById('coach-typing');
+  if (typing) {
+    typing.outerHTML = `
+      <div style="margin-bottom:8px">
+        <div style="display:inline-block;max-width:85%;
+                    padding:10px 14px;
+                    background:rgba(255,255,255,0.06);
+                    border-radius:14px 14px 14px 4px;
+                    font-size:.78rem;color:var(--text-primary);
+                    white-space:pre-line">
+          ${reponse}
+        </div>
+      </div>`;
+    if (chatEl) chatEl.scrollTop = chatEl.scrollHeight;
+  }
+}
+window.Coach = Coach;
 console.log('✅ Coach IA v7.0 chargé');
