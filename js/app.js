@@ -179,11 +179,18 @@ case 'live': {
   try { Coach.renderCoachTabV7(container); }
   catch(e) { Coach.renderCoachTab(container); }
   break;
-      case 'defis':        Defis.render(container);                       break;
+      case 'defis':
+  try { Defis.render(container); }
+  catch(e) { _rendrePlaceholder(container,'🎯','Défis',''); }
+  break;
       case 'predict':
   try { Predict.render(container); }
   catch(e) { _rendrePlaceholder(container,'🔮','Prédictions IA',''); }
   break;
+      case 'calculateur':
+  try { Calculateur.render(container); }
+  catch(e) { _rendrePlaceholder(container,'🧮','Calculateur',''); }
+  break;    
       case 'share':        Share.render(container);                       break;
       case 'gamification': Gamification.renderGamificationTab(container); break;
       case 'history':      History.render(container);                     break;
@@ -5351,7 +5358,8 @@ function _rendreProfil(container) {
       { page:'blessures',    emoji:'🩹', label:'Blessures'           },
       { page:'coach',        emoji:'🤖', label:'Coach IA'            },
       { page:'defis',        emoji:'🏆', label:'Défis'               },
-      { page:'predict',      emoji:'📈', label:'Prédictions'         },
+      { page:'predict',      emoji:'🔮', label:'Prédictions IA'      },
+      { page:'calculateur',  emoji:'🧮', label:'Calculateur'         }, 
       { page:'share',        emoji:'📤', label:'Partage'             },
       { page:'supersets',    emoji:'⚡', label:'Supersets'           },
       { page:'social',       emoji:'📱', label:'Réseaux sociaux'     },
