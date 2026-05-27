@@ -20,14 +20,9 @@ function naviguer(page, options = {}) {
       p.style.display = 'none';
     });
 
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.classList.remove('active');
-    });
-
-    const navPages = ['home','training','live','stats','nutrition'];
-    if (navPages.includes(page)) {
-      document.getElementById(`nav-${page}`)?.classList.add('active');
-    }
+    // ✅ NOUVEAU — Nav Glassmorphism Neon
+    window._pageActive = page;
+    _rendreNavBar();
 
     const pageEl = document.getElementById(`page-${page}`)
       || document.getElementById('page-home');
