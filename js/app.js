@@ -94,6 +94,7 @@ function _updateHeader(page) {
     journal:      { emoji:'📔', titre:'Journal'            },
     objectifs:    { emoji:'🎯', titre:'Objectifs'          },
     circuit:      { emoji:'🔄', titre:'Circuit Training'   },
+    circuit:      { emoji:'⚡', titre:'HIIT & Cardio'      }, 
     adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif'},
     galerie:      { emoji:'💪', titre:'Galerie exercices'  },
     blessures:    { emoji:'🩹', titre:'Blessures'          }
@@ -193,9 +194,15 @@ case 'live': {
         catch(e) { _rendreNutrition(container); }
         break;
       case 'circuit':
-        try { Circuit.render(container); }
-        catch(e) { _rendrePlaceholder(container,'🔄','Circuit Training','Module circuit non disponible.'); }
-        break;
+  try { HIIT.render(container); }
+  catch(e) {
+    try { Circuit.render(container); }
+    catch(e2) { _rendrePlaceholder(
+      container,'⚡','HIIT & Cardio',
+      'Module HIIT non disponible.'
+    ); }
+  }
+  break;
       case 'adaptatif':
   // ✅ Programme IA en priorité
   try { Coach.ProgrammeIA.render(container); }
