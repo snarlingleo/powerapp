@@ -5357,6 +5357,7 @@ function _rendreProfil(container) {
       { page:'history',      emoji:'📅', label:'Historique'          },
       { page:'photos',       emoji:'📸', label:'Photos'              },
       { page:'circuit',      emoji:'🔄', label:'Circuit Training'    },
+      { page:'circuit',      emoji:'⚡', label:'HIIT & Cardio'       }, 
       { page:'adaptatif',    emoji:'🧠', label:'Programme Adaptatif' },
       { page:'nutrition',    emoji:'🥗', label:'Nutrition'           },
       { page:'galerie',      emoji:'💪', label:'Galerie exercices'   },
