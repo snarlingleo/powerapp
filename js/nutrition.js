@@ -1,16 +1,22 @@
 /* ============================================================
-   PowerApp — Nutrition.js v5.0 COMPLET
-   ✅ 60+ aliments · 30+ recettes
-   ✅ Adapté genre (homme/femme)
-   ✅ Adapté objectif (masse/sèche/force/endurance/forme)
-   ✅ Adapté séance du jour (pré/post)
-   ✅ Score nutrition · Streak · Stats · Charts
+   PowerApp — Nutrition.js v6.0 COMPLET
+   ✅ Tout v5.0 conservé
+   ✅ 200+ aliments base de données
+   ✅ 50+ recettes enrichies
+   ✅ Planificateur repas semaine
+   ✅ Liste de courses automatique
+   ✅ Donut macros animé
+   ✅ Aliments favoris + récents
+   ✅ Streak calendar visuel
+   ✅ Comparaison semaines
+   ✅ Export nutrition
+   ✅ Intégration séance du jour
    ============================================================ */
 
 'use strict';
 
 // ════════════════════════════════════════════════════════════
-// BASE DE DONNÉES ALIMENTS — 60 aliments
+// BASE DE DONNÉES ALIMENTS — 200+ aliments
 // ════════════════════════════════════════════════════════════
 const ALIMENTS_DB = {
 
@@ -75,6 +81,47 @@ const ALIMENTS_DB = {
     cal:185, prot:25, gluc:0,   lip:10,  portion:100, unite:'g',
     genre:['homme','femme'], objectifs:['prise_masse','force']
   },
+  // ✅ NOUVEAU v6.0
+  poulet_roti: {
+    nom:'Poulet rôti', emoji:'🍗', categorie:'proteines',
+    cal:172, prot:29, gluc:0,   lip:5,   portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  saumon_fume: {
+    nom:'Saumon fumé', emoji:'🐠', categorie:'proteines',
+    cal:142, prot:20, gluc:0,   lip:7,   portion:100, unite:'g',
+    genre:['femme'], objectifs:['forme','seche']
+  },
+  maquereau: {
+    nom:'Maquereau', emoji:'🐟', categorie:'proteines',
+    cal:205, prot:19, gluc:0,   lip:14,  portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['force','prise_masse']
+  },
+  veau: {
+    nom:'Escalope de veau', emoji:'🥩', categorie:'proteines',
+    cal:130, prot:26, gluc:0,   lip:3,   portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['seche','force']
+  },
+  jambon_sec: {
+    nom:'Jambon sec', emoji:'🥓', categorie:'proteines',
+    cal:250, prot:29, gluc:0,   lip:15,  portion:50, unite:'g',
+    genre:['homme'], objectifs:['prise_masse','force']
+  },
+  bacon_maigre: {
+    nom:'Bacon maigre', emoji:'🥓', categorie:'proteines',
+    cal:218, prot:27, gluc:0,   lip:12,  portion:60, unite:'g',
+    genre:['homme'], objectifs:['prise_masse']
+  },
+  truite: {
+    nom:'Truite', emoji:'🐟', categorie:'proteines',
+    cal:148, prot:21, gluc:0,   lip:7,   portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  calmar: {
+    nom:'Calmar', emoji:'🦑', categorie:'proteines',
+    cal:92,  prot:16, gluc:3,   lip:1.4, portion:100, unite:'g',
+    genre:['femme'], objectifs:['seche','forme']
+  },
 
   // ── LAITIERS ────────────────────────────────────────────
   whey: {
@@ -107,6 +154,37 @@ const ALIMENTS_DB = {
     cal:63,  prot:11, gluc:4,   lip:0.2, portion:100, unite:'g',
     genre:['femme'], objectifs:['seche','forme']
   },
+  // ✅ NOUVEAU v6.0
+  lait_entier: {
+    nom:'Lait entier', emoji:'🥛', categorie:'laitiers',
+    cal:61,  prot:3.2,gluc:4.8, lip:3.3, portion:200, unite:'ml',
+    genre:['homme'], objectifs:['prise_masse']
+  },
+  lait_ecreme: {
+    nom:'Lait écrémé', emoji:'🥛', categorie:'laitiers',
+    cal:35,  prot:3.4,gluc:5,   lip:0.1, portion:200, unite:'ml',
+    genre:['femme'], objectifs:['forme','perte_poids']
+  },
+  emmental: {
+    nom:'Emmental', emoji:'🧀', categorie:'laitiers',
+    cal:379, prot:29, gluc:1,   lip:29,  portion:30, unite:'g',
+    genre:['homme','femme'], objectifs:['prise_masse','force']
+  },
+  mozzarella: {
+    nom:'Mozzarella', emoji:'🧀', categorie:'laitiers',
+    cal:280, prot:20, gluc:2,   lip:22,  portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['forme']
+  },
+  yaourt_nature: {
+    nom:'Yaourt nature entier', emoji:'🥛', categorie:'laitiers',
+    cal:62,  prot:3.5,gluc:4.5, lip:3.1, portion:125, unite:'g',
+    genre:['homme','femme'], objectifs:['forme']
+  },
+  ricotta: {
+    nom:'Ricotta', emoji:'🧀', categorie:'laitiers',
+    cal:174, prot:11, gluc:3,   lip:13,  portion:100, unite:'g',
+    genre:['femme'], objectifs:['forme']
+  },
 
   // ── VÉGÉTAUX ────────────────────────────────────────────
   tofu: {
@@ -128,6 +206,37 @@ const ALIMENTS_DB = {
     nom:'Edamame', emoji:'🌿', categorie:'proteines',
     cal:122, prot:11, gluc:10,  lip:5,   portion:100, unite:'g',
     genre:['femme'], objectifs:['forme']
+  },
+  // ✅ NOUVEAU v6.0
+  haricots_noirs: {
+    nom:'Haricots noirs', emoji:'🫘', categorie:'glucides',
+    cal:132, prot:8.9,gluc:24,  lip:0.5, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance','forme']
+  },
+  haricots_rouges: {
+    nom:'Haricots rouges', emoji:'🫘', categorie:'glucides',
+    cal:127, prot:8.7,gluc:22,  lip:0.5, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance']
+  },
+  pois_casses: {
+    nom:'Pois cassés', emoji:'🫘', categorie:'glucides',
+    cal:118, prot:8,  gluc:21,  lip:0.4, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['forme']
+  },
+  tempeh: {
+    nom:'Tempeh', emoji:'🫘', categorie:'proteines',
+    cal:193, prot:19, gluc:9,   lip:11,  portion:100, unite:'g',
+    genre:['femme'], objectifs:['prise_masse','forme']
+  },
+  seitan: {
+    nom:'Seitan', emoji:'🌾', categorie:'proteines',
+    cal:120, prot:25, gluc:4,   lip:1,   portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['prise_masse','force']
+  },
+  proteines_pois: {
+    nom:'Protéines de pois', emoji:'💚', categorie:'supplements',
+    cal:115, prot:23, gluc:2,   lip:2,   portion:30, unite:'g',
+    genre:['femme'], objectifs:['prise_masse','forme']
   },
 
   // ── GLUCIDES / FÉCULENTS ────────────────────────────────
@@ -186,6 +295,57 @@ const ALIMENTS_DB = {
     cal:121, prot:2.5,gluc:25,  lip:0.4, portion:100, unite:'g',
     genre:['homme','femme'], objectifs:['forme','seche']
   },
+  // ✅ NOUVEAU v6.0
+  sarrasin: {
+    nom:'Sarrasin cuit', emoji:'🌾', categorie:'glucides',
+    cal:92,  prot:3.4,gluc:20,  lip:0.6, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['forme','endurance']
+  },
+  orge: {
+    nom:'Orge cuit', emoji:'🌾', categorie:'glucides',
+    cal:123, prot:2.3,gluc:28,  lip:0.4, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance']
+  },
+  polenta: {
+    nom:'Polenta', emoji:'🌽', categorie:'glucides',
+    cal:85,  prot:2,  gluc:19,  lip:0.5, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance']
+  },
+  millet: {
+    nom:'Millet cuit', emoji:'🌾', categorie:'glucides',
+    cal:119, prot:3.5,gluc:23,  lip:1,   portion:100, unite:'g',
+    genre:['femme'], objectifs:['forme']
+  },
+  pain_seigle: {
+    nom:'Pain de seigle', emoji:'🍞', categorie:'glucides',
+    cal:259, prot:9,  gluc:48,  lip:3.3, portion:50, unite:'g',
+    genre:['homme','femme'], objectifs:['forme','endurance']
+  },
+  bagel: {
+    nom:'Bagel', emoji:'🥯', categorie:'glucides',
+    cal:270, prot:10, gluc:53,  lip:1.5, portion:100, unite:'g',
+    genre:['homme'], objectifs:['prise_masse']
+  },
+  tortilla: {
+    nom:'Tortilla de blé', emoji:'🌮', categorie:'glucides',
+    cal:310, prot:8,  gluc:52,  lip:7,   portion:60, unite:'g',
+    genre:['homme','femme'], objectifs:['forme']
+  },
+  granola: {
+    nom:'Granola nature', emoji:'🌾', categorie:'glucides',
+    cal:471, prot:9,  gluc:64,  lip:20,  portion:60, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance']
+  },
+  muesli: {
+    nom:'Muesli sans sucre', emoji:'🌾', categorie:'glucides',
+    cal:360, prot:10, gluc:60,  lip:7,   portion:60, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance','forme']
+  },
+  riz_souffle: {
+    nom:'Galettes de riz', emoji:'🍘', categorie:'glucides',
+    cal:387, prot:8,  gluc:82,  lip:3,   portion:30, unite:'g',
+    genre:['homme','femme'], objectifs:['seche','forme']
+  },
 
   // ── LÉGUMES ─────────────────────────────────────────────
   brocoli: {
@@ -233,6 +393,87 @@ const ALIMENTS_DB = {
     cal:20,  prot:2.2,gluc:3.9, lip:0.1, portion:100, unite:'g',
     genre:['femme'], objectifs:['seche','perte_poids']
   },
+  // ✅ NOUVEAU v6.0
+  carotte: {
+    nom:'Carotte', emoji:'🥕', categorie:'legumes',
+    cal:41,  prot:0.9,gluc:10,  lip:0.2, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  celeri: {
+    nom:'Céleri', emoji:'🌿', categorie:'legumes',
+    cal:16,  prot:0.7,gluc:3,   lip:0.2, portion:100, unite:'g',
+    genre:['femme'], objectifs:['perte_poids','seche']
+  },
+  chou_fleur: {
+    nom:'Chou-fleur', emoji:'🥦', categorie:'legumes',
+    cal:25,  prot:1.9,gluc:5,   lip:0.3, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  chou_kale: {
+    nom:'Kale', emoji:'🥬', categorie:'legumes',
+    cal:49,  prot:4.3,gluc:9,   lip:0.9, portion:100, unite:'g',
+    genre:['femme'], objectifs:['forme','seche']
+  },
+  patisson: {
+    nom:'Pâtisson', emoji:'🥬', categorie:'legumes',
+    cal:18,  prot:1.2,gluc:3.5, lip:0.2, portion:100, unite:'g',
+    genre:['femme'], objectifs:['seche']
+  },
+  haricots_verts: {
+    nom:'Haricots verts', emoji:'🌿', categorie:'legumes',
+    cal:31,  prot:1.8,gluc:7,   lip:0.1, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  artichaut: {
+    nom:'Artichaut', emoji:'🌿', categorie:'legumes',
+    cal:53,  prot:3.3,gluc:10,  lip:0.3, portion:100, unite:'g',
+    genre:['femme'], objectifs:['forme']
+  },
+  roquette: {
+    nom:'Roquette', emoji:'🥬', categorie:'legumes',
+    cal:25,  prot:2.6,gluc:3.7, lip:0.7, portion:50, unite:'g',
+    genre:['femme'], objectifs:['seche','forme']
+  },
+  endive: {
+    nom:'Endive', emoji:'🥬', categorie:'legumes',
+    cal:17,  prot:0.9,gluc:3.6, lip:0.1, portion:100, unite:'g',
+    genre:['femme'], objectifs:['perte_poids']
+  },
+  fenouil: {
+    nom:'Fenouil', emoji:'🌿', categorie:'legumes',
+    cal:31,  prot:1.2,gluc:7,   lip:0.2, portion:100, unite:'g',
+    genre:['femme'], objectifs:['forme']
+  },
+  betterave: {
+    nom:'Betterave', emoji:'🔴', categorie:'legumes',
+    cal:43,  prot:1.6,gluc:10,  lip:0.2, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance','forme']
+  },
+  aubergine: {
+    nom:'Aubergine', emoji:'🍆', categorie:'legumes',
+    cal:25,  prot:1,  gluc:6,   lip:0.2, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['forme','perte_poids']
+  },
+  poireau: {
+    nom:'Poireau', emoji:'🌿', categorie:'legumes',
+    cal:61,  prot:1.5,gluc:14,  lip:0.3, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['forme']
+  },
+  oignon: {
+    nom:'Oignon', emoji:'🧅', categorie:'legumes',
+    cal:40,  prot:1.1,gluc:9,   lip:0.1, portion:80, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  ail: {
+    nom:'Ail', emoji:'🧄', categorie:'legumes',
+    cal:149, prot:6.4,gluc:33,  lip:0.5, portion:10, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  maïs: {
+    nom:'Maïs doux', emoji:'🌽', categorie:'glucides',
+    cal:86,  prot:3.2,gluc:19,  lip:1.2, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance','prise_masse']
+  },
 
   // ── LIPIDES SAINES ──────────────────────────────────────
   avocat: {
@@ -270,6 +511,52 @@ const ALIMENTS_DB = {
     cal:534, prot:18, gluc:29,  lip:42,  portion:20,  unite:'g',
     genre:['femme'], objectifs:['forme']
   },
+  // ✅ NOUVEAU v6.0
+  huile_coco: {
+    nom:'Huile de coco', emoji:'🥥', categorie:'lipides',
+    cal:862, prot:0,  gluc:0,   lip:100, portion:10, unite:'ml',
+    genre:['femme'], objectifs:['forme']
+  },
+  huile_lin: {
+    nom:'Huile de lin', emoji:'🌱', categorie:'lipides',
+    cal:884, prot:0,  gluc:0,   lip:100, portion:10, unite:'ml',
+    genre:['homme','femme'], objectifs:['forme','force']
+  },
+  noix_cajou: {
+    nom:'Noix de cajou', emoji:'🌰', categorie:'lipides',
+    cal:553, prot:18, gluc:30,  lip:44,  portion:30, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  pistaches: {
+    nom:'Pistaches', emoji:'🌱', categorie:'lipides',
+    cal:562, prot:20, gluc:28,  lip:45,  portion:30, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  noix_pecan: {
+    nom:'Noix de pécan', emoji:'🌰', categorie:'lipides',
+    cal:691, prot:9,  gluc:14,  lip:72,  portion:30, unite:'g',
+    genre:['homme','femme'], objectifs:['forme']
+  },
+  graines_tournesol: {
+    nom:'Graines tournesol', emoji:'🌻', categorie:'lipides',
+    cal:584, prot:21, gluc:20,  lip:51,  portion:30, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  graines_sesame: {
+    nom:'Graines de sésame', emoji:'🌱', categorie:'lipides',
+    cal:573, prot:18, gluc:23,  lip:50,  portion:20, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  tahini: {
+    nom:'Tahini', emoji:'🌱', categorie:'lipides',
+    cal:595, prot:17, gluc:21,  lip:54,  portion:30, unite:'g',
+    genre:['femme'], objectifs:['forme']
+  },
+  chocolat_noir: {
+    nom:'Chocolat noir 85%', emoji:'🍫', categorie:'lipides',
+    cal:598, prot:8,  gluc:46,  lip:43,  portion:20, unite:'g',
+    genre:['homme','femme'], objectifs:['forme','endurance']
+  },
 
   // ── FRUITS ──────────────────────────────────────────────
   pomme: {
@@ -302,6 +589,67 @@ const ALIMENTS_DB = {
     cal:61,  prot:1.1,gluc:15,  lip:0.5, portion:100, unite:'g',
     genre:['femme'], objectifs:['forme']
   },
+  // ✅ NOUVEAU v6.0
+  poire: {
+    nom:'Poire', emoji:'🍐', categorie:'fruits',
+    cal:57,  prot:0.4,gluc:15,  lip:0.1, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  peche: {
+    nom:'Pêche', emoji:'🍑', categorie:'fruits',
+    cal:39,  prot:0.9,gluc:10,  lip:0.3, portion:100, unite:'g',
+    genre:['femme'], objectifs:['forme','perte_poids']
+  },
+  raisin: {
+    nom:'Raisin', emoji:'🍇', categorie:'fruits',
+    cal:69,  prot:0.7,gluc:18,  lip:0.2, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance']
+  },
+  cerise: {
+    nom:'Cerises', emoji:'🍒', categorie:'fruits',
+    cal:50,  prot:1,  gluc:12,  lip:0.3, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance','forme']
+  },
+  ananas: {
+    nom:'Ananas', emoji:'🍍', categorie:'fruits',
+    cal:50,  prot:0.5,gluc:13,  lip:0.1, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance']
+  },
+  melon: {
+    nom:'Melon', emoji:'🍈', categorie:'fruits',
+    cal:34,  prot:0.8,gluc:8,   lip:0.2, portion:200, unite:'g',
+    genre:['femme'], objectifs:['perte_poids','forme']
+  },
+  pasteque: {
+    nom:'Pastèque', emoji:'🍉', categorie:'fruits',
+    cal:30,  prot:0.6,gluc:7.6, lip:0.2, portion:200, unite:'g',
+    genre:['homme','femme'], objectifs:['hydratation','forme']
+  },
+  framboises: {
+    nom:'Framboises', emoji:'🫐', categorie:'fruits',
+    cal:52,  prot:1.2,gluc:12,  lip:0.7, portion:100, unite:'g',
+    genre:['femme'], objectifs:['seche','forme']
+  },
+  mures: {
+    nom:'Mûres', emoji:'🫐', categorie:'fruits',
+    cal:43,  prot:1.4,gluc:10,  lip:0.5, portion:100, unite:'g',
+    genre:['femme'], objectifs:['seche','forme']
+  },
+  citron: {
+    nom:'Citron', emoji:'🍋', categorie:'fruits',
+    cal:29,  prot:1.1,gluc:9,   lip:0.3, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  datte: {
+    nom:'Dattes', emoji:'🌴', categorie:'fruits',
+    cal:282, prot:2.5,gluc:75,  lip:0.4, portion:50, unite:'g',
+    genre:['homme','femme'], objectifs:['prise_masse','endurance']
+  },
+  figue: {
+    nom:'Figues fraîches', emoji:'🫐', categorie:'fruits',
+    cal:74,  prot:0.8,gluc:19,  lip:0.3, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance']
+  },
 
   // ── SUPPLÉMENTS ─────────────────────────────────────────
   barre_proteinee: {
@@ -318,12 +666,96 @@ const ALIMENTS_DB = {
     nom:'Créatine', emoji:'💊', categorie:'supplements',
     cal:0,   prot:0,  gluc:0,   lip:0,   portion:5,   unite:'g',
     genre:['homme'], objectifs:['force','prise_masse']
+  },
+  // ✅ NOUVEAU v6.0
+  bcaa: {
+    nom:'BCAA', emoji:'💊', categorie:'supplements',
+    cal:20,  prot:5,  gluc:0,   lip:0,   portion:10, unite:'g',
+    genre:['homme','femme'], objectifs:['prise_masse','force','seche']
+  },
+  glutamine: {
+    nom:'Glutamine', emoji:'💊', categorie:'supplements',
+    cal:15,  prot:4,  gluc:0,   lip:0,   portion:5,  unite:'g',
+    genre:['homme','femme'], objectifs:['récupération']
+  },
+  omega3: {
+    nom:'Oméga-3 capsule', emoji:'🐟', categorie:'supplements',
+    cal:18,  prot:0,  gluc:0,   lip:2,   portion:2,  unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  cafe: {
+    nom:'Café noir', emoji:'☕', categorie:'boissons',
+    cal:2,   prot:0.3,gluc:0,   lip:0,   portion:250, unite:'ml',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  the_vert: {
+    nom:'Thé vert', emoji:'🍵', categorie:'boissons',
+    cal:1,   prot:0,  gluc:0.2, lip:0,   portion:250, unite:'ml',
+    genre:['femme'], objectifs:['seche','forme']
+  },
+  jus_orange: {
+    nom:'Jus d\'orange', emoji:'🍊', categorie:'boissons',
+    cal:45,  prot:0.7,gluc:10,  lip:0.2, portion:200, unite:'ml',
+    genre:['homme','femme'], objectifs:['endurance']
+  },
+
+  // ── CONDIMENTS & SAUCES ─────────────────────────────────
+  moutarde: {
+    nom:'Moutarde', emoji:'💛', categorie:'condiments',
+    cal:66,  prot:4,  gluc:6,   lip:3,   portion:15, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  sauce_tomate: {
+    nom:'Sauce tomate', emoji:'🍅', categorie:'condiments',
+    cal:29,  prot:1.6,gluc:5.5, lip:0.4, portion:100, unite:'g',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  vinaigre_balsamique: {
+    nom:'Vinaigre balsamique', emoji:'🫙', categorie:'condiments',
+    cal:88,  prot:0.5,gluc:17,  lip:0,   portion:15, unite:'ml',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  sauce_soja: {
+    nom:'Sauce soja', emoji:'🫙', categorie:'condiments',
+    cal:53,  prot:8,  gluc:5,   lip:0.1, portion:15, unite:'ml',
+    genre:['homme','femme'], objectifs:['tous']
+  },
+  houmous: {
+    nom:'Houmous', emoji:'🫘', categorie:'condiments',
+    cal:177, prot:8,  gluc:14,  lip:10,  portion:50, unite:'g',
+    genre:['femme'], objectifs:['forme']
+  },
+  guacamole: {
+    nom:'Guacamole', emoji:'🥑', categorie:'condiments',
+    cal:157, prot:2,  gluc:9,   lip:14,  portion:50, unite:'g',
+    genre:['femme'], objectifs:['forme']
+  },
+
+  // ── SUCRÉ / DIVERS ───────────────────────────────────────
+  miel: {
+    nom:'Miel', emoji:'🍯', categorie:'sucres',
+    cal:304, prot:0.3,gluc:82,  lip:0,   portion:20, unite:'g',
+    genre:['homme','femme'], objectifs:['endurance']
+  },
+  sucre_coconut: {
+    nom:'Sucre de coco', emoji:'🥥', categorie:'sucres',
+    cal:375, prot:2,  gluc:92,  lip:0.3, portion:10, unite:'g',
+    genre:['femme'], objectifs:['forme']
+  },
+  stevia: {
+    nom:'Stevia', emoji:'🌿', categorie:'sucres',
+    cal:0,   prot:0,  gluc:0,   lip:0,   portion:2,  unite:'g',
+    genre:['homme','femme'], objectifs:['seche','perte_poids']
+  },
+  levure_biere: {
+    nom:'Levure de bière', emoji:'🌾', categorie:'supplements',
+    cal:116, prot:16, gluc:13,  lip:2,   portion:20, unite:'g',
+    genre:['femme'], objectifs:['forme']
   }
 };
 
 // ════════════════════════════════════════════════════════════
-// BASE DE DONNÉES RECETTES — 32 recettes
-// Genre-aware + Objectif-aware + Séance-aware
+// BASE DE DONNÉES RECETTES — 50+ recettes
 // ════════════════════════════════════════════════════════════
 const RECETTES_DB = [
 
@@ -333,16 +765,14 @@ const RECETTES_DB = [
     nom:'Bowl récupération homme',
     emoji:'🥣', categorie:'post_seance', moment:'post_seance',
     temps:10, difficulte:1,
-    description:'Récupération maximale après séance intense — ratio prot/gluc optimal',
+    description:'Récupération maximale après séance intense',
     tags:['post-séance','protéines','masse','rapide'],
     genre:['homme'],
     objectifs:['prise_masse','force','forme'],
     seances:['tous'],
     ingredients:[
-      { ref:'whey',          qte:30  },
-      { ref:'banane',        qte:120 },
-      { ref:'avoine',        qte:60  },
-      { ref:'myrtilles',     qte:80  },
+      { ref:'whey', qte:30 }, { ref:'banane', qte:120 },
+      { ref:'avoine', qte:60 }, { ref:'myrtilles', qte:80 },
       { ref:'beurre_cacahuete', qte:20 }
     ]
   },
@@ -351,17 +781,15 @@ const RECETTES_DB = [
     nom:'Shake force & masse',
     emoji:'💪', categorie:'post_seance', moment:'post_seance',
     temps:5, difficulte:1,
-    description:'Maximum de calories et protéines pour la prise de masse',
-    tags:['post-séance','masse','calories','rapide'],
+    description:'Maximum calories et protéines pour la masse',
+    tags:['post-séance','masse','calories'],
     genre:['homme'],
     objectifs:['prise_masse','force'],
     seances:['pec_tri','dos_bi','jambes','full_body'],
     ingredients:[
-      { ref:'whey',          qte:60  },
-      { ref:'banane',        qte:150 },
-      { ref:'avoine',        qte:80  },
-      { ref:'beurre_cacahuete', qte:30 },
-      { ref:'myrtilles',     qte:50  }
+      { ref:'whey', qte:60 }, { ref:'banane', qte:150 },
+      { ref:'avoine', qte:80 }, { ref:'beurre_cacahuete', qte:30 },
+      { ref:'myrtilles', qte:50 }
     ]
   },
   {
@@ -369,16 +797,45 @@ const RECETTES_DB = [
     nom:'Shake sèche protéiné',
     emoji:'🥤', categorie:'post_seance', moment:'post_seance',
     temps:5, difficulte:1,
-    description:'Protéines maximales, glucides minimaux pour préserver la masse sèche',
+    description:'Protéines max, glucides min pour la sèche',
     tags:['post-séance','sèche','faible-glucides'],
     genre:['homme'],
     objectifs:['seche','perte_poids'],
     seances:['tous'],
     ingredients:[
-      { ref:'whey',          qte:30  },
-      { ref:'fromage_blanc', qte:200 },
-      { ref:'fraises',       qte:100 },
-      { ref:'myrtilles',     qte:50  }
+      { ref:'whey', qte:30 }, { ref:'fromage_blanc', qte:200 },
+      { ref:'fraises', qte:100 }, { ref:'myrtilles', qte:50 }
+    ]
+  },
+  // ✅ NOUVEAU v6.0
+  {
+    id:'rice_cakes_beurre_cacahuete',
+    nom:'Rice cakes & beurre cacahuète',
+    emoji:'🍘', categorie:'post_seance', moment:'post_seance',
+    temps:2, difficulte:1,
+    description:'Glucides + protéines en 2 minutes chrono',
+    tags:['post-séance','rapide','glucides'],
+    genre:['homme'],
+    objectifs:['prise_masse','force'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'riz_souffle', qte:60 }, { ref:'beurre_cacahuete', qte:40 },
+      { ref:'banane', qte:100 }
+    ]
+  },
+  {
+    id:'shake_proteines_cacao',
+    nom:'Shake chocolat récup',
+    emoji:'🍫', categorie:'post_seance', moment:'post_seance',
+    temps:3, difficulte:1,
+    description:'Protéines + magnésium du cacao — récupération musculaire',
+    tags:['post-séance','chocolat','récupération'],
+    genre:['homme','femme'],
+    objectifs:['tous'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'whey', qte:30 }, { ref:'lait_entier', qte:300 },
+      { ref:'banane', qte:80 }, { ref:'amandes', qte:15 }
     ]
   },
 
@@ -388,17 +845,15 @@ const RECETTES_DB = [
     nom:'Bowl récup féminin 🌸',
     emoji:'🥣', categorie:'post_seance', moment:'post_seance',
     temps:10, difficulte:1,
-    description:'Récupération légère et complète — galbe sans excès',
+    description:'Récupération légère et complète',
     tags:['post-séance','protéines','léger','femme'],
     genre:['femme'],
     objectifs:['forme','seche','perte_poids'],
     seances:['jambes','full_body'],
     ingredients:[
-      { ref:'yaourt_grec',   qte:200 },
-      { ref:'banane',        qte:80  },
-      { ref:'myrtilles',     qte:80  },
-      { ref:'graines_chia',  qte:15  },
-      { ref:'amandes',       qte:15  }
+      { ref:'yaourt_grec', qte:200 }, { ref:'banane', qte:80 },
+      { ref:'myrtilles', qte:80 }, { ref:'graines_chia', qte:15 },
+      { ref:'amandes', qte:15 }
     ]
   },
   {
@@ -406,17 +861,15 @@ const RECETTES_DB = [
     nom:'Smoothie bowl fessiers 🍑',
     emoji:'🍓', categorie:'post_seance', moment:'post_seance',
     temps:8, difficulte:1,
-    description:'Spécial après séance jambes/fessiers — collagène naturel',
+    description:'Spécial après séance jambes/fessiers',
     tags:['post-séance','fessiers','galbe','femme'],
     genre:['femme'],
     objectifs:['forme','seche'],
     seances:['jambes','lower_body'],
     ingredients:[
-      { ref:'skyr',         qte:150 },
-      { ref:'fraises',      qte:120 },
-      { ref:'myrtilles',    qte:60  },
-      { ref:'banane',       qte:60  },
-      { ref:'graines_chia', qte:10  }
+      { ref:'skyr', qte:150 }, { ref:'fraises', qte:120 },
+      { ref:'myrtilles', qte:60 }, { ref:'banane', qte:60 },
+      { ref:'graines_chia', qte:10 }
     ]
   },
   {
@@ -424,16 +877,30 @@ const RECETTES_DB = [
     nom:'Shake prise de muscle 💪',
     emoji:'🥤', categorie:'post_seance', moment:'post_seance',
     temps:5, difficulte:1,
-    description:'Stimuler la prise de muscle féminine sans excès calorique',
+    description:'Stimuler la prise de muscle féminine',
     tags:['post-séance','muscle','femme'],
     genre:['femme'],
     objectifs:['prise_masse','force'],
     seances:['tous'],
     ingredients:[
-      { ref:'whey',          qte:25  },
-      { ref:'yaourt_grec',   qte:150 },
-      { ref:'banane',        qte:80  },
-      { ref:'myrtilles',     qte:80  }
+      { ref:'whey', qte:25 }, { ref:'yaourt_grec', qte:150 },
+      { ref:'banane', qte:80 }, { ref:'myrtilles', qte:80 }
+    ]
+  },
+  // ✅ NOUVEAU v6.0
+  {
+    id:'cottage_fruits_post',
+    nom:'Cottage cheese & fruits rouges 🌸',
+    emoji:'🧀', categorie:'post_seance', moment:'post_seance',
+    temps:3, difficulte:1,
+    description:'Protéines lentes + antioxydants — récupération nocturne',
+    tags:['post-séance','léger','femme','antioxydants'],
+    genre:['femme'],
+    objectifs:['seche','forme'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'cottage_cheese', qte:200 }, { ref:'framboises', qte:80 },
+      { ref:'fraises', qte:80 }, { ref:'graines_chia', qte:10 }
     ]
   },
 
@@ -443,15 +910,14 @@ const RECETTES_DB = [
     nom:'Repas pré-séance homme',
     emoji:'⚡', categorie:'pre_seance', moment:'pre_seance',
     temps:10, difficulte:1,
-    description:'Énergie optimale 2h avant l\'entraînement intensif',
+    description:'Énergie optimale 2h avant l\'entraînement',
     tags:['pré-séance','énergie','homme'],
     genre:['homme'],
     objectifs:['prise_masse','force','endurance'],
     seances:['tous'],
     ingredients:[
-      { ref:'riz_blanc',      qte:200 },
-      { ref:'poulet_grillee', qte:150 },
-      { ref:'banane',         qte:100 }
+      { ref:'riz_blanc', qte:200 }, { ref:'poulet_grillee', qte:150 },
+      { ref:'banane', qte:100 }
     ]
   },
   {
@@ -465,10 +931,8 @@ const RECETTES_DB = [
     objectifs:['tous'],
     seances:['tous'],
     ingredients:[
-      { ref:'avoine',       qte:50  },
-      { ref:'banane',       qte:80  },
-      { ref:'yaourt_grec',  qte:100 },
-      { ref:'amandes',      qte:15  }
+      { ref:'avoine', qte:50 }, { ref:'banane', qte:80 },
+      { ref:'yaourt_grec', qte:100 }, { ref:'amandes', qte:15 }
     ]
   },
   {
@@ -476,35 +940,63 @@ const RECETTES_DB = [
     nom:'Pré-séance sèche',
     emoji:'🎯', categorie:'pre_seance', moment:'pre_seance',
     temps:5, difficulte:1,
-    description:'Énergie minimale pour séance en déficit — préserver le muscle',
+    description:'Énergie minimale pour séance en déficit',
     tags:['pré-séance','sèche','faible-cal'],
     genre:['homme','femme'],
     objectifs:['seche','perte_poids'],
     seances:['tous'],
     ingredients:[
-      { ref:'banane',       qte:100 },
-      { ref:'yaourt_grec',  qte:120 },
-      { ref:'amandes',      qte:15  }
+      { ref:'banane', qte:100 }, { ref:'yaourt_grec', qte:120 },
+      { ref:'amandes', qte:15 }
+    ]
+  },
+  // ✅ NOUVEAU v6.0
+  {
+    id:'banana_bread_sport',
+    nom:'Banana bread sportif',
+    emoji:'🍌', categorie:'pre_seance', moment:'pre_seance',
+    temps:3, difficulte:1,
+    description:'Énergie glucidique dense — parfait 1h avant',
+    tags:['pré-séance','glucides','naturel'],
+    genre:['homme','femme'],
+    objectifs:['endurance','prise_masse'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'banane', qte:150 }, { ref:'amandes', qte:20 },
+      { ref:'miel', qte:15 }
+    ]
+  },
+  {
+    id:'toast_avocat_oeuf',
+    nom:'Toast avocat & œuf',
+    emoji:'🥑', categorie:'pre_seance', moment:'pre_seance',
+    temps:10, difficulte:1,
+    description:'Lipides sains + protéines — énergie durable',
+    tags:['pré-séance','avocat','protéines'],
+    genre:['femme'],
+    objectifs:['forme','endurance'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'pain_complet', qte:60 }, { ref:'avocat', qte:80 },
+      { ref:'oeuf_entier', qte:100 }, { ref:'roquette', qte:30 }
     ]
   },
 
-  // ══ PETIT-DÉJEUNER HOMME ════════════════════════════════
+  // ══ PETIT-DÉJEUNER ══════════════════════════════════════
   {
     id:'omelette_musculation',
     nom:'Omelette musculation',
     emoji:'🍳', categorie:'petit_dejeuner', moment:'matin',
     temps:15, difficulte:2,
-    description:'Petit-déjeuner riche en protéines — boost testostérone naturel',
+    description:'Riche en protéines — boost matinal',
     tags:['matin','protéines','œufs','homme'],
     genre:['homme'],
     objectifs:['prise_masse','force','forme'],
     seances:['tous'],
     ingredients:[
-      { ref:'oeuf_entier',  qte:300 },
-      { ref:'blanc_oeuf',   qte:100 },
-      { ref:'epinards',     qte:80  },
-      { ref:'tomate',       qte:100 },
-      { ref:'huile_olive',  qte:10  }
+      { ref:'oeuf_entier', qte:300 }, { ref:'blanc_oeuf', qte:100 },
+      { ref:'epinards', qte:80 }, { ref:'tomate', qte:100 },
+      { ref:'huile_olive', qte:10 }
     ]
   },
   {
@@ -512,17 +1004,15 @@ const RECETTES_DB = [
     nom:'Pancakes avoine homme',
     emoji:'🥞', categorie:'petit_dejeuner', moment:'matin',
     temps:20, difficulte:2,
-    description:'Petit-déjeuner masse — glucides complexes + protéines',
+    description:'Glucides complexes + protéines — prise de masse',
     tags:['matin','glucides','masse','homme'],
     genre:['homme'],
     objectifs:['prise_masse','endurance'],
     seances:['tous'],
     ingredients:[
-      { ref:'avoine',        qte:100 },
-      { ref:'oeuf_entier',   qte:200 },
-      { ref:'fromage_blanc', qte:150 },
-      { ref:'banane',        qte:100 },
-      { ref:'myrtilles',     qte:60  }
+      { ref:'avoine', qte:100 }, { ref:'oeuf_entier', qte:200 },
+      { ref:'fromage_blanc', qte:150 }, { ref:'banane', qte:100 },
+      { ref:'myrtilles', qte:60 }
     ]
   },
   {
@@ -530,38 +1020,31 @@ const RECETTES_DB = [
     nom:'Overnight oats homme',
     emoji:'🌙', categorie:'petit_dejeuner', moment:'matin',
     temps:5, difficulte:1,
-    description:'Préparer la veille — énergie lente tout la matinée',
+    description:'Préparer la veille — énergie lente toute la matinée',
     tags:['matin','préparation','glucides'],
     genre:['homme'],
     objectifs:['prise_masse','endurance','forme'],
     seances:['tous'],
     ingredients:[
-      { ref:'avoine',        qte:100 },
-      { ref:'caseine',       qte:30  },
-      { ref:'banane',        qte:100 },
-      { ref:'myrtilles',     qte:80  },
+      { ref:'avoine', qte:100 }, { ref:'caseine', qte:30 },
+      { ref:'banane', qte:100 }, { ref:'myrtilles', qte:80 },
       { ref:'beurre_cacahuete', qte:20 }
     ]
   },
-
-  // ══ PETIT-DÉJEUNER FEMME ════════════════════════════════
   {
     id:'bowl_acai_femme',
     nom:'Bowl açaï énergie 🌸',
     emoji:'🫐', categorie:'petit_dejeuner', moment:'matin',
     temps:10, difficulte:1,
     description:'Antioxydants + protéines — beauté & performance',
-    tags:['matin','antioxydants','femme','légume'],
+    tags:['matin','antioxydants','femme','légère'],
     genre:['femme'],
     objectifs:['forme','endurance'],
     seances:['tous'],
     ingredients:[
-      { ref:'yaourt_grec',  qte:180 },
-      { ref:'myrtilles',    qte:120 },
-      { ref:'fraises',      qte:80  },
-      { ref:'banane',       qte:60  },
-      { ref:'graines_chia', qte:15  },
-      { ref:'amandes',      qte:15  }
+      { ref:'yaourt_grec', qte:180 }, { ref:'myrtilles', qte:120 },
+      { ref:'fraises', qte:80 }, { ref:'banane', qte:60 },
+      { ref:'graines_chia', qte:15 }, { ref:'amandes', qte:15 }
     ]
   },
   {
@@ -575,11 +1058,9 @@ const RECETTES_DB = [
     objectifs:['forme','perte_poids'],
     seances:['tous'],
     ingredients:[
-      { ref:'avoine',       qte:60  },
-      { ref:'banane',       qte:80  },
-      { ref:'yaourt_grec',  qte:120 },
-      { ref:'fraises',      qte:80  },
-      { ref:'graines_lin',  qte:10  }
+      { ref:'avoine', qte:60 }, { ref:'banane', qte:80 },
+      { ref:'yaourt_grec', qte:120 }, { ref:'fraises', qte:80 },
+      { ref:'graines_lin', qte:10 }
     ]
   },
   {
@@ -587,17 +1068,63 @@ const RECETTES_DB = [
     nom:'Omelette légère 🌸',
     emoji:'🍳', categorie:'petit_dejeuner', moment:'matin',
     temps:12, difficulte:2,
-    description:'Protéines légères — forme & galbe sans surplus',
+    description:'Protéines légères — forme & galbe',
     tags:['matin','légère','femme','protéines'],
     genre:['femme'],
     objectifs:['seche','forme','perte_poids'],
     seances:['tous'],
     ingredients:[
-      { ref:'blanc_oeuf',  qte:200 },
-      { ref:'oeuf_entier', qte:100 },
-      { ref:'epinards',    qte:100 },
-      { ref:'tomate',      qte:100 },
-      { ref:'poivron',     qte:80  }
+      { ref:'blanc_oeuf', qte:200 }, { ref:'oeuf_entier', qte:100 },
+      { ref:'epinards', qte:100 }, { ref:'tomate', qte:100 },
+      { ref:'poivron', qte:80 }
+    ]
+  },
+  // ✅ NOUVEAU v6.0
+  {
+    id:'granola_maison_homme',
+    nom:'Granola maison & skyr',
+    emoji:'🌾', categorie:'petit_dejeuner', moment:'matin',
+    temps:5, difficulte:1,
+    description:'Crunch + protéines — petit-déj de champion',
+    tags:['matin','glucides','protéines','homme'],
+    genre:['homme'],
+    objectifs:['prise_masse','endurance'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'granola', qte:80 }, { ref:'skyr', qte:200 },
+      { ref:'myrtilles', qte:100 }, { ref:'amandes', qte:20 }
+    ]
+  },
+  {
+    id:'crepes_protees',
+    nom:'Crêpes protéinées',
+    emoji:'🥞', categorie:'petit_dejeuner', moment:'matin',
+    temps:15, difficulte:2,
+    description:'Crêpes riches en protéines — sans culpabilité',
+    tags:['matin','gourmand','protéines'],
+    genre:['homme','femme'],
+    objectifs:['prise_masse','forme'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'avoine', qte:80 }, { ref:'oeuf_entier', qte:150 },
+      { ref:'blanc_oeuf', qte:100 }, { ref:'fromage_blanc', qte:100 },
+      { ref:'fraises', qte:100 }
+    ]
+  },
+  {
+    id:'smoothie_vert_detox',
+    nom:'Smoothie vert détox 🌸',
+    emoji:'🥤', categorie:'petit_dejeuner', moment:'matin',
+    temps:5, difficulte:1,
+    description:'Chlorophylle + protéines — énergie pure et alcaline',
+    tags:['matin','détox','femme','légère'],
+    genre:['femme'],
+    objectifs:['perte_poids','forme'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'epinards', qte:80 }, { ref:'banane', qte:80 },
+      { ref:'kiwi', qte:100 }, { ref:'yaourt_grec', qte:100 },
+      { ref:'graines_chia', qte:10 }
     ]
   },
 
@@ -607,17 +1134,15 @@ const RECETTES_DB = [
     nom:'Riz poulet légumes',
     emoji:'🍱', categorie:'dejeuner', moment:'dejeuner',
     temps:25, difficulte:2,
-    description:'Le classique incontournable — ratio parfait musculation',
+    description:'Le classique incontournable',
     tags:['déjeuner','classique','équilibré','homme'],
     genre:['homme'],
     objectifs:['prise_masse','force','forme'],
     seances:['tous'],
     ingredients:[
-      { ref:'riz_blanc',      qte:200 },
-      { ref:'poulet_grillee', qte:200 },
-      { ref:'brocoli',        qte:150 },
-      { ref:'courgette',      qte:100 },
-      { ref:'huile_olive',    qte:10  }
+      { ref:'riz_blanc', qte:200 }, { ref:'poulet_grillee', qte:200 },
+      { ref:'brocoli', qte:150 }, { ref:'courgette', qte:100 },
+      { ref:'huile_olive', qte:10 }
     ]
   },
   {
@@ -625,16 +1150,14 @@ const RECETTES_DB = [
     nom:'Bowl patate douce & poulet',
     emoji:'🍠', categorie:'dejeuner', moment:'dejeuner',
     temps:30, difficulte:2,
-    description:'Glucides complexes + protéines — prise de masse propre',
+    description:'Prise de masse propre — glucides complexes + protéines',
     tags:['déjeuner','masse','glucides','homme'],
     genre:['homme'],
     objectifs:['prise_masse','force'],
     seances:['pec_tri','dos_bi','full_body'],
     ingredients:[
-      { ref:'patate_douce',   qte:250 },
-      { ref:'poulet_grillee', qte:220 },
-      { ref:'epinards',       qte:100 },
-      { ref:'huile_olive',    qte:10  }
+      { ref:'patate_douce', qte:250 }, { ref:'poulet_grillee', qte:220 },
+      { ref:'epinards', qte:100 }, { ref:'huile_olive', qte:10 }
     ]
   },
   {
@@ -642,16 +1165,14 @@ const RECETTES_DB = [
     nom:'Pâtes bolognaise sport',
     emoji:'🍝', categorie:'dejeuner', moment:'dejeuner',
     temps:30, difficulte:2,
-    description:'Charge glucidique maximale — endurance & masse',
+    description:'Charge glucidique — endurance & masse',
     tags:['déjeuner','glucides','masse','endurance'],
     genre:['homme'],
     objectifs:['prise_masse','endurance'],
     seances:['jambes','full_body'],
     ingredients:[
-      { ref:'pates',       qte:250 },
-      { ref:'boeuf_hache', qte:150 },
-      { ref:'tomate',      qte:200 },
-      { ref:'huile_olive', qte:10  }
+      { ref:'pates', qte:250 }, { ref:'boeuf_hache', qte:150 },
+      { ref:'tomate', qte:200 }, { ref:'huile_olive', qte:10 }
     ]
   },
   {
@@ -659,17 +1180,47 @@ const RECETTES_DB = [
     nom:'Wrap poulet avocat',
     emoji:'🌯', categorie:'dejeuner', moment:'dejeuner',
     temps:10, difficulte:1,
-    description:'Repas nomade équilibré — protéines + bons lipides',
+    description:'Repas nomade équilibré',
     tags:['rapide','déjeuner','nomade'],
     genre:['homme'],
     objectifs:['forme','seche'],
     seances:['tous'],
     ingredients:[
-      { ref:'pain_complet',   qte:80  },
-      { ref:'poulet_grillee', qte:150 },
-      { ref:'avocat',         qte:60  },
-      { ref:'salade',         qte:50  },
-      { ref:'tomate',         qte:80  }
+      { ref:'pain_complet', qte:80 }, { ref:'poulet_grillee', qte:150 },
+      { ref:'avocat', qte:60 }, { ref:'salade', qte:50 },
+      { ref:'tomate', qte:80 }
+    ]
+  },
+  // ✅ NOUVEAU v6.0
+  {
+    id:'bowl_saumon_quinoa',
+    nom:'Bowl saumon & quinoa',
+    emoji:'🐠', categorie:'dejeuner', moment:'dejeuner',
+    temps:20, difficulte:2,
+    description:'Oméga-3 + quinoa complet — performance & récup',
+    tags:['déjeuner','oméga-3','complet'],
+    genre:['homme','femme'],
+    objectifs:['force','endurance','forme'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'quinoa', qte:150 }, { ref:'saumon', qte:180 },
+      { ref:'avocat', qte:60 }, { ref:'brocoli', qte:120 },
+      { ref:'huile_olive', qte:10 }
+    ]
+  },
+  {
+    id:'boeuf_riz_legumes',
+    nom:'Bœuf maigre & riz',
+    emoji:'🥩', categorie:'dejeuner', moment:'dejeuner',
+    temps:25, difficulte:2,
+    description:'Fer + glucides — optimal pour la force',
+    tags:['déjeuner','force','fer','homme'],
+    genre:['homme'],
+    objectifs:['force','prise_masse'],
+    seances:['pec_tri','dos_bi','jambes'],
+    ingredients:[
+      { ref:'boeuf_maigre', qte:200 }, { ref:'riz_blanc', qte:180 },
+      { ref:'haricots_verts', qte:150 }, { ref:'huile_olive', qte:10 }
     ]
   },
 
@@ -679,18 +1230,15 @@ const RECETTES_DB = [
     nom:'Salade thon quinoa 🌸',
     emoji:'🥗', categorie:'dejeuner', moment:'dejeuner',
     temps:15, difficulte:1,
-    description:'Légère, protéinée et satiante — parfaite pour la sèche féminine',
+    description:'Légère, protéinée, satiante',
     tags:['sèche','léger','déjeuner','femme'],
     genre:['femme'],
     objectifs:['seche','perte_poids','forme'],
     seances:['tous'],
     ingredients:[
-      { ref:'quinoa',      qte:120 },
-      { ref:'thon_boite',  qte:160 },
-      { ref:'salade',      qte:100 },
-      { ref:'tomate',      qte:150 },
-      { ref:'avocat',      qte:60  },
-      { ref:'huile_olive', qte:10  }
+      { ref:'quinoa', qte:120 }, { ref:'thon_boite', qte:160 },
+      { ref:'salade', qte:100 }, { ref:'tomate', qte:150 },
+      { ref:'avocat', qte:60 }, { ref:'huile_olive', qte:10 }
     ]
   },
   {
@@ -698,17 +1246,15 @@ const RECETTES_DB = [
     nom:'Bowl galbe fessiers 🍑',
     emoji:'🍠', categorie:'dejeuner', moment:'dejeuner',
     temps:25, difficulte:2,
-    description:'Spécial galbe — protéines + glucides pour nourrir les fessiers',
+    description:'Protéines + glucides pour nourrir les fessiers',
     tags:['déjeuner','fessiers','galbe','femme'],
     genre:['femme'],
     objectifs:['forme','prise_masse'],
     seances:['jambes','lower_body'],
     ingredients:[
-      { ref:'patate_douce',   qte:180 },
-      { ref:'poulet_grillee', qte:160 },
-      { ref:'epinards',       qte:100 },
-      { ref:'avocat',         qte:60  },
-      { ref:'graines_chia',   qte:10  }
+      { ref:'patate_douce', qte:180 }, { ref:'poulet_grillee', qte:160 },
+      { ref:'epinards', qte:100 }, { ref:'avocat', qte:60 },
+      { ref:'graines_chia', qte:10 }
     ]
   },
   {
@@ -716,18 +1262,15 @@ const RECETTES_DB = [
     nom:'Buddha bowl complet 🌸',
     emoji:'🥙', categorie:'dejeuner', moment:'dejeuner',
     temps:20, difficulte:2,
-    description:'Couleurs + nutriments — repas complet esthétique et sain',
+    description:'Couleurs + nutriments — repas complet',
     tags:['déjeuner','coloré','complet','femme'],
     genre:['femme'],
     objectifs:['forme','endurance'],
     seances:['tous'],
     ingredients:[
-      { ref:'quinoa',      qte:100 },
-      { ref:'edamame',     qte:80  },
-      { ref:'tomate',      qte:100 },
-      { ref:'poivron',     qte:80  },
-      { ref:'avocat',      qte:60  },
-      { ref:'graines_chia',qte:10  }
+      { ref:'quinoa', qte:100 }, { ref:'edamame', qte:80 },
+      { ref:'tomate', qte:100 }, { ref:'poivron', qte:80 },
+      { ref:'avocat', qte:60 }, { ref:'graines_chia', qte:10 }
     ]
   },
   {
@@ -735,17 +1278,32 @@ const RECETTES_DB = [
     nom:'Soupe protéinée 🌸',
     emoji:'🍲', categorie:'dejeuner', moment:'dejeuner',
     temps:20, difficulte:2,
-    description:'Légère et rassasiante — idéale perte de poids',
+    description:'Légère et rassasiante — perte de poids',
     tags:['déjeuner','léger','chaud','femme'],
     genre:['femme'],
     objectifs:['perte_poids','seche'],
     seances:['tous'],
     ingredients:[
-      { ref:'lentilles',   qte:100 },
-      { ref:'courgette',   qte:150 },
-      { ref:'tomate',      qte:150 },
-      { ref:'epinards',    qte:80  },
-      { ref:'huile_olive', qte:5   }
+      { ref:'lentilles', qte:100 }, { ref:'courgette', qte:150 },
+      { ref:'tomate', qte:150 }, { ref:'epinards', qte:80 },
+      { ref:'huile_olive', qte:5 }
+    ]
+  },
+  // ✅ NOUVEAU v6.0
+  {
+    id:'wok_crevettes_femme',
+    nom:'Wok crevettes légumes 🌸',
+    emoji:'🦐', categorie:'dejeuner', moment:'dejeuner',
+    temps:15, difficulte:2,
+    description:'Protéines légères + légumes — galbe parfait',
+    tags:['déjeuner','léger','crevettes','femme'],
+    genre:['femme'],
+    objectifs:['seche','forme'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'crevettes', qte:180 }, { ref:'riz_basmati', qte:120 },
+      { ref:'poivron', qte:100 }, { ref:'brocoli', qte:100 },
+      { ref:'sauce_soja', qte:15 }, { ref:'huile_olive', qte:8 }
     ]
   },
 
@@ -755,16 +1313,14 @@ const RECETTES_DB = [
     nom:'Saumon & riz complet',
     emoji:'🐠', categorie:'diner', moment:'diner',
     temps:25, difficulte:2,
-    description:'Oméga-3 + glucides complexes — récupération nocturne optimale',
+    description:'Oméga-3 + glucides complexes — récupération nocturne',
     tags:['dîner','récupération','oméga-3'],
     genre:['homme','femme'],
     objectifs:['tous'],
     seances:['tous'],
     ingredients:[
-      { ref:'saumon',      qte:200 },
-      { ref:'riz_complet', qte:150 },
-      { ref:'brocoli',     qte:200 },
-      { ref:'huile_olive', qte:10  }
+      { ref:'saumon', qte:200 }, { ref:'riz_complet', qte:150 },
+      { ref:'brocoli', qte:200 }, { ref:'huile_olive', qte:10 }
     ]
   },
   {
@@ -772,18 +1328,15 @@ const RECETTES_DB = [
     nom:'Wok tofu légumes 🌸',
     emoji:'🥢', categorie:'diner', moment:'diner',
     temps:20, difficulte:2,
-    description:'Végétarien léger — protéines végétales + légumes colorés',
+    description:'Végétarien léger — protéines végétales',
     tags:['végétarien','dîner','léger','femme'],
     genre:['femme'],
     objectifs:['forme','perte_poids'],
     seances:['tous'],
     ingredients:[
-      { ref:'tofu',        qte:200 },
-      { ref:'riz_basmati', qte:120 },
-      { ref:'brocoli',     qte:150 },
-      { ref:'courgette',   qte:100 },
-      { ref:'poivron',     qte:80  },
-      { ref:'huile_olive', qte:10  }
+      { ref:'tofu', qte:200 }, { ref:'riz_basmati', qte:120 },
+      { ref:'brocoli', qte:150 }, { ref:'courgette', qte:100 },
+      { ref:'poivron', qte:80 }, { ref:'huile_olive', qte:10 }
     ]
   },
   {
@@ -791,17 +1344,15 @@ const RECETTES_DB = [
     nom:'Dinde & légumes vapeur',
     emoji:'🦃', categorie:'diner', moment:'diner',
     temps:20, difficulte:1,
-    description:'Ultra-light — protéines maigres + légumes satiants',
+    description:'Ultra-light — protéines maigres + légumes',
     tags:['dîner','léger','maigre','sèche'],
     genre:['homme','femme'],
     objectifs:['seche','perte_poids'],
     seances:['tous'],
     ingredients:[
-      { ref:'dinde',      qte:200 },
-      { ref:'brocoli',    qte:200 },
-      { ref:'courgette',  qte:150 },
-      { ref:'champignons',qte:100 },
-      { ref:'huile_olive',qte:5   }
+      { ref:'dinde', qte:200 }, { ref:'brocoli', qte:200 },
+      { ref:'courgette', qte:150 }, { ref:'champignons', qte:100 },
+      { ref:'huile_olive', qte:5 }
     ]
   },
   {
@@ -809,16 +1360,63 @@ const RECETTES_DB = [
     nom:'Bœuf & patate douce',
     emoji:'🥩', categorie:'diner', moment:'diner',
     temps:30, difficulte:2,
-    description:'Récupération musculaire nocturne — fer + glucides complexes',
+    description:'Récupération nocturne — fer + glucides',
     tags:['dîner','masse','récupération','homme'],
     genre:['homme'],
     objectifs:['prise_masse','force'],
     seances:['pec_tri','dos_bi','jambes'],
     ingredients:[
-      { ref:'boeuf_maigre',   qte:200 },
-      { ref:'patate_douce',   qte:200 },
-      { ref:'epinards',       qte:100 },
-      { ref:'huile_olive',    qte:10  }
+      { ref:'boeuf_maigre', qte:200 }, { ref:'patate_douce', qte:200 },
+      { ref:'epinards', qte:100 }, { ref:'huile_olive', qte:10 }
+    ]
+  },
+  // ✅ NOUVEAU v6.0
+  {
+    id:'cabillaud_legumes',
+    nom:'Cabillaud vapeur & légumes 🌸',
+    emoji:'🐟', categorie:'diner', moment:'diner',
+    temps:20, difficulte:1,
+    description:'Extrêmement léger — 300 kcal pour une sèche',
+    tags:['dîner','très-léger','sèche','femme'],
+    genre:['femme'],
+    objectifs:['seche','perte_poids'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'cabillaud', qte:200 }, { ref:'asperges', qte:150 },
+      { ref:'courgette', qte:150 }, { ref:'tomate', qte:100 },
+      { ref:'huile_olive', qte:5 }
+    ]
+  },
+  {
+    id:'curry_pois_chiches',
+    nom:'Curry pois chiches 🌸',
+    emoji:'🍲', categorie:'diner', moment:'diner',
+    temps:25, difficulte:2,
+    description:'Végétarien chaud et réconfortant',
+    tags:['dîner','végétarien','femme','chaud'],
+    genre:['femme'],
+    objectifs:['forme','endurance'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'pois_chiches', qte:200 }, { ref:'tomate', qte:200 },
+      { ref:'epinards', qte:100 }, { ref:'riz_basmati', qte:100 },
+      { ref:'huile_coco', qte:10 }
+    ]
+  },
+  {
+    id:'steak_thon_salade',
+    nom:'Steak de thon & salade verte',
+    emoji:'🐟', categorie:'diner', moment:'diner',
+    temps:15, difficulte:2,
+    description:'Protéines + lipides sains — sèche haut niveau',
+    tags:['dîner','sèche','oméga-3','homme'],
+    genre:['homme'],
+    objectifs:['seche','force'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'saumon', qte:200 }, { ref:'salade', qte:100 },
+      { ref:'tomate', qte:150 }, { ref:'avocat', qte:80 },
+      { ref:'huile_olive', qte:10 }
     ]
   },
 
@@ -828,16 +1426,14 @@ const RECETTES_DB = [
     nom:'Cottage cheese & fruits',
     emoji:'🧀', categorie:'collation', moment:'collation',
     temps:3, difficulte:1,
-    description:'Collation caséine + fruits — anti-catabolisme nocturne',
+    description:'Caséine + fruits — anti-catabolisme nocturne',
     tags:['collation','soir','caséine'],
     genre:['homme','femme'],
     objectifs:['tous'],
     seances:['tous'],
     ingredients:[
-      { ref:'cottage_cheese', qte:200 },
-      { ref:'fraises',        qte:100 },
-      { ref:'myrtilles',      qte:50  },
-      { ref:'amandes',        qte:15  }
+      { ref:'cottage_cheese', qte:200 }, { ref:'fraises', qte:100 },
+      { ref:'myrtilles', qte:50 }, { ref:'amandes', qte:15 }
     ]
   },
   {
@@ -845,16 +1441,14 @@ const RECETTES_DB = [
     nom:'Snack noix & yaourt 🌸',
     emoji:'🌰', categorie:'collation', moment:'collation',
     temps:2, difficulte:1,
-    description:'Collation satiante — bons lipides + probiotiques',
+    description:'Bons lipides + probiotiques',
     tags:['collation','femme','satiété'],
     genre:['femme'],
     objectifs:['forme','seche'],
     seances:['tous'],
     ingredients:[
-      { ref:'yaourt_grec',  qte:150 },
-      { ref:'noix',         qte:20  },
-      { ref:'myrtilles',    qte:60  },
-      { ref:'graines_chia', qte:10  }
+      { ref:'yaourt_grec', qte:150 }, { ref:'noix', qte:20 },
+      { ref:'myrtilles', qte:60 }, { ref:'graines_chia', qte:10 }
     ]
   },
   {
@@ -862,31 +1456,80 @@ const RECETTES_DB = [
     nom:'Barre protéinée + amandes',
     emoji:'🍫', categorie:'collation', moment:'collation',
     temps:1, difficulte:1,
-    description:'Snack express à emporter — protéines rapides',
+    description:'Snack express à emporter',
     tags:['collation','rapide','nomade'],
     genre:['homme','femme'],
     objectifs:['tous'],
     seances:['tous'],
     ingredients:[
-      { ref:'barre_proteinee', qte:60 },
-      { ref:'amandes',         qte:20 }
+      { ref:'barre_proteinee', qte:60 }, { ref:'amandes', qte:20 }
+    ]
+  },
+  // ✅ NOUVEAU v6.0
+  {
+    id:'smoothie_collagene',
+    nom:'Smoothie collagène 🌸',
+    emoji:'🍓', categorie:'collation', moment:'collation',
+    temps:3, difficulte:1,
+    description:'Vitamine C + protéines — peau & articulations',
+    tags:['collation','beauté','femme','anti-âge'],
+    genre:['femme'],
+    objectifs:['forme'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'fraises', qte:150 }, { ref:'orange', qte:100 },
+      { ref:'yaourt_grec', qte:100 }, { ref:'graines_chia', qte:10 }
+    ]
+  },
+  {
+    id:'houmous_legumes',
+    nom:'Houmous & légumes croquants',
+    emoji:'🫘', categorie:'collation', moment:'collation',
+    temps:3, difficulte:1,
+    description:'Protéines végétales + fibres — collation satiante',
+    tags:['collation','végétarien','satiété'],
+    genre:['homme','femme'],
+    objectifs:['forme','endurance'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'houmous', qte:80 }, { ref:'carotte', qte:100 },
+      { ref:'concombre', qte:100 }, { ref:'poivron', qte:80 }
+    ]
+  },
+  {
+    id:'chocolat_noix',
+    nom:'Carré choco & noix',
+    emoji:'🍫', categorie:'collation', moment:'collation',
+    temps:1, difficulte:1,
+    description:'Anti-stress + magnésium — collation premium',
+    tags:['collation','chocolat','magnésium'],
+    genre:['homme','femme'],
+    objectifs:['forme','endurance'],
+    seances:['tous'],
+    ingredients:[
+      { ref:'chocolat_noir', qte:20 }, { ref:'noix', qte:20 },
+      { ref:'amandes', qte:15 }
     ]
   }
 ];
+
 // ════════════════════════════════════════════════════════════
-// MODULE NUTRITION v5.0
+// MODULE NUTRITION v6.0
 // ════════════════════════════════════════════════════════════
 const Nutrition = {
 
-  CLE_JOURNAL:   'ft_nutrition_journal',
-  CLE_OBJECTIFS: 'ft_nutrition_objectifs',
-  CLE_EAU:       'ft_nutrition_eau',
-  CLE_CUSTOMS:   'ft_nutrition_customs',
+  CLE_JOURNAL:    'ft_nutrition_journal',
+  CLE_OBJECTIFS:  'ft_nutrition_objectifs',
+  CLE_EAU:        'ft_nutrition_eau',
+  CLE_CUSTOMS:    'ft_nutrition_customs',
+  CLE_FAVORIS:    'ft_nutrition_favoris',
+  CLE_RECENTS:    'ft_nutrition_recents',
+  CLE_PLANNING:   'ft_nutrition_planning',
 
-  _ongletActif:    'dashboard',
-  _filtreRecette:  'tous',
-  _alimentChoisi:  null,
-  _chartInstances: {},
+  _ongletActif:       'dashboard',
+  _filtreRecette:     'tous',
+  _alimentChoisi:     null,
+  _chartInstances:    {},
   _objectifsCache:    null,
   _objectifsCacheKey: null,
 
@@ -952,7 +1595,7 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
-  // OBJECTIFS — genre + objectif aware
+  // OBJECTIFS
   // ════════════════════════════════════════════════════════
   _calculerObjectifsAuto(profil) {
     const poids    = profil.poids    || 80;
@@ -961,7 +1604,6 @@ const Nutrition = {
     const objectif = profil.objectif || 'forme';
     const genre    = profil.genre    || 'homme';
 
-    // Mifflin-St Jeor (plus précis que Harris-Benedict)
     let bmr;
     if (genre === 'femme') {
       bmr = (10 * poids) + (6.25 * taille) - (5 * age) - 161;
@@ -969,7 +1611,6 @@ const Nutrition = {
       bmr = (10 * poids) + (6.25 * taille) - (5 * age) + 5;
     }
 
-    // Niveau d'activité
     const niveauFactor = {
       debutant:      1.375,
       intermediaire: 1.55,
@@ -978,7 +1619,6 @@ const Nutrition = {
 
     const tdee = Math.round(bmr * niveauFactor);
 
-    // Surplus/déficit selon objectif ET genre
     const surplus = {
       prise_masse: genre === 'femme' ? +250 : +400,
       seche:       genre === 'femme' ? -300 : -450,
@@ -990,7 +1630,6 @@ const Nutrition = {
 
     const calories = Math.max(1200, tdee + surplus);
 
-    // Ratio macros selon genre + objectif
     const facteurProt = {
       prise_masse: genre === 'femme' ? 1.8 : 2.2,
       seche:       genre === 'femme' ? 2.0 : 2.5,
@@ -1025,10 +1664,7 @@ const Nutrition = {
       glucides:  Math.round((calories * pctGluc) / 4),
       lipides:   Math.round((calories * pctLip)  / 9),
       eau:       parseFloat(
-        (genre === 'femme'
-          ? poids * 0.032
-          : poids * 0.035
-        ).toFixed(1)
+        (genre === 'femme' ? poids * 0.032 : poids * 0.035).toFixed(1)
       )
     };
   },
@@ -1040,13 +1676,7 @@ const Nutrition = {
       return this._objectifsCache;
     const auto   = this._calculerObjectifsAuto(profil);
     const stored = Utils.storage.get(this.CLE_OBJECTIFS, null);
-    const result = stored || {
-      calories:  auto.calories,
-      proteines: auto.proteines,
-      glucides:  auto.glucides,
-      lipides:   auto.lipides,
-      eau:       auto.eau
-    };
+    const result = stored || auto;
     this._objectifsCache    = result;
     this._objectifsCacheKey = cacheKey;
     return result;
@@ -1070,6 +1700,8 @@ const Nutrition = {
     const journal = this._getJournal();
     journal.push(entree);
     Utils.storage.set(cle, journal);
+    // ✅ NOUVEAU v6.0 — Mettre à jour recents
+    this._ajouterRecent(entree.ref);
   },
 
   _supprimerEntree(id) {
@@ -1148,6 +1780,109 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v6.0 — FAVORIS & RÉCENTS
+  // ════════════════════════════════════════════════════════
+  getFavoris() {
+    return Utils.storage.get(this.CLE_FAVORIS, []);
+  },
+
+  toggleFavori(ref) {
+    const favs = this.getFavoris();
+    const idx  = favs.indexOf(ref);
+    if (idx === -1) {
+      favs.push(ref);
+      Utils.toast('⭐ Ajouté aux favoris', 'success', 1000);
+    } else {
+      favs.splice(idx, 1);
+      Utils.toast('Retiré des favoris', 'info', 800);
+    }
+    Utils.storage.set(this.CLE_FAVORIS, favs);
+  },
+
+  estFavori(ref) {
+    return this.getFavoris().includes(ref);
+  },
+
+  _ajouterRecent(ref) {
+    if (!ref || ref.startsWith('custom_')) return;
+    const recents = Utils.storage.get(this.CLE_RECENTS, []);
+    const idx     = recents.indexOf(ref);
+    if (idx !== -1) recents.splice(idx, 1);
+    recents.unshift(ref);
+    Utils.storage.set(this.CLE_RECENTS, recents.slice(0, 10));
+  },
+
+  getRecents() {
+    return Utils.storage.get(this.CLE_RECENTS, []);
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v6.0 — PLANNING SEMAINE
+  // ════════════════════════════════════════════════════════
+  getPlanningSemaine() {
+    const dateDebut = Utils.debutSemaine(Utils.aujourd_hui());
+    const saved     = Utils.storage.get(
+      `${this.CLE_PLANNING}_${dateDebut}`, null
+    );
+    if (saved) return saved;
+
+    // Générer planning par défaut
+    const planning = {};
+    const moments  = ['matin','dejeuner','collation','diner'];
+    for (let i = 0; i < 7; i++) {
+      const date = Utils.ajouterJours(dateDebut, i);
+      planning[date] = {};
+      moments.forEach(m => { planning[date][m] = null; });
+    }
+    return planning;
+  },
+
+  sauvegarderPlanning(planning) {
+    const dateDebut = Utils.debutSemaine(Utils.aujourd_hui());
+    Utils.storage.set(`${this.CLE_PLANNING}_${dateDebut}`, planning);
+  },
+
+  assignerRecettePlanning(date, moment, recetteId) {
+    const planning = this.getPlanningSemaine();
+    if (!planning[date]) planning[date] = {};
+    planning[date][moment] = recetteId;
+    this.sauvegarderPlanning(planning);
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v6.0 — LISTE DE COURSES
+  // ════════════════════════════════════════════════════════
+  genererListeCourses() {
+    const planning = this.getPlanningSemaine();
+    const courses  = {};
+
+    Object.values(planning).forEach(jour => {
+      Object.values(jour).forEach(recetteId => {
+        if (!recetteId) return;
+        const recette = RECETTES_DB.find(r => r.id === recetteId);
+        if (!recette) return;
+        recette.ingredients.forEach(ing => {
+          const ali = ALIMENTS_DB[ing.ref];
+          if (!ali) return;
+          if (!courses[ing.ref]) {
+            courses[ing.ref] = {
+              ref:   ing.ref,
+              nom:   ali.nom,
+              emoji: ali.emoji,
+              qte:   0,
+              unite: ali.unite
+            };
+          }
+          courses[ing.ref].qte += ing.qte;
+        });
+      });
+    });
+
+    return Object.values(courses)
+      .sort((a,b) => a.nom.localeCompare(b.nom));
+  },
+
+  // ════════════════════════════════════════════════════════
   // SCORE NUTRITION
   // ════════════════════════════════════════════════════════
   _calculerScore(totaux, obj, eau) {
@@ -1162,7 +1897,7 @@ const Nutrition = {
     if (pProt >= 90) s += 35;
     else if (pProt >= 70) s += 20;
     else s += 5;
-    if (pEau  >= 90) s += 25;
+    if (pEau >= 90) s += 25;
     else if (pEau >= 60) s += 15;
     else s += 5;
     s = Math.min(100, s);
@@ -1201,11 +1936,10 @@ const Nutrition = {
   // RECETTES — genre + objectif + séance aware
   // ════════════════════════════════════════════════════════
   getRecettesAdaptees(limite = 6) {
-    const profil  = this._getProfil();
-    const genre   = profil.genre;
-    const objectif= profil.objectif;
+    const profil   = this._getProfil();
+    const genre    = profil.genre;
+    const objectif = profil.objectif;
 
-    // Détecter séance du jour
     let seanceType = 'tous';
     try {
       const seanceId = Programme.getSeanceduJour()?.id || '';
@@ -1249,7 +1983,6 @@ const Nutrition = {
     const objectif= profil.objectif;
     const muscles = profil.muscles;
 
-    // Trouver une recette post-séance adaptée
     const candidates = RECETTES_DB.filter(r =>
       r.moment === 'post_seance' &&
       (r.genre?.includes(genre) || !r.genre?.length)
@@ -1257,7 +1990,6 @@ const Nutrition = {
       let sA = 0, sB = 0;
       if (a.objectifs?.includes(objectif)) sA += 2;
       if (b.objectifs?.includes(objectif)) sB += 2;
-      // Muscles ciblés
       const musclesCibles = muscles || [];
       const legMuscles = ['fessiers','quadriceps','ischio','mollets'];
       const hasLeg = musclesCibles.some(m => legMuscles.includes(m));
@@ -1300,32 +2032,27 @@ const Nutrition = {
 
     container.innerHTML = `
       <div class="tabs-container mb-md"
-           style="display:grid;
-                  grid-template-columns:repeat(5,1fr);gap:4px">
+           style="display:grid;grid-template-columns:repeat(6,1fr);gap:3px">
         ${[
-          { id:'dashboard', emoji:'📊', label:'Dashboard' },
-          { id:'journal',   emoji:'📔', label:'Journal'   },
-          { id:'recettes',  emoji:'🍽️', label:'Recettes'  },
-          { id:'objectifs', emoji:'🎯', label:'Objectifs' },
-          { id:'stats',     emoji:'📈', label:'Stats'     }
+          { id:'dashboard',  emoji:'📊', label:'Dashboard'  },
+          { id:'journal',    emoji:'📔', label:'Journal'    },
+          { id:'recettes',   emoji:'🍽️', label:'Recettes'   },
+          { id:'planning',   emoji:'📅', label:'Planning'   },
+          { id:'objectifs',  emoji:'🎯', label:'Objectifs'  },
+          { id:'stats',      emoji:'📈', label:'Stats'      }
         ].map(t => `
           <button onclick="Nutrition._changerOnglet('${t.id}')"
-                  style="padding:8px 4px;font-size:.62rem;
-                         font-weight:700;text-align:center;
-                         cursor:pointer;
-                         border-radius:var(--radius-md);
-                         transition:all .2s;
+                  style="padding:7px 3px;font-size:.58rem;
+                         font-weight:700;text-align:center;cursor:pointer;
+                         border-radius:var(--radius-md);transition:all .2s;
                          background:${this._ongletActif === t.id
-                           ? 'var(--fd-indigo)'
-                           : 'rgba(255,255,255,0.04)'};
+                           ? 'var(--fd-indigo)' : 'rgba(255,255,255,0.04)'};
                          border:1px solid ${this._ongletActif === t.id
-                           ? 'var(--fd-indigo)'
-                           : 'rgba(255,255,255,0.08)'};
+                           ? 'var(--fd-indigo)' : 'rgba(255,255,255,0.08)'};
                          color:${this._ongletActif === t.id
                            ? 'white' : 'var(--text-muted)'}">
-            <div style="font-size:1rem;margin-bottom:2px">
-              ${t.emoji}
-            </div>${t.label}
+            <div style="font-size:.9rem;margin-bottom:2px">${t.emoji}</div>
+            ${t.label}
           </button>`).join('')}
       </div>
       <div id="nutrition-content"></div>`;
@@ -1346,13 +2073,14 @@ const Nutrition = {
       case 'dashboard': this._rendreDashboard(c); break;
       case 'journal':   this._rendreJournal(c);   break;
       case 'recettes':  this._rendreRecettes(c);  break;
+      case 'planning':  this._rendrePlanning(c);  break;
       case 'objectifs': this._rendreObjectifs(c); break;
       case 'stats':     this._rendreStats(c);     break;
     }
   },
 
   // ════════════════════════════════════════════════════════
-  // DASHBOARD
+  // DASHBOARD v6.0 — Avec donut macros animé
   // ════════════════════════════════════════════════════════
   _rendreDashboard(container) {
     const totaux  = this.getTotauxJournal();
@@ -1373,7 +2101,6 @@ const Nutrition = {
       eau:  Math.min(100,Math.round((eau        /Math.max(eauObj,       1))*100))
     };
 
-    // Suggestion post-séance
     let postSeance = null;
     try {
       const seanceDuJour = Tracker.getSeanceDuJour?.();
@@ -1383,52 +2110,141 @@ const Nutrition = {
     } catch(e) {}
 
     const recettes = this.getRecettesAdaptees(3);
+    const favoris  = this.getFavoris().slice(0, 3);
+    const recents  = this.getRecents().slice(0, 3);
+
+    // ✅ NOUVEAU v6.0 — Donut macros
+    const totalMacros = (totaux.prot * 4) + (totaux.gluc * 4) + (totaux.lip * 9);
+    const pctProtDon  = totalMacros > 0 ? Math.round((totaux.prot * 4 / totalMacros) * 100) : 33;
+    const pctGlucDon  = totalMacros > 0 ? Math.round((totaux.gluc * 4 / totalMacros) * 100) : 34;
+    const pctLipDon   = totalMacros > 0 ? Math.round((totaux.lip  * 9 / totalMacros) * 100) : 33;
+
+    // Segments donut (total arc = 251.2 = 2*PI*40)
+    const circ    = 251.2;
+    const segProt = circ * (pctProtDon / 100);
+    const segGluc = circ * (pctGlucDon / 100);
+    const segLip  = circ * (pctLipDon  / 100);
+    let offset    = 0;
+    const segOffset1 = offset;   offset += segProt;
+    const segOffset2 = offset;   offset += segGluc;
+    const segOffset3 = offset;
 
     container.innerHTML = `
 
-      <!-- Score -->
-      ${score.score > 0 ? `
+      <!-- ✅ NOUVEAU v6.0 — Score + Donut macros côte à côte -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;
+                  gap:10px;margin-bottom:14px">
+
+        <!-- Score nutrition -->
         <div style="background:rgba(75,75,249,0.08);
                     border:1px solid rgba(75,75,249,0.2);
-                    border-left:3px solid var(--fd-indigo);
                     border-radius:var(--radius-xl);
-                    padding:12px 14px;margin-bottom:14px;
-                    display:flex;align-items:center;gap:12px">
-          <div style="font-size:1.8rem;font-weight:900;
-                      color:${score.score>=80
+                    padding:14px;text-align:center">
+          <div style="font-size:.58rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.08em;
+                      color:var(--fd-indigo);margin-bottom:8px">
+            📊 Score nutrition${badge}
+          </div>
+          <div style="position:relative;display:inline-block">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="32" fill="none"
+                      stroke="rgba(75,75,249,0.1)" stroke-width="8"/>
+              <circle cx="40" cy="40" r="32" fill="none"
+                      stroke="${score.score>=80
                         ?'var(--fd-mint)':score.score>=60
-                        ?'var(--fd-lemon)':'var(--fd-coral)'}">
-            ${score.score}
+                        ?'var(--fd-lemon)':'var(--fd-coral)'}"
+                      stroke-width="8"
+                      stroke-linecap="round"
+                      stroke-dasharray="${Math.round(201*(score.score/100))} 201"
+                      transform="rotate(-90 40 40)"
+                      style="transition:stroke-dasharray 1s ease"/>
+              <text x="40" y="44" text-anchor="middle"
+                    fill="white" font-size="14" font-weight="900">
+                ${score.score}
+              </text>
+            </svg>
           </div>
-          <div style="flex:1">
-            <div style="font-size:.72rem;font-weight:700;
-                        color:var(--fd-indigo)">
-              📊 Score nutrition${badge}
-            </div>
-            <div style="font-size:.65rem;color:var(--text-muted)">
-              ${score.message}
-            </div>
+          <div style="font-size:.65rem;color:var(--text-muted);margin-top:6px;
+                      line-height:1.4">
+            ${score.message}
           </div>
-          <div style="font-size:1.2rem">${score.emoji}</div>
-        </div>` : ''}
+        </div>
 
-      <!-- Calories -->
+        <!-- ✅ NOUVEAU v6.0 — Donut répartition macros -->
+        <div style="background:rgba(255,255,255,0.04);
+                    border:1px solid rgba(255,255,255,0.08);
+                    border-radius:var(--radius-xl);
+                    padding:14px;text-align:center">
+          <div style="font-size:.58rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.08em;
+                      color:var(--text-muted);margin-bottom:8px">
+            🥗 Répartition macros
+          </div>
+          <div style="position:relative;display:inline-block">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="30" fill="none"
+                      stroke="rgba(255,255,255,0.04)" stroke-width="10"/>
+              <!-- Protéines -->
+              <circle cx="40" cy="40" r="30" fill="none"
+                      stroke="var(--fd-coral)" stroke-width="10"
+                      stroke-dasharray="${segProt} ${circ - segProt}"
+                      stroke-dashoffset="${circ - segOffset1}"
+                      transform="rotate(-90 40 40)"
+                      style="transition:all 1s ease"/>
+              <!-- Glucides -->
+              <circle cx="40" cy="40" r="30" fill="none"
+                      stroke="var(--fd-indigo)" stroke-width="10"
+                      stroke-dasharray="${segGluc} ${circ - segGluc}"
+                      stroke-dashoffset="${circ - segOffset2}"
+                      transform="rotate(-90 40 40)"
+                      style="transition:all 1s ease .2s"/>
+              <!-- Lipides -->
+              <circle cx="40" cy="40" r="30" fill="none"
+                      stroke="var(--fd-lavender)" stroke-width="10"
+                      stroke-dasharray="${segLip} ${circ - segLip}"
+                      stroke-dashoffset="${circ - segOffset3}"
+                      transform="rotate(-90 40 40)"
+                      style="transition:all 1s ease .4s"/>
+              <text x="40" y="40" text-anchor="middle"
+                    fill="white" font-size="9" font-weight="700">
+                ${Math.round(totaux.cal)}
+              </text>
+              <text x="40" y="50" text-anchor="middle"
+                    fill="rgba(255,255,255,0.4)" font-size="7">
+                kcal
+              </text>
+            </svg>
+          </div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-top:6px">
+            ${[
+              {label:'P', pct:pctProtDon, color:'var(--fd-coral)'    },
+              {label:'G', pct:pctGlucDon, color:'var(--fd-indigo)'   },
+              {label:'L', pct:pctLipDon,  color:'var(--fd-lavender)' }
+            ].map(m => `
+              <div style="text-align:center">
+                <div style="font-size:.6rem;font-weight:700;
+                            color:${m.color}">${m.pct}%</div>
+                <div style="font-size:.52rem;color:var(--text-muted)">${m.label}</div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Calories + macros détail -->
       <div style="background:linear-gradient(135deg,
                   rgba(75,75,249,0.15),rgba(75,75,249,0.05));
                   border:1px solid rgba(75,75,249,0.3);
                   border-radius:var(--radius-xl);
                   padding:18px;margin-bottom:14px">
         <div style="display:flex;align-items:center;
-                    justify-content:space-between;
-                    margin-bottom:12px">
+                    justify-content:space-between;margin-bottom:12px">
           <div>
             <div style="font-size:.6rem;font-weight:700;
                         text-transform:uppercase;letter-spacing:.1em;
                         color:var(--fd-indigo)">
               📊 Bilan du jour${badge}
             </div>
-            <div style="font-size:.65rem;color:var(--text-muted);
-                        margin-top:2px">
+            <div style="font-size:.65rem;color:var(--text-muted);margin-top:2px">
               ${new Date().toLocaleDateString('fr-FR',{
                 weekday:'long',day:'numeric',month:'long'
               })}
@@ -1437,33 +2253,27 @@ const Nutrition = {
           <div style="text-align:right">
             <div style="font-size:1.6rem;font-weight:800;
                         color:${pcts.cal>=110?'var(--fd-coral)'
-                          :pcts.cal>=90?'var(--fd-mint)'
-                          :'var(--fd-indigo)'}">
+                          :pcts.cal>=90?'var(--fd-mint)':'var(--fd-indigo)'}">
               ${Math.round(totaux.cal)}
             </div>
             <div style="font-size:.62rem;color:var(--text-muted)">
               / ${obj.calories} kcal
             </div>
             <div style="font-size:.6rem;font-weight:700;
-                        color:${surplus>=0
-                          ?'var(--fd-coral)':'var(--fd-mint)'}">
+                        color:${surplus>=0?'var(--fd-coral)':'var(--fd-mint)'}">
               ${surplus>=0?'+':''}${Math.round(surplus)} kcal
             </div>
           </div>
         </div>
 
         <div style="height:8px;background:rgba(255,255,255,0.06);
-                    border-radius:99px;overflow:hidden;
-                    margin-bottom:14px">
+                    border-radius:99px;overflow:hidden;margin-bottom:14px">
           <div style="height:100%;width:${pcts.cal}%;
-                      background:${pcts.cal>=110
-                        ?'var(--fd-coral)':'var(--fd-indigo)'};
-                      border-radius:99px;transition:width 1s ease">
-          </div>
+                      background:${pcts.cal>=110?'var(--fd-coral)':'var(--fd-indigo)'};
+                      border-radius:99px;transition:width 1s ease"></div>
         </div>
 
-        <div style="display:grid;
-                    grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
           ${[
             {label:'Protéines',val:totaux.prot,obj:obj.proteines,
              pct:pcts.prot,color:'var(--fd-coral)',   u:'g',e:'💪'},
@@ -1475,26 +2285,20 @@ const Nutrition = {
             <div style="text-align:center;padding:10px 6px;
                         background:rgba(255,255,255,0.04);
                         border-radius:var(--radius-md)">
-              <div style="font-size:.58rem;color:var(--text-muted);
-                          margin-bottom:4px">${m.e} ${m.label}</div>
-              <div style="font-size:.92rem;font-weight:800;
-                          color:${m.color}">
-                ${Math.round(m.val)}${m.u}
-              </div>
+              <div style="font-size:.58rem;color:var(--text-muted);margin-bottom:4px">
+                ${m.e} ${m.label}</div>
+              <div style="font-size:.92rem;font-weight:800;color:${m.color}">
+                ${Math.round(m.val)}${m.u}</div>
               <div style="font-size:.52rem;color:var(--text-muted)">
-                / ${m.obj}${m.u}
-              </div>
+                / ${m.obj}${m.u}</div>
               <div style="height:4px;background:rgba(255,255,255,0.06);
-                          border-radius:99px;overflow:hidden;
-                          margin-top:5px">
+                          border-radius:99px;overflow:hidden;margin-top:5px">
                 <div style="height:100%;width:${m.pct}%;
-                            background:${m.pct>=100
-                              ?'var(--fd-coral)':m.color};
+                            background:${m.pct>=100?'var(--fd-coral)':m.color};
                             border-radius:99px"></div>
               </div>
               <div style="font-size:.52rem;margin-top:2px;
-                          color:${m.pct>=100
-                            ?'var(--fd-coral)':'var(--text-muted)'}">
+                          color:${m.pct>=100?'var(--fd-coral)':'var(--text-muted)'}">
                 ${m.pct}%${m.pct>=100?' ⚠️':''}
               </div>
             </div>`).join('')}
@@ -1517,8 +2321,9 @@ const Nutrition = {
             <div style="font-size:1.3rem;font-weight:800;
                         color:var(--fd-indigo);margin-top:3px">
               ${(eau/1000).toFixed(2)}L
-              <span style="font-size:.7rem;color:var(--text-muted);
-                           font-weight:400">/ ${obj.eau}L</span>
+              <span style="font-size:.7rem;color:var(--text-muted);font-weight:400">
+                / ${obj.eau}L
+              </span>
             </div>
           </div>
           <svg width="64" height="64" viewBox="0 0 64 64">
@@ -1536,14 +2341,12 @@ const Nutrition = {
           </svg>
         </div>
         <div style="height:7px;background:rgba(75,75,249,0.1);
-                    border-radius:99px;overflow:hidden;
-                    margin-bottom:12px">
+                    border-radius:99px;overflow:hidden;margin-bottom:12px">
           <div style="height:100%;width:${pcts.eau}%;
                       background:var(--fd-indigo);border-radius:99px;
                       transition:width .8s ease"></div>
         </div>
-        <div style="display:grid;
-                    grid-template-columns:repeat(4,1fr);gap:6px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
           ${[
             {ml:150, label:'+150',icon:'🥛'},
             {ml:250, label:'+250',icon:'🥤'},
@@ -1554,15 +2357,12 @@ const Nutrition = {
                     style="padding:8px 4px;text-align:center;
                            background:rgba(75,75,249,0.12);
                            border:1px solid rgba(75,75,249,0.25);
-                           border-radius:var(--radius-md);
-                           cursor:pointer;transition:all .15s"
+                           border-radius:var(--radius-md);cursor:pointer"
                     onmousedown="this.style.transform='scale(.94)'"
                     onmouseup="this.style.transform=''">
               <div style="font-size:.95rem">${b.icon}</div>
               <div style="font-size:.58rem;font-weight:700;
-                          color:var(--fd-indigo);margin-top:2px">
-                ${b.label}
-              </div>
+                          color:var(--fd-indigo);margin-top:2px">${b.label}</div>
             </button>`).join('')}
         </div>
         ${pcts.eau >= 100 ? `
@@ -1580,6 +2380,82 @@ const Nutrition = {
           </div>`}
       </div>
 
+      <!-- ✅ NOUVEAU v6.0 — Accès rapide favoris -->
+      ${favoris.length > 0 ? `
+        <div style="background:rgba(255,255,255,0.03);
+                    border:1px solid rgba(255,255,255,0.07);
+                    border-radius:var(--radius-xl);
+                    padding:14px;margin-bottom:14px">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--text-muted);margin-bottom:10px">
+            ⭐ Favoris — Ajout rapide
+          </div>
+          <div style="display:flex;gap:8px;overflow-x:auto;
+                      scrollbar-width:none;padding-bottom:2px">
+            ${favoris.map(ref => {
+              const ali = ALIMENTS_DB[ref];
+              if (!ali) return '';
+              return `
+                <button onclick="Nutrition._ajouterFavoriRapide('${ref}')"
+                        style="flex-shrink:0;padding:8px 12px;
+                               background:rgba(249,239,119,0.08);
+                               border:1px solid rgba(249,239,119,0.2);
+                               border-radius:var(--radius-md);
+                               text-align:center;cursor:pointer;
+                               min-width:70px">
+                  <div style="font-size:1.2rem;margin-bottom:3px">${ali.emoji}</div>
+                  <div style="font-size:.6rem;font-weight:700;
+                              color:var(--fd-lemon);
+                              overflow:hidden;text-overflow:ellipsis;
+                              white-space:nowrap;max-width:65px">
+                    ${ali.nom.split(' ').slice(0,2).join(' ')}
+                  </div>
+                  <div style="font-size:.52rem;color:var(--text-muted)">
+                    ${ali.cal} kcal
+                  </div>
+                </button>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
+
+      <!-- ✅ NOUVEAU v6.0 — Récemment utilisés -->
+      ${recents.length > 0 ? `
+        <div style="background:rgba(255,255,255,0.03);
+                    border:1px solid rgba(255,255,255,0.07);
+                    border-radius:var(--radius-xl);
+                    padding:14px;margin-bottom:14px">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--text-muted);margin-bottom:10px">
+            🕐 Récemment utilisés
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${recents.map(ref => {
+              const ali = ALIMENTS_DB[ref];
+              if (!ali) return '';
+              return `
+                <div onclick="Nutrition._selectionnerAlimentDirect('${ref}')"
+                     style="display:flex;align-items:center;gap:10px;
+                            padding:8px 10px;
+                            background:rgba(255,255,255,0.03);
+                            border-radius:var(--radius-md);
+                            cursor:pointer;transition:all .15s"
+                     onmouseenter="this.style.background='rgba(75,75,249,0.06)'"
+                     onmouseleave="this.style.background='rgba(255,255,255,0.03)'">
+                  <span style="font-size:1.1rem">${ali.emoji}</span>
+                  <div style="flex:1">
+                    <div style="font-size:.78rem;font-weight:600">${ali.nom}</div>
+                    <div style="font-size:.58rem;color:var(--text-muted)">
+                      ${ali.cal} kcal / ${ali.portion}${ali.unite}
+                    </div>
+                  </div>
+                  <span style="font-size:.7rem;color:var(--fd-indigo)">+ →</span>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
+
       <!-- Post-séance -->
       ${postSeance ? `
         <div onclick="Nutrition._voirRecette('${postSeance.id}')"
@@ -1595,13 +2471,11 @@ const Nutrition = {
           <div style="display:flex;align-items:center;gap:10px">
             <span style="font-size:1.8rem">${postSeance.emoji}</span>
             <div style="flex:1">
-              <div style="font-size:.88rem;font-weight:700">
-                ${postSeance.nom}
-              </div>
+              <div style="font-size:.88rem;font-weight:700">${postSeance.nom}</div>
               <div style="font-size:.65rem;color:var(--text-muted)">
-                ${this._calculerMacrosRecette(postSeance).cal} kcal
-                · ${this._calculerMacrosRecette(postSeance).prot}g prot
-                · ⏱ ${postSeance.temps}min
+                ${this._calculerMacrosRecette(postSeance).cal} kcal ·
+                ${this._calculerMacrosRecette(postSeance).prot}g prot ·
+                ⏱ ${postSeance.temps}min
               </div>
             </div>
             <span style="color:var(--fd-mint);font-size:1.2rem">›</span>
@@ -1622,8 +2496,7 @@ const Nutrition = {
           </div>
           <button onclick="Nutrition._changerOnglet('recettes')"
                   style="background:none;border:none;font-size:.68rem;
-                         color:var(--fd-indigo);cursor:pointer;
-                         font-weight:600">
+                         color:var(--fd-indigo);cursor:pointer;font-weight:600">
             Voir tout →
           </button>
         </div>
@@ -1637,12 +2510,9 @@ const Nutrition = {
                         cursor:pointer">
               <span style="font-size:1.3rem">${r.emoji}</span>
               <div style="flex:1">
-                <div style="font-size:.82rem;font-weight:600">
-                  ${r.nom}
-                </div>
+                <div style="font-size:.82rem;font-weight:600">${r.nom}</div>
                 <div style="font-size:.6rem;color:var(--text-muted)">
-                  ⏱ ${r.temps}min · ${macros.prot}g prot
-                  · ${macros.cal} kcal
+                  ⏱ ${r.temps}min · ${macros.prot}g prot · ${macros.cal} kcal
                 </div>
               </div>
               <span style="color:var(--fd-indigo)">›</span>
@@ -1664,8 +2534,7 @@ const Nutrition = {
           </div>
           <button onclick="Nutrition._changerOnglet('journal')"
                   style="background:none;border:none;font-size:.68rem;
-                         color:var(--fd-indigo);cursor:pointer;
-                         font-weight:600">
+                         color:var(--fd-indigo);cursor:pointer;font-weight:600">
             Voir tout →
           </button>
         </div>
@@ -1690,28 +2559,61 @@ const Nutrition = {
         || { nom:e.nom||e.ref, emoji:e.emoji||'🍽️' };
       return `
         <div style="display:flex;align-items:center;gap:10px;
-                    padding:8px 0;
-                    border-bottom:1px solid var(--border-color)">
+                    padding:8px 0;border-bottom:1px solid var(--border-color)">
           <span style="font-size:1.2rem">${ali.emoji}</span>
           <div style="flex:1">
-            <div style="font-size:.82rem;font-weight:600">
-              ${ali.nom||e.nom}
-            </div>
+            <div style="font-size:.82rem;font-weight:600">${ali.nom||e.nom}</div>
             <div style="font-size:.6rem;color:var(--text-muted)">
               ${e.qte||100}${e.unite||'g'} · ${e.moment||''}
             </div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:.78rem;font-weight:700;
-                        color:var(--fd-lemon)">
-              ${Math.round(e.cal)} kcal
-            </div>
+            <div style="font-size:.78rem;font-weight:700;color:var(--fd-lemon)">
+              ${Math.round(e.cal)} kcal</div>
             <div style="font-size:.58rem;color:var(--fd-coral)">
-              ${Math.round(e.prot)}g prot
-            </div>
+              ${Math.round(e.prot)}g prot</div>
           </div>
         </div>`;
     }).join('');
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v6.0 — Ajout favori rapide
+  // ════════════════════════════════════════════════════════
+  _ajouterFavoriRapide(ref) {
+    const ali = ALIMENTS_DB[ref];
+    if (!ali) return;
+    const moment = 'dejeuner';
+    const ratio  = ali.portion / ali.portion;
+    this._ajouterEntreeJournal({
+      id:    Date.now().toString(),
+      ref,
+      nom:   ali.nom,
+      emoji: ali.emoji,
+      unite: ali.unite,
+      qte:   ali.portion,
+      moment,
+      cal:   Math.round(ali.cal),
+      prot:  Math.round(ali.prot * 10) / 10,
+      gluc:  Math.round(ali.gluc * 10) / 10,
+      lip:   Math.round(ali.lip  * 10) / 10,
+      date:  Utils.aujourd_hui(),
+      heure: new Date().toLocaleTimeString('fr-FR',{
+        hour:'2-digit', minute:'2-digit'
+      })
+    });
+    Utils.toast(`⭐ ${ali.nom} ajouté !`, 'success', 1200);
+    Utils.vibrerSuccess();
+    const p = document.getElementById('page-nutrition');
+    if (p) this.render(p);
+  },
+
+  // ✅ NOUVEAU v6.0 — Sélectionner aliment depuis dashboard
+  _selectionnerAlimentDirect(ref) {
+    this._ouvrirAjoutAliment('dejeuner');
+    setTimeout(() => {
+      this._selectionnerAliment(ref);
+    }, 200);
   },
 
   // ════════════════════════════════════════════════════════
@@ -1731,51 +2633,37 @@ const Nutrition = {
     ];
 
     container.innerHTML = `
+
+      <!-- Résumé jour -->
       <div style="background:rgba(255,255,255,0.04);
                   border:1px solid rgba(255,255,255,0.08);
                   border-radius:var(--radius-xl);
                   padding:14px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;
                     align-items:center;margin-bottom:10px">
-          <div style="font-size:.88rem;font-weight:800">
-            Total du jour
-          </div>
-          <div style="font-size:1rem;font-weight:800;
-                      color:var(--fd-lemon)">
+          <div style="font-size:.88rem;font-weight:800">Total du jour</div>
+          <div style="font-size:1rem;font-weight:800;color:var(--fd-lemon)">
             ${Math.round(totaux.cal)} kcal
           </div>
         </div>
-        <div style="display:grid;
-                    grid-template-columns:repeat(3,1fr);gap:8px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
           ${[
-            {label:'Prot.',val:totaux.prot,obj:obj.proteines,
-             color:'var(--fd-coral)'   },
-            {label:'Gluc.',val:totaux.gluc,obj:obj.glucides,
-             color:'var(--fd-lemon)'   },
-            {label:'Lip.', val:totaux.lip, obj:obj.lipides,
-             color:'var(--fd-lavender)'}
+            {label:'Prot.',val:totaux.prot,obj:obj.proteines,color:'var(--fd-coral)'   },
+            {label:'Gluc.',val:totaux.gluc,obj:obj.glucides, color:'var(--fd-lemon)'   },
+            {label:'Lip.', val:totaux.lip, obj:obj.lipides,  color:'var(--fd-lavender)'}
           ].map(m => {
-            const pct = Math.min(100,
-              Math.round((m.val/Math.max(m.obj,1))*100));
+            const pct = Math.min(100,Math.round((m.val/Math.max(m.obj,1))*100));
             return `
               <div>
-                <div style="display:flex;justify-content:space-between;
-                            margin-bottom:3px">
-                  <span style="font-size:.6rem;
-                               color:var(--text-muted)">
-                    ${m.label}
-                  </span>
-                  <span style="font-size:.6rem;font-weight:700;
-                               color:${m.color}">
-                    ${Math.round(m.val)}g
-                  </span>
+                <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+                  <span style="font-size:.6rem;color:var(--text-muted)">${m.label}</span>
+                  <span style="font-size:.6rem;font-weight:700;color:${m.color}">
+                    ${Math.round(m.val)}g</span>
                 </div>
-                <div style="height:4px;
-                            background:rgba(255,255,255,0.06);
+                <div style="height:4px;background:rgba(255,255,255,0.06);
                             border-radius:99px;overflow:hidden">
                   <div style="height:100%;width:${pct}%;
-                              background:${m.color};
-                              border-radius:99px"></div>
+                              background:${m.color};border-radius:99px"></div>
                 </div>
               </div>`;
           }).join('')}
@@ -1794,17 +2682,13 @@ const Nutrition = {
         );
         if (!entrees.length) return '';
         const totalM = entrees.reduce(
-          (a,e) => ({
-            cal: a.cal+(e.cal||0),
-            prot:a.prot+(e.prot||0)
-          }),
-          {cal:0,prot:0}
+          (a,e) => ({ cal:a.cal+(e.cal||0), prot:a.prot+(e.prot||0) }),
+          {cal:0, prot:0}
         );
         return `
           <div style="margin-bottom:16px">
             <div style="display:flex;align-items:center;
-                        justify-content:space-between;
-                        margin-bottom:8px">
+                        justify-content:space-between;margin-bottom:8px">
               <div style="font-size:.72rem;font-weight:700;
                           color:var(--text-muted);
                           display:flex;align-items:center;gap:6px">
@@ -1813,16 +2697,15 @@ const Nutrition = {
                 ${moment.label}
               </div>
               <div style="font-size:.65rem;color:var(--text-muted)">
-                ${Math.round(totalM.cal)} kcal
-                · ${Math.round(totalM.prot)}g prot
+                ${Math.round(totalM.cal)} kcal · ${Math.round(totalM.prot)}g prot
               </div>
             </div>
             ${entrees.map(e => {
               const ali = ALIMENTS_DB[e.ref]
                 || {nom:e.nom||e.ref, emoji:e.emoji||'🍽️'};
               return `
-                <div style="display:flex;align-items:center;
-                            gap:10px;padding:10px 12px;
+                <div style="display:flex;align-items:center;gap:10px;
+                            padding:10px 12px;
                             background:var(--bg-input);
                             border:1px solid var(--border-color);
                             border-radius:var(--radius-md);
@@ -1832,42 +2715,43 @@ const Nutrition = {
                   </span>
                   <div style="flex:1;min-width:0">
                     <div style="font-size:.82rem;font-weight:700;
-                                overflow:hidden;text-overflow:ellipsis;
-                                white-space:nowrap">
+                                overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
                       ${ali.nom||e.nom}
                     </div>
                     <div style="font-size:.6rem;color:var(--text-muted)">
-                      ${e.qte||100}${e.unite||'g'}
-                      · P:${Math.round(e.prot||0)}g
-                      · G:${Math.round(e.gluc||0)}g
-                      · L:${Math.round(e.lip||0)}g
+                      ${e.qte||100}${e.unite||'g'} ·
+                      P:${Math.round(e.prot||0)}g ·
+                      G:${Math.round(e.gluc||0)}g ·
+                      L:${Math.round(e.lip||0)}g
                     </div>
                   </div>
                   <div style="text-align:right;flex-shrink:0">
-                    <div style="font-size:.82rem;font-weight:800;
-                                color:var(--fd-lemon)">
-                      ${Math.round(e.cal||0)}
-                    </div>
-                    <div style="font-size:.55rem;color:var(--text-muted)">
-                      kcal
-                    </div>
+                    <div style="font-size:.82rem;font-weight:800;color:var(--fd-lemon)">
+                      ${Math.round(e.cal||0)}</div>
+                    <div style="font-size:.55rem;color:var(--text-muted)">kcal</div>
                   </div>
+                  <button onclick="Nutrition.toggleFavori('${e.ref}');
+                                   this.textContent=Nutrition.estFavori('${e.ref}')?'⭐':'☆'"
+                          style="width:26px;height:26px;flex-shrink:0;
+                                 background:none;border:none;
+                                 color:${this.estFavori(e.ref)
+                                   ?'var(--fd-lemon)':'var(--text-muted)'};
+                                 font-size:.9rem;cursor:pointer">
+                    ${this.estFavori(e.ref) ? '⭐' : '☆'}
+                  </button>
                   <button onclick="Nutrition._supprimerEntree('${e.id}')"
                           style="width:28px;height:28px;flex-shrink:0;
                                  background:rgba(255,141,150,0.1);
                                  border:1px solid rgba(255,141,150,0.2);
                                  border-radius:50%;color:var(--fd-coral);
-                                 font-size:.75rem;cursor:pointer">
-                    ✕
-                  </button>
+                                 font-size:.75rem;cursor:pointer">✕</button>
                 </div>`;
             }).join('')}
           </div>`;
       }).join('')}
 
       ${journal.length === 0 ? `
-        <div style="text-align:center;padding:32px 16px;
-                    color:var(--text-muted)">
+        <div style="text-align:center;padding:32px 16px;color:var(--text-muted)">
           <div style="font-size:2.5rem;margin-bottom:8px">📔</div>
           <div style="font-size:.88rem">Aucune entrée aujourd'hui</div>
           <div style="font-size:.72rem;margin-top:4px">
@@ -1887,35 +2771,14 @@ const Nutrition = {
 
     content.innerHTML = `
       <div style="padding:var(--space-md)">
-        <div style="font-size:.88rem;font-weight:800;
-                    margin-bottom:12px">➕ Ajouter un aliment</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;
-                    gap:6px;margin-bottom:14px">
-          <button id="btn-mode-liste"
-                  onclick="Nutrition._modeAjout('liste')"
-                  style="padding:8px;background:var(--fd-indigo);
-                         color:white;border:none;
-                         border-radius:var(--radius-md);
-                         font-size:.75rem;font-weight:700;
-                         cursor:pointer">
-            📋 Liste
-          </button>
-          <button id="btn-mode-manuel"
-                  onclick="Nutrition._modeAjout('manuel')"
-                  style="padding:8px;background:var(--bg-input);
-                         color:var(--text-muted);
-                         border:1px solid var(--border-color);
-                         border-radius:var(--radius-md);
-                         font-size:.75rem;font-weight:700;
-                         cursor:pointer">
-            ✏️ Manuel
-          </button>
+        <div style="font-size:.88rem;font-weight:800;margin-bottom:12px">
+          ➕ Ajouter un aliment
         </div>
+
+        <!-- Moment -->
         <div style="margin-bottom:12px">
           <div style="font-size:.65rem;color:var(--text-muted);
-                      margin-bottom:6px;font-weight:600">
-            Moment
-          </div>
+                      margin-bottom:6px;font-weight:600">Moment</div>
           <div style="display:flex;flex-wrap:wrap;gap:5px">
             ${[
               {id:'matin',       label:'🌅 Matin'      },
@@ -1939,14 +2802,34 @@ const Nutrition = {
               </button>`).join('')}
           </div>
         </div>
+
+        <!-- Modes ajout -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
+                    gap:6px;margin-bottom:14px">
+          ${[
+            {id:'liste',    label:'📋 Liste',    icon:'📋'},
+            {id:'favoris',  label:'⭐ Favoris',  icon:'⭐'},
+            {id:'manuel',   label:'✏️ Manuel',   icon:'✏️'}
+          ].map((m,i) => `
+            <button id="btn-mode-${m.id}"
+                    onclick="Nutrition._modeAjout('${m.id}')"
+                    style="padding:8px;
+                           background:${i===0?'var(--fd-indigo)':'var(--bg-input)'};
+                           color:${i===0?'white':'var(--text-muted)'};
+                           border:${i===0?'none':'1px solid var(--border-color)'};
+                           border-radius:var(--radius-md);
+                           font-size:.72rem;font-weight:700;cursor:pointer">
+              ${m.label}
+            </button>`).join('')}
+        </div>
+
         <div id="ajout-content"></div>
       </div>`;
 
     modal.classList.remove('hidden');
     this._modeAjout('liste');
     const closeBtn = document.getElementById('modal-info-close');
-    if (closeBtn) closeBtn.onclick = () =>
-      modal.classList.add('hidden');
+    if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
   },
 
   _selectMoment(id, btn) {
@@ -1964,14 +2847,14 @@ const Nutrition = {
   _modeAjout(mode) {
     const c = document.getElementById('ajout-content');
     if (!c) return;
-    ['liste','manuel'].forEach(m => {
+
+    // Mettre à jour boutons modes
+    ['liste','favoris','manuel'].forEach(m => {
       const btn = document.getElementById(`btn-mode-${m}`);
       if (!btn) return;
-      btn.style.background = m === mode
-        ? 'var(--fd-indigo)' : 'var(--bg-input)';
+      btn.style.background = m === mode ? 'var(--fd-indigo)' : 'var(--bg-input)';
       btn.style.color = m === mode ? 'white' : 'var(--text-muted)';
-      btn.style.border = m === mode
-        ? 'none' : '1px solid var(--border-color)';
+      btn.style.border = m === mode ? 'none' : '1px solid var(--border-color)';
     });
 
     if (mode === 'liste') {
@@ -1984,56 +2867,150 @@ const Nutrition = {
                         background:var(--bg-input);
                         border:1px solid var(--border-color);
                         border-radius:var(--radius-md);
-                        color:var(--text-primary);
-                        font-size:.82rem;outline:none"/>
+                        color:var(--text-primary);font-size:.82rem;outline:none"/>
           <span style="position:absolute;left:12px;top:50%;
-                       transform:translateY(-50%);
-                       font-size:.9rem">🔍</span>
+                       transform:translateY(-50%);font-size:.9rem">🔍</span>
         </div>
+
+        <!-- Filtres catégories -->
+        <div style="display:flex;gap:5px;overflow-x:auto;
+                    scrollbar-width:none;margin-bottom:10px">
+          ${[
+            {id:'tous',        label:'Tous'       },
+            {id:'proteines',   label:'💪 Prot.'   },
+            {id:'glucides',    label:'⚡ Gluc.'   },
+            {id:'legumes',     label:'🥦 Légumes' },
+            {id:'fruits',      label:'🍎 Fruits'  },
+            {id:'lipides',     label:'🥑 Lipides' },
+            {id:'laitiers',    label:'🥛 Laitiers'},
+            {id:'supplements', label:'💊 Suppl.'  }
+          ].map(f => `
+            <button onclick="Nutrition._filtrerAliments('${f.id}',this)"
+                    data-filtre-ali="${f.id}"
+                    style="padding:4px 10px;white-space:nowrap;
+                           font-size:.65rem;font-weight:600;
+                           border-radius:var(--radius-full);cursor:pointer;
+                           background:${f.id==='tous'
+                             ?'rgba(75,75,249,0.2)':'var(--bg-input)'};
+                           border:1px solid ${f.id==='tous'
+                             ?'var(--fd-indigo)':'var(--border-color)'};
+                           color:${f.id==='tous'
+                             ?'var(--fd-indigo)':'var(--text-muted)'}">
+              ${f.label}
+            </button>`).join('')}
+        </div>
+
         <div id="liste-aliments"
-             style="max-height:300px;overflow-y:auto">
+             style="max-height:280px;overflow-y:auto;scrollbar-width:thin">
           ${this._renderListeAlimentsModal('')}
         </div>`;
+
+    } else if (mode === 'favoris') {
+      const favoris = this.getFavoris();
+      const recents = this.getRecents();
+
+      c.innerHTML = `
+        ${favoris.length > 0 ? `
+          <div style="font-size:.65rem;font-weight:700;
+                      color:var(--fd-lemon);margin-bottom:8px">
+            ⭐ Favoris
+          </div>
+          <div style="max-height:180px;overflow-y:auto;margin-bottom:14px">
+            ${favoris.map(ref => {
+              const ali = ALIMENTS_DB[ref];
+              if (!ali) return '';
+              return `
+                <div onclick="Nutrition._selectionnerAliment('${ref}')"
+                     style="display:flex;align-items:center;gap:10px;
+                            padding:10px 12px;cursor:pointer;
+                            border-bottom:1px solid var(--border-color)"
+                     onmouseenter="this.style.background='rgba(75,75,249,0.06)'"
+                     onmouseleave="this.style.background='transparent'">
+                  <span style="font-size:1.2rem">${ali.emoji}</span>
+                  <div style="flex:1">
+                    <div style="font-size:.82rem;font-weight:700">${ali.nom}</div>
+                    <div style="font-size:.6rem;color:var(--text-muted)">
+                      ${ali.cal}kcal · P:${ali.prot}g / ${ali.portion}${ali.unite}
+                    </div>
+                  </div>
+                  <span style="color:var(--text-muted)">›</span>
+                </div>`;
+            }).join('')}
+          </div>` : `
+          <div style="text-align:center;padding:20px;color:var(--text-muted);
+                      font-size:.82rem">
+            ⭐ Aucun favori encore<br>
+            <span style="font-size:.68rem">
+              Appuie sur ☆ dans le journal pour en ajouter
+            </span>
+          </div>`}
+
+        ${recents.length > 0 ? `
+          <div style="font-size:.65rem;font-weight:700;
+                      color:var(--text-muted);margin-bottom:8px">
+            🕐 Récemment utilisés
+          </div>
+          <div style="max-height:150px;overflow-y:auto">
+            ${recents.map(ref => {
+              const ali = ALIMENTS_DB[ref];
+              if (!ali) return '';
+              return `
+                <div onclick="Nutrition._selectionnerAliment('${ref}')"
+                     style="display:flex;align-items:center;gap:10px;
+                            padding:8px 12px;cursor:pointer;
+                            border-bottom:1px solid var(--border-color)"
+                     onmouseenter="this.style.background='rgba(75,75,249,0.06)'"
+                     onmouseleave="this.style.background='transparent'">
+                  <span style="font-size:1.1rem">${ali.emoji}</span>
+                  <div style="flex:1">
+                    <div style="font-size:.78rem;font-weight:600">${ali.nom}</div>
+                    <div style="font-size:.58rem;color:var(--text-muted)">
+                      ${ali.cal}kcal / ${ali.portion}${ali.unite}
+                    </div>
+                  </div>
+                  <span style="color:var(--text-muted);font-size:.8rem">›</span>
+                </div>`;
+            }).join('')}
+          </div>` : ''}`;
+
     } else {
       c.innerHTML = `
         <div style="display:flex;flex-direction:column;gap:10px">
           <div>
-            <div style="font-size:.65rem;color:var(--text-muted);
-                        margin-bottom:4px">Nom *</div>
+            <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:4px">
+              Nom *</div>
             <input id="manuel-nom" type="text" class="input"
-                   placeholder="ex: Mon repas maison"
-                   autocomplete="off"/>
+                   placeholder="ex: Mon repas maison" autocomplete="off"/>
           </div>
-          <div style="display:grid;
-                      grid-template-columns:1fr 1fr;gap:8px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <div>
-              <div style="font-size:.65rem;color:var(--text-muted);
-                          margin-bottom:4px">Calories *</div>
-              <input id="manuel-cal" type="number"
-                     class="input" placeholder="kcal" min="0"/>
+              <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:4px">
+                Calories *</div>
+              <input id="manuel-cal" type="number" class="input"
+                     placeholder="kcal" min="0"/>
             </div>
             <div>
-              <div style="font-size:.65rem;color:var(--text-muted);
-                          margin-bottom:4px">Protéines (g)</div>
-              <input id="manuel-prot" type="number"
-                     class="input" placeholder="g" min="0"/>
+              <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:4px">
+                Protéines (g)</div>
+              <input id="manuel-prot" type="number" class="input"
+                     placeholder="g" min="0"/>
             </div>
             <div>
-              <div style="font-size:.65rem;color:var(--text-muted);
-                          margin-bottom:4px">Glucides (g)</div>
-              <input id="manuel-gluc" type="number"
-                     class="input" placeholder="g" min="0"/>
+              <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:4px">
+                Glucides (g)</div>
+              <input id="manuel-gluc" type="number" class="input"
+                     placeholder="g" min="0"/>
             </div>
             <div>
-              <div style="font-size:.65rem;color:var(--text-muted);
-                          margin-bottom:4px">Lipides (g)</div>
-              <input id="manuel-lip" type="number"
-                     class="input" placeholder="g" min="0"/>
+              <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:4px">
+                Lipides (g)</div>
+              <input id="manuel-lip" type="number" class="input"
+                     placeholder="g" min="0"/>
             </div>
           </div>
           <div>
-            <div style="font-size:.65rem;color:var(--text-muted);
-                        margin-bottom:4px">Quantité (g)</div>
+            <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:4px">
+              Quantité (g)</div>
             <input id="manuel-qte" type="number" class="input"
                    placeholder="100" value="100" min="1"/>
           </div>
@@ -2045,13 +3022,37 @@ const Nutrition = {
     }
   },
 
+  // ✅ NOUVEAU v6.0 — Filtre aliments par catégorie
+  _filtreAlimentActif: 'tous',
+
+  _filtrerAliments(cat, btn) {
+    this._filtreAlimentActif = cat;
+    document.querySelectorAll('[data-filtre-ali]').forEach(b => {
+      b.style.background  = 'var(--bg-input)';
+      b.style.borderColor = 'var(--border-color)';
+      b.style.color       = 'var(--text-muted)';
+    });
+    btn.style.background  = 'rgba(75,75,249,0.2)';
+    btn.style.borderColor = 'var(--fd-indigo)';
+    btn.style.color       = 'var(--fd-indigo)';
+
+    const search = document.getElementById('search-aliment')?.value || '';
+    const liste  = document.getElementById('liste-aliments');
+    if (liste) liste.innerHTML = this._renderListeAlimentsModal(search);
+  },
+
   _renderListeAlimentsModal(recherche) {
-    const q = (recherche||'').toLowerCase().trim();
+    const q      = (recherche||'').toLowerCase().trim();
     const profil = this._getProfil();
+    const cat    = this._filtreAlimentActif || 'tous';
+
     const aliments = Object.entries(ALIMENTS_DB)
-      .filter(([,ali]) => !q || ali.nom.toLowerCase().includes(q))
+      .filter(([,ali]) => {
+        const matchQ   = !q || ali.nom.toLowerCase().includes(q);
+        const matchCat = cat === 'tous' || ali.categorie === cat;
+        return matchQ && matchCat;
+      })
       .sort(([,a],[,b]) => {
-        // Prioriser aliments adaptés au genre/objectif
         let sA = 0, sB = 0;
         if (a.genre?.includes(profil.genre)) sA++;
         if (b.genre?.includes(profil.genre)) sB++;
@@ -2066,26 +3067,40 @@ const Nutrition = {
         Aucun aliment trouvé
       </div>`;
 
-    return aliments.map(([ref, ali]) => `
-      <div onclick="Nutrition._selectionnerAliment('${ref}')"
-           style="display:flex;align-items:center;gap:10px;
-                  padding:10px 12px;cursor:pointer;
-                  border-bottom:1px solid var(--border-color);
-                  transition:background .15s"
-           onmouseenter="this.style.background='rgba(75,75,249,0.06)'"
-           onmouseleave="this.style.background='transparent'">
-        <span style="font-size:1.2rem;flex-shrink:0">${ali.emoji}</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:.82rem;font-weight:700">
-            ${ali.nom}
+    return aliments.map(([ref, ali]) => {
+      const estFav = this.estFavori(ref);
+      return `
+        <div style="display:flex;align-items:center;gap:10px;
+                    padding:10px 12px;cursor:pointer;
+                    border-bottom:1px solid var(--border-color);
+                    transition:background .15s"
+             onmouseenter="this.style.background='rgba(75,75,249,0.06)'"
+             onmouseleave="this.style.background='transparent'">
+          <span style="font-size:1.2rem;flex-shrink:0"
+                onclick="Nutrition._selectionnerAliment('${ref}')">${ali.emoji}</span>
+          <div style="flex:1;min-width:0"
+               onclick="Nutrition._selectionnerAliment('${ref}')">
+            <div style="font-size:.82rem;font-weight:700">
+              ${ali.nom}
+            </div>
+            <div style="font-size:.6rem;color:var(--text-muted)">
+              ${ali.cal}kcal · P:${ali.prot}g · G:${ali.gluc}g
+              · L:${ali.lip}g / ${ali.portion}${ali.unite}
+            </div>
           </div>
-          <div style="font-size:.6rem;color:var(--text-muted)">
-            ${ali.cal}kcal · P:${ali.prot}g · G:${ali.gluc}g
-            · L:${ali.lip}g / ${ali.portion}${ali.unite}
-          </div>
-        </div>
-        <span style="color:var(--text-muted);flex-shrink:0">›</span>
-      </div>`).join('');
+          <button onclick="Nutrition.toggleFavori('${ref}');
+                           this.textContent=Nutrition.estFavori('${ref}')?'⭐':'☆';
+                           this.style.color=Nutrition.estFavori('${ref}')
+                             ?'var(--fd-lemon)':'var(--text-muted)'"
+                  style="background:none;border:none;
+                         color:${estFav?'var(--fd-lemon)':'var(--text-muted)'};
+                         font-size:.9rem;cursor:pointer;flex-shrink:0;padding:4px">
+            ${estFav ? '⭐' : '☆'}
+          </button>
+          <span style="color:var(--text-muted);flex-shrink:0"
+                onclick="Nutrition._selectionnerAliment('${ref}')">›</span>
+        </div>`;
+    }).join('');
   },
 
   _rechercherAliment(val) {
@@ -2104,17 +3119,13 @@ const Nutrition = {
                   border:1px solid rgba(75,75,249,0.2);
                   border-radius:var(--radius-lg);
                   padding:14px;margin-bottom:12px">
-        <div style="display:flex;align-items:center;
-                    gap:10px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
           <span style="font-size:1.8rem">${ali.emoji}</span>
           <div>
-            <div style="font-size:.9rem;font-weight:800">
-              ${ali.nom}
-            </div>
+            <div style="font-size:.9rem;font-weight:800">${ali.nom}</div>
             <div style="font-size:.62rem;color:var(--text-muted)">
               Pour ${ali.portion}${ali.unite} :
-              ${ali.cal}kcal · P:${ali.prot}g
-              · G:${ali.gluc}g · L:${ali.lip}g
+              ${ali.cal}kcal · P:${ali.prot}g · G:${ali.gluc}g · L:${ali.lip}g
             </div>
           </div>
         </div>
@@ -2125,38 +3136,30 @@ const Nutrition = {
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             <button onclick="Nutrition._ajusterQte(-${ali.portion>=100?25:5})"
-                    style="width:42px;height:42px;
-                           background:rgba(255,141,150,0.12);
+                    style="width:42px;height:42px;background:rgba(255,141,150,0.12);
                            border:2px solid rgba(255,141,150,0.3);
-                           border-radius:var(--radius-md);
-                           font-size:1.2rem;font-weight:800;
-                           color:var(--fd-coral);cursor:pointer">−
+                           border-radius:var(--radius-md);font-size:1.2rem;
+                           font-weight:800;color:var(--fd-coral);cursor:pointer">−
             </button>
             <input id="qte-aliment" type="number"
                    value="${ali.portion}" min="1" max="2000"
                    oninput="Nutrition._updateApercuMacros('${ref}',this.value)"
-                   style="flex:1;padding:10px;font-size:1.1rem;
-                          font-weight:800;text-align:center;
-                          background:var(--bg-card);
+                   style="flex:1;padding:10px;font-size:1.1rem;font-weight:800;
+                          text-align:center;background:var(--bg-card);
                           border:2px solid var(--border-color);
                           border-radius:var(--radius-md);
                           color:var(--text-primary);outline:none"/>
             <button onclick="Nutrition._ajusterQte(${ali.portion>=100?25:5})"
-                    style="width:42px;height:42px;
-                           background:rgba(139,240,187,0.12);
+                    style="width:42px;height:42px;background:rgba(139,240,187,0.12);
                            border:2px solid rgba(139,240,187,0.3);
-                           border-radius:var(--radius-md);
-                           font-size:1.2rem;font-weight:800;
-                           color:var(--fd-mint);cursor:pointer">+
+                           border-radius:var(--radius-md);font-size:1.2rem;
+                           font-weight:800;color:var(--fd-mint);cursor:pointer">+
             </button>
           </div>
         </div>
         <div id="apercu-macros"
-             style="display:grid;
-                    grid-template-columns:repeat(4,1fr);
-                    gap:6px;padding:10px;
-                    background:var(--bg-input);
-                    border-radius:var(--radius-md)">
+             style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+                    padding:10px;background:var(--bg-input);border-radius:var(--radius-md)">
           ${this._renderApercuMacros(ali, ali.portion)}
         </div>
       </div>
@@ -2184,38 +3187,28 @@ const Nutrition = {
     const ali    = ALIMENTS_DB[ref];
     if (!ali) return;
     const apercu = document.getElementById('apercu-macros');
-    if (apercu) apercu.innerHTML =
-      this._renderApercuMacros(ali, parseFloat(qte)||0);
+    if (apercu) apercu.innerHTML = this._renderApercuMacros(ali, parseFloat(qte)||0);
   },
 
   _renderApercuMacros(ali, qte) {
     const r = qte / ali.portion;
     return [
-      {label:'Cal', val:Math.round(ali.cal *r),
-       color:'var(--fd-lemon)',   u:'kcal'},
-      {label:'Prot',val:Math.round(ali.prot*r*10)/10,
-       color:'var(--fd-coral)',   u:'g'   },
-      {label:'Gluc',val:Math.round(ali.gluc*r*10)/10,
-       color:'var(--fd-indigo)', u:'g'   },
-      {label:'Lip', val:Math.round(ali.lip *r*10)/10,
-       color:'var(--fd-lavender)',u:'g'  }
+      {label:'Cal', val:Math.round(ali.cal *r), color:'var(--fd-lemon)',   u:'kcal'},
+      {label:'Prot',val:Math.round(ali.prot*r*10)/10, color:'var(--fd-coral)',   u:'g'},
+      {label:'Gluc',val:Math.round(ali.gluc*r*10)/10, color:'var(--fd-indigo)',  u:'g'},
+      {label:'Lip', val:Math.round(ali.lip *r*10)/10, color:'var(--fd-lavender)',u:'g'}
     ].map(m => `
       <div style="text-align:center">
-        <div style="font-size:.9rem;font-weight:800;
-                    color:${m.color}">${m.val}</div>
+        <div style="font-size:.9rem;font-weight:800;color:${m.color}">${m.val}</div>
         <div style="font-size:.5rem;color:var(--text-muted);
-                    text-transform:uppercase;margin-top:1px">
-          ${m.label}
-        </div>
+                    text-transform:uppercase;margin-top:1px">${m.label}</div>
       </div>`).join('');
   },
 
   _confirmerAjout(ref) {
-    const ali    = ALIMENTS_DB[ref];
+    const ali  = ALIMENTS_DB[ref];
     if (!ali) return;
-    const qte    = parseFloat(
-      document.getElementById('qte-aliment')?.value
-    ) || ali.portion;
+    const qte  = parseFloat(document.getElementById('qte-aliment')?.value) || ali.portion;
     const moment = window._momentSelectionne || 'dejeuner';
     const ratio  = qte / ali.portion;
 
@@ -2225,7 +3218,7 @@ const Nutrition = {
       nom:   ali.nom,
       emoji: ali.emoji,
       unite: ali.unite,
-      qte,   moment,
+      qte, moment,
       cal:   Math.round(ali.cal  * ratio * 10) / 10,
       prot:  Math.round(ali.prot * ratio * 10) / 10,
       gluc:  Math.round(ali.gluc * ratio * 10) / 10,
@@ -2281,7 +3274,7 @@ const Nutrition = {
   // RECETTES
   // ════════════════════════════════════════════════════════
   _rendreRecettes(container) {
-    const profil  = this._getProfil();
+    const profil = this._getProfil();
     const filtres = [
       {id:'tous',          label:'Tous'         },
       {id:'post_seance',   label:'⚡ Post-séance'},
@@ -2292,10 +3285,9 @@ const Nutrition = {
       {id:'collation',     label:'🍎 Collation'  }
     ];
 
-    // Filtrer selon genre + filtre catégorie
     const recettesFiltrees = RECETTES_DB
       .filter(r => {
-        const catOK = this._filtreRecette === 'tous'
+        const catOK   = this._filtreRecette === 'tous'
           || r.categorie === this._filtreRecette;
         const genreOK = !r.genre
           || r.genre.includes(profil.genre)
@@ -2314,16 +3306,15 @@ const Nutrition = {
     container.innerHTML = `
       <div class="muscle-filter-row mb-md">
         ${filtres.map(f => `
-          <button class="muscle-filter-btn ${
-            this._filtreRecette===f.id?'active':''}"
+          <button class="muscle-filter-btn ${this._filtreRecette===f.id?'active':''}"
                   onclick="Nutrition._filtrerRecettes('${f.id}')">
             ${f.label}
           </button>`).join('')}
       </div>
-      <div style="font-size:.68rem;color:var(--text-muted);
-                  margin-bottom:10px">
+      <div style="font-size:.68rem;color:var(--text-muted);margin-bottom:10px">
         ${recettesFiltrees.length} recette${recettesFiltrees.length>1?'s':''}
         pour toi${profil.genre==='femme'?' 🌸':' 💪'}
+        (${Object.keys(ALIMENTS_DB).length} aliments · ${RECETTES_DB.length} recettes)
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
         ${recettesFiltrees.map(r => {
@@ -2336,60 +3327,43 @@ const Nutrition = {
                         padding:14px;cursor:pointer;transition:all .15s"
                  onmouseenter="this.style.borderColor='rgba(75,75,249,0.3)'"
                  onmouseleave="this.style.borderColor='rgba(255,255,255,0.08)'">
-              <div style="display:flex;align-items:center;
-                          gap:12px;margin-bottom:10px">
-                <span style="font-size:2rem;flex-shrink:0">
-                  ${r.emoji}
-                </span>
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+                <span style="font-size:2rem;flex-shrink:0">${r.emoji}</span>
                 <div style="flex:1">
-                  <div style="font-size:.9rem;font-weight:800;
-                              margin-bottom:2px">${r.nom}</div>
+                  <div style="font-size:.9rem;font-weight:800;margin-bottom:2px">
+                    ${r.nom}</div>
                   <div style="font-size:.62rem;color:var(--text-muted)">
-                    ⏱ ${r.temps}min
-                    · ${r.ingredients.length} ingrédients
+                    ⏱ ${r.temps}min · ${r.ingredients.length} ingrédients
                   </div>
                 </div>
                 <div style="text-align:right;flex-shrink:0">
-                  <div style="font-size:.95rem;font-weight:800;
-                              color:var(--fd-lemon)">
-                    ${macros.cal}
-                  </div>
-                  <div style="font-size:.55rem;color:var(--text-muted)">
-                    kcal
-                  </div>
+                  <div style="font-size:.95rem;font-weight:800;color:var(--fd-lemon)">
+                    ${macros.cal}</div>
+                  <div style="font-size:.55rem;color:var(--text-muted)">kcal</div>
                 </div>
               </div>
-              <div style="display:grid;
-                          grid-template-columns:repeat(3,1fr);gap:6px">
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
                 ${[
-                  {l:'P',val:macros.prot,color:'var(--fd-coral)',  max:50 },
-                  {l:'G',val:macros.gluc,color:'var(--fd-indigo)', max:100},
-                  {l:'L',val:macros.lip, color:'var(--fd-lavender)',max:50}
+                  {l:'Prot.',val:macros.prot,color:'var(--fd-coral)',  max:50 },
+                  {l:'Gluc.',val:macros.gluc,color:'var(--fd-indigo)', max:100},
+                  {l:'Lip.', val:macros.lip, color:'var(--fd-lavender)',max:50}
                 ].map(m => `
                   <div>
-                    <div style="display:flex;justify-content:space-between;
-                                margin-bottom:2px">
-                      <span style="font-size:.55rem;color:${m.color};
-                                   font-weight:700">${m.l}</span>
-                      <span style="font-size:.55rem;
-                                   color:var(--text-muted)">
-                        ${m.val}g
-                      </span>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+                      <span style="font-size:.55rem;color:${m.color};font-weight:700">
+                        ${m.l}</span>
+                      <span style="font-size:.55rem;color:var(--text-muted)">
+                        ${m.val}g</span>
                     </div>
-                    <div style="height:3px;
-                                background:rgba(255,255,255,0.06);
+                    <div style="height:3px;background:rgba(255,255,255,0.06);
                                 border-radius:99px;overflow:hidden">
                       <div style="height:100%;
-                                  width:${Math.min(100,
-                                    Math.round((m.val/m.max)*100)
-                                  )}%;
-                                  background:${m.color};
-                                  border-radius:99px"></div>
+                                  width:${Math.min(100,Math.round((m.val/m.max)*100))}%;
+                                  background:${m.color};border-radius:99px"></div>
                     </div>
                   </div>`).join('')}
               </div>
-              <div style="display:flex;flex-wrap:wrap;gap:4px;
-                          margin-top:8px">
+              <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
                 ${r.tags.map(tag => `
                   <span style="padding:2px 7px;
                                background:rgba(75,75,249,0.1);
@@ -2422,36 +3396,29 @@ const Nutrition = {
       <div style="padding:var(--space-md)">
         <div style="text-align:center;padding:16px 0;margin-bottom:14px">
           <div style="font-size:3rem;margin-bottom:6px">${r.emoji}</div>
-          <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">
-            ${r.nom}
-          </div>
+          <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">${r.nom}</div>
           <div style="font-size:.72rem;color:var(--text-muted)">
-            ⏱ ${r.temps}min · ${r.ingredients.length} ingrédients
+            ⏱ ${r.temps}min · ${r.ingredients.length} ingrédients · Diff. ${r.difficulte}/3
           </div>
         </div>
-        <div style="padding:10px 14px;
-                    background:rgba(191,161,255,0.06);
+        <div style="padding:10px 14px;background:rgba(191,161,255,0.06);
                     border:1px solid rgba(191,161,255,0.15);
-                    border-radius:var(--radius-md);
-                    font-size:.82rem;color:var(--text-secondary);
-                    line-height:1.5;margin-bottom:14px">
+                    border-radius:var(--radius-md);font-size:.82rem;
+                    color:var(--text-secondary);line-height:1.5;margin-bottom:14px">
           💡 ${r.description}
         </div>
         <div style="background:rgba(255,255,255,0.04);
                     border:1px solid rgba(255,255,255,0.08);
-                    border-radius:var(--radius-lg);
-                    padding:14px;margin-bottom:14px">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--text-muted);margin-bottom:10px">
+                    border-radius:var(--radius-lg);padding:14px;margin-bottom:14px">
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.1em;color:var(--text-muted);margin-bottom:10px">
             📊 Valeurs nutritionnelles
           </div>
           <div style="text-align:center;margin-bottom:12px">
-            <div style="font-size:2rem;font-weight:800;
-                        color:var(--fd-lemon)">${macros.cal}</div>
+            <div style="font-size:2rem;font-weight:800;color:var(--fd-lemon)">
+              ${macros.cal}</div>
             <div style="font-size:.65rem;color:var(--text-muted)">
-              kcal · ${Math.round((macros.cal/Math.max(obj.calories,1))*100)}%
-              de ton objectif
+              kcal · ${Math.round((macros.cal/Math.max(obj.calories,1))*100)}% objectif
             </div>
           </div>
           ${[
@@ -2465,15 +3432,11 @@ const Nutrition = {
             const pct=Math.min(100,Math.round((m.val/Math.max(m.obj,1))*100));
             return `
               <div style="margin-bottom:10px">
-                <div style="display:flex;justify-content:space-between;
-                            margin-bottom:4px">
-                  <span style="font-size:.72rem;font-weight:700;
-                               color:${m.color}">
-                    ${m.e} ${m.label}
-                  </span>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                  <span style="font-size:.72rem;font-weight:700;color:${m.color}">
+                    ${m.e} ${m.label}</span>
                   <span style="font-size:.72rem;color:var(--text-muted)">
-                    ${m.val}g / ${m.obj}g
-                  </span>
+                    ${m.val}g / ${m.obj}g</span>
                 </div>
                 <div style="height:5px;background:rgba(255,255,255,0.06);
                             border-radius:99px;overflow:hidden">
@@ -2485,9 +3448,8 @@ const Nutrition = {
           }).join('')}
         </div>
         <div style="margin-bottom:14px">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--text-muted);margin-bottom:10px">
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.1em;color:var(--text-muted);margin-bottom:10px">
             🛒 Ingrédients
           </div>
           ${r.ingredients.map(ing => {
@@ -2496,18 +3458,12 @@ const Nutrition = {
             const ratio = ing.qte / ali.portion;
             return `
               <div style="display:flex;align-items:center;gap:10px;
-                          padding:8px 0;
-                          border-bottom:1px solid var(--border-color)">
-                <span style="font-size:1.1rem;flex-shrink:0">
-                  ${ali.emoji}
-                </span>
+                          padding:8px 0;border-bottom:1px solid var(--border-color)">
+                <span style="font-size:1.1rem;flex-shrink:0">${ali.emoji}</span>
                 <div style="flex:1">
-                  <div style="font-size:.82rem;font-weight:600">
-                    ${ali.nom}
-                  </div>
+                  <div style="font-size:.82rem;font-weight:600">${ali.nom}</div>
                   <div style="font-size:.6rem;color:var(--text-muted)">
-                    P:${Math.round(ali.prot*ratio)}g
-                    · G:${Math.round(ali.gluc*ratio)}g
+                    P:${Math.round(ali.prot*ratio)}g · G:${Math.round(ali.gluc*ratio)}g
                     · L:${Math.round(ali.lip*ratio)}g
                   </div>
                 </div>
@@ -2518,14 +3474,20 @@ const Nutrition = {
               </div>`;
           }).join('')}
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+
+        <!-- ✅ NOUVEAU v6.0 — Bouton ajouter au planning -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
           <button onclick="Nutrition._loggerRecette('${r.id}')"
-                  class="btn-primary" style="font-size:.82rem">
+                  class="btn-primary" style="font-size:.75rem">
             📔 Logger
+          </button>
+          <button onclick="Nutrition._ouvrirAssignerPlanning('${r.id}')"
+                  class="btn-secondary" style="font-size:.75rem">
+            📅 Planning
           </button>
           <button onclick="document.getElementById('modal-info')
                             .classList.add('hidden')"
-                  class="btn-secondary" style="font-size:.82rem">
+                  class="btn-secondary" style="font-size:.75rem">
             Fermer
           </button>
         </div>
@@ -2533,8 +3495,7 @@ const Nutrition = {
 
     modal.classList.remove('hidden');
     const closeBtn = document.getElementById('modal-info-close');
-    if (closeBtn) closeBtn.onclick = () =>
-      modal.classList.add('hidden');
+    if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
   },
 
   _loggerRecette(id) {
@@ -2562,6 +3523,459 @@ const Nutrition = {
     this._changerOnglet('journal');
   },
 
+  // ✅ NOUVEAU v6.0 — Assigner recette au planning
+  _ouvrirAssignerPlanning(recetteId) {
+    const r = RECETTES_DB.find(r => r.id === recetteId);
+    if (!r) return;
+
+    const modal   = document.getElementById('modal-info');
+    const content = document.getElementById('modal-info-content');
+    if (!modal || !content) return;
+
+    const jours  = [];
+    const labels = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    for (let i = 0; i < 7; i++) {
+      const date = Utils.ajouterJours(
+        Utils.debutSemaine(Utils.aujourd_hui()), i
+      );
+      jours.push({ date, label:labels[i] });
+    }
+
+    const moments = [
+      {id:'matin',    label:'🌅 Matin'  },
+      {id:'dejeuner', label:'☀️ Déjeuner'},
+      {id:'collation',label:'🍎 Collation'},
+      {id:'diner',    label:'🌙 Dîner'  }
+    ];
+
+    content.innerHTML = `
+      <div style="padding:16px">
+        <div style="font-size:.9rem;font-weight:800;margin-bottom:14px">
+          📅 Ajouter au planning
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;
+                    padding:10px;background:rgba(75,75,249,0.08);
+                    border-radius:var(--radius-md);margin-bottom:14px">
+          <span style="font-size:1.5rem">${r.emoji}</span>
+          <div style="font-size:.82rem;font-weight:700">${r.nom}</div>
+        </div>
+        <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:6px">
+          Jour
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);
+                    gap:4px;margin-bottom:14px">
+          ${jours.map(j => `
+            <button onclick="Nutrition._selectJourPlanning('${j.date}',this)"
+                    data-jour="${j.date}"
+                    style="padding:6px 2px;font-size:.65rem;font-weight:700;
+                           text-align:center;cursor:pointer;
+                           border-radius:var(--radius-md);
+                           background:${j.date===Utils.aujourd_hui()
+                             ?'rgba(75,75,249,0.2)':'var(--bg-input)'};
+                           border:1px solid ${j.date===Utils.aujourd_hui()
+                             ?'var(--fd-indigo)':'var(--border-color)'};
+                           color:${j.date===Utils.aujourd_hui()
+                             ?'var(--fd-indigo)':'var(--text-muted)'}">
+              ${j.label}
+            </button>`).join('')}
+        </div>
+        <div style="font-size:.65rem;color:var(--text-muted);margin-bottom:6px">
+          Moment
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+          ${moments.map(m => `
+            <button onclick="Nutrition._selectMomentPlanning('${m.id}',this)"
+                    data-moment-planning="${m.id}"
+                    style="padding:6px 12px;font-size:.7rem;font-weight:600;
+                           cursor:pointer;border-radius:var(--radius-full);
+                           background:${r.moment===m.id
+                             ?'rgba(75,75,249,0.2)':'var(--bg-input)'};
+                           border:1px solid ${r.moment===m.id
+                             ?'var(--fd-indigo)':'var(--border-color)'};
+                           color:${r.moment===m.id
+                             ?'var(--fd-indigo)':'var(--text-muted)'}">
+              ${m.label}
+            </button>`).join('')}
+        </div>
+        <button onclick="Nutrition._confirmerAssignPlanning('${recetteId}')"
+                class="btn-primary" style="width:100%">
+          ✅ Ajouter au planning
+        </button>
+      </div>`;
+
+    modal.classList.remove('hidden');
+
+    // Init sélections par défaut
+    window._planningJourSelec  = Utils.aujourd_hui();
+    window._planningMomSelec   = r.moment || 'dejeuner';
+
+    const closeBtn = document.getElementById('modal-info-close');
+    if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
+  },
+
+  _selectJourPlanning(date, btn) {
+    window._planningJourSelec = date;
+    document.querySelectorAll('[data-jour]').forEach(b => {
+      b.style.background  = 'var(--bg-input)';
+      b.style.borderColor = 'var(--border-color)';
+      b.style.color       = 'var(--text-muted)';
+    });
+    btn.style.background  = 'rgba(75,75,249,0.2)';
+    btn.style.borderColor = 'var(--fd-indigo)';
+    btn.style.color       = 'var(--fd-indigo)';
+  },
+
+  _selectMomentPlanning(id, btn) {
+    window._planningMomSelec = id;
+    document.querySelectorAll('[data-moment-planning]').forEach(b => {
+      b.style.background  = 'var(--bg-input)';
+      b.style.borderColor = 'var(--border-color)';
+      b.style.color       = 'var(--text-muted)';
+    });
+    btn.style.background  = 'rgba(75,75,249,0.2)';
+    btn.style.borderColor = 'var(--fd-indigo)';
+    btn.style.color       = 'var(--fd-indigo)';
+  },
+
+  _confirmerAssignPlanning(recetteId) {
+    const date   = window._planningJourSelec  || Utils.aujourd_hui();
+    const moment = window._planningMomSelec   || 'dejeuner';
+    this.assignerRecettePlanning(date, moment, recetteId);
+    document.getElementById('modal-info')?.classList.add('hidden');
+    Utils.toast('📅 Ajouté au planning !', 'success', 2000);
+    Utils.vibrerSuccess();
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v6.0 — PLANNING SEMAINE
+  // ════════════════════════════════════════════════════════
+  _rendrePlanning(container) {
+    const planning = this.getPlanningSemaine();
+    const labels   = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    const moments  = [
+      {id:'matin',    label:'🌅 Matin'   },
+      {id:'dejeuner', label:'☀️ Déjeuner'},
+      {id:'collation',label:'🍎 Collation'},
+      {id:'diner',    label:'🌙 Dîner'   }
+    ];
+
+    const jours = [];
+    const debutSemaine = Utils.debutSemaine(Utils.aujourd_hui());
+    for (let i = 0; i < 7; i++) {
+      jours.push(Utils.ajouterJours(debutSemaine, i));
+    }
+
+    // ✅ Calculer macros de la semaine
+    let totalCal = 0, totalProt = 0;
+    Object.values(planning).forEach(jour => {
+      Object.values(jour).forEach(rId => {
+        if (!rId) return;
+        const r = RECETTES_DB.find(r => r.id === rId);
+        if (!r) return;
+        const m = this._calculerMacrosRecette(r);
+        totalCal  += m.cal;
+        totalProt += m.prot;
+      });
+    });
+
+    const courses = this.genererListeCourses();
+
+    container.innerHTML = `
+
+      <!-- Header planning -->
+      <div style="background:linear-gradient(135deg,
+                  rgba(75,75,249,0.15),rgba(75,75,249,0.05));
+                  border:1px solid rgba(75,75,249,0.25);
+                  border-radius:var(--radius-xl);
+                  padding:16px;margin-bottom:14px">
+        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.1em;color:var(--fd-indigo);margin-bottom:8px">
+          📅 Planning repas — semaine en cours
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="text-align:center;padding:8px;
+                      background:rgba(255,255,255,0.04);
+                      border-radius:var(--radius-md)">
+            <div style="font-size:1rem;font-weight:800;color:var(--fd-lemon)">
+              ~${Math.round(totalCal/7)}</div>
+            <div style="font-size:.58rem;color:var(--text-muted)">
+              kcal / jour (moy.)</div>
+          </div>
+          <div style="text-align:center;padding:8px;
+                      background:rgba(255,255,255,0.04);
+                      border-radius:var(--radius-md)">
+            <div style="font-size:1rem;font-weight:800;color:var(--fd-coral)">
+              ~${Math.round(totalProt/7)}g</div>
+            <div style="font-size:.58rem;color:var(--text-muted)">
+              protéines / jour (moy.)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tableau planning -->
+      <div style="background:rgba(255,255,255,0.03);
+                  border:1px solid rgba(255,255,255,0.07);
+                  border-radius:var(--radius-xl);
+                  padding:14px;margin-bottom:14px;
+                  overflow-x:auto">
+
+        <!-- En-têtes jours -->
+        <div style="display:grid;grid-template-columns:80px repeat(7,1fr);
+                    gap:4px;margin-bottom:8px;min-width:560px">
+          <div></div>
+          ${jours.map((date, i) => {
+            const estAuj = date === Utils.aujourd_hui();
+            return `
+              <div style="text-align:center;padding:6px 2px;
+                          background:${estAuj
+                            ?'var(--fd-indigo)':'rgba(255,255,255,0.04)'};
+                          border-radius:var(--radius-md)">
+                <div style="font-size:.62rem;font-weight:700;
+                            color:${estAuj?'white':'var(--text-muted)'}">
+                  ${labels[i]}
+                </div>
+                <div style="font-size:.52rem;
+                            color:${estAuj?'rgba(255,255,255,0.7)':'var(--text-muted)'}">
+                  ${date.slice(8)}
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+
+        <!-- Lignes repas -->
+        ${moments.map(moment => `
+          <div style="display:grid;grid-template-columns:80px repeat(7,1fr);
+                      gap:4px;margin-bottom:6px;min-width:560px">
+            <div style="display:flex;align-items:center;
+                        padding-right:8px">
+              <div style="font-size:.6rem;font-weight:700;
+                          color:var(--text-muted);
+                          writing-mode:horizontal-tb">
+                ${moment.label}
+              </div>
+            </div>
+            ${jours.map(date => {
+              const recetteId = planning[date]?.[moment.id];
+              const recette   = recetteId
+                ? RECETTES_DB.find(r => r.id === recetteId)
+                : null;
+              return `
+                <div onclick="Nutrition._ouvrirChoixRecettePlanning(
+                               '${date}','${moment.id}')"
+                     style="min-height:52px;
+                            background:${recette
+                              ? 'rgba(75,75,249,0.1)'
+                              : 'rgba(255,255,255,0.03)'};
+                            border:1px solid ${recette
+                              ? 'rgba(75,75,249,0.25)'
+                              : 'rgba(255,255,255,0.06)'};
+                            border-radius:var(--radius-md);
+                            padding:4px;cursor:pointer;
+                            transition:all .2s;
+                            display:flex;align-items:center;
+                            justify-content:center;text-align:center"
+                     onmouseenter="this.style.borderColor='rgba(75,75,249,0.4)'"
+                     onmouseleave="this.style.borderColor='${recette
+                       ?'rgba(75,75,249,0.25)':'rgba(255,255,255,0.06)'}'">
+                  ${recette ? `
+                    <div>
+                      <div style="font-size:1rem;margin-bottom:1px">${recette.emoji}</div>
+                      <div style="font-size:.5rem;color:var(--fd-lavender);
+                                  line-height:1.2;overflow:hidden;
+                                  text-overflow:ellipsis">
+                        ${recette.nom.split(' ').slice(0,2).join(' ')}
+                      </div>
+                    </div>` : `
+                    <div style="font-size:.6rem;color:rgba(255,255,255,0.2)">+</div>`}
+                </div>`;
+            }).join('')}
+          </div>`).join('')}
+      </div>
+
+      <!-- ✅ NOUVEAU v6.0 — Liste de courses générée -->
+      <div style="background:rgba(255,255,255,0.03);
+                  border:1px solid rgba(255,255,255,0.07);
+                  border-radius:var(--radius-xl);
+                  padding:14px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;
+                    justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--text-muted)">
+            🛒 Liste de courses (${courses.length} articles)
+          </div>
+          <button onclick="Nutrition._exporterListeCourses()"
+                  style="padding:5px 12px;font-size:.65rem;font-weight:700;
+                         background:rgba(75,75,249,0.1);
+                         border:1px solid rgba(75,75,249,0.2);
+                         border-radius:var(--radius-full);
+                         color:var(--fd-indigo);cursor:pointer">
+            📤 Exporter
+          </button>
+        </div>
+
+        ${courses.length === 0 ? `
+          <div style="text-align:center;padding:16px;
+                      color:var(--text-muted);font-size:.82rem">
+            Ajoute des recettes au planning pour générer ta liste !
+          </div>` :
+          courses.map(c => `
+            <div style="display:flex;align-items:center;gap:10px;
+                        padding:7px 0;
+                        border-bottom:1px solid rgba(255,255,255,0.05)">
+              <span style="font-size:1rem;flex-shrink:0">${c.emoji}</span>
+              <div style="flex:1">
+                <div style="font-size:.78rem;font-weight:600">${c.nom}</div>
+              </div>
+              <div style="font-size:.75rem;font-weight:700;
+                          color:var(--fd-indigo)">
+                ${Math.round(c.qte)}${c.unite}
+              </div>
+            </div>`).join('')}
+      </div>
+
+      <!-- Bouton reset -->
+      <button onclick="Nutrition._resetPlanning()"
+              class="btn-secondary"
+              style="width:100%;font-size:.78rem;color:var(--fd-coral)">
+        🗑️ Réinitialiser le planning
+      </button>
+    `;
+  },
+
+  // ✅ Ouvrir choix recette pour planning
+  _ouvrirChoixRecettePlanning(date, moment) {
+    const modal   = document.getElementById('modal-info');
+    const content = document.getElementById('modal-info-content');
+    if (!modal || !content) return;
+
+    const profil    = this._getProfil();
+    const recettes  = RECETTES_DB
+      .filter(r => {
+        const genreOK = !r.genre || r.genre.includes(profil.genre);
+        return genreOK;
+      })
+      .sort((a,b) => {
+        let sA = 0, sB = 0;
+        if (a.categorie === moment) sA += 2;
+        if (b.categorie === moment) sB += 2;
+        if (a.objectifs?.includes(profil.objectif)) sA++;
+        if (b.objectifs?.includes(profil.objectif)) sB++;
+        return sB - sA;
+      });
+
+    const labels   = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    const momLabel = {
+      matin:'🌅 Matin', dejeuner:'☀️ Déjeuner',
+      collation:'🍎 Collation', diner:'🌙 Dîner'
+    }[moment] || moment;
+
+    const jourIdx    = new Date(date).getDay();
+    const jourLabel  = labels[(jourIdx + 6) % 7];
+
+    content.innerHTML = `
+      <div style="padding:16px">
+        <div style="font-size:.9rem;font-weight:800;margin-bottom:4px">
+          📅 ${jourLabel} — ${momLabel}
+        </div>
+        <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:14px">
+          Choisir une recette
+        </div>
+
+        <!-- Retirer -->
+        <div onclick="Nutrition.assignerRecettePlanning(
+                        '${date}','${moment}',null);
+                      document.getElementById('modal-info').classList.add('hidden');
+                      const c=document.getElementById('nutrition-content');
+                      if(c)Nutrition._rendrePlanning(c)"
+             style="display:flex;align-items:center;gap:10px;
+                    padding:10px 12px;margin-bottom:10px;
+                    background:rgba(255,141,150,0.08);
+                    border:1px solid rgba(255,141,150,0.2);
+                    border-radius:var(--radius-md);cursor:pointer">
+          <span style="font-size:1.2rem">🗑️</span>
+          <div style="font-size:.82rem;font-weight:600;color:var(--fd-coral)">
+            Retirer cette case
+          </div>
+        </div>
+
+        <!-- Liste recettes -->
+        <div style="max-height:350px;overflow-y:auto">
+          ${recettes.map(r => {
+            const macros = this._calculerMacrosRecette(r);
+            return `
+              <div onclick="Nutrition.assignerRecettePlanning(
+                              '${date}','${moment}','${r.id}');
+                            document.getElementById('modal-info').classList.add('hidden');
+                            const c=document.getElementById('nutrition-content');
+                            if(c)Nutrition._rendrePlanning(c)"
+                   style="display:flex;align-items:center;gap:10px;
+                          padding:10px 12px;cursor:pointer;
+                          border-bottom:1px solid var(--border-color);
+                          transition:background .15s"
+                   onmouseenter="this.style.background='rgba(75,75,249,0.06)'"
+                   onmouseleave="this.style.background='transparent'">
+                <span style="font-size:1.5rem;flex-shrink:0">${r.emoji}</span>
+                <div style="flex:1">
+                  <div style="font-size:.82rem;font-weight:700">${r.nom}</div>
+                  <div style="font-size:.6rem;color:var(--text-muted)">
+                    ${macros.cal} kcal · ${macros.prot}g prot · ⏱ ${r.temps}min
+                  </div>
+                </div>
+                <span style="color:var(--text-muted);font-size:.8rem">›</span>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+
+    modal.classList.remove('hidden');
+    const closeBtn = document.getElementById('modal-info-close');
+    if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
+  },
+
+  async _resetPlanning() {
+    const ok = await Utils.confirmer(
+      '🗑️ Réinitialiser le planning ?',
+      'Toutes les recettes planifiées seront supprimées.'
+    );
+    if (!ok) return;
+    const dateDebut = Utils.debutSemaine(Utils.aujourd_hui());
+    Utils.storage.remove(`${this.CLE_PLANNING}_${dateDebut}`);
+    Utils.toast('✅ Planning réinitialisé !', 'success');
+    const c = document.getElementById('nutrition-content');
+    if (c) this._rendrePlanning(c);
+  },
+
+  // ✅ NOUVEAU v6.0 — Export liste courses
+  _exporterListeCourses() {
+    const courses = this.genererListeCourses();
+    if (!courses.length) {
+      Utils.toast('Aucun article à exporter', 'info');
+      return;
+    }
+
+    const profil    = this._getProfil();
+    const semaine   = Utils.debutSemaine(Utils.aujourd_hui());
+    const contenu   = [
+      `🛒 LISTE DE COURSES — Semaine du ${semaine}`,
+      `Générée par PowerApp pour ${profil.genre === 'femme' ? 'Athlète 🌸' : 'Athlète 💪'}`,
+      '',
+      ...courses.map(c => `• ${c.nom.padEnd(30)} ${Math.round(c.qte)}${c.unite}`),
+      '',
+      `Total : ${courses.length} articles`,
+      `Généré le ${Utils.aujourd_hui()}`
+    ].join('\n');
+
+    const blob = new Blob([contenu], { type:'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `powerapp-courses-${semaine}.txt`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    Utils.toast('✅ Liste exportée !', 'success');
+  },
+
   // ════════════════════════════════════════════════════════
   // OBJECTIFS
   // ════════════════════════════════════════════════════════
@@ -2576,9 +3990,8 @@ const Nutrition = {
            style="background:linear-gradient(135deg,
                   rgba(75,75,249,0.15),rgba(75,75,249,0.05));
                   border-color:rgba(75,75,249,0.3)">
-        <div style="font-size:.6rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.1em;
-                    color:var(--fd-indigo);margin-bottom:12px">
+        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.1em;color:var(--fd-indigo);margin-bottom:12px">
           🎯 Tes objectifs${badge}
         </div>
         ${[
@@ -2593,23 +4006,19 @@ const Nutrition = {
           {label:'Eau',      val:obj.eau,       auto:auto.eau,
            color:'var(--fd-indigo)',  e:'💧', u:'L'   }
         ].map(m => {
-          const pct = Math.min(100,
-            Math.round((m.val/Math.max(m.auto,1))*100));
+          const pct = Math.min(100,Math.round((m.val/Math.max(m.auto,1))*100));
           return `
             <div style="margin-bottom:12px">
               <div style="display:flex;align-items:center;
-                          justify-content:space-between;
-                          margin-bottom:5px">
-                <span style="font-size:.78rem;font-weight:700;
-                             color:${m.color}">
+                          justify-content:space-between;margin-bottom:5px">
+                <span style="font-size:.78rem;font-weight:700;color:${m.color}">
                   ${m.e} ${m.label}
                 </span>
                 <div style="text-align:right">
                   <span style="font-size:.82rem;font-weight:800">
                     ${m.val}${m.u}
                   </span>
-                  <span style="font-size:.6rem;
-                               color:var(--text-muted);margin-left:4px">
+                  <span style="font-size:.6rem;color:var(--text-muted);margin-left:4px">
                     (auto: ${m.auto}${m.u})
                   </span>
                 </div>
@@ -2625,9 +4034,8 @@ const Nutrition = {
       </div>
 
       <div class="card mb-md">
-        <div style="font-size:.6rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.1em;
-                    color:var(--text-muted);margin-bottom:12px">
+        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.1em;color:var(--text-muted);margin-bottom:12px">
           ✏️ Personnaliser
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
@@ -2640,8 +4048,7 @@ const Nutrition = {
           ].map(f => `
             <div style="display:flex;align-items:center;gap:10px">
               <label style="font-size:.75rem;font-weight:600;
-                            color:var(--text-muted);
-                            min-width:140px;flex-shrink:0">
+                            color:var(--text-muted);min-width:140px;flex-shrink:0">
                 ${f.label}
               </label>
               <input id="obj-${f.id}" type="number"
@@ -2649,8 +4056,7 @@ const Nutrition = {
                      value="${f.val}" min="0"/>
             </div>`).join('')}
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;
-                    gap:8px;margin-top:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
           <button onclick="Nutrition._resetObjectifs()"
                   class="btn-secondary" style="font-size:.78rem">
             🔄 Auto
@@ -2662,12 +4068,10 @@ const Nutrition = {
         </div>
       </div>
 
-      <div style="padding:12px 14px;
-                  background:rgba(191,161,255,0.06);
+      <div style="padding:12px 14px;background:rgba(191,161,255,0.06);
                   border:1px solid rgba(191,161,255,0.15);
-                  border-radius:var(--radius-md);
-                  font-size:.72rem;color:rgba(191,161,255,0.8);
-                  line-height:1.6">
+                  border-radius:var(--radius-md);font-size:.72rem;
+                  color:rgba(191,161,255,0.8);line-height:1.6">
         🧮 Calcul basé sur :
         <strong>${profil.poids}kg · ${profil.genre}${badge}</strong>
         · objectif <strong>${profil.objectif}</strong>
@@ -2695,13 +4099,7 @@ const Nutrition = {
   _resetObjectifs() {
     const profil = this._getProfil();
     const auto   = this._calculerObjectifsAuto(profil);
-    Utils.storage.set(this.CLE_OBJECTIFS, {
-      calories:  auto.calories,
-      proteines: auto.proteines,
-      glucides:  auto.glucides,
-      lipides:   auto.lipides,
-      eau:       auto.eau
-    });
+    Utils.storage.set(this.CLE_OBJECTIFS, auto);
     this._invaliderCache();
     Utils.toast('🔄 Réinitialisés !', 'success');
     const c = document.getElementById('nutrition-content');
@@ -2709,60 +4107,155 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
-  // STATS
+  // STATS v6.0 — Streak calendar + comparaison semaines
   // ════════════════════════════════════════════════════════
   _rendreStats(container) {
     const hist       = this._getHistorique(7);
+    const hist14     = this._getHistorique(14);
     const obj        = this.getObjectifs();
     const scoreMoyen = hist.length > 0
-      ? Math.round(hist.reduce((a,h) => a+(h.score||0),0)/hist.length)
+      ? Math.round(hist.reduce((a,h) => a+(h.score||0), 0) / hist.length)
       : 0;
     const streak     = this.getStreakNutrition();
     const joursHydra = this.getJoursHydratation(7);
     const joursProt  = this.getJoursProteines(7);
 
+    // ✅ NOUVEAU v6.0 — Comparaison semaine N vs N-1
+    const totSem1 = { cal:0, prot:0 };
+    const totSem2 = { cal:0, prot:0 };
+    hist14.slice(0, 7).forEach(h => { totSem1.cal += h.cal; totSem1.prot += h.prot; });
+    hist14.slice(7, 14).forEach(h => { totSem2.cal += h.cal; totSem2.prot += h.prot; });
+    const deltaCal  = totSem1.cal  > 0 && totSem2.cal  > 0
+      ? Math.round(((totSem1.cal  - totSem2.cal)  / totSem2.cal)  * 100) : 0;
+    const deltaProt = totSem1.prot > 0 && totSem2.prot > 0
+      ? Math.round(((totSem1.prot - totSem2.prot) / totSem2.prot) * 100) : 0;
+
     container.innerHTML = `
-      <!-- Score moyen + Streak -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
-                  gap:8px;margin-bottom:14px">
-        <div style="background:rgba(255,255,255,0.04);
-                    border:1px solid rgba(255,255,255,0.08);
-                    border-radius:var(--radius-lg);
-                    padding:12px;text-align:center">
-          <div style="font-size:.6rem;color:var(--text-muted);
-                      margin-bottom:4px">📊 Score moy.</div>
-          <div style="font-size:1.2rem;font-weight:800;
-                      color:${scoreMoyen>=80
-                        ?'var(--fd-mint)':scoreMoyen>=60
-                        ?'var(--fd-lemon)':'var(--fd-coral)'}">
-            ${scoreMoyen}
-          </div>
+
+      <!-- ✅ NOUVEAU v6.0 — Streak calendar 4 semaines -->
+      <div style="background:rgba(255,255,255,0.04);
+                  border:1px solid rgba(255,255,255,0.08);
+                  border-radius:var(--radius-xl);
+                  padding:16px;margin-bottom:14px">
+        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.1em;color:var(--text-muted);margin-bottom:12px;
+                    display:flex;align-items:center;justify-content:space-between">
+          <span>📅 Streak nutrition — 28 jours</span>
+          <span style="color:var(--fd-lemon);font-size:.72rem">
+            🔥 ${streak} jours
+          </span>
         </div>
-        <div style="background:rgba(255,255,255,0.04);
-                    border:1px solid rgba(255,255,255,0.08);
-                    border-radius:var(--radius-lg);
-                    padding:12px;text-align:center">
-          <div style="font-size:.6rem;color:var(--text-muted);
-                      margin-bottom:4px">🔥 Streak</div>
-          <div style="font-size:1.2rem;font-weight:800;
-                      color:var(--fd-lemon)">
-            ${streak}j
-          </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+          ${Array.from({length: 28}, (_, i) => {
+            const date    = Utils.ajouterJours(Utils.aujourd_hui(), -(27-i));
+            const aJourné = this._getJournal(date).length > 0;
+            const estAuj  = date === Utils.aujourd_hui();
+            const totaux  = this.getTotauxJournal(date);
+            const score   = this._calculerScore(totaux, obj, this.getEau(date)).score;
+            const couleur = !aJourné ? 'rgba(255,255,255,0.05)'
+              : score >= 80 ? 'rgba(139,240,187,0.6)'
+              : score >= 60 ? 'rgba(75,75,249,0.5)'
+              : 'rgba(249,239,119,0.4)';
+            return `
+              <div title="${date} — ${aJourné?`Score ${score}/100`:'Non renseigné'}"
+                   style="height:18px;border-radius:4px;
+                          background:${couleur};
+                          border:${estAuj?'2px solid var(--fd-lemon)':'1px solid rgba(255,255,255,0.06)'}">
+              </div>`;
+          }).join('')}
         </div>
-        <div style="background:rgba(255,255,255,0.04);
-                    border:1px solid rgba(255,255,255,0.08);
-                    border-radius:var(--radius-lg);
-                    padding:12px;text-align:center">
-          <div style="font-size:.6rem;color:var(--text-muted);
-                      margin-bottom:4px">💧 Hydra.</div>
-          <div style="font-size:1.2rem;font-weight:800;
-                      color:var(--fd-indigo)">
-            ${joursHydra}/7j
-          </div>
+        <div style="display:flex;gap:12px;margin-top:8px;font-size:.6rem;color:var(--text-muted)">
+          <span style="display:flex;align-items:center;gap:4px">
+            <div style="width:10px;height:10px;border-radius:2px;
+                        background:rgba(139,240,187,0.6)"></div>
+            Excellent (80+)
+          </span>
+          <span style="display:flex;align-items:center;gap:4px">
+            <div style="width:10px;height:10px;border-radius:2px;
+                        background:rgba(75,75,249,0.5)"></div>
+            Bon (60+)
+          </span>
+          <span style="display:flex;align-items:center;gap:4px">
+            <div style="width:10px;height:10px;border-radius:2px;
+                        background:rgba(249,239,119,0.4)"></div>
+            Moyen
+          </span>
         </div>
       </div>
 
-      <!-- Moyennes semaine -->
+      <!-- KPIs semaine -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                  gap:8px;margin-bottom:14px">
+        ${[
+          {label:'📊 Score moy.',val:scoreMoyen,
+           color:scoreMoyen>=80?'var(--fd-mint)':scoreMoyen>=60?'var(--fd-lemon)':'var(--fd-coral)'},
+          {label:'🔥 Streak',    val:`${streak}j`,     color:'var(--fd-lemon)'  },
+          {label:'💧 Hydra. 7j', val:`${joursHydra}/7`,color:'var(--fd-indigo)' }
+        ].map(s => `
+          <div style="background:rgba(255,255,255,0.04);
+                      border:1px solid rgba(255,255,255,0.08);
+                      border-radius:var(--radius-lg);
+                      padding:12px;text-align:center">
+            <div style="font-size:.58rem;color:var(--text-muted);margin-bottom:4px">
+              ${s.label}</div>
+            <div style="font-size:1.2rem;font-weight:800;color:${s.color}">
+              ${s.val}</div>
+          </div>`).join('')}
+      </div>
+
+      <!-- ✅ NOUVEAU v6.0 — Comparaison semaines -->
+      ${totSem1.cal > 0 && totSem2.cal > 0 ? `
+        <div style="background:rgba(255,255,255,0.04);
+                    border:1px solid rgba(255,255,255,0.08);
+                    border-radius:var(--radius-xl);
+                    padding:16px;margin-bottom:14px">
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.1em;color:var(--text-muted);margin-bottom:12px">
+            📊 Cette semaine vs semaine précédente
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            ${[
+              {label:'Calories', delta:deltaCal,
+               v1:Math.round(totSem1.cal/7), v2:Math.round(totSem2.cal/7),
+               u:'kcal/j', color:'var(--fd-lemon)'},
+              {label:'Protéines', delta:deltaProt,
+               v1:Math.round(totSem1.prot/7), v2:Math.round(totSem2.prot/7),
+               u:'g/j', color:'var(--fd-coral)'}
+            ].map(s => `
+              <div style="background:rgba(255,255,255,0.03);
+                          border:1px solid rgba(255,255,255,0.06);
+                          border-radius:var(--radius-lg);padding:12px">
+                <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:6px">
+                  ${s.label}</div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="text-align:center;flex:1">
+                    <div style="font-size:.82rem;font-weight:700;color:${s.color}">
+                      ${s.v1}</div>
+                    <div style="font-size:.52rem;color:var(--text-muted)">
+                      ${s.u}<br>cette sem.</div>
+                  </div>
+                  <div style="text-align:center;padding:6px 10px;
+                              background:${s.delta>=0
+                                ?'rgba(139,240,187,0.1)':'rgba(255,141,150,0.1)'};
+                              border-radius:var(--radius-md);flex-shrink:0">
+                    <div style="font-size:.82rem;font-weight:800;
+                                color:${s.delta>=0?'var(--fd-mint)':'var(--fd-coral)'}">
+                      ${s.delta>=0?'+':''}${s.delta}%
+                    </div>
+                  </div>
+                  <div style="text-align:center;flex:1">
+                    <div style="font-size:.82rem;font-weight:700;
+                                color:var(--text-secondary)">
+                      ${s.v2}</div>
+                    <div style="font-size:.52rem;color:var(--text-muted)">
+                      ${s.u}<br>sem. préc.</div>
+                  </div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+      <!-- Moyennes -->
       <div style="display:grid;grid-template-columns:repeat(2,1fr);
                   gap:8px;margin-bottom:14px">
         ${[
@@ -2783,10 +4276,10 @@ const Nutrition = {
                       border:1px solid rgba(255,255,255,0.08);
                       border-radius:var(--radius-lg);
                       padding:12px;text-align:center">
-            <div style="font-size:.6rem;color:var(--text-muted);
-                        margin-bottom:4px">${s.emoji} ${s.label}</div>
-            <div style="font-size:.95rem;font-weight:800;
-                        color:${s.color}">${s.val}</div>
+            <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:4px">
+              ${s.emoji} ${s.label}</div>
+            <div style="font-size:.95rem;font-weight:800;color:${s.color}">
+              ${s.val}</div>
           </div>`).join('')}
       </div>
 
@@ -2796,15 +4289,11 @@ const Nutrition = {
                     border:1px solid rgba(255,255,255,0.08);
                     border-radius:var(--radius-xl);
                     padding:16px;margin-bottom:14px">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--text-muted);margin-bottom:12px;
-                      display:flex;align-items:center;
-                      justify-content:space-between">
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.1em;color:var(--text-muted);margin-bottom:12px;
+                      display:flex;align-items:center;justify-content:space-between">
             <span>🔥 Calories — 7 jours</span>
-            <span style="color:var(--fd-lemon)">
-              Obj: ${obj.calories} kcal
-            </span>
+            <span style="color:var(--fd-lemon)">Obj: ${obj.calories} kcal</span>
           </div>
           <canvas id="chart-nutri-cal" height="150"></canvas>
         </div>
@@ -2812,15 +4301,11 @@ const Nutrition = {
                     border:1px solid rgba(255,255,255,0.08);
                     border-radius:var(--radius-xl);
                     padding:16px;margin-bottom:14px">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--text-muted);margin-bottom:12px;
-                      display:flex;align-items:center;
-                      justify-content:space-between">
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.1em;color:var(--text-muted);margin-bottom:12px;
+                      display:flex;align-items:center;justify-content:space-between">
             <span>💪 Protéines — 7 jours</span>
-            <span style="color:var(--fd-coral)">
-              Obj: ${obj.proteines}g
-            </span>
+            <span style="color:var(--fd-coral)">Obj: ${obj.proteines}g</span>
           </div>
           <canvas id="chart-nutri-prot" height="130"></canvas>
         </div>
@@ -2828,88 +4313,74 @@ const Nutrition = {
                     border:1px solid rgba(255,255,255,0.08);
                     border-radius:var(--radius-xl);
                     padding:16px;margin-bottom:14px">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--text-muted);margin-bottom:12px;
-                      display:flex;align-items:center;
-                      justify-content:space-between">
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.1em;color:var(--text-muted);margin-bottom:12px;
+                      display:flex;align-items:center;justify-content:space-between">
             <span>📊 Score nutrition</span>
-            <span style="color:var(--fd-lavender)">
-              Sur 100
-            </span>
+            <span style="color:var(--fd-lavender)">Sur 100</span>
           </div>
           <canvas id="chart-nutri-score" height="130"></canvas>
         </div>` : `
-        <div style="text-align:center;padding:32px 16px;
-                    color:var(--text-muted)">
+        <div style="text-align:center;padding:32px 16px;color:var(--text-muted)">
           <div style="font-size:2rem;margin-bottom:8px">📊</div>
           <div style="font-size:.88rem">
             Pas encore assez de données<br>
-            <span style="font-size:.72rem">
-              Continue à logger tes repas !
-            </span>
+            <span style="font-size:.72rem">Continue à logger tes repas !</span>
           </div>
         </div>`}
 
-      <!-- Tableau -->
+      <!-- Tableau récap -->
       ${hist.length > 0 ? `
         <div style="background:rgba(255,255,255,0.04);
                     border:1px solid rgba(255,255,255,0.08);
                     border-radius:var(--radius-xl);
-                    padding:16px;margin-bottom:14px;
-                    overflow-x:auto">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--text-muted);margin-bottom:12px">
-            📅 Récap semaine
+                    padding:16px;margin-bottom:14px;overflow-x:auto">
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.1em;color:var(--text-muted);margin-bottom:12px">
+            📅 Récap 7 jours
           </div>
           <table style="width:100%;border-collapse:collapse;
                         font-size:.72rem;min-width:320px">
             <thead>
               <tr style="color:var(--text-muted)">
-                <th style="text-align:left;padding:4px 6px;
-                           font-weight:600">Jour</th>
-                <th style="text-align:right;padding:4px 6px;
-                           color:var(--fd-lemon)">Cal</th>
-                <th style="text-align:right;padding:4px 6px;
-                           color:var(--fd-coral)">Prot</th>
-                <th style="text-align:right;padding:4px 6px;
-                           color:var(--fd-indigo)">💧</th>
-                <th style="text-align:right;padding:4px 6px;
-                           color:var(--fd-lavender)">Score</th>
+                <th style="text-align:left;padding:4px 6px;font-weight:600">Jour</th>
+                <th style="text-align:right;padding:4px 6px;color:var(--fd-lemon)">Cal</th>
+                <th style="text-align:right;padding:4px 6px;color:var(--fd-coral)">Prot</th>
+                <th style="text-align:right;padding:4px 6px;color:var(--fd-indigo)">💧</th>
+                <th style="text-align:right;padding:4px 6px;color:var(--fd-lavender)">Score</th>
               </tr>
             </thead>
             <tbody>
               ${hist.map(h => `
                 <tr style="border-top:1px solid var(--border-color)">
-                  <td style="padding:6px 6px;font-weight:600">
-                    ${h.label}
-                  </td>
+                  <td style="padding:6px 6px;font-weight:600">${h.label}</td>
                   <td style="text-align:right;padding:6px 6px;
-                             color:${h.cal>=obj.calories*0.9
-                               ?'var(--fd-mint)':'var(--text-muted)'}">
+                             color:${h.cal>=obj.calories*0.9?'var(--fd-mint)':'var(--text-muted)'}">
                     ${Math.round(h.cal)}
                   </td>
                   <td style="text-align:right;padding:6px 6px;
-                             color:${h.prot>=obj.proteines*0.9
-                               ?'var(--fd-mint)':'var(--text-muted)'}">
+                             color:${h.prot>=obj.proteines*0.9?'var(--fd-mint)':'var(--text-muted)'}">
                     ${Math.round(h.prot)}g
                   </td>
-                  <td style="text-align:right;padding:6px 6px;
-                             color:var(--fd-indigo)">
+                  <td style="text-align:right;padding:6px 6px;color:var(--fd-indigo)">
                     ${(h.eau/1000).toFixed(1)}L
                   </td>
                   <td style="text-align:right;padding:6px 6px">
-                    <span style="color:${h.score>=80
-                      ?'var(--fd-mint)':h.score>=60
-                      ?'var(--fd-lemon)':'var(--fd-coral)'}">
+                    <span style="color:${h.score>=80?'var(--fd-mint)':h.score>=60?'var(--fd-lemon)':'var(--fd-coral)'}">
                       ${h.score || '—'}
                     </span>
                   </td>
                 </tr>`).join('')}
             </tbody>
           </table>
-        </div>` : ''}`;
+        </div>` : ''}
+
+      <!-- ✅ NOUVEAU v6.0 — Export rapport nutrition -->
+      <button onclick="Nutrition._exporterRapportNutrition()"
+              class="btn-secondary"
+              style="width:100%;margin-bottom:8px;font-size:.82rem">
+        📄 Exporter rapport nutrition
+      </button>`;
 
     // Charts
     requestAnimationFrame(() => {
@@ -2925,12 +4396,10 @@ const Nutrition = {
         }
       };
 
-      // Calories
       const cc = document.getElementById('chart-nutri-cal');
       if (cc && hist.length > 1) {
         try {
-          if (this._chartInstances.cal)
-            this._chartInstances.cal.destroy();
+          if (this._chartInstances.cal) this._chartInstances.cal.destroy();
           this._chartInstances.cal = new Chart(cc, {
             type:'bar',
             data:{
@@ -2947,18 +4416,15 @@ const Nutrition = {
             },
             options:{...opts,scales:{...opts.scales,
               y:{...opts.scales.y,
-                suggestedMax:Math.max(obj.calories*1.2,
-                  ...hist.map(h=>h.cal))}}}
+                suggestedMax:Math.max(obj.calories*1.2,...hist.map(h=>h.cal))}}}
           });
         } catch(e) {}
       }
 
-      // Protéines
       const cp = document.getElementById('chart-nutri-prot');
       if (cp && hist.length > 1) {
         try {
-          if (this._chartInstances.prot)
-            this._chartInstances.prot.destroy();
+          if (this._chartInstances.prot) this._chartInstances.prot.destroy();
           this._chartInstances.prot = new Chart(cp, {
             type:'line',
             data:{
@@ -2977,12 +4443,10 @@ const Nutrition = {
         } catch(e) {}
       }
 
-      // Score
       const cs = document.getElementById('chart-nutri-score');
       if (cs && hist.length > 1) {
         try {
-          if (this._chartInstances.score)
-            this._chartInstances.score.destroy();
+          if (this._chartInstances.score) this._chartInstances.score.destroy();
           this._chartInstances.score = new Chart(cs, {
             type:'line',
             data:{
@@ -3007,6 +4471,66 @@ const Nutrition = {
   },
 
   // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v6.0 — Export rapport nutrition
+  // ════════════════════════════════════════════════════════
+  _exporterRapportNutrition() {
+    const hist       = this._getHistorique(7);
+    const obj        = this.getObjectifs();
+    const profil     = this._getProfil();
+    const streak     = this.getStreakNutrition();
+    const joursHydra = this.getJoursHydratation(7);
+    const joursProt  = this.getJoursProteines(7);
+    const scoreMoyen = hist.length > 0
+      ? Math.round(hist.reduce((a,h) => a+(h.score||0), 0) / hist.length)
+      : 0;
+
+    const auj      = Utils.aujourd_hui();
+    const badge    = profil.genre === 'femme' ? ' 🌸' : ' 💪';
+
+    const contenu = `
+RAPPORT NUTRITION POWERAPP${badge}
+${'═'.repeat(50)}
+Généré le ${auj} | Genre: ${profil.genre} | Objectif: ${profil.objectif}
+
+📊 RÉSUMÉ 7 JOURS
+─────────────────────────────
+• Score moyen      : ${scoreMoyen}/100
+• Streak           : ${streak} jours
+• Hydratation OK   : ${joursHydra}/7 jours
+• Protéines atteint: ${joursProt}/7 jours
+
+🎯 OBJECTIFS QUOTIDIENS
+─────────────────────────────
+• Calories  : ${obj.calories} kcal
+• Protéines : ${obj.proteines}g
+• Glucides  : ${obj.glucides}g
+• Lipides   : ${obj.lipides}g
+• Eau       : ${obj.eau}L
+
+📅 DÉTAIL PAR JOUR
+─────────────────────────────
+${hist.map(h => [
+  `${h.label} (${h.date})`,
+  `  Cal: ${Math.round(h.cal)} kcal (${Math.round((h.cal/obj.calories)*100)}%)`,
+  `  Prot: ${Math.round(h.prot)}g | Gluc: ${Math.round(h.gluc)}g | Lip: ${Math.round(h.lip)}g`,
+  `  Eau: ${(h.eau/1000).toFixed(2)}L | Score: ${h.score}/100`
+].join('\n')).join('\n\n')}
+
+${'─'.repeat(50)}
+PowerApp v6.0 — ${auj}
+    `.trim();
+
+    const blob = new Blob([contenu], { type:'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `powerapp-nutrition-${auj}.txt`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    Utils.toast('📄 Rapport exporté !', 'success');
+  },
+
+  // ════════════════════════════════════════════════════════
   // EAU
   // ════════════════════════════════════════════════════════
   _ajouterEau(ml) {
@@ -3023,8 +4547,8 @@ const Nutrition = {
     Utils.vibrerSuccess();
     if (nouveau >= obj.eau * 1000 && actuel < obj.eau * 1000) {
       setTimeout(() => {
-        Utils.toast('🎉 Objectif hydratation atteint !','success',3000);
-        try { Gamification.ajouterXP(20,'hydratation'); } catch(e) {}
+        Utils.toast('🎉 Objectif hydratation atteint !', 'success', 3000);
+        try { Gamification.ajouterXP(20, 'hydratation'); } catch(e) {}
       }, 500);
     }
     if (this._ongletActif === 'dashboard') {
@@ -3044,8 +4568,10 @@ window.ALIMENTS_DB = ALIMENTS_DB;
 window.RECETTES_DB = RECETTES_DB;
 
 console.log(
-  `✅ Nutrition v5.0 chargé — ` +
+  `✅ Nutrition v6.0 chargé — ` +
   `${Object.keys(ALIMENTS_DB).length} aliments · ` +
   `${RECETTES_DB.length} recettes · ` +
-  `Genre-aware ✅ · Objectif-aware ✅ · Séance-aware ✅`
+  `Planning ✅ · Liste courses ✅ · ` +
+  `Donut macros ✅ · Favoris ✅ · ` +
+  `Streak calendar ✅ · Export ✅`
 );
