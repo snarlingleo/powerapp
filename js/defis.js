@@ -1,1144 +1,906 @@
 /* ============================================================
-   PowerApp — Défis Hebdomadaires v4.0
-   Défis auto + suivi + récompenses + photos + supersets
-   + Défis femme Lower Body + Défis maison
-   + Genre-aware generation
+   PowerApp — Defis.js v2.0
+   ✅ Défis dynamiques selon niveau
+   ✅ Classement défis communauté
+   ✅ Défis saisonniers
+   ✅ Récompenses XP + badges
+   ✅ Historique défis
+   ✅ Défis spéciaux surprise
    ============================================================ */
+
+'use strict';
 
 const Defis = {
 
-  BANQUE: [
-    // ══ VOLUME ══
-    { id:'vol_bench_100',  titre:'💪 100 reps Développé couché',
-      description:'Cumule 100 répétitions de bench press cette semaine',
-      categorie:'volume', exercice:'bench_press',
-      type:'reps_cumul', cible:100, xp:300, emoji:'💪',
-      difficulte:2, genre:['homme'] },
-    { id:'vol_squat_80',   titre:'🦵 80 reps de Squat',
-      description:'Cumule 80 répétitions de squat cette semaine',
-      categorie:'volume', exercice:'squat',
-      type:'reps_cumul', cible:80, xp:300, emoji:'🦵',
-      difficulte:2, genre:['homme','femme'] },
-    { id:'vol_total_5000', titre:'🏋️ 5 tonnes soulevées',
-      description:'Cumule 5 000kg de volume total cette semaine',
-      categorie:'volume', type:'volume_total',
-      cible:5000, xp:400, emoji:'🏋️',
-      difficulte:3, genre:['homme'] },
-    { id:'vol_total_3000_femme', titre:'💪 3 tonnes soulevées',
-      description:'Cumule 3 000kg de volume total cette semaine',
-      categorie:'volume', type:'volume_total',
-      cible:3000, xp:350, emoji:'💪',
-      difficulte:3, genre:['femme'] },
-    { id:'vol_total_8000', titre:'💥 8 tonnes soulevées',
-      description:'Cumule 8 000kg de volume total cette semaine',
-      categorie:'volume', type:'volume_total',
-      cible:8000, xp:600, emoji:'💥',
-      difficulte:4, genre:['homme'] },
-    { id:'vol_traction_50',titre:'🔗 50 tractions',
-      description:'Cumule 50 répétitions de tractions cette semaine',
-      categorie:'volume', exercice:'tractions',
-      type:'reps_cumul', cible:50, xp:350, emoji:'🔗',
-      difficulte:3, genre:['homme'] },
-    { id:'vol_curl_120',   titre:'💪 120 reps de Curl',
-      description:'Cumule 120 répétitions de curl cette semaine',
-      categorie:'volume', exercice:'curl_halteres',
-      type:'reps_cumul', cible:120, xp:200, emoji:'💪',
-      difficulte:1, genre:['homme','femme'] },
-    { id:'vol_soulevé_60', titre:'🏋️ 60 reps Soulevé de terre',
-      description:'Cumule 60 répétitions de soulevé de terre',
-      categorie:'volume', exercice:'soulevé_terre',
-      type:'reps_cumul', cible:60, xp:350, emoji:'🏋️',
-      difficulte:3, genre:['homme'] },
-    { id:'vol_total_3000', titre:'💪 3 tonnes soulevées',
-      description:'Cumule 3 000kg de volume total cette semaine',
-      categorie:'volume', type:'volume_total',
-      cible:3000, xp:200, emoji:'💪',
-      difficulte:1, genre:['homme'] },
+  CLE_DEFIS:      'ft_defis_actifs',
+  CLE_HISTORIQUE: 'ft_defis_historique',
+  CLE_SAISON:     'ft_defis_saison',
 
-    // ══ VOLUME FEMME ══
-    { id:'vol_hip_thrust_80',  titre:'🍑 80 reps Hip Thrust',
-      description:'Cumule 80 répétitions de hip thrust cette semaine',
-      categorie:'volume', exercice:'hip_thrust_sol',
-      type:'reps_cumul', cible:80, xp:300, emoji:'🍑',
-      difficulte:2, genre:['femme'] },
-    { id:'vol_squat_f_100',   titre:'🦵 100 reps Squat',
-      description:'Cumule 100 répétitions de squat cette semaine',
-      categorie:'volume', exercice:'squat_poids_corps',
-      type:'reps_cumul', cible:100, xp:250, emoji:'🦵',
-      difficulte:2, genre:['femme'] },
-    { id:'vol_fentes_60',     titre:'🔥 60 fentes bulgares',
-      description:'Cumule 60 répétitions de fentes bulgares',
-      categorie:'volume', exercice:'fentes_bulgares',
-      type:'reps_cumul', cible:60, xp:300, emoji:'🔥',
-      difficulte:3, genre:['femme'] },
-    { id:'vol_donkey_100',    titre:'🍑 100 donkey kicks',
-      description:'Cumule 100 donkey kicks cette semaine',
-      categorie:'volume', exercice:'donkey_kick',
-      type:'reps_cumul', cible:100, xp:200, emoji:'🍑',
-      difficulte:1, genre:['femme'] },
-    { id:'vol_pompes_femme',  titre:'💪 50 pompes',
-      description:'Cumule 50 pompes cette semaine',
-      categorie:'volume', exercice:'pompes',
-      type:'reps_cumul', cible:50, xp:250, emoji:'💪',
-      difficulte:2, genre:['femme'] },
+  // ════════════════════════════════════════════════════════
+  // DÉFIS DYNAMIQUES — générés selon niveau + objectif
+  // ════════════════════════════════════════════════════════
+  _genererDefis() {
+    let totalSeances = 0, streak = 0, totalPRs = 0;
+    let volumeSemaine = 0, niveau = 1;
 
-    // ══ SÉANCES ══
-    { id:'seance_4_semaine',  titre:'📅 4 séances cette semaine',
-      description:'Complète 4 séances dans la semaine',
-      categorie:'assiduite', type:'seances_semaine',
-      cible:4, xp:250, emoji:'📅',
-      difficulte:2, genre:['homme','femme'] },
-    { id:'seance_5_semaine',  titre:'🔥 5 séances cette semaine',
-      description:'Complète 5 séances dans la semaine',
-      categorie:'assiduite', type:'seances_semaine',
-      cible:5, xp:400, emoji:'🔥',
-      difficulte:3, genre:['homme','femme'] },
-    { id:'seance_matin',      titre:'🌅 3 séances avant 10h',
-      description:'Complète 3 séances avant 10h du matin',
-      categorie:'assiduite', type:'seances_matin',
-      cible:3, xp:300, emoji:'🌅',
-      difficulte:3, genre:['homme','femme'] },
-    { id:'seance_full_body',  titre:'🔄 2 séances Full Body',
-      description:'Complète 2 séances Full Body cette semaine',
-      categorie:'assiduite', type:'seance_type',
-      seanceId:'full_body', cible:2, xp:250, emoji:'🔄',
-      difficulte:2, genre:['homme','femme'] },
-    { id:'seance_3_semaine',  titre:'📅 3 séances cette semaine',
-      description:'Complète 3 séances dans la semaine',
-      categorie:'assiduite', type:'seances_semaine',
-      cible:3, xp:150, emoji:'📅',
-      difficulte:1, genre:['homme','femme'] },
-    { id:'seance_express_3',  titre:'⚡ 3 séances express',
-      description:'Complète 3 séances express cette semaine',
-      categorie:'assiduite', type:'seances_express',
-      cible:3, xp:200, emoji:'⚡',
-      difficulte:2, genre:['homme','femme'] },
+    try { totalSeances  = Tracker.getTotalSeances();           } catch(e) {}
+    try { streak        = Tracker.getStreak().count;          } catch(e) {}
+    try { totalPRs      = Object.keys(Tracker.getAllPRs()).length; } catch(e) {}
+    try { volumeSemaine = Tracker.getVolumeSemaine();         } catch(e) {}
+    try { niveau        = Gamification.getXP().niveau.numero; } catch(e) {}
 
-    // ✅ NOUVEAU v4.0 — Séances femme spécifiques
-    { id:'seance_lower_2',    titre:'🍑 2 séances Lower Body',
-      description:'Complète 2 séances dédiées au bas du corps',
-      categorie:'assiduite', type:'seances_lower',
-      cible:2, xp:250, emoji:'🍑',
-      difficulte:2, genre:['femme'] },
-    { id:'seance_lower_3',    titre:'🍑 3 séances Lower Body',
-      description:'Complète 3 séances dédiées au bas du corps',
-      categorie:'assiduite', type:'seances_lower',
-      cible:3, xp:400, emoji:'🍑',
-      difficulte:3, genre:['femme'] },
+    const profil  = (() => {
+      try { return Tracker.getProfil(); } catch(e) { return {}; }
+    })();
+    const objectif = profil.objectif || 'forme';
+    const genre    = Utils.storage.get('ft_profil_onboarding', {})?.genre || 'homme';
 
-    // ✅ NOUVEAU v4.0 — Défis maison
-    { id:'maison_pompes_100',  titre:'🏠 100 pompes maison',
-      description:'Cumule 100 pompes à la maison cette semaine',
-      categorie:'maison', exercice:'pompes',
-      type:'reps_cumul', cible:100, xp:200, emoji:'🏠',
-      difficulte:2, genre:['homme','femme'], lieu:['maison'] },
-    { id:'maison_seance_3',    titre:'🏠 3 séances maison',
-      description:'Complète 3 séances à la maison cette semaine',
-      categorie:'maison', type:'seances_maison',
-      cible:3, xp:250, emoji:'🏠',
-      difficulte:2, genre:['homme','femme'], lieu:['maison'] },
-    { id:'maison_planche_5',   titre:'🏠 5 min de planche',
-      description:'Cumule 5 minutes de gainage cette semaine',
-      categorie:'maison', exercice:'planche',
-      type:'reps_cumul', cible:300, xp:200, emoji:'🏠',
-      difficulte:2, genre:['homme','femme'], lieu:['maison'] },
-    { id:'dehors_seance_2',    titre:'🌳 2 séances dehors',
-      description:'Complète 2 séances en extérieur cette semaine',
-      categorie:'maison', type:'seances_dehors',
-      cible:2, xp:200, emoji:'🌳',
-      difficulte:2, genre:['homme','femme'], lieu:['dehors'] },
+    const maintenant = new Date();
+    const debutSem   = Utils.debutSemaine(Utils.aujourd_hui());
+    const finSem     = Utils.ajouterJours(debutSem, 6);
 
-    // ══ FORCE / PR ══
-    { id:'pr_bench',        titre:'🏆 Nouveau PR Développé couché',
-      description:'Bats ton record sur le développé couché',
-      categorie:'force', exercice:'bench_press',
-      type:'nouveau_pr', cible:1, xp:500, emoji:'🏆',
-      difficulte:4, genre:['homme'] },
-    { id:'pr_squat',        titre:'🦵 Nouveau PR Squat',
-      description:'Bats ton record sur le squat',
-      categorie:'force', exercice:'squat',
-      type:'nouveau_pr', cible:1, xp:500, emoji:'🦵',
-      difficulte:4, genre:['homme','femme'] },
-    { id:'pr_hip_thrust',   titre:'🍑 Nouveau PR Hip Thrust',
-      description:'Bats ton record sur le hip thrust',
-      categorie:'force', exercice:'hip_thrust_sol',
-      type:'nouveau_pr', cible:1, xp:500, emoji:'🍑',
-      difficulte:4, genre:['femme'] },
-    { id:'pr_any_3',        titre:'🎯 3 nouveaux records',
-      description:'Bats 3 records personnels cette semaine',
-      categorie:'force', type:'prs_semaine',
-      cible:3, xp:600, emoji:'🎯',
-      difficulte:4, genre:['homme','femme'] },
-    { id:'pr_any_1',        titre:'🏅 1 nouveau record',
-      description:'Bats 1 record personnel cette semaine',
-      categorie:'force', type:'prs_semaine',
-      cible:1, xp:200, emoji:'🏅',
-      difficulte:2, genre:['homme','femme'] },
-    { id:'force_serie_lourde', titre:'💎 Série lourde (5 reps max)',
-      description:'Fais une série de 5 reps ou moins',
-      categorie:'force', type:'serie_lourde',
-      cible:1, xp:200, emoji:'💎',
-      difficulte:3, genre:['homme'] },
-    { id:'force_pr_deadlift', titre:'🏋️ Nouveau PR Soulevé de terre',
-      description:'Bats ton record sur le soulevé de terre',
-      categorie:'force', exercice:'soulevé_terre',
-      type:'nouveau_pr', cible:1, xp:500, emoji:'🏋️',
-      difficulte:4, genre:['homme'] },
+    // Pool de défis adaptés au profil
+    const pool = [
 
-    // ══ RÉGULARITÉ ══
-    { id:'streak_7',    titre:'🔥 Streak 7 jours',
-      description:'Maintiens un streak de 7 jours consécutifs',
-      categorie:'regularite', type:'streak',
-      cible:7, xp:500, emoji:'🔥',
-      difficulte:4, genre:['homme','femme'] },
-    { id:'streak_5',    titre:'⚡ Streak 5 jours',
-      description:'Maintiens un streak de 5 jours consécutifs',
-      categorie:'regularite', type:'streak',
-      cible:5, xp:300, emoji:'⚡',
-      difficulte:3, genre:['homme','femme'] },
-    { id:'streak_3',    titre:'🔥 Streak 3 jours',
-      description:'Maintiens un streak de 3 jours consécutifs',
-      categorie:'regularite', type:'streak',
-      cible:3, xp:150, emoji:'🔥',
-      difficulte:1, genre:['homme','femme'] },
-    { id:'pas_absence', titre:'✅ Zéro absence cette semaine',
-      description:'Ne manque aucune séance planifiée cette semaine',
-      categorie:'regularite', type:'zero_absence',
-      cible:1, xp:400, emoji:'✅',
-      difficulte:3, genre:['homme','femme'] },
+      // ─── DÉFI SÉANCES ───
+      {
+        id:          `defi_seances_${debutSem}`,
+        titre:       `${niveau >= 5 ? '5' : niveau >= 3 ? '4' : '3'} séances cette semaine`,
+        emoji:       '💪',
+        type:        'seances',
+        categorie:   'hebdo',
+        difficulte:  niveau >= 5 ? 'difficile' : niveau >= 3 ? 'moyen' : 'facile',
+        description: `Complète ${niveau >= 5 ? '5' : niveau >= 3 ? '4' : '3'} séances avant dimanche`,
+        cible:       niveau >= 5 ? 5 : niveau >= 3 ? 4 : 3,
+        xp:          niveau >= 5 ? 400 : niveau >= 3 ? 250 : 150,
+        dateDebut:   debutSem,
+        dateFin:     finSem,
+        iconeRecomp: '🏅',
+        progression: () => {
+          try {
+            return Tracker.getHistoriqueSeances(7)
+              .filter(s => s.date >= debutSem).length;
+          } catch(e) { return 0; }
+        }
+      },
 
-    // ══ BIEN-ÊTRE ══
-    { id:'journal_3',       titre:'📔 3 entrées journal',
-      description:'Écris 3 entrées dans ton journal cette semaine',
-      categorie:'bienetre', type:'journal_semaine',
-      cible:3, xp:150, emoji:'📔',
-      difficulte:1, genre:['homme','femme'] },
-    { id:'journal_1',       titre:'📔 1 entrée journal',
-      description:'Écris 1 entrée dans ton journal',
-      categorie:'bienetre', type:'journal_semaine',
-      cible:1, xp:75, emoji:'📔',
-      difficulte:1, genre:['homme','femme'] },
-    { id:'mesure_semaine',  titre:'⚖️ Prendre ses mesures',
-      description:'Enregistre tes mesures corporelles cette semaine',
-      categorie:'bienetre', type:'mesure_semaine',
-      cible:1, xp:100, emoji:'⚖️',
-      difficulte:1, genre:['homme','femme'] },
-    { id:'rpe_controle',    titre:'🎯 RPE maîtrisé',
-      description:'Maintiens un RPE entre 7 et 8.5 sur toutes tes séances',
-      categorie:'bienetre', type:'rpe_controle',
-      cible:1, xp:200, emoji:'🎯',
-      difficulte:2, genre:['homme','femme'] },
-    { id:'photo_progression',titre:'📸 Photo de progression',
-      description:'Ajoute une photo de progression cette semaine',
-      categorie:'bienetre', type:'photo_semaine',
-      cible:1, xp:150, emoji:'📸',
-      difficulte:1, genre:['homme','femme'] },
-    { id:'humeur_5j',       titre:'😊 Humeur 5 jours',
-      description:'Renseigne ton humeur 5 jours cette semaine',
-      categorie:'bienetre', type:'humeur_semaine',
-      cible:5, xp:100, emoji:'😊',
-      difficulte:1, genre:['homme','femme'] },
+      // ─── DÉFI STREAK ───
+      {
+        id:          `defi_streak_${debutSem}`,
+        titre:       `Streak de ${niveau >= 4 ? '7' : '5'} jours`,
+        emoji:       '🔥',
+        type:        'streak',
+        categorie:   'hebdo',
+        difficulte:  niveau >= 4 ? 'difficile' : 'moyen',
+        description: `Maintiens ton streak pendant ${niveau >= 4 ? '7' : '5'} jours consécutifs`,
+        cible:       niveau >= 4 ? 7 : 5,
+        xp:          niveau >= 4 ? 350 : 200,
+        dateDebut:   debutSem,
+        dateFin:     finSem,
+        iconeRecomp: '🔥',
+        progression: () => {
+          try { return Tracker.getStreak().count; } catch(e) { return 0; }
+        }
+      },
 
-    // ══ CARDIO ══
-    { id:'cardio_3',       titre:'🚴 3 sessions cardio',
-      description:'Fais 3 sessions de cardio cette semaine',
-      categorie:'cardio', type:'cardio_semaine',
-      cible:3, xp:200, emoji:'🚴',
-      difficulte:2, genre:['homme','femme'] },
-    { id:'cardio_1',       titre:'🚴 1 session cardio',
-      description:'Fais 1 session de cardio cette semaine',
-      categorie:'cardio', type:'cardio_semaine',
-      cible:1, xp:75, emoji:'🚴',
-      difficulte:1, genre:['homme','femme'] },
-    { id:'rameur_15min',   titre:'🚣 15 min de rameur',
-      description:'Fais au moins 15 min de rameur en une session',
-      categorie:'cardio', exercice:'rameur',
-      type:'cardio_semaine', cible:1,
-      xp:150, emoji:'🚣',
-      difficulte:2, genre:['homme','femme'] },
+      // ─── DÉFI VOLUME ───
+      {
+        id:          `defi_volume_${debutSem}`,
+        titre:       'Volume Monster',
+        emoji:       '📦',
+        type:        'volume',
+        categorie:   'hebdo',
+        difficulte:  objectif === 'prise_masse' || objectif === 'force' ? 'difficile' : 'moyen',
+        description: `Soulève ${niveau >= 4 ? '10' : '6'} tonnes cette semaine`,
+        cible:       (niveau >= 4 ? 10 : 6) * 1000,
+        xp:          niveau >= 4 ? 300 : 180,
+        dateDebut:   debutSem,
+        dateFin:     finSem,
+        iconeRecomp: '💎',
+        progression: () => {
+          try { return Tracker.getVolumeSemaine(); } catch(e) { return 0; }
+        }
+      },
 
-    // ══ SUPERSETS ══
-    { id:'superset_3', titre:'⚡ 3 supersets cette semaine',
-      description:'Complète 3 supersets dans tes séances',
-      categorie:'avance', type:'supersets_semaine',
-      cible:3, xp:250, emoji:'⚡',
-      difficulte:2, genre:['homme','femme'] },
-    { id:'superset_5', titre:'⚡ 5 supersets cette semaine',
-      description:'Complète 5 supersets dans tes séances',
-      categorie:'avance', type:'supersets_semaine',
-      cible:5, xp:400, emoji:'⚡',
-      difficulte:3, genre:['homme','femme'] },
+      // ─── DÉFI PR ───
+      {
+        id:          `defi_pr_${debutSem}`,
+        titre:       niveau >= 3 ? 'Double Record' : 'Premier Record',
+        emoji:       '🏆',
+        type:        'prs',
+        categorie:   'hebdo',
+        difficulte:  niveau >= 3 ? 'moyen' : 'facile',
+        description: `Bats ${niveau >= 3 ? '2 PRs' : '1 PR'} cette semaine`,
+        cible:       niveau >= 3 ? 2 : 1,
+        xp:          niveau >= 3 ? 400 : 200,
+        dateDebut:   debutSem,
+        dateFin:     finSem,
+        iconeRecomp: '🏆',
+        progression: () => {
+          try {
+            const prsActuels = Tracker.getPRsSeance?.(null) || [];
+            const seances    = Tracker.getHistoriqueSeances(7)
+              .filter(s => s.date >= debutSem);
+            return seances.reduce((a,s) => a + (s.prs?.length || 0), 0);
+          } catch(e) { return 0; }
+        }
+      },
 
-    // ══ DÉFIS SPÉCIAUX ══
-    { id:'defi_100_series',    titre:'💯 100 séries cette semaine',
-      description:'Cumule 100 séries au total cette semaine',
-      categorie:'avance', type:'series_total',
-      cible:100, xp:500, emoji:'💯',
-      difficulte:4, genre:['homme'] },
-    { id:'defi_seance_longue', titre:'⏱️ Séance de 90 minutes',
-      description:'Complète une séance de 90 minutes ou plus',
-      categorie:'avance', type:'seance_longue',
-      cible:90 * 60, xp:300, emoji:'⏱️',
-      difficulte:3, genre:['homme','femme'] }
+      // ─── DÉFI HYDRATATION ───
+      {
+        id:          `defi_eau_${debutSem}`,
+        titre:       'Hydro Champion',
+        emoji:       '💧',
+        type:        'hydratation',
+        categorie:   'hebdo',
+        difficulte:  'facile',
+        description: 'Atteins ton objectif eau 5 jours cette semaine',
+        cible:       5,
+        xp:          150,
+        dateDebut:   debutSem,
+        dateFin:     finSem,
+        iconeRecomp: '💧',
+        progression: () => {
+          try {
+            const obj  = Utils.storage.get('ft_nutrition_objectifs', {eau:2.5});
+            const seuil = (obj.eau || 2.5) * 900;
+            let count   = 0;
+            for (let i = 0; i < 7; i++) {
+              const date = Utils.ajouterJours(debutSem, i);
+              if (date > Utils.aujourd_hui()) break;
+              const eau  = Utils.storage.get(`ft_nutrition_eau_${date}`, 0);
+              if (eau >= seuil) count++;
+            }
+            return count;
+          } catch(e) { return 0; }
+        }
+      },
+
+      // ─── DÉFI SPÉCIAL GENRE ───
+      genre === 'femme' ? {
+        id:          `defi_lower_${debutSem}`,
+        titre:       'Lower Body Queen 🌸',
+        emoji:       '🍑',
+        type:        'lower',
+        categorie:   'special',
+        difficulte:  'moyen',
+        description: '3 séances Lower Body / Fessiers cette semaine',
+        cible:       3,
+        xp:          350,
+        dateDebut:   debutSem,
+        dateFin:     finSem,
+        iconeRecomp: '👑',
+        progression: () => {
+          try {
+            return Tracker.getHistoriqueSeances(7)
+              .filter(s => s.date >= debutSem &&
+                (s.id?.includes('lower') || s.id?.includes('fessier'))
+              ).length;
+          } catch(e) { return 0; }
+        }
+      } : {
+        id:          `defi_force_${debutSem}`,
+        titre:       'Force Brute',
+        emoji:       '💥',
+        type:        'force',
+        categorie:   'special',
+        difficulte:  'difficile',
+        description: 'Bats ton record sur Bench, Squat ou Deadlift',
+        cible:       1,
+        xp:          500,
+        dateDebut:   debutSem,
+        dateFin:     finSem,
+        iconeRecomp: '🔥',
+        progression: () => {
+          try {
+            const bigThree = ['bench_press','squat','soulevé_terre'];
+            const prs      = Tracker.getAllPRs();
+            return bigThree.filter(ref => {
+              const pr = prs[ref];
+              return pr?.date >= debutSem;
+            }).length;
+          } catch(e) { return 0; }
+        }
+      },
+
+      // ─── DÉFI NUTRITION ───
+      {
+        id:          `defi_nutrition_${debutSem}`,
+        titre:       'Nutrition Parfaite',
+        emoji:       '🥗',
+        type:        'nutrition',
+        categorie:   'hebdo',
+        difficulte:  'moyen',
+        description: 'Atteins ton objectif protéines 4 jours cette semaine',
+        cible:       4,
+        xp:          200,
+        dateDebut:   debutSem,
+        dateFin:     finSem,
+        iconeRecomp: '🥗',
+        progression: () => {
+          try {
+            const obj  = Utils.storage.get('ft_nutrition_objectifs', {proteines:160});
+            const seuil = (obj.proteines || 160) * 0.9;
+            let count   = 0;
+            for (let i = 0; i < 7; i++) {
+              const date  = Utils.ajouterJours(debutSem, i);
+              if (date > Utils.aujourd_hui()) break;
+              const j     = Utils.storage.get(`ft_nutrition_journal_${date}`, []);
+              const prot  = j.reduce((a,e) => a+(e.prot||0), 0);
+              if (prot >= seuil) count++;
+            }
+            return count;
+          } catch(e) { return 0; }
+        }
+      }
+    ];
+
+    return pool.filter(Boolean);
+  },
+
+  // ════════════════════════════════════════════════════════
+  // DÉFIS SAISON
+  // ════════════════════════════════════════════════════════
+  DEFIS_SAISON: [
+    {
+      id:          'saison_100_seances',
+      titre:       '100 Séances',
+      emoji:       '💯',
+      type:        'seances_total',
+      categorie:   'saison',
+      difficulte:  'legendaire',
+      description: 'Atteins le cap des 100 séances totales',
+      cible:       100,
+      xp:          2000,
+      iconeRecomp: '👑',
+      progression: () => {
+        try { return Tracker.getTotalSeances(); } catch(e) { return 0; }
+      }
+    },
+    {
+      id:          'saison_50_prs',
+      titre:       '50 Records Personnels',
+      emoji:       '🏆',
+      type:        'prs_total',
+      categorie:   'saison',
+      difficulte:  'legendaire',
+      description: 'Bats 50 records personnels au total',
+      cible:       50,
+      xp:          3000,
+      iconeRecomp: '⭐',
+      progression: () => {
+        try { return Object.keys(Tracker.getAllPRs()).length; } catch(e) { return 0; }
+      }
+    },
+    {
+      id:          'saison_streak_30',
+      titre:       '30 Jours Consécutifs',
+      emoji:       '🔥',
+      type:        'streak_max',
+      categorie:   'saison',
+      difficulte:  'epique',
+      description: 'Maintiens un streak de 30 jours',
+      cible:       30,
+      xp:          1500,
+      iconeRecomp: '💎',
+      progression: () => {
+        try { return Tracker.getStreak().max; } catch(e) { return 0; }
+      }
+    },
+    {
+      id:          'saison_niveau_5',
+      titre:       'Niveau Expert',
+      emoji:       '⚡',
+      type:        'niveau',
+      categorie:   'saison',
+      difficulte:  'epique',
+      description: 'Atteins le niveau 5 — Expert',
+      cible:       5,
+      xp:          2500,
+      iconeRecomp: '🔥',
+      progression: () => {
+        try { return Gamification.getXP().niveau.numero; } catch(e) { return 1; }
+      }
+    },
+    {
+      id:          'saison_1000_series',
+      titre:       '1000 Séries',
+      emoji:       '💪',
+      type:        'series_total',
+      categorie:   'saison',
+      difficulte:  'epique',
+      description: 'Valide 1000 séries au total',
+      cible:       1000,
+      xp:          1800,
+      iconeRecomp: '🏆',
+      progression: () => {
+        try {
+          return Tracker.getHistoriqueSeances(999)
+            .reduce((a,s) => a + (s.series?.length || 0), 0);
+        } catch(e) { return 0; }
+      }
+    }
   ],
 
   // ════════════════════════════════════════════════════════
-  // HELPERS PROFIL
+  // LEADERBOARD DÉFIS
   // ════════════════════════════════════════════════════════
-  _getGenre() {
-    try {
-      return Utils.storage.get(
-        'ft_profil_onboarding', {}
-      ).genre || 'homme';
-    } catch(e) { return 'homme'; }
-  },
+  getLeaderboardDefis() {
+    let totalSeances = 0, streakMax = 0, totalXP = 0;
+    try { totalSeances = Tracker.getTotalSeances();           } catch(e) {}
+    try { streakMax    = Tracker.getStreak().max;             } catch(e) {}
+    try { totalXP      = Gamification.getXP().total;         } catch(e) {}
 
-  _getLieu() {
-    try {
-      return Utils.storage.get(
-        'ft_profil_onboarding', {}
-      ).lieu || 'salle';
-    } catch(e) { return 'salle'; }
-  },
+    const moi    = Utils.storage.get('ft_profil_onboarding', {});
+    const pseudo = Utils.storage.get('ft_social_profil', {})?.pseudo
+      || moi.nom || 'Moi';
 
-  // ════════════════════════════════════════════════════════
-  // GÉNÉRATION DÉFIS — ✅ v4.0 genre + lieu aware
-  // ════════════════════════════════════════════════════════
-  genererDefis(forceRegen = false) {
-    const semaine  = Utils.debutSemaine(Utils.aujourd_hui());
-    const cleCache = `ft_defis_${semaine}`;
-    const cached   = Utils.storage.get(cleCache, null);
-
-    if (cached && !forceRegen) return cached;
-
-    let seances = 0;
-    try { seances = Tracker.getTotalSeances(); } catch(e) {}
-
-    const niveauMax =
-      seances < 5  ? 1 :
-      seances < 20 ? 2 :
-      seances < 50 ? 3 : 4;
-
-    const genre = this._getGenre();
-    const lieu  = this._getLieu();
-
-    // ✅ NOUVEAU v4.0 — Filtrer selon genre + lieu + difficulté
-    const disponibles = this.BANQUE.filter(d => {
-      // Filtre difficulté
-      if (d.difficulte > niveauMax + 1) return false;
-      // Filtre genre
-      if (d.genre && !d.genre.includes(genre)) return false;
-      // Filtre lieu (si lieu spécifié dans le défi)
-      if (d.lieu && !d.lieu.includes(lieu)) return false;
-      return true;
-    });
-
-    // ✅ NOUVEAU v4.0 — Catégories adaptées selon genre
-    let categories = ['volume','assiduite','force','regularite','bienetre'];
-
-    if (genre === 'femme') {
-      // Remplacer 'force' par mix force+lower
-      categories = [
-        'volume','assiduite','force','regularite','bienetre'
-      ];
-    }
-    if (lieu === 'maison' || lieu === 'dehors') {
-      // Ajouter catégorie maison
-      categories.push('maison');
-    }
-
-    const selectionnes = [];
-
-    const graine = new Date(semaine + 'T00:00:00').getTime();
-    const seed   = isNaN(graine)
-      ? Math.floor(Date.now() / (1000 * 60 * 60 * 24))
-      : Math.floor(graine / (1000 * 60 * 60 * 24));
-
-    categories.forEach((cat, ci) => {
-      const dispo = disponibles.filter(
-        d => d.categorie === cat
-          && !selectionnes.find(s => s.id === d.id)
-      );
-      if (!dispo.length) return;
-      const idx = (seed + ci * 7) % dispo.length;
-      selectionnes.push(dispo[idx] || dispo[0]);
-    });
-
-    if (niveauMax >= 3) {
-      const avance = disponibles.filter(
-        d => d.categorie === 'avance'
-          && !selectionnes.find(s => s.id === d.id)
-      );
-      if (avance.length) {
-        const idx = (seed + 31) % avance.length;
-        selectionnes.push(avance[idx] || avance[0]);
-      }
-    }
-
-    const defisAvecProgression = selectionnes.map(d => ({
-      ...d, progression:0, complete:false, semaine
-    }));
-
-    Utils.storage.set(cleCache, defisAvecProgression);
-    return defisAvecProgression;
-  },
-
-  // ════════════════════════════════════════════════════════
-  // MISE À JOUR PROGRESSION
-  // ════════════════════════════════════════════════════════
-  mettreAJourProgression() {
-    const semaine  = Utils.debutSemaine(Utils.aujourd_hui());
-    const cleCache = `ft_defis_${semaine}`;
-    const defis    = Utils.storage.get(cleCache, null);
-    if (!defis) return this.genererDefis();
-
-    let seances = 0, volumeSem = 0;
-    let streak  = { count:0 }, journal = [];
-    let mesures = [], prs = {}, photos = [];
-
-    try { seances   = Tracker.getSeancesParSemaine();  } catch(e) {}
-    try { volumeSem = Tracker.getVolumeSemaine();      } catch(e) {}
-    try { streak    = Tracker.getStreak();             } catch(e) {}
-    try { journal   = Tracker.getJournal();            } catch(e) {}
-    try { mesures   = Tracker.getMesures();            } catch(e) {}
-    try { prs       = Tracker.getAllPRs();             } catch(e) {}
-    try { photos    = Tracker.getPhotos?.() || [];     } catch(e) {}
-
-    const prsSemaine = Object.values(prs)
-      .filter(pr => (pr.date||'') >= semaine).length;
-
-    const mis_a_jour = defis.map(defi => {
-      if (defi.complete) return defi;
-
-      let progression = 0;
-
-      try {
-        switch(defi.type) {
-
-          case 'seances_semaine':
-            progression = seances;
-            break;
-
-          case 'volume_total':
-            progression = volumeSem;
-            break;
-
-          case 'streak':
-            progression = streak.count;
-            break;
-
-          case 'prs_semaine':
-            progression = prsSemaine;
-            break;
-
-          case 'nouveau_pr': {
-            const pr = prs[defi.exercice];
-            progression = (pr?.date||'') >= semaine ? 1 : 0;
-            break;
-          }
-
-          case 'journal_semaine':
-            progression = journal.filter(
-              e => (e.date||'') >= semaine
-            ).length;
-            break;
-
-          case 'mesure_semaine':
-            progression = mesures.filter(
-              m => (m.date||'') >= semaine
-            ).length;
-            break;
-
-          case 'reps_cumul':
-            progression = this._calculerRepsCumul(
-              defi.exercice, semaine
-            );
-            break;
-
-          case 'zero_absence':
-            progression = this._verifierZeroAbsence(semaine)
-              ? 1 : 0;
-            break;
-
-          case 'seances_matin':
-            progression = this._compterSeancesMatin(semaine);
-            break;
-
-          case 'rpe_controle':
-            progression = this._verifierRPEControle(semaine)
-              ? 1 : 0;
-            break;
-
-          case 'seance_type':
-            progression = this._compterSeanceType(
-              defi.seanceId, semaine
-            );
-            break;
-
-          case 'serie_lourde':
-            progression = this._verifierSerieLourde(semaine)
-              ? 1 : 0;
-            break;
-
-          case 'cardio_semaine':
-          case 'cardio_duree':
-            progression = this._compterCardio(semaine);
-            break;
-
-          case 'photo_semaine':
-            progression = photos.filter(
-              p => (p.date||'') >= semaine
-            ).length;
-            break;
-
-          case 'humeur_semaine':
-            progression = this._compterHumeurs(semaine);
-            break;
-
-          case 'supersets_semaine':
-            progression = this._compterSupersets(semaine);
-            break;
-
-          case 'series_total':
-            progression = this._compterSeriesTotales(semaine);
-            break;
-
-          case 'seance_longue':
-            progression = this._verifierSeanceLongue(semaine)
-              ? defi.cible : 0;
-            break;
-
-          case 'seances_express':
-            progression = this._compterSeancesExpress(semaine);
-            break;
-
-          // ✅ NOUVEAU v4.0 — Séances Lower Body (femme)
-          case 'seances_lower':
-            progression = this._compterSeancesLower(semaine);
-            break;
-
-          // ✅ NOUVEAU v4.0 — Séances maison / dehors
-          case 'seances_maison':
-            progression = this._compterSeancesLieu(
-              semaine, 'maison'
-            );
-            break;
-
-          case 'seances_dehors':
-            progression = this._compterSeancesLieu(
-              semaine, 'dehors'
-            );
-            break;
-
-          default:
-            progression = defi.progression || 0;
-        }
-      } catch(e) {
-        progression = defi.progression || 0;
-      }
-
-      const complete = progression >= defi.cible;
-
-      if (complete && !defi.complete) {
-        this._recompenser(defi);
-      }
-
-      return {
-        ...defi,
-        progression: Math.min(progression, defi.cible),
-        complete
-      };
-    });
-
-    Utils.storage.set(cleCache, mis_a_jour);
-    return mis_a_jour;
-  },
-
-  // ════════════════════════════════════════════════════════
-  // HELPERS CALCUL
-  // ════════════════════════════════════════════════════════
-  _calculerRepsCumul(exerciceRef, semaine) {
-    try {
-      const hist = Tracker.getHistoriqueExercice(exerciceRef, 200);
-      return hist
-        .filter(h => (h.date||'') >= semaine)
-        .reduce((acc, h) => acc + (h.reps||0), 0);
-    } catch(e) { return 0; }
-  },
-
-  _verifierZeroAbsence(semaine) {
-    try {
-      const planning = window.PLANNING_SEMAINE || [];
-      for (let i = 0; i < 7; i++) {
-        const date = Utils.ajouterJours(semaine, i);
-        if (date > Utils.aujourd_hui()) break;
-        const p = planning[i];
-        if (!p?.seanceId) continue;
-        const s = Tracker.getSeanceDuJour(date);
-        if (!s?.complete) return false;
-      }
-      return true;
-    } catch(e) { return false; }
-  },
-
-  _compterSeancesMatin(semaine) {
-    let count = 0;
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const cle = localStorage.key(i);
-        if (!cle?.startsWith('ft_seance_')) continue;
-        try {
-          const data = JSON.parse(localStorage.getItem(cle));
-          if (!data?.complete || !data?.date) continue;
-          if (data.date < semaine) continue;
-          if (!data.debut) continue;
-          const heure = new Date(data.debut).getHours();
-          if (heure < 10) count++;
-        } catch(e) {}
-      }
-    } catch(e) {}
-    return count;
-  },
-
-  _verifierRPEControle(semaine) {
-    try {
-      const seances = Tracker.getHistoriqueSeances(10);
-      const sem = seances.filter(
-        s => (s.date||'') >= semaine && s.rpesMoyen
-      );
-      if (!sem.length) return false;
-      return sem.every(
-        s => s.rpesMoyen >= 7 && s.rpesMoyen <= 8.5
-      );
-    } catch(e) { return false; }
-  },
-
-  _compterSeanceType(seanceId, semaine) {
-    let count = 0;
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const cle = localStorage.key(i);
-        if (!cle?.startsWith('ft_seance_')) continue;
-        try {
-          const data = JSON.parse(localStorage.getItem(cle));
-          if (data?.complete
-              && data?.id === seanceId
-              && (data?.date||'') >= semaine) count++;
-        } catch(e) {}
-      }
-    } catch(e) {}
-    return count;
-  },
-
-  _verifierSerieLourde(semaine) {
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const cle = localStorage.key(i);
-        if (!cle?.startsWith('ft_seance_')) continue;
-        try {
-          const data = JSON.parse(localStorage.getItem(cle));
-          if (!data?.complete) continue;
-          if ((data?.date||'') < semaine) continue;
-          const lourde = (data.series||[]).find(
-            s => (s.reps||0) <= 5 && (s.poids||0) > 0
-          );
-          if (lourde) return true;
-        } catch(e) {}
-      }
-    } catch(e) {}
-    return false;
-  },
-
-  _compterCardio(semaine) {
-    const cardioIds = ['rameur','velo'];
-    let count = 0;
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const cle = localStorage.key(i);
-        if (!cle?.startsWith('ft_seance_')) continue;
-        try {
-          const data = JSON.parse(localStorage.getItem(cle));
-          if (!data?.complete) continue;
-          if ((data?.date||'') < semaine) continue;
-          const hasCardio = (data.series||[]).some(
-            s => cardioIds.includes(s.exerciceRef)
-          );
-          if (hasCardio) count++;
-        } catch(e) {}
-      }
-    } catch(e) {}
-    return count;
-  },
-
-  _compterHumeurs(semaine) {
-    let count = 0;
-    try {
-      for (let i = 0; i < 7; i++) {
-        const date   = Utils.ajouterJours(semaine, i);
-        if (date > Utils.aujourd_hui()) break;
-        const humeur = Tracker.getHumeur(date);
-        if (humeur?.humeur) count++;
-      }
-    } catch(e) {}
-    return count;
-  },
-
-  // ✅ FIX v4.0 — _compterSupersets corrigé
-  // seriesCompletes est un nombre, pas un array
-  _compterSupersets(semaine) {
-    let count = 0;
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const cle = localStorage.key(i);
-        if (!cle?.startsWith('ft_superset_')) continue;
-        try {
-          const data = JSON.parse(localStorage.getItem(cle));
-          // ✅ FIX — seriesCompletes est un nombre
-          if ((data?.date||'') >= semaine
-              && (data?.seriesCompletes || 0) > 0) {
-            count++;
-          }
-        } catch(e) {}
-      }
-    } catch(e) {}
-    return count;
-  },
-
-  _compterSeriesTotales(semaine) {
-    let total = 0;
-    try {
-      const seances = Tracker.getHistoriqueSeances(20);
-      seances.filter(s => (s.date||'') >= semaine)
-        .forEach(s => { total += (s.series||[]).length; });
-    } catch(e) {}
-    return total;
-  },
-
-  _verifierSeanceLongue(semaine) {
-    try {
-      const seances = Tracker.getHistoriqueSeances(20);
-      return seances.some(
-        s => (s.date||'') >= semaine && (s.duree||0) >= 90 * 60
-      );
-    } catch(e) { return false; }
-  },
-
-  _compterSeancesExpress(semaine) {
-    let count = 0;
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const cle = localStorage.key(i);
-        if (!cle?.startsWith('ft_seance_')) continue;
-        try {
-          const data = JSON.parse(localStorage.getItem(cle));
-          if (!data?.complete) continue;
-          if ((data?.date||'') < semaine) continue;
-          if (data?.id?.includes('express')
-              || data?.id === 'full_body') count++;
-        } catch(e) {}
-      }
-    } catch(e) {}
-    return count;
-  },
-
-  // ✅ NOUVEAU v4.0 — Compter séances Lower Body (femme)
-  _compterSeancesLower(semaine) {
-    let count = 0;
-    const lowerIds = [
-      'lower','fessier','jambes','legs','glutes','lower_body'
+    const communaute = [
+      { pseudo:'MaxPower',    avatar:'👑', seances:342, streak:45, xp:28450, defisTotal:28 },
+      { pseudo:'IronFist',    avatar:'💎', seances:198, streak:22, xp:15200, defisTotal:19 },
+      { pseudo:'FitQueen 🌸', avatar:'🌸', seances:187, streak:18, xp:14800, defisTotal:17 },
+      { pseudo:'StrengthX',   avatar:'🔥', seances:142, streak:12, xp:8900,  defisTotal:14 },
+      { pseudo:'GymWarrior',  avatar:'⚡', seances:128, streak:9,  xp:7200,  defisTotal:11 },
+      { pseudo:'NaturalBeast',avatar:'🏆', seances:89,  streak:7,  xp:4500,  defisTotal:8  },
+      { pseudo:'IronBody',    avatar:'💪', seances:76,  streak:5,  xp:3800,  defisTotal:7  },
+      { pseudo:'Rookie2024',  avatar:'🌱', seances:24,  streak:2,  xp:800,   defisTotal:3  }
     ];
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const cle = localStorage.key(i);
-        if (!cle?.startsWith('ft_seance_')) continue;
-        try {
-          const data = JSON.parse(localStorage.getItem(cle));
-          if (!data?.complete) continue;
-          if ((data?.date||'') < semaine) continue;
-          const id = data?.id?.toLowerCase() || '';
-          if (lowerIds.some(k => id.includes(k))) count++;
-        } catch(e) {}
+
+    const defisFaits = Utils.storage.get(this.CLE_HISTORIQUE, []).length;
+
+    const joueurs = [
+      ...communaute,
+      {
+        pseudo, avatar: '🙋',
+        seances: totalSeances, streak: streakMax,
+        xp: totalXP, defisTotal: defisFaits,
+        isMe: true
       }
-      // Fallback : chercher dans Tracker
-      const hist = Tracker.getHistoriqueSeances(20);
-      hist.filter(s => (s.date||'') >= semaine)
-        .forEach(s => {
-          const id = (s.id||'').toLowerCase();
-          if (lowerIds.some(k => id.includes(k))) count++;
-        });
-    } catch(e) {}
-    return count;
-  },
+    ].sort((a,b) => b.defisTotal - a.defisTotal)
+     .map((j,i) => ({ ...j, rang:i+1 }));
 
-  // ✅ NOUVEAU v4.0 — Compter séances par lieu
-  _compterSeancesLieu(semaine, lieu) {
-    let count = 0;
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const cle = localStorage.key(i);
-        if (!cle?.startsWith('ft_seance_')) continue;
-        try {
-          const data = JSON.parse(localStorage.getItem(cle));
-          if (!data?.complete) continue;
-          if ((data?.date||'') < semaine) continue;
-          // Vérifier par lieu ou par id
-          if (data?.lieu === lieu
-              || data?.id?.includes(lieu)) count++;
-        } catch(e) {}
-      }
-    } catch(e) {}
-    return count;
+    return joueurs;
   },
 
   // ════════════════════════════════════════════════════════
-  // RÉCOMPENSES
+  // VÉRIFICATION DÉFIS
   // ════════════════════════════════════════════════════════
-  _recompenser(defi) {
-    setTimeout(() => {
-      try { timerRepos.jouerSon('pr'); } catch(e) {}
-      try { Utils.confetti(3000);      } catch(e) {}
-      try { Utils.vibrerPR();          } catch(e) {}
+  verifierDefis() {
+    const defis    = this._genererDefis();
+    const historique = Utils.storage.get(this.CLE_HISTORIQUE, []);
+    const termines   = new Set(historique.map(d => d.id));
+    const nouveaux   = [];
 
-      Utils.toast(
-        `🏆 Défi accompli : ${defi.emoji} ${defi.titre} ! +${defi.xp} XP`,
-        'pr', 6000
-      );
+    defis.forEach(defi => {
+      if (termines.has(defi.id)) return;
 
-      try {
-        Gamification.ajouterXP(defi.xp, `Défi : ${defi.titre}`);
-      } catch(e) {}
-
-      Utils.storage.set(
-        `ft_defi_done_${defi.id}`,
-        Utils.aujourd_hui()
-      );
-    }, 500);
-  },
-
-  // ════════════════════════════════════════════════════════
-  // HISTORIQUE + STATS
-  // ════════════════════════════════════════════════════════
-  getHistoriqueDefis(nbSemaines = 4) {
-    const historique = [];
-    for (let i = 0; i < nbSemaines; i++) {
-      const date  = Utils.ajouterJours(Utils.aujourd_hui(), -i * 7);
-      const sem   = Utils.debutSemaine(date);
-      const defis = Utils.storage.get(`ft_defis_${sem}`, null);
-      if (defis) {
-        const completes = defis.filter(d => d.complete).length;
+      const prog = defi.progression?.() || 0;
+      if (prog >= defi.cible) {
         historique.push({
-          semaine:  sem,
-          label:    Utils.formatDateCourt(sem),
-          defis,
-          completes,
-          total:    defis.length,
-          xpGagne:  defis.filter(d => d.complete)
-            .reduce((a,d) => a + d.xp, 0)
+          id:     defi.id,
+          titre:  defi.titre,
+          emoji:  defi.emoji,
+          xp:     defi.xp,
+          date:   Utils.aujourd_hui()
         });
+        nouveaux.push(defi);
       }
+    });
+
+    // Vérifier défis saison
+    this.DEFIS_SAISON.forEach(defi => {
+      if (termines.has(defi.id)) return;
+      const prog = defi.progression?.() || 0;
+      if (prog >= defi.cible) {
+        historique.push({
+          id:     defi.id,
+          titre:  defi.titre,
+          emoji:  defi.emoji,
+          xp:     defi.xp,
+          date:   Utils.aujourd_hui()
+        });
+        nouveaux.push(defi);
+      }
+    });
+
+    if (nouveaux.length > 0) {
+      Utils.storage.set(this.CLE_HISTORIQUE, historique);
+      nouveaux.forEach((d, i) => {
+        setTimeout(() => {
+          Utils.toast(
+            `🎯 Défi accompli : ${d.emoji} ${d.titre} ! +${d.xp} XP`,
+            'pr', 5000
+          );
+          try { Gamification.ajouterXP(d.xp, `Défi ${d.titre}`); } catch(e) {}
+          Utils.vibrer([100,50,200]);
+        }, i * 2000);
+      });
     }
-    return historique;
-  },
 
-  getStatsDefis() {
-    const historique        = this.getHistoriqueDefis(12);
-    const total             = historique.reduce((a,s) => a+s.total, 0);
-    const completes         = historique.reduce(
-      (a,s) => a+s.completes, 0
-    );
-    const xpTotal           = historique.reduce(
-      (a,s) => a+s.xpGagne, 0
-    );
-    const semainesParfaites = historique.filter(
-      s => s.completes === s.total && s.total > 0
-    ).length;
-
-    return {
-      total, completes, xpTotal,
-      tauxReussite: total > 0
-        ? Math.round((completes/total)*100) : 0,
-      semainesParfaites
-    };
+    return nouveaux;
   },
 
   // ════════════════════════════════════════════════════════
-  // RENDER
+  // RENDER PRINCIPAL
   // ════════════════════════════════════════════════════════
   render(container) {
     if (!container) return;
 
-    const genre  = this._getGenre();
-    const lieu   = this._getLieu();
+    // Vérifier défis en arrière-plan
+    try { this.verifierDefis(); } catch(e) {}
 
-    let defis = [];
-    try {
-      defis = this.mettreAJourProgression()
-        || this.genererDefis();
-    } catch(e) {
-      defis = this.genererDefis();
+    container.innerHTML = `
+      <div style="display:flex;gap:5px;overflow-x:auto;
+                  scrollbar-width:none;margin-bottom:14px">
+        ${[
+          { id:'semaine',    label:'📅 Cette semaine' },
+          { id:'saison',     label:'🏆 Saison'        },
+          { id:'classement', label:'🌍 Classement'    },
+          { id:'historique', label:'✅ Historique'    }
+        ].map(t => `
+          <button onclick="Defis._changerOnglet('${t.id}')"
+                  style="padding:8px 14px;white-space:nowrap;
+                         font-size:.72rem;font-weight:700;
+                         border-radius:var(--radius-full);
+                         cursor:pointer;transition:all .2s;
+                         background:${this._ongletActif === t.id
+                           ? 'var(--fd-indigo)'
+                           : 'rgba(255,255,255,0.06)'};
+                         border:1px solid ${this._ongletActif === t.id
+                           ? 'var(--fd-indigo)'
+                           : 'rgba(255,255,255,0.1)'};
+                         color:${this._ongletActif === t.id
+                           ? 'white' : 'var(--text-muted)'}">
+            ${t.label}
+          </button>`).join('')}
+      </div>
+      <div id="defis-content"></div>`;
+
+    this._rendreOnglet();
+  },
+
+  _ongletActif: 'semaine',
+
+  _changerOnglet(id) {
+    this._ongletActif = id;
+    const c = document.getElementById('page-defis')
+      || document.getElementById('page-training');
+    if (c) this.render(c);
+  },
+
+  _rendreOnglet() {
+    const c = document.getElementById('defis-content');
+    if (!c) return;
+    switch(this._ongletActif) {
+      case 'semaine':    this._rendreSemaine(c);    break;
+      case 'saison':     this._rendreSaison(c);     break;
+      case 'classement': this._rendreClassement(c); break;
+      case 'historique': this._rendreHistorique(c); break;
     }
+  },
 
-    const historique = this.getHistoriqueDefis(4);
-    const stats      = this.getStatsDefis();
-    const completes  = defis.filter(d => d.complete).length;
-    const semaine    = Utils.debutSemaine(Utils.aujourd_hui());
-    const finSemaine = Utils.finSemaine(Utils.aujourd_hui());
+  // ─── ONGLET SEMAINE ─────────────────────────────────────
+  _rendreSemaine(container) {
+    const defis      = this._genererDefis();
+    const historique = Utils.storage.get(this.CLE_HISTORIQUE, []);
+    const termines   = new Set(historique.map(d => d.id));
 
-    const xpGagne = defis.filter(d => d.complete)
+    const xpTotal    = defis.reduce((a,d) => a + d.xp, 0);
+    const xpGagne    = defis
+      .filter(d => termines.has(d.id))
       .reduce((a,d) => a + d.xp, 0);
-    const xpTotal = defis.reduce((a,d) => a + d.xp, 0);
-    const pctGlob = Math.round(
-      (completes / Math.max(defis.length,1)) * 100
-    );
+    const nbTermines = defis.filter(d => termines.has(d.id)).length;
+
+    const debutSem   = Utils.debutSemaine(Utils.aujourd_hui());
+    const finSem     = Utils.ajouterJours(debutSem, 6);
+
+    const diffColors = {
+      facile:    { bg:'rgba(139,240,187,0.08)', border:'rgba(139,240,187,0.2)', color:'var(--fd-mint)'     },
+      moyen:     { bg:'rgba(75,75,249,0.08)',   border:'rgba(75,75,249,0.2)',   color:'var(--fd-indigo)'   },
+      difficile: { bg:'rgba(249,239,119,0.08)', border:'rgba(249,239,119,0.2)','color':'var(--fd-lemon)'   },
+      legendaire:{ bg:'rgba(255,141,150,0.08)', border:'rgba(255,141,150,0.2)','color':'var(--fd-coral)'   },
+      special:   { bg:'rgba(191,161,255,0.08)', border:'rgba(191,161,255,0.2)','color':'var(--fd-lavender)'}
+    };
 
     container.innerHTML = `
 
       <!-- Header semaine -->
-      <div class="card mb-md"
-           style="background:linear-gradient(135deg,
-                  rgba(249,239,119,0.15),
-                  rgba(75,75,249,0.15));
-                  border-color:var(--fd-lemon)">
-        <div class="flex justify-between items-center">
+      <div style="background:linear-gradient(135deg,
+                  rgba(75,75,249,0.15),rgba(75,75,249,0.03));
+                  border:1px solid rgba(75,75,249,0.25);
+                  border-radius:var(--radius-xl);
+                  padding:16px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;
+                    align-items:flex-start;margin-bottom:10px">
           <div>
-            <div class="card-label" style="color:var(--fd-lemon)">
-              🏆 Défis de la semaine
-              ${genre === 'femme' ? '🌸' : ''}
-              ${lieu === 'maison' ? '🏠' : lieu === 'dehors' ? '🌳' : ''}
+            <div style="font-size:.6rem;font-weight:700;
+                        text-transform:uppercase;letter-spacing:.1em;
+                        color:var(--fd-indigo);margin-bottom:4px">
+              📅 Défis de la semaine
             </div>
-            <div style="font-size:.78rem;color:var(--text-muted);
-                        margin-top:2px">
-              ${Utils.formatDateCourt(semaine)}
-              → ${Utils.formatDateCourt(finSemaine)}
+            <div style="font-size:.72rem;color:var(--text-muted)">
+              ${defis[0]?.dateDebut || debutSem} → ${finSem}
             </div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:1.8rem;font-weight:800;
-                        color:var(--fd-lemon)">
-              ${completes}/${defis.length}
+            <div style="font-size:1.2rem;font-weight:900;color:var(--fd-lemon)">
+              ${xpGagne}/${xpTotal}
             </div>
-            <div style="font-size:.65rem;color:var(--text-muted)">
-              complétés
-            </div>
+            <div style="font-size:.6rem;color:var(--text-muted)">XP gagnés</div>
           </div>
         </div>
 
-        <div style="margin-top:var(--space-md)">
-          <div class="progress-bar">
-            <div class="progress-fill"
-                 style="width:${pctGlob}%;
-                        background:var(--fd-lemon)">
-            </div>
-          </div>
+        <!-- Barre progression -->
+        <div style="height:8px;background:rgba(255,255,255,0.06);
+                    border-radius:99px;overflow:hidden;margin-bottom:6px">
+          <div style="height:100%;
+                      width:${Math.round((nbTermines/Math.max(defis.length,1))*100)}%;
+                      background:linear-gradient(90deg,
+                        var(--fd-indigo),var(--fd-mint));
+                      border-radius:99px;transition:width 1s ease"></div>
         </div>
-
-        <div style="display:flex;justify-content:space-between;
-                    margin-top:var(--space-sm);font-size:.72rem">
-          <span style="color:var(--text-muted)">XP cette semaine</span>
-          <span style="color:var(--fd-lemon);font-weight:700">
-            +${xpGagne} / ${xpTotal} XP
-          </span>
+        <div style="font-size:.65rem;color:var(--text-muted);text-align:center">
+          ${nbTermines} / ${defis.length} défis accomplis
         </div>
       </div>
 
-      <!-- Stats globales -->
-      <div class="stats-grid mb-md">
-        <div class="stat-card">
-          <span class="stat-value" style="color:var(--fd-mint)">
-            ${stats.completes}
-          </span>
-          <span class="stat-label">Total réussis</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value" style="color:var(--fd-indigo)">
-            ${stats.tauxReussite}%
-          </span>
-          <span class="stat-label">Taux réussite</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value" style="color:var(--fd-lemon)">
-            ${stats.xpTotal}
-          </span>
-          <span class="stat-label">XP gagnés</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value" style="color:var(--fd-lavender)">
-            ${stats.semainesParfaites}
-          </span>
-          <span class="stat-label">Sem. parfaites</span>
-        </div>
-      </div>
+      <!-- Liste défis -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${defis.map(defi => {
+          const estTermine  = termines.has(defi.id);
+          const progActuelle= defi.progression?.() || 0;
+          const pct         = Math.min(100,
+            Math.round((progActuelle / Math.max(defi.cible,1)) * 100)
+          );
+          const dc          = diffColors[defi.difficulte] || diffColors.moyen;
 
-      <!-- Défis actifs -->
-      <div class="section-title">⚡ Défis en cours</div>
+          return `
+            <div style="background:${estTermine
+                ? 'rgba(139,240,187,0.08)'
+                : dc.bg};
+                        border:1px solid ${estTermine
+                ? 'rgba(139,240,187,0.3)'
+                : dc.border};
+                        border-radius:var(--radius-xl);
+                        padding:16px;
+                        ${estTermine ? 'opacity:.85;' : ''}
+                        transition:all .3s">
 
-      ${defis.map(defi => {
-        const pct = Math.round(
-          (defi.progression / Math.max(defi.cible,1)) * 100
-        );
-        const couleur =
-          defi.complete ? 'var(--fd-mint)'   :
-          pct >= 75     ? 'var(--fd-lemon)'  :
-          pct >= 40     ? 'var(--fd-indigo)' :
-                          'var(--fd-lavender)';
-
-        return `
-          <div class="card mb-md"
-               style="${defi.complete
-                 ? 'border-color:var(--fd-mint);'
-                   + 'background:rgba(139,240,187,0.05);'
-                 : ''}">
-            <div class="flex items-center gap-md">
-              <div style="width:48px;height:48px;
-                          border-radius:50%;
-                          background:${defi.complete
-                            ? 'var(--fd-mint)'
-                            : 'var(--bg-input)'};
-                          display:flex;align-items:center;
-                          justify-content:center;
-                          font-size:1.4rem;flex-shrink:0">
-                ${defi.complete ? '✅' : defi.emoji}
-              </div>
-
-              <div style="flex:1;min-width:0">
-                <div style="font-weight:700;font-size:.92rem;
-                            color:${defi.complete
-                              ? 'var(--fd-mint)'
-                              : 'var(--text-primary)'}">
-                  ${defi.titre}
+              <!-- Header -->
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+                <div style="width:48px;height:48px;border-radius:14px;
+                            flex-shrink:0;display:flex;align-items:center;
+                            justify-content:center;font-size:1.6rem;
+                            background:${dc.bg};
+                            border:1px solid ${dc.border}">
+                  ${estTermine ? '✅' : defi.emoji}
                 </div>
-                <div style="font-size:.70rem;
-                            color:var(--text-muted);
-                            margin-top:2px;line-height:1.4">
-                  ${defi.description}
-                </div>
-
-                <div style="margin-top:var(--space-sm)">
-                  <div style="display:flex;
-                              justify-content:space-between;
-                              font-size:.68rem;margin-bottom:4px">
-                    <span style="color:${couleur};font-weight:600">
-                      ${defi.progression} / ${defi.cible}
-                      ${defi.type === 'volume_total' ? 'kg' : ''}
-                    </span>
-                    <span style="color:var(--fd-lemon);
-                                 font-weight:700">
-                      +${defi.xp} XP
-                    </span>
-                  </div>
-                  <div class="progress-bar">
-                    <div class="progress-fill"
-                         style="width:${pct}%;
-                                background:${couleur};
-                                transition:width .5s ease">
+                <div style="flex:1">
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                    <div style="font-size:.88rem;font-weight:800">
+                      ${defi.titre}
                     </div>
+                    ${defi.categorie === 'special' ? `
+                      <span style="padding:1px 6px;font-size:.55rem;
+                                   font-weight:700;border-radius:99px;
+                                   background:rgba(191,161,255,0.15);
+                                   color:var(--fd-lavender)">
+                        ✨ SPÉCIAL
+                      </span>` : ''}
+                  </div>
+                  <div style="font-size:.65rem;color:var(--text-muted);
+                              margin-bottom:4px">
+                    ${defi.description}
+                  </div>
+                  <div style="font-size:.6rem;padding:2px 8px;
+                              background:${dc.bg};border:1px solid ${dc.border};
+                              border-radius:99px;display:inline-block;
+                              color:${dc.color};font-weight:700">
+                    ${defi.difficulte}
                   </div>
                 </div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:.85rem;font-weight:800;
+                              color:var(--fd-lemon)">+${defi.xp}</div>
+                  <div style="font-size:.55rem;color:var(--text-muted)">XP</div>
+                </div>
               </div>
-            </div>
 
-            ${defi.complete ? `
-              <div style="margin-top:var(--space-sm);
-                          text-align:center;font-size:.75rem;
-                          color:var(--fd-mint);font-weight:600;
-                          padding:var(--space-xs);
-                          background:rgba(139,240,187,0.08);
-                          border-radius:var(--radius-sm)">
-                🎉 Défi accompli !
-                ${Utils.storage.get(`ft_defi_done_${defi.id}`)
-                  ? `· ${Utils.formatDateCourt(
-                      Utils.storage.get(`ft_defi_done_${defi.id}`)
-                    )}`
-                  : ''}
-              </div>` : ''}
-          </div>`;
-      }).join('')}
-
-      <!-- Actions -->
-      <div class="flex gap-sm mb-md">
-        <button onclick="Defis._confirmerRegen()"
-                class="btn-secondary"
-                style="flex:1;font-size:.82rem">
-          🔄 Nouveaux défis
-        </button>
-        <button onclick="Defis._forceCheck()"
-                class="btn-secondary"
-                style="flex:1;font-size:.82rem">
-          🔃 Actualiser
-        </button>
-      </div>
-
-      <!-- Historique -->
-      ${historique.length > 1 ? `
-        <div class="section-title">📊 Historique défis</div>
-        ${historique.slice(1).map(sem => `
-          <div class="card mb-md">
-            <div class="flex justify-between items-center">
+              <!-- Progression -->
               <div>
-                <div style="font-weight:600;font-size:.88rem">
-                  Semaine du ${sem.label}
+                <div style="display:flex;justify-content:space-between;
+                            font-size:.65rem;color:var(--text-muted);
+                            margin-bottom:5px">
+                  <span>Progression</span>
+                  <span style="font-weight:700;
+                               color:${estTermine ? 'var(--fd-mint)' : dc.color}">
+                    ${progActuelle} / ${defi.cible}
+                    ${defi.type === 'volume' ? 'kg' : ''}
+                    (${pct}%)
+                  </span>
                 </div>
-                <div style="font-size:.72rem;color:var(--text-muted);
-                            margin-top:2px">
-                  ${sem.completes}/${sem.total} défis
-                  · +${sem.xpGagne} XP
-                </div>
-              </div>
-              <div style="font-size:1.5rem">
-                ${sem.completes === sem.total ? '🏆' :
-                  sem.completes >= sem.total/2 ? '⭐' : '📊'}
-              </div>
-            </div>
-            <div style="margin-top:var(--space-sm)">
-              <div class="progress-bar">
-                <div class="progress-fill"
-                     style="width:${Math.round(
-                       (sem.completes / Math.max(sem.total,1)) * 100
-                     )}%;background:var(--fd-lavender)">
+                <div style="height:8px;background:rgba(255,255,255,0.06);
+                            border-radius:99px;overflow:hidden">
+                  <div style="height:100%;width:${pct}%;
+                              background:${estTermine ? 'var(--fd-mint)' : dc.color};
+                              border-radius:99px;transition:width .8s ease"></div>
                 </div>
               </div>
-            </div>
-          </div>`).join('')}` : ''}
+
+              ${estTermine ? `
+                <div style="margin-top:10px;text-align:center;
+                            font-size:.72rem;color:var(--fd-mint);font-weight:700">
+                  🎉 Défi accompli ! ${defi.iconeRecomp} +${defi.xp} XP gagné
+                </div>` : pct >= 80 ? `
+                <div style="margin-top:8px;font-size:.65rem;
+                            color:var(--fd-lemon);font-weight:600;text-align:center">
+                  🔥 Presque ! Plus que ${defi.cible - progActuelle} pour finir !
+                </div>` : ''}
+            </div>`;
+        }).join('')}
+      </div>
     `;
   },
 
-  // ════════════════════════════════════════════════════════
-  // ACTIONS UI
-  // ════════════════════════════════════════════════════════
-  _getContainer() {
-    return document.getElementById('page-defis')
-      || document.getElementById('stats-content')
-      || document.getElementById('page-content');
+  // ─── ONGLET SAISON ──────────────────────────────────────
+  _rendreSaison(container) {
+    const historique = Utils.storage.get(this.CLE_HISTORIQUE, []);
+    const termines   = new Set(historique.map(d => d.id));
+
+    const diffColors = {
+      epique:     { bg:'rgba(191,161,255,0.1)', border:'rgba(191,161,255,0.3)', color:'var(--fd-lavender)' },
+      legendaire: { bg:'rgba(249,239,119,0.1)', border:'rgba(249,239,119,0.3)','color':'var(--fd-lemon)'   }
+    };
+
+    container.innerHTML = `
+      <div style="background:linear-gradient(135deg,
+                  rgba(249,239,119,0.1),rgba(75,75,249,0.05));
+                  border:1px solid rgba(249,239,119,0.2);
+                  border-radius:var(--radius-xl);
+                  padding:16px;margin-bottom:14px">
+        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.1em;color:var(--fd-lemon);margin-bottom:6px">
+          🏆 Défis de Saison — Récompenses épiques
+        </div>
+        <div style="font-size:.75rem;color:var(--text-muted)">
+          Ces défis à long terme te définissent comme athlète.
+          Chaque accomplissement débloque un badge légendaire.
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${this.DEFIS_SAISON.map(defi => {
+          const estTermine   = termines.has(defi.id);
+          const progActuelle = defi.progression?.() || 0;
+          const pct          = Math.min(100,
+            Math.round((progActuelle / Math.max(defi.cible,1)) * 100)
+          );
+          const dc = diffColors[defi.difficulte] || diffColors.epique;
+
+          return `
+            <div style="background:${estTermine
+                ? 'rgba(249,239,119,0.1)'
+                : dc.bg};
+                        border:${estTermine
+                ? '2px solid rgba(249,239,119,0.4)'
+                : `1px solid ${dc.border}`};
+                        border-radius:var(--radius-xl);
+                        padding:18px;
+                        position:relative;overflow:hidden">
+
+              ${estTermine ? `
+                <div style="position:absolute;top:12px;right:12px;
+                            font-size:.62rem;font-weight:700;padding:3px 8px;
+                            background:rgba(249,239,119,0.2);
+                            border:1px solid rgba(249,239,119,0.4);
+                            border-radius:99px;color:var(--fd-lemon)">
+                  ✅ ACCOMPLI
+                </div>` : `
+                <div style="position:absolute;top:12px;right:12px;
+                            font-size:.6rem;font-weight:700;padding:3px 8px;
+                            background:${dc.bg};
+                            border:1px solid ${dc.border};
+                            border-radius:99px;color:${dc.color}">
+                  ${defi.difficulte.toUpperCase()}
+                </div>`}
+
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+                <div style="font-size:2.5rem">${estTermine ? '🏆' : defi.emoji}</div>
+                <div>
+                  <div style="font-size:1rem;font-weight:800;margin-bottom:3px">
+                    ${defi.titre}
+                  </div>
+                  <div style="font-size:.72rem;color:var(--text-muted)">
+                    ${defi.description}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Progression -->
+              <div style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;
+                            font-size:.68rem;margin-bottom:5px">
+                  <span style="color:var(--text-muted)">
+                    ${progActuelle.toLocaleString('fr-FR')} /
+                    ${defi.cible.toLocaleString('fr-FR')}
+                  </span>
+                  <span style="font-weight:800;color:${dc.color}">
+                    ${pct}%
+                  </span>
+                </div>
+                <div style="height:10px;background:rgba(255,255,255,0.06);
+                            border-radius:99px;overflow:hidden">
+                  <div style="height:100%;width:${pct}%;
+                              background:${estTermine
+                                ? 'var(--fd-lemon)'
+                                : `linear-gradient(90deg,${dc.color},${dc.color}aa)`};
+                              border-radius:99px;
+                              transition:width 1s ease;
+                              box-shadow:${estTermine
+                                ? '0 0 8px rgba(249,239,119,0.5)' : 'none'}">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Récompense -->
+              <div style="display:flex;align-items:center;
+                          justify-content:space-between">
+                <div style="font-size:.65rem;color:var(--text-muted)">
+                  ${defi.iconeRecomp} Badge + Badge légendaire
+                </div>
+                <div style="font-size:.78rem;font-weight:800;color:var(--fd-lemon)">
+                  +${defi.xp.toLocaleString('fr-FR')} XP
+                </div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    `;
   },
 
-  async _confirmerRegen() {
-    const ok = await Utils.confirmer(
-      'Nouveaux défis ?',
-      'Ça va réinitialiser les défis de la semaine.'
-    );
-    if (!ok) return;
+  // ─── ONGLET CLASSEMENT ──────────────────────────────────
+  _rendreClassement(container) {
+    const ldb = this.getLeaderboardDefis();
 
-    try { this.genererDefis(true); } catch(e) {}
+    container.innerHTML = `
+      <div style="background:rgba(249,239,119,0.08);
+                  border:1px solid rgba(249,239,119,0.2);
+                  border-radius:var(--radius-lg);
+                  padding:12px 14px;margin-bottom:14px">
+        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.1em;color:var(--fd-lemon);margin-bottom:4px">
+          🌍 Classement Défis
+        </div>
+        <div style="font-size:.72rem;color:var(--text-muted)">
+          Classé par nombre de défis accomplis
+        </div>
+      </div>
 
-    const el = this._getContainer();
-    if (el) this.render(el);
-    Utils.toast('🔄 Nouveaux défis générés !', 'success');
+      <!-- Top 3 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
+                  gap:8px;margin-bottom:14px">
+        ${ldb.slice(0,3).map((j,i) => {
+          const couleurs = ['var(--fd-lemon)','#c0c0c0','#cd7f32'];
+          const podiums  = ['🥇','🥈','🥉'];
+          return `
+            <div style="text-align:center;padding:12px 6px;
+                        background:${j.isMe
+                          ?'rgba(75,75,249,0.15)':'rgba(255,255,255,0.04)'};
+                        border:${j.isMe
+                          ?'2px solid var(--fd-indigo)':'1px solid rgba(255,255,255,0.08)'};
+                        border-radius:var(--radius-xl)">
+              <div style="font-size:1.3rem;margin-bottom:4px">${j.avatar}</div>
+              <div style="font-size:.62rem;font-weight:800;
+                          color:${j.isMe?'var(--fd-indigo)':'var(--text-primary)'};
+                          margin-bottom:2px;overflow:hidden;
+                          text-overflow:ellipsis;white-space:nowrap">
+                ${j.pseudo}
+              </div>
+              <div style="font-size:1.1rem;color:${couleurs[i]}">${podiums[i]}</div>
+              <div style="font-size:.7rem;font-weight:700;
+                          color:${couleurs[i]}">
+                ${j.defisTotal} défis
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+
+      <!-- Reste -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${ldb.slice(3).map(j => `
+          <div style="display:flex;align-items:center;gap:12px;
+                      padding:10px 14px;
+                      background:${j.isMe
+                        ?'rgba(75,75,249,0.1)':'rgba(255,255,255,0.03)'};
+                      border:1px solid ${j.isMe
+                        ?'rgba(75,75,249,0.25)':'rgba(255,255,255,0.06)'};
+                      border-radius:var(--radius-lg)">
+            <div style="width:24px;text-align:center;font-size:.78rem;
+                        font-weight:800;color:var(--text-muted)">
+              #${j.rang}
+            </div>
+            <div style="font-size:1.1rem">${j.avatar}</div>
+            <div style="flex:1">
+              <div style="font-size:.82rem;font-weight:700;
+                          color:${j.isMe?'var(--fd-indigo)':'var(--text-primary)'}">
+                ${j.pseudo}
+                ${j.isMe ? `<span style="font-size:.58rem;padding:1px 5px;margin-left:4px;
+                  background:rgba(75,75,249,0.15);border-radius:99px;
+                  color:var(--fd-indigo)">Toi</span>` : ''}
+              </div>
+              <div style="font-size:.6rem;color:var(--text-muted)">
+                ${j.seances} séances · ${j.xp.toLocaleString('fr-FR')} XP
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:.85rem;font-weight:800;color:var(--fd-lemon)">
+                ${j.defisTotal}
+              </div>
+              <div style="font-size:.55rem;color:var(--text-muted)">défis</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    `;
   },
 
-  _forceCheck() {
-    let defis = [];
-    try { defis = this.mettreAJourProgression() || []; } catch(e) {}
+  // ─── ONGLET HISTORIQUE ──────────────────────────────────
+  _rendreHistorique(container) {
+    const historique = Utils.storage.get(this.CLE_HISTORIQUE, [])
+      .reverse();
+    const xpTotal    = historique.reduce((a,d) => a + (d.xp || 0), 0);
 
-    const el = this._getContainer();
-    if (el) this.render(el);
+    container.innerHTML = `
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                  gap:8px;margin-bottom:14px">
+        ${[
+          { val:historique.length,              label:'Défis accomplis', color:'var(--fd-indigo)'   },
+          { val:`${xpTotal.toLocaleString()} XP`,label:'XP gagnés',      color:'var(--fd-lemon)'    },
+          { val:historique.filter(d => d.date >= Utils.debutSemaine(Utils.aujourd_hui())).length,
+            label:'Cette semaine', color:'var(--fd-mint)'     }
+        ].map(s => `
+          <div style="background:rgba(255,255,255,0.04);
+                      border:1px solid rgba(255,255,255,0.08);
+                      border-radius:var(--radius-lg);
+                      padding:12px;text-align:center">
+            <div style="font-size:.9rem;font-weight:800;color:${s.color}">
+              ${s.val}</div>
+            <div style="font-size:.58rem;color:var(--text-muted);margin-top:2px">
+              ${s.label}</div>
+          </div>`).join('')}
+      </div>
 
-    const nb = defis.filter(d => d.complete).length;
-    Utils.toast(
-      `🔃 Mis à jour — ${nb} défi${nb>1?'s':''} complété${nb>1?'s':''}`,
-      'success', 2000
-    );
+      ${historique.length === 0 ? `
+        <div style="text-align:center;padding:40px 16px;color:var(--text-muted)">
+          <div style="font-size:2.5rem;margin-bottom:8px">🎯</div>
+          <div style="font-size:.88rem">Aucun défi accompli encore</div>
+          <div style="font-size:.72rem;margin-top:4px">
+            Commence par les défis de la semaine !
+          </div>
+        </div>` :
+        historique.map(d => `
+          <div style="display:flex;align-items:center;gap:12px;
+                      padding:12px 14px;margin-bottom:8px;
+                      background:rgba(139,240,187,0.06);
+                      border:1px solid rgba(139,240,187,0.15);
+                      border-radius:var(--radius-lg)">
+            <span style="font-size:1.4rem;flex-shrink:0">${d.emoji}</span>
+            <div style="flex:1">
+              <div style="font-size:.82rem;font-weight:700">${d.titre}</div>
+              <div style="font-size:.62rem;color:var(--text-muted)">
+                ${Utils.formatDateCourt?.(d.date) || d.date}
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:.78rem;font-weight:700;color:var(--fd-lemon)">
+                +${d.xp} XP
+              </div>
+              <div style="font-size:.55rem;color:var(--fd-mint)">✅ Accompli</div>
+            </div>
+          </div>`).join('')}
+    `;
   }
 };
 
 window.Defis = Defis;
-console.log('✅ Defis v4.0 chargé — Femme + Maison + Genre-aware + Fix supersets');
+console.log('✅ Defis.js v2.0 — Défis dynamiques + Saison + Classement + Historique');
