@@ -1069,20 +1069,463 @@ const Coach = {
 };
 
 // ════════════════════════════════════════════════════════════
-// Programme IA (stub si absent)
+// COACH PROGRAMME IA — Générateur de programmes personnalisés
 // ════════════════════════════════════════════════════════════
-if (!Coach.ProgrammeIA) {
-  Coach.ProgrammeIA = {
-    _modeQuestionnaire: false,
-    _etapeActuelle:     0,
-    _reponses:          {},
-    generer(config) {
-      console.warn('[Coach.ProgrammeIA] Module non chargé — stub utilisé');
-      return { styleLabel: 'Standard', config };
-    }
-  };
-}
+Coach.ProgrammeIA = {
 
+  _modeQuestionnaire: false,
+  _etapeActuelle:     0,
+  _reponses:          {},
+
+  // ── Styles de programmes disponibles ──────────────────
+  STYLES: {
+    ppl: {
+      label:      'Push Pull Legs',
+      styleLabel: 'Push Pull Legs',
+      emoji:      '🔄',
+      description:'3 séances — Push / Pull / Jambes',
+      joursMin:   3, joursMax: 6,
+      seances:    ['pec_tri', 'dos_bi', 'jambes']
+    },
+    upper_lower: {
+      label:      'Upper / Lower',
+      styleLabel: 'Upper Lower',
+      emoji:      '⚖️',
+      description:'Haut / Bas du corps en alternance',
+      joursMin:   2, joursMax: 4,
+      seances:    ['pec_tri', 'jambes', 'epaules_bras', 'jambes']
+    },
+    full_body: {
+      label:      'Full Body',
+      styleLabel: 'Full Body',
+      emoji:      '🔥',
+      description:'Corps complet à chaque séance',
+      joursMin:   2, joursMax: 4,
+      seances:    ['full_body', 'full_body', 'full_body', 'full_body']
+    },
+    maison: {
+      label:      'Maison / Sans matériel',
+      styleLabel: 'Maison',
+      emoji:      '🏠',
+      description:'Programme sans équipement',
+      joursMin:   2, joursMax: 5,
+      seances:    ['maison_push', 'maison_pull', 'maison_legs']
+    },
+    femme_galbe: {
+      label:      'Galbe Féminin',
+      styleLabel: 'Galbe Féminin',
+      emoji:      '🌸',
+      description:'Programme galbe et renforcement féminin',
+      joursMin:   3, joursMax: 5,
+      seances:    ['lower_body_femme', 'upper_body_femme', 'core_femme']
+    }
+  },
+
+  // ── Questions du questionnaire ─────────────────────────
+  QUESTIONS: [
+    {
+      id:       'objectif',
+      question: '🎯 Quel est ton objectif principal ?',
+      options:  [
+        { label: '💪 Prise de masse',    value: 'prise_masse'  },
+        { label: '🔥 Perte de poids',    value: 'perte_poids'  },
+        { label: '⚡ Force pure',         value: 'force'        },
+        { label: '🏃 Forme générale',    value: 'forme'        },
+        { label: '✂️ Sèche',             value: 'seche'        }
+      ]
+    },
+    {
+      id:       'niveau',
+      question: '📊 Quel est ton niveau ?',
+      options:  [
+        { label: '🌱 Débutant (< 6 mois)',    value: 'debutant'      },
+        { label: '📈 Intermédiaire (6m-2ans)', value: 'intermediaire' },
+        { label: '🏆 Avancé (> 2 ans)',        value: 'avance'        }
+      ]
+    },
+    {
+      id:       'lieu',
+      question: '📍 Où t\'entraînes-tu ?',
+      options:  [
+        { label: '🏋️ Salle de sport',      value: 'salle'  },
+        { label: '🏠 Maison',              value: 'maison' },
+        { label: '🌳 Dehors / Parc',       value: 'dehors' }
+      ]
+    },
+    {
+      id:       'joursParSemaine',
+      question: '📅 Combien de jours par semaine ?',
+      options:  [
+        { label: '2 jours', value: 2 },
+        { label: '3 jours', value: 3 },
+        { label: '4 jours', value: 4 },
+        { label: '5 jours', value: 5 },
+        { label: '6 jours', value: 6 }
+      ]
+    },
+    {
+      id:       'genre',
+      question: '👤 Tu t\'identifies comme ?',
+      options:  [
+        { label: '♂️ Homme', value: 'homme' },
+        { label: '♀️ Femme', value: 'femme' }
+      ]
+    }
+  ],
+
+  // ── Génération du programme ────────────────────────────
+  generer(config) {
+    try {
+      const {
+        objectif          = 'forme',
+        niveau            = 'intermediaire',
+        lieu              = 'salle',
+        nbJours           = 4,
+        genre             = 'homme',
+        jours_specifiques = null
+      } = config;
+
+      // Choisir le style selon le profil
+      let styleKey = 'ppl';
+
+      if (lieu === 'maison' || lieu === 'dehors') {
+        styleKey = 'maison';
+      } else if (genre === 'femme' && objectif !== 'force') {
+        styleKey = 'femme_galbe';
+      } else if (niveau === 'debutant' || nbJours <= 3) {
+        styleKey = 'full_body';
+      } else if (nbJours <= 4) {
+        styleKey = 'upper_lower';
+      } else {
+        styleKey = 'ppl';
+      }
+
+      const style = this.STYLES[styleKey];
+
+      // Construire le planning
+      const joursDispos = jours_specifiques
+        || this._genererJours(nbJours);
+
+      const planning = this._construirePlanning(
+        style, joursDispos, nbJours, genre, lieu
+      );
+
+      // Appliquer le planning
+      try {
+        Programme.sauvegarderPlanning(planning);
+      } catch(e) {}
+
+      // Sauvegarder la config
+      const programmeGenere = {
+        styleKey,
+        styleLabel:   style.styleLabel,
+        emoji:        style.emoji,
+        objectif,
+        niveau,
+        lieu,
+        nbJours,
+        genre,
+        planning,
+        dateCreation: (typeof Utils !== 'undefined')
+          ? Utils.aujourd_hui()
+          : new Date().toISOString().slice(0, 10)
+      };
+
+      try {
+        Utils.storage.set('ft_programme_ia_config', programmeGenere);
+      } catch(e) {}
+
+      console.log(
+        '[Coach.ProgrammeIA] Programme généré ✅',
+        programmeGenere
+      );
+      return programmeGenere;
+
+    } catch(e) {
+      console.error('[Coach.ProgrammeIA] Erreur génération:', e);
+      return {
+        styleLabel: 'Standard',
+        emoji:      '💪',
+        planning:   [],
+        config
+      };
+    }
+  },
+
+  // ── Construire le planning ─────────────────────────────
+  _construirePlanning(style, jours, nbJours, genre, lieu) {
+    const planning = Array.from({ length: 7 }, (_, i) => ({
+      jour:     i,
+      label:    ['LUN','MAR','MER','JEU','VEN','SAM','DIM'][i],
+      seanceId: null
+    }));
+
+    const seancesStyle   = [...style.seances];
+    const seancesAdaptees = seancesStyle.map(s => {
+      if (lieu === 'maison' || lieu === 'dehors') {
+        if (s === 'pec_tri')      return 'maison_push';
+        if (s === 'dos_bi')       return 'maison_pull';
+        if (s === 'jambes')       return 'maison_legs';
+        if (s === 'epaules_bras') return 'maison_push';
+      }
+      if (genre === 'femme') {
+        if (s === 'jambes')       return 'lower_body_femme';
+        if (s === 'full_body')    return 'full_body';
+        if (s === 'pec_tri')      return 'upper_body_femme';
+        if (s === 'dos_bi')       return 'upper_body_femme';
+        if (s === 'epaules_bras') return 'upper_body_femme';
+      }
+      return s;
+    });
+
+    const joursLimites = jours.slice(0, nbJours);
+    joursLimites.forEach((jourIdx, i) => {
+      const seanceIdx = i % seancesAdaptees.length;
+      if (jourIdx >= 0 && jourIdx < 7) {
+        planning[jourIdx].seanceId = seancesAdaptees[seanceIdx];
+      }
+    });
+
+    return planning;
+  },
+
+  // ── Générer les jours automatiquement ─────────────────
+  _genererJours(nbJours) {
+    const patterns = {
+      2: [0, 3],
+      3: [0, 2, 4],
+      4: [0, 1, 3, 4],
+      5: [0, 1, 2, 4, 5],
+      6: [0, 1, 2, 3, 4, 5]
+    };
+    return patterns[nbJours] || patterns[4];
+  },
+
+  // ── Rendu du questionnaire ─────────────────────────────
+  renderQuestionnaire(container) {
+    if (!container) return;
+
+    const etape      = this._etapeActuelle;
+    const questions  = this.QUESTIONS;
+
+    if (etape >= questions.length) {
+      this._finaliserQuestionnaire(container);
+      return;
+    }
+
+    const q          = questions[etape];
+    const progression = Math.round((etape / questions.length) * 100);
+
+    container.innerHTML = `
+      <div class="card" style="max-width:480px;margin:0 auto">
+
+        <div style="display:flex;align-items:center;
+                    justify-content:space-between;margin-bottom:16px">
+          <div style="font-size:.72rem;color:var(--text-muted)">
+            Question ${etape + 1} / ${questions.length}
+          </div>
+          <div style="font-size:.72rem;color:var(--fd-indigo);
+                      font-weight:700">
+            ${progression}%
+          </div>
+        </div>
+
+        <div style="height:4px;background:rgba(255,255,255,0.1);
+                    border-radius:4px;margin-bottom:24px;overflow:hidden">
+          <div style="height:100%;width:${progression}%;
+                      background:var(--fd-indigo);
+                      border-radius:4px;transition:width .3s"></div>
+        </div>
+
+        <div style="font-size:1.05rem;font-weight:700;
+                    margin-bottom:20px;line-height:1.4">
+          ${q.question}
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${q.options.map(opt => `
+            <button
+              onclick="Coach.ProgrammeIA._repondre('${q.id}', ${
+                typeof opt.value === 'string'
+                  ? `'${opt.value}'`
+                  : opt.value
+              })"
+              style="padding:14px 16px;
+                     background:rgba(75,75,249,0.08);
+                     border:1px solid rgba(75,75,249,0.2);
+                     border-radius:var(--radius-lg);
+                     color:var(--text-primary);
+                     font-size:.9rem;font-weight:600;
+                     text-align:left;cursor:pointer;
+                     transition:all .2s"
+              onmouseover="this.style.background='rgba(75,75,249,0.2)';
+                           this.style.borderColor='var(--fd-indigo)'"
+              onmouseout="this.style.background='rgba(75,75,249,0.08)';
+                          this.style.borderColor='rgba(75,75,249,0.2)'">
+              ${opt.label}
+            </button>
+          `).join('')}
+        </div>
+
+        ${etape > 0 ? `
+          <button
+            onclick="Coach.ProgrammeIA._precedent()"
+            style="margin-top:16px;width:100%;
+                   padding:10px;background:transparent;
+                   border:1px solid rgba(255,255,255,0.1);
+                   border-radius:var(--radius-lg);
+                   color:var(--text-muted);font-size:.8rem;
+                   cursor:pointer">
+            ← Retour
+          </button>` : ''}
+      </div>
+    `;
+  },
+
+  // ── Répondre à une question ────────────────────────────
+  _repondre(id, valeur) {
+    this._reponses[id]  = valeur;
+    this._etapeActuelle++;
+
+    const container = document.getElementById('page-adaptatif')
+      || document.querySelector('[data-page="adaptatif"]');
+
+    if (this._etapeActuelle >= this.QUESTIONS.length) {
+      this._finaliserQuestionnaire(container);
+    } else {
+      if (container) this.renderQuestionnaire(container);
+    }
+  },
+
+  // ── Retour question précédente ─────────────────────────
+  _precedent() {
+    if (this._etapeActuelle > 0) {
+      this._etapeActuelle--;
+      const container = document.getElementById('page-adaptatif')
+        || document.querySelector('[data-page="adaptatif"]');
+      if (container) this.renderQuestionnaire(container);
+    }
+  },
+
+  // ── Finaliser le questionnaire ─────────────────────────
+  _finaliserQuestionnaire(container) {
+    const rep = this._reponses;
+
+    const config = {
+      objectif: rep.objectif        || 'forme',
+      niveau:   rep.niveau          || 'intermediaire',
+      lieu:     rep.lieu            || 'salle',
+      nbJours:  rep.joursParSemaine || 4,
+      genre:    rep.genre           || 'homme'
+    };
+
+    const programme = this.generer(config);
+
+    // Sync profil onboarding
+    try {
+      const profil    = Utils.storage.get('ft_profil_onboarding', {});
+      profil.objectif = config.objectif;
+      profil.niveau   = config.niveau;
+      profil.lieu     = config.lieu;
+      profil.genre    = config.genre;
+      Utils.storage.set('ft_profil_onboarding', profil);
+    } catch(e) {}
+
+    // Reset
+    this._modeQuestionnaire = false;
+    this._etapeActuelle     = 0;
+    this._reponses          = {};
+
+    if (container) {
+      container.innerHTML = `
+        <div class="card"
+             style="max-width:480px;margin:0 auto;text-align:center">
+
+          <div style="font-size:3rem;margin-bottom:12px">
+            ${programme.emoji}
+          </div>
+
+          <div style="font-size:1.2rem;font-weight:800;
+                      color:var(--fd-indigo);margin-bottom:8px">
+            Programme ${programme.styleLabel} activé !
+          </div>
+
+          <div style="font-size:.82rem;color:var(--text-muted);
+                      margin-bottom:24px">
+            ${programme.nbJours} séances/semaine ·
+            ${programme.objectif} · ${programme.lieu}
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);
+                      gap:4px;margin-bottom:24px">
+            ${(programme.planning || []).map(j => {
+              const hasSeance = !!j.seanceId;
+              const seance    = hasSeance
+                ? (typeof SEANCES_BASE !== 'undefined'
+                    ? SEANCES_BASE[j.seanceId] : null)
+                : null;
+              return `
+                <div style="text-align:center;padding:8px 4px;
+                            background:${hasSeance
+                              ? 'rgba(75,75,249,0.15)'
+                              : 'rgba(255,255,255,0.04)'};
+                            border:1px solid ${hasSeance
+                              ? 'rgba(75,75,249,0.3)'
+                              : 'rgba(255,255,255,0.06)'};
+                            border-radius:var(--radius-md)">
+                  <div style="font-size:.6rem;color:var(--text-muted);
+                              margin-bottom:4px">${j.label}</div>
+                  <div style="font-size:1rem">
+                    ${hasSeance ? (seance?.emoji || '💪') : '😴'}
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>
+
+          <button onclick="naviguer('home')"
+                  style="width:100%;padding:14px;
+                         background:var(--fd-indigo);
+                         color:white;border:none;
+                         border-radius:var(--radius-lg);
+                         font-size:.95rem;font-weight:700;
+                         cursor:pointer">
+            C'est parti ! 🚀
+          </button>
+
+          <button onclick="Coach.ProgrammeIA._relancer()"
+                  style="width:100%;padding:10px;margin-top:8px;
+                         background:transparent;
+                         border:1px solid rgba(255,255,255,0.1);
+                         border-radius:var(--radius-lg);
+                         color:var(--text-muted);font-size:.8rem;
+                         cursor:pointer">
+            🔄 Recommencer le questionnaire
+          </button>
+        </div>
+      `;
+    }
+
+    try {
+      Utils.toast(
+        `✅ Programme ${programme.styleLabel} créé !`,
+        'success', 3000
+      );
+    } catch(e) {}
+  },
+
+  // ── Relancer le questionnaire ──────────────────────────
+  _relancer() {
+    this._modeQuestionnaire = true;
+    this._etapeActuelle     = 0;
+    this._reponses          = {};
+    const container = document.getElementById('page-adaptatif')
+      || document.querySelector('[data-page="adaptatif"]');
+    if (container) this.renderQuestionnaire(container);
+  }
+
+};
+
+// ════════════════════════════════════════════════════════════
 window.Coach = Coach;
 
 console.log('✅ Coach IA v7.0 chargé');
