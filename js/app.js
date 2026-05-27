@@ -4207,8 +4207,10 @@ const ChronoSerie = {
   _terminerManuellement(seanceId, exoRef, exoIdx, serieIdx, totalSeries, totalExos, reposDuree) {
     this.stopper();
     this._fermerOverlay();
+    if (typeof App !== 'undefined' && App.validerSerieLR) {
     App.validerSerieLR(seanceId, exoRef, exoIdx, serieIdx, totalSeries, totalExos, reposDuree);
-  },
+  }
+},
 
   // ✅ Modifier charge pendant la série
   _modifierCharge(exoIdx, serieIdx, delta) {
@@ -6588,296 +6590,275 @@ const dureeAffichee = (() => {
 const ResumSeance = {
 
   async genererImagePNG(seanceId) {
+  try {
+    Utils.toast('⏳ Génération en cours...', 'info', 2000);
+
+    const canvas  = document.createElement('canvas');
+    canvas.width  = 1080;
+    canvas.height = 1920;
+    const ctx     = canvas.getContext('2d');
+
+    // ✅ Récupérer données
+    const seance = (window.SEANCES_BASE || {})[seanceId]
+      || { nom:'Séance', emoji:'💪' };
+
+    let profil    = { nom:'Athlète', avatar:'💪' };
+    let xp        = { total:0, niveau:{ numero:1, nom:'Débutant' } };
+    let streak    = { count:0 };
+    let volume    = 0;
+    let prs       = 0;
+    let scoreForm = 0;
+    let dureeAff  = '—';
+    let duree     = 0;
+
+    try { profil    = Tracker.getProfil();                    } catch(e) {}
+    try { xp        = Gamification.getXP();                   } catch(e) {}
+    try { streak    = Tracker.getStreak();                    } catch(e) {}
+    try { volume    = Tracker.getVolumeSemaine();             } catch(e) {}
+    try { scoreForm = Tracker.calculerScoreForme().score;     } catch(e) {}
+    try { duree     = TempsSalle.getDureeChronoSecondes() || 0; } catch(e) {}
     try {
-      Utils.toast('⏳ Génération en cours...', 'info', 2000);
-
-      const canvas  = document.createElement('canvas');
-      canvas.width  = 1080;
-      canvas.height = 1920;
-      const ctx     = canvas.getContext('2d');
-
-      // ✅ Récupérer données
-      const seance     = (window.SEANCES_BASE || {})[seanceId]
-        || { nom:'Séance', emoji:'💪' };
-
-      let profil    = { nom:'Athlète', avatar:'💪' };
-      let xp        = { total:0, niveau:{ numero:1, nom:'Débutant' } };
-      let streak    = { count:0 };
-      let volume    = 0;
-      let prs       = 0;
-      let scoreForm = 0;
-      let dureeAff  = '—';
-
-      try { profil    = Tracker.getProfil();         } catch(e) {}
-      try { xp        = Gamification.getXP();        } catch(e) {}
-      try { streak    = Tracker.getStreak();         } catch(e) {}
-      try { volume    = Tracker.getVolumeSemaine();  } catch(e) {}
-      try { scoreForm = Tracker.calculerScoreForme().score; } catch(e) {}
-      try {
-  // ✅ FIX v4.0 — Vérifier TempsSalle avant appel
-  if (typeof TempsSalle !== 'undefined'
-      && TempsSalle.recuperer) {
-    const sec = TempsSalle.recuperer(seanceId);
-    if (sec && sec > 60) {
-      dureeAff = TempsSalle.formaterDuree(sec);
-    } else if (duree > 0) {
-      dureeAff = Utils.formatDuree(duree);
-    }
-  } else if (duree > 0) {
-    dureeAff = Utils.formatDuree(duree);
-  }
-} catch(e) {
-  if (duree > 0) dureeAff = Utils.formatDuree(duree);
-}
-      try {
-        prs = (Tracker.getPRsSeance(seanceId) || []).length;
-      } catch(e) {}
-
-      // ✅ FOND — gradient bleu profond Foundever
-      const gradFond = ctx.createLinearGradient(0, 0, 0, 1920);
-      gradFond.addColorStop(0,    '#06063d');
-      gradFond.addColorStop(0.5,  '#08082e');
-      gradFond.addColorStop(1,    '#050520');
-      ctx.fillStyle = gradFond;
-      ctx.fillRect(0, 0, 1080, 1920);
-
-      // ✅ Glow indigo en haut
-      const glowTop = ctx.createRadialGradient(540, 0, 0, 540, 0, 600);
-      glowTop.addColorStop(0,   'rgba(75,75,249,0.25)');
-      glowTop.addColorStop(1,   'transparent');
-      ctx.fillStyle = glowTop;
-      ctx.fillRect(0, 0, 1080, 600);
-
-      // ✅ Glow mint en bas
-      const glowBot = ctx.createRadialGradient(540, 1920, 0, 540, 1920, 500);
-      glowBot.addColorStop(0,   'rgba(139,240,187,0.12)');
-      glowBot.addColorStop(1,   'transparent');
-      ctx.fillStyle = glowBot;
-      ctx.fillRect(0, 1400, 1080, 520);
-
-      // ✅ LOGO PowerApp
-      ctx.fillStyle    = '#4b4bf9';
-      ctx.font         = 'bold 38px system-ui, sans-serif';
-      ctx.textAlign    = 'center';
-      ctx.fillText('⚡ PowerApp', 540, 120);
-
-      // Ligne décorative sous le logo
-      const ligne = ctx.createLinearGradient(200, 0, 880, 0);
-      ligne.addColorStop(0, 'transparent');
-      ligne.addColorStop(0.5, 'rgba(75,75,249,0.6)');
-      ligne.addColorStop(1, 'transparent');
-      ctx.strokeStyle = ligne;
-      ctx.lineWidth   = 1;
-      ctx.beginPath();
-      ctx.moveTo(200, 140);
-      ctx.lineTo(880, 140);
-      ctx.stroke();
-
-      // ✅ EMOJI SÉANCE
-      ctx.font      = '120px serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(seance.emoji, 540, 320);
-
-      // ✅ NOM SÉANCE
-      ctx.fillStyle = '#ffffff';
-      ctx.font      = 'bold 72px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      this._wrapText(ctx, seance.nom, 540, 420, 900, 85);
-
-      // ✅ Badge "Séance terminée"
-      this._roundRect(ctx, 290, 520, 500, 70, 35,
-        'rgba(139,240,187,0.15)', 'rgba(139,240,187,0.4)');
-      ctx.fillStyle = '#8bf0bb';
-      ctx.font      = 'bold 32px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('✅ SÉANCE TERMINÉE', 540, 563);
-
-      // ✅ STATS CARDS (3 cartes)
-      const cartes = [
-        { label:'VOLUME',  val:Utils.formatVolume(volume),  color:'#8bf0bb',  x:80  },
-        { label:'DURÉE',   val:dureeAff,                    color:'#4b4bf9',  x:390 },
-        { label:'RECORDS', val:`${prs} 🏆`,                 color:'#f9ef77',  x:700 }
-      ];
-
-      cartes.forEach(c => {
-        // Card background
-        this._roundRect(ctx, c.x, 640, 280, 180, 24,
-          'rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)');
-        // Valeur
-        ctx.fillStyle = c.color;
-        ctx.font      = 'bold 52px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(c.val, c.x + 140, 740);
-        // Label
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.font      = '24px system-ui, sans-serif';
-        ctx.fillText(c.label, c.x + 140, 785);
-      });
-
-      // ✅ DONUT MUSCLES
-      const musclesData = {};
-      try {
-        const seanceData = Tracker.getSeanceDuJour();
-        (seanceData?.series || []).forEach(s => {
-          const ex     = (window.EXERCICES || {})[s.exerciceRef] || {};
-          const muscle = ex.muscle || 'Autre';
-          const vol    = (s.poids || 0) * (s.reps || 0);
-          musclesData[muscle] = (musclesData[muscle] || 0) + vol;
-        });
-      } catch(e) {}
-
-      const musclesArr  = Object.entries(musclesData)
-        .sort((a,b) => b[1] - a[1]).slice(0, 5);
-      const totalMusc   = musclesArr.reduce((a,[,v]) => a + v, 0) || 1;
-      const COULEURS    = ['#4b4bf9','#8bf0bb','#f9ef77','#bfa1ff','#ff8d96'];
-
-      if (musclesArr.length > 0) {
-        // Titre section
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.font      = '28px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('RÉPARTITION MUSCULAIRE', 540, 900);
-
-        // Donut canvas
-        const cx = 540, cy = 1060, r = 140, sw = 30;
-        const circ = 2 * Math.PI * r;
-
-        // Track
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-        ctx.lineWidth   = sw;
-        ctx.stroke();
-
-        // Segments
-        let startAngle = -Math.PI / 2;
-        musclesArr.forEach(([muscle, vol], i) => {
-          const angle = (vol / totalMusc) * 2 * Math.PI;
-          ctx.beginPath();
-          ctx.arc(cx, cy, r, startAngle, startAngle + angle);
-          ctx.strokeStyle = COULEURS[i];
-          ctx.lineWidth   = sw;
-          ctx.lineCap     = 'round';
-          ctx.stroke();
-          startAngle += angle;
-        });
-
-        // Centre donut
-        ctx.fillStyle = '#ffffff';
-        ctx.font      = 'bold 48px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(`${musclesArr.length}`, cx, cy - 10);
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.font      = '24px system-ui, sans-serif';
-        ctx.fillText('muscles', cx, cy + 30);
-
-        // Légende
-        const legendY = 1240;
-        musclesArr.forEach(([muscle, vol], i) => {
-          const pct  = Math.round((vol / totalMusc) * 100);
-          const col  = i % 2 === 0 ? 150 : 580;
-          const row  = Math.floor(i / 2) * 70;
-
-          // Point couleur
-          ctx.fillStyle = COULEURS[i];
-          ctx.beginPath();
-          ctx.arc(col, legendY + row + 10, 10, 0, 2 * Math.PI);
-          ctx.fill();
-
-          // Nom muscle
-          ctx.fillStyle = '#ffffff';
-          ctx.font      = 'bold 26px system-ui, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.fillText(muscle, col + 25, legendY + row + 18);
-
-          // Pourcentage
-          ctx.fillStyle = COULEURS[i];
-          ctx.font      = 'bold 26px system-ui, sans-serif';
-          ctx.textAlign = 'right';
-          ctx.fillText(`${pct}%`,
-            i % 2 === 0 ? 520 : 1000,
-            legendY + row + 18);
-        });
+      if (typeof TempsSalle !== 'undefined' && TempsSalle.recuperer) {
+        const sec = TempsSalle.recuperer(seanceId);
+        if (sec && sec > 60) {
+          dureeAff = TempsSalle.formaterDuree(sec);
+        } else if (duree > 0) {
+          dureeAff = Utils.formatDuree(duree);
+        }
+      } else if (duree > 0) {
+        dureeAff = Utils.formatDuree(duree);
       }
+    } catch(e) {}
+    try { prs = (Tracker.getPRsSeance(seanceId) || []).length; } catch(e) {}
 
-      // ✅ SCORE + STREAK
-      const scoreY = musclesArr.length > 0 ? 1520 : 950;
+    // ✅ FOND — gradient bleu profond
+    const gradFond = ctx.createLinearGradient(0, 0, 0, 1920);
+    gradFond.addColorStop(0,   '#06063d');
+    gradFond.addColorStop(0.5, '#08082e');
+    gradFond.addColorStop(1,   '#050520');
+    ctx.fillStyle = gradFond;
+    ctx.fillRect(0, 0, 1080, 1920);
 
-      this._roundRect(ctx, 80, scoreY, 900, 140, 24,
+    // ✅ Glow indigo en haut
+    const glowTop = ctx.createRadialGradient(540, 0, 0, 540, 0, 600);
+    glowTop.addColorStop(0, 'rgba(75,75,249,0.25)');
+    glowTop.addColorStop(1, 'transparent');
+    ctx.fillStyle = glowTop;
+    ctx.fillRect(0, 0, 1080, 600);
+
+    // ✅ Glow mint en bas
+    const glowBot = ctx.createRadialGradient(540, 1920, 0, 540, 1920, 500);
+    glowBot.addColorStop(0, 'rgba(139,240,187,0.12)');
+    glowBot.addColorStop(1, 'transparent');
+    ctx.fillStyle = glowBot;
+    ctx.fillRect(0, 1400, 1080, 520);
+
+    // ✅ LOGO PowerApp
+    ctx.fillStyle = '#4b4bf9';
+    ctx.font      = 'bold 38px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚡ PowerApp', 540, 120);
+
+    const ligne = ctx.createLinearGradient(200, 0, 880, 0);
+    ligne.addColorStop(0, 'transparent');
+    ligne.addColorStop(0.5, 'rgba(75,75,249,0.6)');
+    ligne.addColorStop(1, 'transparent');
+    ctx.strokeStyle = ligne;
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.moveTo(200, 140);
+    ctx.lineTo(880, 140);
+    ctx.stroke();
+
+    // ✅ EMOJI SÉANCE
+    ctx.font      = '120px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(seance.emoji, 540, 320);
+
+    // ✅ NOM SÉANCE
+    ctx.fillStyle = '#ffffff';
+    ctx.font      = 'bold 72px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    this._wrapText(ctx, seance.nom, 540, 420, 900, 85);
+
+    // ✅ Badge "Séance terminée"
+    this._roundRect(ctx, 290, 520, 500, 70, 35,
+      'rgba(139,240,187,0.15)', 'rgba(139,240,187,0.4)');
+    ctx.fillStyle = '#8bf0bb';
+    ctx.font      = 'bold 32px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✅ SÉANCE TERMINÉE', 540, 563);
+
+    // ✅ STATS CARDS (3 cartes)
+    const cartes = [
+      { label:'VOLUME',  val:Utils.formatVolume(volume), color:'#8bf0bb', x:80  },
+      { label:'DURÉE',   val:dureeAff,                   color:'#4b4bf9', x:390 },
+      { label:'RECORDS', val:`${prs} 🏆`,                color:'#f9ef77', x:700 }
+    ];
+
+    cartes.forEach(c => {
+      this._roundRect(ctx, c.x, 640, 280, 180, 24,
         'rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)');
-
-      // Score
-      ctx.fillStyle = scoreForm >= 70
-        ? '#8bf0bb' : scoreForm >= 50
-          ? '#4b4bf9' : '#f9ef77';
-      ctx.font      = 'bold 64px system-ui, sans-serif';
+      ctx.fillStyle = c.color;
+      ctx.font      = 'bold 52px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`${scoreForm}/100`, 300, scoreY + 80);
+      ctx.fillText(c.val, c.x + 140, 740);
       ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.font      = '26px system-ui, sans-serif';
-      ctx.fillText('SCORE DE FORME', 300, scoreY + 115);
+      ctx.font      = '24px system-ui, sans-serif';
+      ctx.fillText(c.label, c.x + 140, 785);
+    });
 
-      // Streak
-      ctx.fillStyle = '#f9ef77';
-      ctx.font      = 'bold 64px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(`🔥 ${streak.count}`, 780, scoreY + 80);
+    // ✅ DONUT MUSCLES
+    const musclesData = {};
+    try {
+      const seanceData = Tracker.getSeanceDuJour();
+      (seanceData?.series || []).forEach(s => {
+        const ex     = (window.EXERCICES || {})[s.exerciceRef] || {};
+        const muscle = ex.muscle || 'Autre';
+        const vol    = (s.poids || 0) * (s.reps || 0);
+        musclesData[muscle] = (musclesData[muscle] || 0) + vol;
+      });
+    } catch(e) {}
+
+    const musclesArr = Object.entries(musclesData)
+      .sort((a,b) => b[1] - a[1]).slice(0, 5);
+    const totalMusc  = musclesArr.reduce((a,[,v]) => a + v, 0) || 1;
+    const COULEURS   = ['#4b4bf9','#8bf0bb','#f9ef77','#bfa1ff','#ff8d96'];
+
+    if (musclesArr.length > 0) {
       ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      ctx.font      = '26px system-ui, sans-serif';
-      ctx.fillText('STREAK', 780, scoreY + 115);
-
-      // ✅ PROFIL
-      const profilY = musclesArr.length > 0 ? 1700 : 1120;
-
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.font      = '30px system-ui, sans-serif';
+      ctx.font      = '28px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(
-        `${profil.avatar} ${profil.nom} · Niv.${xp.niveau.numero} · ${xp.total} XP`,
-        540, profilY
-      );
+      ctx.fillText('RÉPARTITION MUSCULAIRE', 540, 900);
 
-      // Ligne décorative
-      const ligneBot = ctx.createLinearGradient(200, 0, 880, 0);
-      ligneBot.addColorStop(0, 'transparent');
-      ligneBot.addColorStop(0.5, 'rgba(75,75,249,0.4)');
-      ligneBot.addColorStop(1, 'transparent');
-      ctx.strokeStyle = ligneBot;
-      ctx.lineWidth   = 1;
+      const cx = 540, cy = 1060, r = 140, sw = 30;
+      const circ = 2 * Math.PI * r;
+
       ctx.beginPath();
-      ctx.moveTo(200, profilY + 20);
-      ctx.lineTo(880, profilY + 20);
+      ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.lineWidth   = sw;
       ctx.stroke();
 
-      // ✅ DATE
-      const dateStr = new Date().toLocaleDateString('fr-FR', {
-        weekday:'long', day:'numeric', month:'long', year:'numeric'
+      let startAngle = -Math.PI / 2;
+      musclesArr.forEach(([muscle, vol], i) => {
+        const angle = (vol / totalMusc) * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, startAngle, startAngle + angle);
+        ctx.strokeStyle = COULEURS[i];
+        ctx.lineWidth   = sw;
+        ctx.lineCap     = 'round';
+        ctx.stroke();
+        startAngle += angle;
       });
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.font      = '26px system-ui, sans-serif';
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font      = 'bold 48px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(dateStr, 540, profilY + 60);
+      ctx.fillText(`${musclesArr.length}`, cx, cy - 10);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font      = '24px system-ui, sans-serif';
+      ctx.fillText('muscles', cx, cy + 30);
 
-      // ✅ Watermark PowerApp
-      ctx.fillStyle = 'rgba(75,75,249,0.5)';
-      ctx.font      = 'bold 24px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('powerapp.fitness', 540, 1880);
+      const legendY = 1240;
+      musclesArr.forEach(([muscle, vol], i) => {
+        const pct = Math.round((vol / totalMusc) * 100);
+        const col = i % 2 === 0 ? 150 : 580;
+        const row = Math.floor(i / 2) * 70;
 
-      // ✅ Télécharger
-      const link    = document.createElement('a');
-      link.download = `powerapp-seance-${Utils.aujourd_hui()}.png`;
-      link.href     = canvas.toDataURL('image/png', 0.95);
-      link.click();
+        ctx.fillStyle = COULEURS[i];
+        ctx.beginPath();
+        ctx.arc(col, legendY + row + 10, 10, 0, 2 * Math.PI);
+        ctx.fill();
 
-      Utils.toast('✅ Story téléchargée !', 'success', 3000);
-      Utils.vibrerSuccess();
+        ctx.fillStyle = '#ffffff';
+        ctx.font      = 'bold 26px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(muscle, col + 25, legendY + row + 18);
 
-    } catch(e) {
-      console.error('[ResumSeance] Erreur PNG:', e);
-      Utils.toast('❌ Erreur génération image', 'error');
+        ctx.fillStyle = COULEURS[i];
+        ctx.font      = 'bold 26px system-ui, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${pct}%`,
+          i % 2 === 0 ? 520 : 1000,
+          legendY + row + 18);
+      });
     }
-  },
+
+    // ✅ SCORE + STREAK
+    const scoreY = musclesArr.length > 0 ? 1520 : 950;
+
+    this._roundRect(ctx, 80, scoreY, 900, 140, 24,
+      'rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)');
+
+    ctx.fillStyle = scoreForm >= 70
+      ? '#8bf0bb' : scoreForm >= 50 ? '#4b4bf9' : '#f9ef77';
+    ctx.font      = 'bold 64px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${scoreForm}/100`, 300, scoreY + 80);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font      = '26px system-ui, sans-serif';
+    ctx.fillText('SCORE DE FORME', 300, scoreY + 115);
+
+    ctx.fillStyle = '#f9ef77';
+    ctx.font      = 'bold 64px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`🔥 ${streak.count}`, 780, scoreY + 80);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font      = '26px system-ui, sans-serif';
+    ctx.fillText('STREAK', 780, scoreY + 115);
+
+    // ✅ PROFIL
+    const profilY = musclesArr.length > 0 ? 1700 : 1120;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font      = '30px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      `${profil.avatar} ${profil.nom} · Niv.${xp.niveau.numero} · ${xp.total} XP`,
+      540, profilY
+    );
+
+    const ligneBot = ctx.createLinearGradient(200, 0, 880, 0);
+    ligneBot.addColorStop(0, 'transparent');
+    ligneBot.addColorStop(0.5, 'rgba(75,75,249,0.4)');
+    ligneBot.addColorStop(1, 'transparent');
+    ctx.strokeStyle = ligneBot;
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.moveTo(200, profilY + 20);
+    ctx.lineTo(880, profilY + 20);
+    ctx.stroke();
+
+    // ✅ DATE
+    const dateStr = new Date().toLocaleDateString('fr-FR', {
+      weekday:'long', day:'numeric', month:'long', year:'numeric'
+    });
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font      = '26px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(dateStr, 540, profilY + 60);
+
+    // ✅ Watermark
+    ctx.fillStyle = 'rgba(75,75,249,0.5)';
+    ctx.font      = 'bold 24px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('powerapp.fitness', 540, 1880);
+
+    // ✅ Télécharger
+    const link    = document.createElement('a');
+    link.download = `powerapp-seance-${Utils.aujourd_hui()}.png`;
+    link.href     = canvas.toDataURL('image/png', 0.95);
+    link.click();
+
+    Utils.toast('✅ Story téléchargée !', 'success', 3000);
+    Utils.vibrerSuccess();
+
+  } catch(e) {
+    console.error('[ResumSeance] Erreur PNG:', e);
+    Utils.toast('❌ Erreur génération image', 'error');
+  }
+},
 
   // ✅ Helper — texte multiligne
   _wrapText(ctx, text, x, y, maxWidth, lineHeight) {
