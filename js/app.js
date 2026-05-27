@@ -191,7 +191,10 @@ case 'live': {
   try { Calculateur.render(container); }
   catch(e) { _rendrePlaceholder(container,'🧮','Calculateur',''); }
   break;    
-      case 'share':        Share.render(container);                       break;
+      case 'share':
+  try { Export.render(container); }
+  catch(e) { _rendrePlaceholder(container,'📤','Partage','Module export non disponible.'); }
+  break;
       case 'gamification': Gamification.renderGamificationTab(container); break;
       case 'history':      History.render(container);                     break;
       case 'photos':       Photos.render(container);                      break;
@@ -399,7 +402,7 @@ function rechercherDepuisHome(val) {
     { mots:['circuit'],                                            page:'circuit'       },
     { mots:['adaptatif','adaptation','intelligent'],               page:'adaptatif'     },
     { mots:['xp','niveau','gamification','trophee','trophée'],     page:'gamification'  },
-    { mots:['partage','share','social'],                           page:'share'         },
+    { mots:['partage','share','export','exporter'],                page:'export' },
     { mots:['hors-ligne','offline','sync'],                        page:'offline'       }
   ];
 
@@ -5375,7 +5378,7 @@ function _rendreProfil(container) {
       { page:'defis',        emoji:'🏆', label:'Défis'               },
       { page:'predict',      emoji:'🔮', label:'Prédictions IA'      },
       { page:'calculateur',  emoji:'🧮', label:'Calculateur'         }, 
-      { page:'share',        emoji:'📤', label:'Partage'             },
+      { page:'export',       emoji:'📤', label:'Exporter mes données'},
       { page:'supersets',    emoji:'⚡', label:'Supersets'           },
       { page:'social',       emoji:'📱', label:'Réseaux sociaux'     },
       { page:'offline',      emoji:'📵', label:'Hors-ligne'          },
@@ -9502,7 +9505,6 @@ const MenuGlobal = {
       { page:'gamification', emoji:'⭐', label:'XP & Niveaux'         },
       { page:'history',      emoji:'📅', label:'Historique'           },
       { page:'photos',       emoji:'📸', label:'Photos'               },
-      { page:'share',        emoji:'📤', label:'Partage'              },
       { page:'social',       emoji:'📱', label:'Réseaux sociaux'      },
       { page:'supersets',    emoji:'⚡', label:'Supersets'            },
       { page:'circuit',      emoji:'🔄', label:'Circuit Training'     },
