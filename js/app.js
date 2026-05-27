@@ -237,6 +237,21 @@ case 'live': {
         try { Stats.renderObjectifs(container); }
         catch(e) { _rendrePlaceholder(container,'🎯','Objectifs','Définis tes objectifs.'); }
         break;
+        // ✅ Cases à ajouter dans _rendreContenu()
+case 'themes':
+  try { Themes.render(container); }
+  catch(e) { _rendrePlaceholder(container,'🎨','Thèmes',''); }
+  break;
+
+case 'export':
+  try { Export.render(container); }
+  catch(e) { _rendrePlaceholder(container,'📤','Export',''); }
+  break;
+
+case 'sounds':
+  try { Sounds.renderSettings(container); }
+  catch(e) { _rendrePlaceholder(container,'🔊','Sons',''); }
+  break;  
       case 'blessures':
         try { Stats.renderBlessures(container); }
         catch(e) { _rendrePlaceholder(container,'🩹','Blessures','Suivi de tes blessures.'); }
@@ -7525,6 +7540,7 @@ async function init() {
     try { ThemeManager.init?.();       } catch(e) {}
     try { SwipeNav.init?.();           } catch(e) {}
     try { SeanceGuidee.prechargerVoix?.(); } catch(e) {}
+    try { Themes.init(); } catch(e) {}  
     try { TimerManager.initAlarme?.(); } catch(e) {}
 
     setTimeout(() => {
@@ -9491,6 +9507,9 @@ const MenuGlobal = {
       { page:'supersets',    emoji:'⚡', label:'Supersets'            },
       { page:'circuit',      emoji:'🔄', label:'Circuit Training'     },
       { page:'adaptatif',    emoji:'🧠', label:'Programme Adaptatif'  },
+      { page:'themes',       emoji:'🎨', label:'Thèmes'               },
+      { page:'sounds',       emoji:'🔊', label:'Sons & Animations'    },
+      { page:'export',       emoji:'📤', label:'Exporter'             }, 
       { page:'galerie',      emoji:'💪', label:'Galerie exercices'    },
       { page:'offline',      emoji:'📵', label:'Hors-ligne'           },
       { page:'settings',     emoji:'⚙️', label:'Paramètres'          }
