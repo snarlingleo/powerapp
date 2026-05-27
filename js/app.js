@@ -69,6 +69,85 @@ function retourArriere() {
 }
 
 // ════════════════════════════════════════════════════════════
+// NAV BAR — Glassmorphism Neon + Lucide Icons
+// ════════════════════════════════════════════════════════════
+function _rendreNavBar() {
+  const nav = document.querySelector('.nav-bar')
+    || document.querySelector('nav')
+    || document.getElementById('nav-bar');
+  if (!nav) return;
+
+  const pages = [
+    { id:'home',      icon:'home',        label:'Home',    neon:'neon-home'   },
+    { id:'training',  icon:'calendar',    label:'Prog.',   neon:'neon-live'   },
+    { id:'live',      icon:'zap',         label:'Live',    neon:'neon-stats'  },
+    { id:'stats',     icon:'bar-chart-2', label:'Stats',   neon:'neon-coach'  },
+    { id:'nutrition', icon:'salad',       label:'Nutri.',  neon:'neon-profil' }
+  ];
+
+  nav.innerHTML = pages.map(p => `
+    <div class="nav-btn ${p.neon} ${window._pageActive === p.id ? 'active' : ''}"
+         onclick="naviguer('${p.id}')"
+         style="display:flex;flex-direction:column;
+                align-items:center;gap:5px;
+                cursor:pointer;transition:transform .2s;
+                position:relative;padding:4px 8px"
+         onmouseenter="this.style.transform='translateY(-3px)'"
+         onmouseleave="this.style.transform=''">
+      <div class="glass-icon-nav"
+           style="width:46px;height:46px;
+                  border-radius:14px;
+                  display:flex;align-items:center;
+                  justify-content:center;
+                  background:${window._pageActive === p.id
+                    ? 'var(--neon-bg-'+p.id+')'
+                    : 'rgba(255,255,255,0.05)'};
+                  border:1px solid ${window._pageActive === p.id
+                    ? 'var(--neon-border-'+p.id+')'
+                    : 'rgba(255,255,255,0.1)'};
+                  backdrop-filter:blur(10px);
+                  position:relative;overflow:hidden;
+                  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+                  ${window._pageActive === p.id
+                    ? 'transform:scale(1.08);'
+                    : ''}">
+        <i data-lucide="${p.icon}"
+           style="width:22px;height:22px;
+                  stroke:${window._pageActive === p.id
+                    ? 'var(--neon-color-'+p.id+')'
+                    : 'rgba(255,255,255,0.5)'};
+                  stroke-width:${window._pageActive === p.id ? '2.2' : '1.8'};
+                  fill:none;position:relative;z-index:1;
+                  ${window._pageActive === p.id
+                    ? 'filter:drop-shadow(0 0 6px var(--neon-color-'+p.id+'))'
+                    : ''}">
+        </i>
+      </div>
+      <span style="font-size:.52rem;font-weight:700;
+                   text-transform:uppercase;letter-spacing:.06em;
+                   color:${window._pageActive === p.id
+                     ? 'white'
+                     : 'rgba(255,255,255,0.35)'};
+                   transition:color .3s">
+        ${p.label}
+      </span>
+      <!-- Active dot -->
+      <div style="position:absolute;bottom:-2px;
+                  left:50%;transform:translateX(-50%);
+                  width:4px;height:4px;border-radius:50%;
+                  opacity:${window._pageActive === p.id ? '1' : '0'};
+                  background:white;
+                  box-shadow:0 0 6px white;
+                  transition:opacity .3s">
+      </div>
+    </div>
+  `).join('');
+
+  // Init Lucide icons
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// ════════════════════════════════════════════════════════════
 // HEADER
 // ════════════════════════════════════════════════════════════
 function _updateHeader(page) {
