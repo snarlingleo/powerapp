@@ -143,8 +143,10 @@ getAnalyseSemaine() {
     } catch(e) {}
 
     try {
-      ctx.prochainPR = Predict.prochainPRPotentiel?.() || null;
-    } catch(e) {}
+  if (typeof Predict !== 'undefined') {
+    ctx.prochainPR = Predict.prochainPRPotentiel?.() || null;
+  }
+} catch(e) {}
 
     return ctx;
   },
