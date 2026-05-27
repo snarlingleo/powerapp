@@ -176,8 +176,24 @@ case 'live': {
   break;
       case 'profil':       _rendreProfil(container);                      break;
       case 'coach':
-  try { Coach.renderCoachTabV7(container); }
-  catch(e) { Coach.renderCoachTab(container); }
+  try {
+    if (typeof Coach === 'undefined') {
+      throw new Error('Coach non chargé');
+    }
+    if (typeof Coach.renderCoachTabV7 === 'function') {
+      Coach.renderCoachTabV7(container);
+    } else if (typeof Coach.renderCoachTab === 'function') {
+      Coach.renderCoachTab(container);
+    } else {
+      throw new Error('Aucune méthode render disponible');
+    }
+  } catch(e) {
+    console.error('[Coach]', e);
+    _rendrePlaceholder(
+      container, '🤖', 'Coach IA',
+      'Module Coach non disponible. Vérifie que coach.js est chargé.'
+    );
+  }
   break;
       case 'defis':
   try { Defis.render(container); }
