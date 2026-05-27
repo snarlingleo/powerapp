@@ -1,792 +1,940 @@
 /* ============================================================
-   PowerApp — Calculateur.js v2.0
-   Calcul 1RM + recommandations + pourcentages
-   + Genre-aware + Page complète + getSuggestionCharge()
+   PowerApp — Calculateur.js v1.0
+   ✅ 1RM multi-formules
+   ✅ Wilks Score (powerlifting)
+   ✅ FFMI (indice masse musculaire)
+   ✅ IMC + catégories
+   ✅ Calories brûlées détaillées
+   ✅ Macros personnalisées
+   ✅ Zones d'entraînement FC
+   ✅ Comparateur charges
    ============================================================ */
 
 'use strict';
 
 const Calculateur = {
 
+  _ongletActif: 'rm1',
+
   // ════════════════════════════════════════════════════════
   // FORMULES 1RM
   // ════════════════════════════════════════════════════════
-
-  calculer1RM(poids, reps) {
-    if (!poids || !reps || reps < 1) return 0;
-    if (reps === 1) return poids;
-
-    // Epley (la plus connue)
-    const epley    = poids * (1 + reps / 30);
-
-    // Brzycki (précise jusqu'à 10 reps)
-    const brzycki  = reps < 37
-      ? poids * (36 / (37 - reps))
-      : poids * 2; // Sécurité si reps >= 37
-
-    // Lombardi
-    const lombardi = poids * Math.pow(reps, 0.10);
-
-    // ✅ NOUVEAU v2.0 — O'Conner (précise hautes reps)
-    const oconner  = poids * (1 + 0.025 * reps);
-
-    // Moyenne pondérée
-    const moyenne  =
-      epley    * 0.40
-      + brzycki  * 0.30
-      + lombardi * 0.15
-      + oconner  * 0.15;
-
-    // Arrondi au 0.5kg
-    return Math.round(moyenne * 2) / 2;
+  FORMULES_1RM: {
+    brzycki: {
+      nom:    'Brzycki',
+      calcul: (p, r) => p * (36 / (37 - r)),
+      info:   'La plus précise pour 1-10 reps'
+    },
+    epley: {
+      nom:    'Epley',
+      calcul: (p, r) => r === 1 ? p : p * (1 + r / 30),
+      info:   'Adaptée pour les séries moyennes'
+    },
+    lander: {
+      nom:    'Lander',
+      calcul: (p, r) => (100 * p) / (101.3 - 2.67123 * r),
+      info:   'Précise pour les reps élevées'
+    },
+    lombardi: {
+      nom:    'Lombardi',
+      calcul: (p, r) => p * Math.pow(r, 0.10),
+      info:   'Conservatrice — idéale débutants'
+    },
+    oconner: {
+      nom:    "O'Conner",
+      calcul: (p, r) => p * (1 + 0.025 * r),
+      info:   'Simple et rapide'
+    },
+    wathan: {
+      nom:    'Wathan',
+      calcul: (p, r) => (100 * p) / (48.8 + 53.8 * Math.exp(-0.075 * r)),
+      info:   'Adaptée powerlifting'
+    }
   },
 
-  // ════════════════════════════════════════════════════════
-  // RECOMMANDATIONS — ✅ v2.0 genre-aware
-  // ════════════════════════════════════════════════════════
-  getRecommandations(un_rm, genre = null) {
-    if (!un_rm || un_rm <= 0) return [];
-
-    // ✅ NOUVEAU v2.0 — Détecter genre si non fourni
-    if (!genre) {
+  calculer1RMTous(poids, reps) {
+    if (!poids || !reps || reps < 1) return {};
+    return Object.entries(this.FORMULES_1RM).reduce((acc, [id, formule]) => {
       try {
-        genre = Utils.storage.get(
-          'ft_profil_onboarding', {}
-        ).genre || 'homme';
-      } catch(e) {
-        genre = 'homme';
-      }
-    }
-
-    const arrondir = (val) => Math.round(val / 2.5) * 2.5;
-
-    const recs = [
-      {
-        objectif:   'Force',
-        emoji:      '🏋️',
-        color:      'var(--fd-coral)',
-        pct_min:    85,
-        pct_max:    95,
-        reps:       genre === 'femme' ? '3-6' : '1-5',
-        series:     '4-6',
-        charge_min: arrondir(un_rm * 0.85),
-        charge_max: arrondir(un_rm * 0.95),
-        conseil:    'Récupération 3-5 min entre séries',
-        // ✅ NOUVEAU v2.0 — Volume hebdo recommandé
-        volHebdo:   genre === 'femme'
-          ? '9-12 séries/sem'
-          : '10-15 séries/sem'
-      },
-      {
-        objectif:   'Hypertrophie',
-        emoji:      '💪',
-        color:      'var(--fd-indigo)',
-        pct_min:    65,
-        pct_max:    80,
-        reps:       genre === 'femme' ? '10-15' : '6-12',
-        series:     genre === 'femme' ? '4-5' : '3-4',
-        charge_min: arrondir(un_rm * 0.65),
-        charge_max: arrondir(un_rm * 0.80),
-        conseil:    genre === 'femme'
-          ? 'Récupération 60-75 sec. Focus contraction'
-          : 'Récupération 60-90 sec entre séries',
-        volHebdo: genre === 'femme'
-          ? '14-20 séries/sem'
-          : '12-18 séries/sem'
-      },
-      {
-        objectif:   'Endurance musculaire',
-        emoji:      '🔥',
-        color:      'var(--fd-mint)',
-        pct_min:    50,
-        pct_max:    65,
-        reps:       genre === 'femme' ? '15-25' : '12-20',
-        series:     '2-3',
-        charge_min: arrondir(un_rm * 0.50),
-        charge_max: arrondir(un_rm * 0.65),
-        conseil:    'Récupération 30-45 sec entre séries',
-        volHebdo:   '10-15 séries/sem'
-      }
-    ];
-
-    // ✅ NOUVEAU v2.0 — Objectif Lower Body pour femme
-    if (genre === 'femme') {
-      recs.push({
-        objectif:   'Fessiers / Lower',
-        emoji:      '🍑',
-        color:      'var(--fd-coral)',
-        pct_min:    60,
-        pct_max:    75,
-        reps:       '12-20',
-        series:     '4-5',
-        charge_min: arrondir(un_rm * 0.60),
-        charge_max: arrondir(un_rm * 0.75),
-        conseil:    'Contraction maximale en haut. Tempo 2-0-2-1',
-        volHebdo:   '16-22 séries/sem'
-      });
-    }
-
-    return recs;
+        const val = formule.calcul(poids, reps);
+        acc[id] = {
+          nom:    formule.nom,
+          valeur: Math.round(val * 10) / 10,
+          info:   formule.info
+        };
+      } catch(e) {}
+      return acc;
+    }, {});
   },
 
-  chargeParPourcentage(un_rm, pourcentage) {
-    const charge = un_rm * (pourcentage / 100);
-    return Math.round(charge / 2.5) * 2.5;
+  calculer1RMMoyen(poids, reps) {
+    const resultats = Object.values(this.calculer1RMTous(poids, reps))
+      .map(r => r.valeur)
+      .filter(v => v > 0);
+    return resultats.length > 0
+      ? Math.round(
+          resultats.reduce((a,b) => a+b, 0) / resultats.length * 10
+        ) / 10
+      : 0;
   },
 
-  repsEstimees(un_rm, charge) {
-    if (!un_rm || !charge || charge > un_rm) return 0;
-    const pct  = charge / un_rm;
-    const reps = Math.round(30 * (1 / pct - 1));
-    return Math.max(1, Math.min(30, reps));
+  getZonesEntrainement(rm1) {
+    return [
+      { zone:'Endurance',    pct:50, reps:'15-20+', repos:'30s',   color:'#8bf0bb', objectif:'Fond & endurance' },
+      { zone:'Hypertrophie', pct:65, reps:'12-15',  repos:'60s',   color:'#4b4bf9', objectif:'Volume musculaire' },
+      { zone:'Hypertrophie+',pct:75, reps:'8-12',   repos:'90s',   color:'#bfa1ff', objectif:'Masse & définition' },
+      { zone:'Force',        pct:85, reps:'4-6',    repos:'3min',  color:'#f9ef77', objectif:'Gain de force' },
+      { zone:'Force max',    pct:90, reps:'2-3',    repos:'4min',  color:'#ffa500', objectif:'Développement neural' },
+      { zone:'Puissance max',pct:95, reps:'1-2',    repos:'5min+', color:'#ff8d96', objectif:'1RM & puissance' }
+    ].map(z => ({
+      ...z,
+      charge:    Math.round(rm1 * z.pct / 100 / 2.5) * 2.5
+    }));
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ NOUVEAU v2.0 — getSuggestionCharge(ref)
-  // Appelée par Tracker.getSuggestionCharge() / History.js
+  // WILKS SCORE
   // ════════════════════════════════════════════════════════
-  getSuggestionCharge(exerciceRef) {
-    try {
-      const pr   = Tracker.getPR(exerciceRef);
-      const hist = Tracker.getHistoriqueExercice(exerciceRef, 5);
+  calculerWilks(total, poidsCorps, genre = 'homme') {
+    if (!total || !poidsCorps) return 0;
 
-      if (!hist.length) return null;
+    // Coefficients Wilks 2020 (Wilks II)
+    const coeffsHomme  = [-216.0475144, 16.2606339, -0.002388645, -0.00113732, 7.01863e-6, -1.291e-8];
+    const coeffsFemme  = [594.31747775582, -27.23842536447, 0.82112226871, -0.00930733913, 4.731582e-5, -9.054e-8];
+    const coeffs       = genre === 'femme' ? coeffsFemme : coeffsHomme;
 
-      const derniere = hist.sort(
-        (a,b) => (b.date||'').localeCompare(a.date||'')
-      )[0];
+    const b = poidsCorps;
+    const denom = coeffs[0]
+      + coeffs[1] * b
+      + coeffs[2] * b**2
+      + coeffs[3] * b**3
+      + coeffs[4] * b**4
+      + coeffs[5] * b**5;
 
-      if (!derniere?.poids) return null;
+    const coeff = denom !== 0 ? 600 / denom : 0;
+    return Math.round(total * coeff * 10) / 10;
+  },
 
-      let phase = { nom:'Construction', intensite:0.75 };
-      try { phase = Programme.getPhaseActuelle(); } catch(e) {}
-
-      // ✅ Déterminer si progression est possible
-      const rm1Actuel   = pr?.rm1 || this.calculer1RM(
-        derniere.poids, derniere.reps
-      );
-      const chargeIdeal = Math.round(
-        rm1Actuel * phase.intensite / 2.5
-      ) * 2.5;
-
-      // ✅ Comparaison avec dernière séance
-      const deltaCHarge = chargeIdeal - derniere.poids;
-      const action      = deltaCHarge > 0
-        ? 'augmenter' : deltaCHarge < 0 ? 'reduire' : 'maintenir';
-
-      return {
-        ref:           exerciceRef,
-        poids:         chargeIdeal,
-        dernierePoids: derniere.poids,
-        derniereReps:  derniere.reps,
-        delta:         Utils.arrondir(deltaCHarge),
-        action,
-        rm1:           rm1Actuel,
-        phase:         phase.nom,
-        raison:        action === 'augmenter'
-          ? `Phase ${phase.nom} → +${Math.abs(deltaCHarge)}kg vs dernière`
-          : action === 'reduire'
-            ? `Récupération → -${Math.abs(deltaCHarge)}kg conseillé`
-            : `Charge maintenue (phase ${phase.nom})`
-      };
-    } catch(e) {
-      return null;
-    }
+  getCategorieWilks(score) {
+    if (score >= 500)      return { label:'Elite mondiale',  color:'#f9ef77', emoji:'👑' };
+    if (score >= 400)      return { label:'Compétition nat.',color:'#ff8d96', emoji:'💥' };
+    if (score >= 300)      return { label:'Avancé',          color:'#bfa1ff', emoji:'💎' };
+    if (score >= 200)      return { label:'Intermédiaire',   color:'#4b4bf9', emoji:'🔥' };
+    if (score >= 100)      return { label:'Débutant solide', color:'#8bf0bb', emoji:'💪' };
+    return                        { label:'Débutant',        color:'#ffffff', emoji:'🌱' };
   },
 
   // ════════════════════════════════════════════════════════
-  // RENDER INLINE (sous exercice)
+  // FFMI — Fat-Free Mass Index
   // ════════════════════════════════════════════════════════
-  renderCalculateur(exoRef, exoIdx) {
-    const containerId = `calc-${exoIdx}`;
-    const existing    = document.getElementById(containerId);
+  calculerFFMI(poidsTotal, taille, pctGraisse = null) {
+    if (!poidsTotal || !taille) return null;
 
-    if (existing) {
-      existing.remove();
-      return;
-    }
+    const tailleMetre  = taille / 100;
+    const masseGrasse  = pctGraisse !== null
+      ? (poidsTotal * pctGraisse / 100)
+      : (poidsTotal * 0.15); // Estimation 15% défaut
 
-    const panel = document.createElement('div');
-    panel.id    = containerId;
-    panel.style.cssText = `
-      margin-top:     8px;
-      padding:        var(--space-md);
-      background:     rgba(75,75,249,0.08);
-      border:         1px solid rgba(75,75,249,0.25);
-      border-radius:  var(--radius-md);
-      animation:      fadeIn .2s ease;
-    `;
+    const masseMaigre  = poidsTotal - masseGrasse;
+    const ffmi         = masseMaigre / (tailleMetre ** 2);
+    const ffmiNormalise= ffmi + 6.1 * (1.8 - tailleMetre);
 
-    // ✅ NOUVEAU v2.0 — Pré-remplir avec dernière perf
-    let dernierPoids = '', derniereReps = '';
-    try {
-      const derniere = Tracker.getDernierePerf(null, exoRef);
-      if (derniere?.poids) dernierPoids = derniere.poids;
-      if (derniere?.reps)  derniereReps = derniere.reps;
-    } catch(e) {}
-
-    panel.innerHTML = `
-      <div style="font-size:.72rem;font-weight:700;
-                  color:var(--fd-indigo);
-                  text-transform:uppercase;
-                  letter-spacing:.08em;
-                  margin-bottom:var(--space-sm)">
-        🧮 Calculateur 1RM
-      </div>
-
-      <div style="display:grid;
-                  grid-template-columns:1fr 1fr auto;
-                  gap:var(--space-xs);
-                  margin-bottom:var(--space-sm)">
-        <div>
-          <div style="font-size:.65rem;color:var(--text-muted);
-                      margin-bottom:3px">Poids (kg)</div>
-          <input type="number"
-                 id="calc-poids-${exoIdx}"
-                 class="input"
-                 placeholder="ex: 80"
-                 value="${dernierPoids}"
-                 step="2.5"
-                 style="padding:8px;font-size:.85rem;
-                        text-align:center"/>
-        </div>
-        <div>
-          <div style="font-size:.65rem;color:var(--text-muted);
-                      margin-bottom:3px">Répétitions</div>
-          <input type="number"
-                 id="calc-reps-${exoIdx}"
-                 class="input"
-                 placeholder="ex: 8"
-                 value="${derniereReps}"
-                 min="1" max="30"
-                 style="padding:8px;font-size:.85rem;
-                        text-align:center"/>
-        </div>
-        <div style="display:flex;align-items:flex-end">
-          <button onclick="Calculateur._calculerEtAfficher(${exoIdx})"
-                  class="btn-primary"
-                  style="padding:8px 12px;font-size:.82rem;
-                         white-space:nowrap">
-            Calculer →
-          </button>
-        </div>
-      </div>
-
-      <div id="calc-resultat-${exoIdx}"></div>
-    `;
-
-    const carte = document.getElementById(`live-exo-${exoIdx}`);
-    if (carte) {
-      carte.appendChild(panel);
-    }
-
-    // ✅ Auto-calculer si pré-rempli
-    if (dernierPoids && derniereReps) {
-      setTimeout(() => {
-        this._calculerEtAfficher(exoIdx);
-      }, 150);
-    } else {
-      setTimeout(() => {
-        document.getElementById(`calc-poids-${exoIdx}`)?.focus();
-      }, 100);
-    }
+    return {
+      ffmi:        Math.round(ffmi * 10) / 10,
+      ffmiNorm:    Math.round(ffmiNormalise * 10) / 10,
+      masseMaigre: Math.round(masseMaigre * 10) / 10,
+      masseGrasse: Math.round(masseGrasse * 10) / 10,
+      categorie:   this._categorieFFMI(ffmiNormalise)
+    };
   },
 
-  _calculerEtAfficher(exoIdx) {
-    const poids = parseFloat(
-      document.getElementById(`calc-poids-${exoIdx}`)?.value
-    );
-    const reps  = parseInt(
-      document.getElementById(`calc-reps-${exoIdx}`)?.value
-    );
-
-    if (!poids || !reps) {
-      const el = document.getElementById(`calc-resultat-${exoIdx}`);
-      if (el) el.innerHTML = `
-        <div style="font-size:.75rem;color:var(--fd-coral);
-                    text-align:center;padding:var(--space-sm)">
-          ⚠️ Entre le poids et les répétitions
-        </div>`;
-      return;
-    }
-
-    const un_rm        = this.calculer1RM(poids, reps);
-    const recommandations = this.getRecommandations(un_rm);
-
-    const el = document.getElementById(`calc-resultat-${exoIdx}`);
-    if (!el) return;
-
-    el.innerHTML = `
-
-      <!-- 1RM estimé -->
-      <div style="text-align:center;
-                  padding:var(--space-md);
-                  background:rgba(75,75,249,0.12);
-                  border-radius:var(--radius-sm);
-                  margin-bottom:var(--space-sm)">
-        <div style="font-size:.65rem;color:var(--text-muted);
-                    text-transform:uppercase;letter-spacing:.08em">
-          1RM estimé
-        </div>
-        <div style="font-size:2rem;font-weight:800;
-                    color:var(--fd-indigo);
-                    line-height:1.1;margin-top:2px">
-          ${un_rm} kg
-        </div>
-        <div style="font-size:.65rem;color:var(--text-muted);
-                    margin-top:2px">
-          Basé sur ${poids}kg × ${reps} reps
-        </div>
-      </div>
-
-      <!-- Recommandations -->
-      <div style="font-size:.68rem;font-weight:700;
-                  color:var(--text-muted);
-                  text-transform:uppercase;
-                  letter-spacing:.08em;
-                  margin-bottom:var(--space-xs)">
-        Charges recommandées
-      </div>
-
-      ${recommandations.map(r => `
-        <div style="display:flex;align-items:center;
-                    justify-content:space-between;
-                    padding:var(--space-sm);
-                    background:var(--bg-input);
-                    border-radius:var(--radius-sm);
-                    margin-bottom:4px;
-                    border-left:3px solid ${r.color}">
-          <div>
-            <div style="font-size:.78rem;font-weight:700">
-              ${r.emoji} ${r.objectif}
-            </div>
-            <div style="font-size:.65rem;color:var(--text-muted)">
-              ${r.reps} reps · ${r.series} séries
-              · ${r.pct_min}-${r.pct_max}%
-            </div>
-            <div style="font-size:.62rem;color:var(--text-muted);
-                        margin-top:1px;font-style:italic">
-              ${r.conseil}
-            </div>
-            ${r.volHebdo ? `
-              <div style="font-size:.6rem;
-                          color:${r.color};margin-top:2px">
-                📊 ${r.volHebdo}
-              </div>` : ''}
-          </div>
-          <div style="text-align:right;flex-shrink:0;
-                      margin-left:var(--space-sm)">
-            <div style="font-size:.9rem;font-weight:800;
-                        color:${r.color}">
-              ${r.charge_min}–${r.charge_max}kg
-            </div>
-            <button onclick="Calculateur._appliquerCharge(
-                      ${exoIdx}, ${r.charge_max})"
-                    style="margin-top:4px;
-                           padding:3px 8px;
-                           font-size:.62rem;
-                           font-weight:700;
-                           background:${r.color};
-                           color:var(--fd-midnight);
-                           border:none;
-                           border-radius:var(--radius-full);
-                           cursor:pointer">
-              Utiliser
-            </button>
-          </div>
-        </div>`).join('')}
-
-      <!-- ✅ NOUVEAU v2.0 — Reps à une charge donnée -->
-      <div style="margin-top:var(--space-sm);padding:var(--space-sm);
-                  background:rgba(75,75,249,0.06);
-                  border-radius:var(--radius-sm)">
-        <div style="font-size:.65rem;font-weight:700;
-                    color:var(--text-muted);
-                    text-transform:uppercase;
-                    letter-spacing:.06em;margin-bottom:6px">
-          Reps estimées à une charge
-        </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input type="number"
-                 id="calc-charge-test-${exoIdx}"
-                 class="input"
-                 placeholder="Charge (kg)"
-                 step="2.5"
-                 style="flex:1;padding:6px;font-size:.78rem;
-                        text-align:center"/>
-          <button onclick="(() => {
-            const c = parseFloat(document.getElementById(
-              'calc-charge-test-${exoIdx}').value);
-            const r = Calculateur.repsEstimees(${un_rm}, c);
-            document.getElementById(
-              'calc-reps-test-${exoIdx}').textContent =
-              c && r ? r + ' reps estimées' : '—';
-          })()"
-                  class="btn-secondary"
-                  style="padding:6px 10px;font-size:.72rem">
-            →
-          </button>
-        </div>
-        <div id="calc-reps-test-${exoIdx}"
-             style="font-size:.78rem;font-weight:700;
-                    color:var(--fd-indigo);
-                    text-align:center;margin-top:6px">
-        </div>
-      </div>
-
-      <!-- Tableau des % -->
-      <details style="margin-top:var(--space-sm)">
-        <summary style="font-size:.68rem;color:var(--text-muted);
-                        cursor:pointer;padding:var(--space-xs) 0">
-          📊 Voir tous les pourcentages
-        </summary>
-        <div style="display:grid;
-                    grid-template-columns:repeat(4,1fr);
-                    gap:3px;margin-top:var(--space-xs)">
-          ${[100,95,90,85,80,75,70,65,60,55,50,45].map(pct => `
-            <div style="text-align:center;
-                        padding:4px 2px;
-                        background:var(--bg-input);
-                        border-radius:var(--radius-sm)">
-              <div style="font-size:.6rem;
-                          color:var(--text-muted)">${pct}%</div>
-              <div style="font-size:.72rem;font-weight:700;
-                          color:var(--text-primary)">
-                ${this.chargeParPourcentage(un_rm, pct)}kg
-              </div>
-            </div>`).join('')}
-        </div>
-      </details>
-    `;
-  },
-
-  // ✅ v2.0 — _appliquerCharge avec mise à jour timerPoids
-  _appliquerCharge(exoIdx, charge) {
-    let s = 0;
-    while (document.getElementById(`poids-${exoIdx}-${s}`)) {
-      document.getElementById(`poids-${exoIdx}-${s}`).value = charge;
-      s++;
-    }
-    // ✅ NOUVEAU v2.0 — Mettre à jour timerPoidsModifie
-    window._timerPoidsModifie = charge;
-
-    Utils.toast(
-      `💪 ${charge}kg appliqué sur toutes les séries`,
-      'success', 2000
-    );
+  _categorieFFMI(ffmi) {
+    if (ffmi >= 26)    return { label:'Athlète de haut niveau', color:'#f9ef77', emoji:'👑', info:'Rare — possible sans dopage' };
+    if (ffmi >= 24)    return { label:'Très musclé',            color:'#ff8d96', emoji:'💥', info:'Top 5% de la population' };
+    if (ffmi >= 22)    return { label:'Musclé',                 color:'#4b4bf9', emoji:'💪', info:'Résultat d\'années d\'entraînement' };
+    if (ffmi >= 20)    return { label:'Bien musclé',            color:'#8bf0bb', emoji:'⚡', info:'Entraînement sérieux visible' };
+    if (ffmi >= 18)    return { label:'Entraîné',               color:'#bfa1ff', emoji:'🏃', info:'Masse musculaire correcte' };
+    return                    { label:'Natif',                  color:'#ffffff', emoji:'🌱', info:'Potentiel de gain important' };
   },
 
   // ════════════════════════════════════════════════════════
-  // ✅ NOUVEAU v2.0 — render() page complète
+  // IMC
+  // ════════════════════════════════════════════════════════
+  calculerIMC(poids, taille) {
+    if (!poids || !taille) return null;
+    const imc = poids / ((taille/100) ** 2);
+    return {
+      valeur:    Math.round(imc * 10) / 10,
+      categorie: this._categorieIMC(imc)
+    };
+  },
+
+  _categorieIMC(imc) {
+    if (imc < 16.5)  return { label:'Maigreur sévère', color:'#ff8d96', emoji:'⚠️'  };
+    if (imc < 18.5)  return { label:'Maigreur',        color:'#ffa500', emoji:'📉'  };
+    if (imc < 25)    return { label:'Poids normal',    color:'#8bf0bb', emoji:'✅'  };
+    if (imc < 30)    return { label:'Surpoids',        color:'#f9ef77', emoji:'📊'  };
+    if (imc < 35)    return { label:'Obésité I',       color:'#ffa500', emoji:'⚠️'  };
+    if (imc < 40)    return { label:'Obésité II',      color:'#ff8d96', emoji:'⚠️'  };
+    return                  { label:'Obésité III',     color:'#ff4444', emoji:'🚨'  };
+  },
+
+  // ════════════════════════════════════════════════════════
+  // CALORIES BRÛLÉES
+  // ════════════════════════════════════════════════════════
+  ACTIVITES: {
+    musculation_intense: { label:'Musculation intense',    met:6.0  },
+    musculation_modere:  { label:'Musculation modérée',    met:3.5  },
+    hiit:                { label:'HIIT / Circuit',         met:8.0  },
+    cardio_leger:        { label:'Cardio léger',           met:4.0  },
+    cardio_intense:      { label:'Cardio intense',         met:9.0  },
+    course_lente:        { label:'Course lente (8km/h)',   met:7.0  },
+    course_rapide:       { label:'Course rapide (12km/h)', met:11.5 },
+    velo:                { label:'Vélo (20km/h)',          met:7.5  },
+    natation:            { label:'Natation',               met:6.0  },
+    yoga:                { label:'Yoga / Stretching',      met:2.5  },
+    marche_active:       { label:'Marche active',          met:4.5  },
+    boxe:                { label:'Boxe / Arts martiaux',   met:7.5  }
+  },
+
+  calculerCalories(activiteId, dureeMin, poidsKg, genre = 'homme') {
+    const act = this.ACTIVITES[activiteId];
+    if (!act || !dureeMin || !poidsKg) return 0;
+
+    // Formule MET
+    const cal = (act.met * poidsKg * 3.5 / 200) * dureeMin;
+
+    // Correction genre (femmes brûlent ~10% moins)
+    const coeff = genre === 'femme' ? 0.9 : 1.0;
+
+    return Math.round(cal * coeff);
+  },
+
+  // ════════════════════════════════════════════════════════
+  // ZONES FC (Fréquence Cardiaque)
+  // ════════════════════════════════════════════════════════
+  calculerZonesFC(age, fcRepos = 60) {
+    const fcMax  = 220 - age;
+    const fcRes  = fcMax - fcRepos; // FC de réserve (Karvonen)
+
+    return [
+      { zone:1, nom:'Récupération active',  pctMin:50, pctMax:60, color:'#8bf0bb',
+        objectif:'Récupération, chaleur' },
+      { zone:2, nom:'Endurance de base',    pctMin:60, pctMax:70, color:'#4b4bf9',
+        objectif:'Fondamental, brûle graisses' },
+      { zone:3, nom:'Aérobie',              pctMin:70, pctMax:80, color:'#f9ef77',
+        objectif:'Condition cardio, endurance' },
+      { zone:4, nom:'Seuil anaérobie',      pctMin:80, pctMax:90, color:'#ffa500',
+        objectif:'Performance, puissance' },
+      { zone:5, nom:'VO2 Max',              pctMin:90, pctMax:100,color:'#ff8d96',
+        objectif:'Puissance maximale — court' }
+    ].map(z => ({
+      ...z,
+      fcMin: Math.round(fcRepos + fcRes * z.pctMin/100),
+      fcMax: Math.round(fcRepos + fcRes * z.pctMax/100),
+      fcMaxAbs: fcMax
+    }));
+  },
+
+  // ════════════════════════════════════════════════════════
+  // RENDER PRINCIPAL
   // ════════════════════════════════════════════════════════
   render(container) {
     if (!container) return;
 
-    let genre = 'homme';
+    container.innerHTML = `
+      <div style="display:flex;gap:5px;overflow-x:auto;
+                  scrollbar-width:none;margin-bottom:14px">
+        ${[
+          { id:'rm1',       label:'💪 1RM'         },
+          { id:'zones',     label:'📊 Zones'        },
+          { id:'wilks',     label:'🏋️ Wilks'       },
+          { id:'ffmi',      label:'🧬 FFMI'         },
+          { id:'calories',  label:'🔥 Calories'     },
+          { id:'fc',        label:'❤️ Zones FC'     }
+        ].map(t => `
+          <button onclick="Calculateur._changerOnglet('${t.id}')"
+                  style="padding:8px 14px;white-space:nowrap;
+                         font-size:.72rem;font-weight:700;
+                         border-radius:var(--radius-full);
+                         cursor:pointer;transition:all .2s;
+                         background:${this._ongletActif === t.id
+                           ? 'var(--fd-indigo)'
+                           : 'rgba(255,255,255,0.06)'};
+                         border:1px solid ${this._ongletActif === t.id
+                           ? 'var(--fd-indigo)'
+                           : 'rgba(255,255,255,0.1)'};
+                         color:${this._ongletActif === t.id
+                           ? 'white' : 'var(--text-muted)'}">
+            ${t.label}
+          </button>`).join('')}
+      </div>
+      <div id="calc-content"></div>`;
+
+    this._rendreOnglet();
+  },
+
+  _changerOnglet(id) {
+    this._ongletActif = id;
+    const c = document.getElementById('page-calculateur')
+      || document.getElementById('page-tools');
+    if (c) this.render(c);
+  },
+
+  _rendreOnglet() {
+    const c = document.getElementById('calc-content');
+    if (!c) return;
+    switch(this._ongletActif) {
+      case 'rm1':      this._rendreRM1(c);      break;
+      case 'zones':    this._rendreZones(c);    break;
+      case 'wilks':    this._rendreWilks(c);    break;
+      case 'ffmi':     this._rendreFFMI(c);     break;
+      case 'calories': this._rendreCalories(c); break;
+      case 'fc':       this._rendreFC(c);       break;
+    }
+  },
+
+  // ─── ONGLET 1RM ─────────────────────────────────────────
+  _rendreRM1(container) {
+    let poidsPre = 0, repsPre = 0;
     try {
-      genre = Utils.storage.get('ft_profil_onboarding', {})
-        .genre || 'homme';
+      const prs = Tracker.getAllPRs();
+      const top = Object.values(prs).sort((a,b)=>(b.rm1||0)-(a.rm1||0))[0];
+      if (top) { poidsPre = top.poids || 0; repsPre = top.reps || 0; }
     } catch(e) {}
 
-    let prs = {};
-    try { prs = Tracker.getAllPRs(); } catch(e) {}
-    const refs = Object.keys(prs);
-
     container.innerHTML = `
-
-      <!-- Titre -->
-      <div class="card mb-md"
-           style="background:linear-gradient(135deg,
-                  rgba(75,75,249,0.15),rgba(75,75,249,0.05));
-                  border-color:var(--fd-indigo)">
-        <div style="font-size:1.5rem;margin-bottom:4px">🧮</div>
-        <div style="font-weight:700;font-size:1.1rem">
-          Calculateur 1RM
-        </div>
-        <div style="font-size:.78rem;color:var(--text-muted);
-                    margin-top:4px">
-          Calcule ton 1RM estimé et tes charges optimales
-          ${genre === 'femme' ? '🌸' : ''}
-        </div>
-      </div>
-
-      <!-- Calculateur manuel -->
       <div class="card mb-md">
-        <div class="card-label">🏋️ Calcul rapide</div>
-        <div style="display:grid;
-                    grid-template-columns:1fr 1fr;
-                    gap:var(--space-sm);
-                    margin-top:var(--space-md)">
+        <div class="card-label mb-md">💪 Calculateur 1RM multi-formules</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
           <div>
             <div class="input-label">Poids soulevé (kg)</div>
-            <input type="number"
-                   id="page-calc-poids"
-                   class="input"
-                   placeholder="ex: 80"
-                   step="2.5"/>
+            <input id="calc-poids" type="number" class="input"
+                   placeholder="80" value="${poidsPre || ''}"
+                   oninput="Calculateur._calcRM1()"
+                   min="1" max="500"/>
           </div>
           <div>
             <div class="input-label">Répétitions</div>
-            <input type="number"
-                   id="page-calc-reps"
-                   class="input"
-                   placeholder="ex: 8"
+            <input id="calc-reps" type="number" class="input"
+                   placeholder="5" value="${repsPre || ''}"
+                   oninput="Calculateur._calcRM1()"
                    min="1" max="30"/>
           </div>
         </div>
-        <button onclick="Calculateur._pageCalculer()"
-                class="btn-primary mt-md"
-                style="width:100%">
-          🧮 Calculer mon 1RM
-        </button>
-        <div id="page-calc-resultat"
-             style="margin-top:var(--space-md)"></div>
-      </div>
+        <div id="rm1-result"></div>
+      </div>`;
 
-      <!-- 1RM depuis PRs existants -->
-      ${refs.length > 0 ? `
-        <div class="section-title">📊 Mes 1RM depuis mes records</div>
-        <div class="card mb-md">
-          ${refs.slice(0, 8).map(ref => {
-            const pr = prs[ref];
-            const ex = (window.EXERCICES||{})[ref] || {};
-            if (!pr?.poids || !pr?.reps) return '';
-            const rm1 = pr.rm1 || this.calculer1RM(
-              pr.poids, pr.reps
-            );
-            return `
-              <div style="padding:var(--space-sm) 0;
-                          border-bottom:1px solid var(--border-color);
-                          cursor:pointer"
-                   onclick="Calculateur._afficherDetailExo(
-                     '${ref}', ${rm1})">
-                <div class="flex justify-between items-center">
-                  <div>
-                    <div style="font-size:.88rem;font-weight:600">
-                      ${ex.emoji||'💪'} ${ex.nom||ref}
-                    </div>
-                    <div style="font-size:.68rem;
-                                color:var(--text-muted)">
-                      Record : ${pr.poids}kg × ${pr.reps} reps
-                    </div>
-                  </div>
-                  <div style="text-align:right">
-                    <div style="font-size:1.1rem;font-weight:800;
-                                color:var(--fd-indigo)">
-                      ~${rm1}kg
-                    </div>
-                    <div style="font-size:.62rem;
-                                color:var(--text-muted)">
-                      1RM estimé
-                    </div>
-                  </div>
-                </div>
-              </div>`;
-          }).join('')}
-          <div id="detail-exo-calc"
-               style="margin-top:var(--space-sm)"></div>
-        </div>` : `
-        <div class="card mb-md"
-             style="text-align:center;padding:var(--space-xl)">
-          <div style="font-size:2rem">🏋️</div>
-          <p style="color:var(--text-muted);font-size:.88rem;
-                    margin-top:var(--space-sm)">
-            Fais des séances pour voir tes 1RM ici !
-          </p>
-        </div>`}
-
-      <!-- Guide formules -->
-      <div class="card">
-        <div class="card-label">📐 À propos des formules</div>
-        <div style="margin-top:var(--space-sm)">
-          ${[
-            {
-              nom:'Epley',
-              desc:'La plus utilisée. Poids × (1 + reps/30)',
-              fiable:'Toutes les plages de reps'
-            },
-            {
-              nom:'Brzycki',
-              desc:'Précise pour 1-10 reps. Poids × 36/(37-reps)',
-              fiable:'1 à 10 reps'
-            },
-            {
-              nom:'Lombardi',
-              desc:'Poids × reps^0.10',
-              fiable:'Hautes reps'
-            },
-            {
-              nom:'O\'Conner',
-              desc:'Poids × (1 + 0.025 × reps)',
-              fiable:'Hautes reps'
-            }
-          ].map(f => `
-            <div style="padding:var(--space-xs) 0;
-                        border-bottom:1px solid var(--border-color)">
-              <div style="font-size:.82rem;font-weight:600;
-                          color:var(--fd-indigo)">
-                ${f.nom}
-              </div>
-              <div style="font-size:.72rem;color:var(--text-muted)">
-                ${f.desc}
-              </div>
-              <div style="font-size:.62rem;color:var(--fd-mint)">
-                ✓ ${f.fiable}
-              </div>
-            </div>`).join('')}
-          <div style="font-size:.65rem;color:var(--text-muted);
-                      margin-top:var(--space-sm);
-                      font-style:italic">
-            💡 PowerApp utilise une moyenne pondérée des 4 formules
-            pour la meilleure précision.
-          </div>
-        </div>
-      </div>
-    `;
+    if (poidsPre && repsPre) this._calcRM1();
   },
 
-  _pageCalculer() {
-    const poids = parseFloat(
-      document.getElementById('page-calc-poids')?.value
-    );
-    const reps  = parseInt(
-      document.getElementById('page-calc-reps')?.value
-    );
-
-    const el = document.getElementById('page-calc-resultat');
-    if (!el) return;
+  _calcRM1() {
+    const poids = parseFloat(document.getElementById('calc-poids')?.value) || 0;
+    const reps  = parseInt(document.getElementById('calc-reps')?.value)    || 0;
+    const res   = document.getElementById('rm1-result');
+    if (!res) return;
 
     if (!poids || !reps) {
-      el.innerHTML = `
-        <div style="font-size:.78rem;color:var(--fd-coral);
-                    text-align:center;padding:var(--space-sm)">
-          ⚠️ Entre le poids et les répétitions
-        </div>`;
+      res.innerHTML = '';
       return;
     }
 
-    const un_rm        = this.calculer1RM(poids, reps);
-    const recommandations = this.getRecommandations(un_rm);
+    const resultats = this.calculer1RMTous(poids, reps);
+    const moyen     = this.calculer1RMMoyen(poids, reps);
+    const vals      = Object.values(resultats).map(r => r.valeur);
+    const max       = Math.max(...vals);
+    const min       = Math.min(...vals);
 
-    el.innerHTML = `
-      <div style="text-align:center;
-                  padding:var(--space-md);
-                  background:rgba(75,75,249,0.12);
-                  border-radius:var(--radius-sm);
-                  margin-bottom:var(--space-md)">
-        <div style="font-size:.65rem;color:var(--text-muted);
-                    text-transform:uppercase;letter-spacing:.08em">
-          1RM estimé
+    res.innerHTML = `
+      <!-- 1RM moyen -->
+      <div style="text-align:center;padding:14px;
+                  background:rgba(75,75,249,0.1);
+                  border:2px solid rgba(75,75,249,0.3);
+                  border-radius:var(--radius-xl);
+                  margin-bottom:14px">
+        <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:4px">
+          1RM ESTIMÉ (MOYENNE)
         </div>
-        <div style="font-size:2.5rem;font-weight:800;
-                    color:var(--fd-indigo);
-                    line-height:1.1;margin-top:2px">
-          ${un_rm} kg
+        <div style="font-size:2.5rem;font-weight:900;color:var(--fd-indigo)">
+          ${moyen}kg
         </div>
-        <div style="font-size:.65rem;color:var(--text-muted);
-                    margin-top:2px">
-          Basé sur ${poids}kg × ${reps} reps
+        <div style="font-size:.65rem;color:var(--text-muted);margin-top:4px">
+          Fourchette : ${min}kg — ${max}kg
         </div>
       </div>
 
-      ${recommandations.map(r => `
-        <div style="display:flex;align-items:center;
-                    justify-content:space-between;
-                    padding:var(--space-sm);
-                    background:var(--bg-input);
-                    border-radius:var(--radius-sm);
-                    margin-bottom:4px;
-                    border-left:3px solid ${r.color}">
-          <div>
-            <div style="font-size:.82rem;font-weight:700">
-              ${r.emoji} ${r.objectif}
-            </div>
-            <div style="font-size:.68rem;color:var(--text-muted)">
-              ${r.reps} reps · ${r.series} séries
-              · ${r.pct_min}-${r.pct_max}%
-            </div>
-            <div style="font-size:.62rem;color:var(--text-muted);
-                        font-style:italic">
-              ${r.conseil}
-            </div>
-            ${r.volHebdo ? `
-              <div style="font-size:.6rem;color:${r.color};
-                          margin-top:2px">
-                📊 ${r.volHebdo}
-              </div>` : ''}
-          </div>
-          <div style="text-align:right;flex-shrink:0;
-                      margin-left:var(--space-sm)">
-            <div style="font-size:.9rem;font-weight:800;
-                        color:${r.color}">
-              ${r.charge_min}–${r.charge_max}kg
-            </div>
-          </div>
-        </div>`).join('')}
-
-      <details style="margin-top:var(--space-sm)">
-        <summary style="font-size:.68rem;color:var(--text-muted);
-                        cursor:pointer;padding:4px 0">
-          📊 Tableau pourcentages
-        </summary>
-        <div style="display:grid;
-                    grid-template-columns:repeat(4,1fr);
-                    gap:3px;margin-top:var(--space-xs)">
-          ${[100,95,90,85,80,75,70,65,60,55,50,45].map(pct => `
-            <div style="text-align:center;padding:4px 2px;
-                        background:var(--bg-input);
-                        border-radius:var(--radius-sm)">
-              <div style="font-size:.6rem;
-                          color:var(--text-muted)">${pct}%</div>
-              <div style="font-size:.72rem;font-weight:700">
-                ${this.chargeParPourcentage(un_rm, pct)}kg
+      <!-- Toutes formules -->
+      <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                  letter-spacing:.1em;color:var(--text-muted);margin-bottom:8px">
+        Détail par formule
+      </div>
+      ${Object.entries(resultats).map(([id, r]) => {
+        const pct = max > 0 ? Math.round((r.valeur / max) * 100) : 0;
+        return `
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;
+                        margin-bottom:4px">
+              <div>
+                <span style="font-size:.78rem;font-weight:700">${r.nom}</span>
+                <span style="font-size:.6rem;color:var(--text-muted);
+                             margin-left:6px">${r.info}</span>
               </div>
-            </div>`).join('')}
-        </div>
-      </details>
+              <span style="font-size:.82rem;font-weight:800;
+                           color:var(--fd-indigo)">${r.valeur}kg</span>
+            </div>
+            <div style="height:5px;background:rgba(255,255,255,0.06);
+                        border-radius:99px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;
+                          background:var(--fd-indigo);border-radius:99px"></div>
+            </div>
+          </div>`;
+      }).join('')}
     `;
   },
 
-  _afficherDetailExo(ref, rm1) {
-    const el = document.getElementById('detail-exo-calc');
-    if (!el) return;
+  // ─── ONGLET ZONES ───────────────────────────────────────
+  _rendreZones(container) {
+    let rm1Pre = 0;
+    try {
+      const prs = Tracker.getAllPRs();
+      rm1Pre = Math.max(...Object.values(prs).map(p => p.rm1 || 0), 0);
+    } catch(e) {}
 
-    const recs = this.getRecommandations(rm1);
-    const ex   = (window.EXERCICES||{})[ref] || {};
+    container.innerHTML = `
+      <div class="card mb-md">
+        <div class="card-label mb-md">📊 Zones d'entraînement</div>
+        <div style="margin-bottom:14px">
+          <div class="input-label">1RM de référence (kg)</div>
+          <input id="zones-rm1" type="number" class="input"
+                 placeholder="100" value="${rm1Pre || ''}"
+                 oninput="Calculateur._calcZones()"
+                 min="1" max="500"/>
+        </div>
+        <div id="zones-result"></div>
+      </div>`;
 
-    el.innerHTML = `
-      <div style="padding:var(--space-md);
+    if (rm1Pre) this._calcZones();
+  },
+
+  _calcZones() {
+    const rm1 = parseFloat(document.getElementById('zones-rm1')?.value) || 0;
+    const res = document.getElementById('zones-result');
+    if (!res || !rm1) return;
+
+    const zones = this.getZonesEntrainement(rm1);
+    res.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${zones.map(z => `
+          <div style="display:flex;align-items:center;gap:10px;
+                      padding:12px 14px;
+                      background:${z.color}11;
+                      border:1px solid ${z.color}33;
+                      border-left:4px solid ${z.color};
+                      border-radius:var(--radius-md)">
+            <div style="width:60px;flex-shrink:0;text-align:center">
+              <div style="font-size:1.1rem;font-weight:900;color:${z.color}">
+                ${z.charge}kg
+              </div>
+              <div style="font-size:.55rem;color:var(--text-muted)">
+                ${z.pct}%
+              </div>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:.78rem;font-weight:700">${z.zone}</div>
+              <div style="font-size:.62rem;color:var(--text-muted)">
+                ${z.reps} reps · Repos ${z.repos}
+              </div>
+              <div style="font-size:.6rem;color:${z.color};margin-top:1px">
+                ${z.objectif}
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  },
+
+  // ─── ONGLET WILKS ───────────────────────────────────────
+  _rendreWilks(container) {
+    let poidsCorps = 0;
+    try { poidsCorps = Tracker.getProfil()?.poids || 0; } catch(e) {}
+
+    container.innerHTML = `
+      <div class="card mb-md">
+        <div class="card-label mb-md">🏋️ Score Wilks — Powerlifting</div>
+        <div style="padding:10px 12px;background:rgba(75,75,249,0.06);
+                    border-radius:var(--radius-md);margin-bottom:12px;
+                    font-size:.72rem;color:var(--text-muted)">
+          📊 Le score Wilks normalise ta performance selon ton poids de corps.
+          Utilisé dans les compétitions de powerlifting mondiales.
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          <div>
+            <div class="input-label">Genre</div>
+            <select id="wilks-genre" class="input" onchange="Calculateur._calcWilks()">
+              <option value="homme">👨 Homme</option>
+              <option value="femme">👩 Femme</option>
+            </select>
+          </div>
+          <div>
+            <div class="input-label">Poids de corps (kg)</div>
+            <input id="wilks-poids" type="number" class="input"
+                   value="${poidsCorps || ''}" placeholder="80"
+                   oninput="Calculateur._calcWilks()" min="40" max="200"/>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                    gap:8px;margin-bottom:12px">
+          ${[
+            { id:'wilks-squat',   label:'Squat (kg)',    placeholder:'120' },
+            { id:'wilks-bench',   label:'Bench (kg)',    placeholder:'90'  },
+            { id:'wilks-deadlift',label:'Deadlift (kg)', placeholder:'150' }
+          ].map(f => `
+            <div>
+              <div class="input-label" style="font-size:.58rem">${f.label}</div>
+              <input id="${f.id}" type="number" class="input"
+                     placeholder="${f.placeholder}"
+                     oninput="Calculateur._calcWilks()"
+                     min="0" max="500"/>
+            </div>`).join('')}
+        </div>
+        <div id="wilks-result"></div>
+      </div>`;
+
+    // Préremplir avec les PRs
+    try {
+      const prs = Tracker.getAllPRs();
+      const vals = {
+        'wilks-squat':    prs['squat']?.rm1          || '',
+        'wilks-bench':    prs['bench_press']?.rm1    || '',
+        'wilks-deadlift': prs['soulevé_terre']?.rm1  || ''
+      };
+      Object.entries(vals).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el && val) el.value = val;
+      });
+      if (prs['squat'] || prs['bench_press'] || prs['soulevé_terre']) {
+        this._calcWilks();
+      }
+    } catch(e) {}
+  },
+
+  _calcWilks() {
+    const genre   = document.getElementById('wilks-genre')?.value || 'homme';
+    const poids   = parseFloat(document.getElementById('wilks-poids')?.value)    || 0;
+    const squat   = parseFloat(document.getElementById('wilks-squat')?.value)    || 0;
+    const bench   = parseFloat(document.getElementById('wilks-bench')?.value)    || 0;
+    const deadlft = parseFloat(document.getElementById('wilks-deadlift')?.value) || 0;
+    const res     = document.getElementById('wilks-result');
+    if (!res) return;
+
+    const total = squat + bench + deadlft;
+    if (!total || !poids) {
+      res.innerHTML = '';
+      return;
+    }
+
+    const score    = this.calculerWilks(total, poids, genre);
+    const categorie= this.getCategorieWilks(score);
+
+    res.innerHTML = `
+      <!-- Score principal -->
+      <div style="text-align:center;padding:16px;
+                  background:rgba(249,239,119,0.08);
+                  border:2px solid rgba(249,239,119,0.25);
+                  border-radius:var(--radius-xl);margin-bottom:12px">
+        <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:4px">
+          SCORE WILKS II
+        </div>
+        <div style="font-size:3rem;font-weight:900;color:var(--fd-lemon)">
+          ${score}
+        </div>
+        <div style="font-size:1.2rem;margin-top:4px">${categorie.emoji}</div>
+        <div style="font-size:.82rem;font-weight:700;
+                    color:${categorie.color};margin-top:4px">
+          ${categorie.label}
+        </div>
+      </div>
+
+      <!-- Total et décomposition -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);
+                  gap:6px;margin-bottom:12px">
+        ${[
+          { label:'Total', val:`${total}kg`, color:'var(--fd-lemon)' },
+          { label:'Squat', val:`${squat}kg`, color:'#4b4bf9'         },
+          { label:'Bench', val:`${bench}kg`, color:'#ff8d96'         },
+          { label:'Dead',  val:`${deadlft}kg`,color:'#8bf0bb'        }
+        ].map(s => `
+          <div style="text-align:center;padding:8px 4px;
+                      background:rgba(255,255,255,0.04);
+                      border-radius:var(--radius-md)">
+            <div style="font-size:.78rem;font-weight:700;color:${s.color}">
+              ${s.val}</div>
+            <div style="font-size:.55rem;color:var(--text-muted)">${s.label}</div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Niveaux Wilks -->
+      <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                  letter-spacing:.1em;color:var(--text-muted);margin-bottom:8px">
+        Échelle de référence
+      </div>
+      ${[500,400,300,200,100].map(seuil => {
+        const cat = this.getCategorieWilks(seuil);
+        return `
+          <div style="display:flex;align-items:center;gap:8px;
+                      padding:6px 0;
+                      border-bottom:1px solid rgba(255,255,255,0.05)">
+            <span style="font-size:.8rem">${cat.emoji}</span>
+            <span style="flex:1;font-size:.72rem;
+                         color:${score >= seuil
+                           ? 'var(--text-primary)' : 'var(--text-muted)'}">
+              ${cat.label}
+            </span>
+            <span style="font-size:.72rem;font-weight:700;
+                         color:${score >= seuil ? cat.color : 'var(--text-muted)'}">
+              ${score >= seuil ? '✅' : ''} ${seuil}+
+            </span>
+          </div>`;
+      }).join('')}
+    `;
+  },
+
+  // ─── ONGLET FFMI ────────────────────────────────────────
+  _rendreFFMI(container) {
+    let poidsCorps = 0, tailleCorps = 0;
+    try {
+      const p = Tracker.getProfil();
+      poidsCorps  = p.poids  || 0;
+      tailleCorps = p.taille || 0;
+    } catch(e) {}
+
+    container.innerHTML = `
+      <div class="card mb-md">
+        <div class="card-label mb-md">🧬 FFMI — Indice Masse Musculaire</div>
+        <div style="padding:10px 12px;background:rgba(75,75,249,0.06);
+                    border-radius:var(--radius-md);margin-bottom:12px;
+                    font-size:.72rem;color:var(--text-muted)">
+          🧬 Le FFMI mesure ton niveau de développement musculaire
+          relativement à ta taille. Le maximum naturel est généralement ~26.
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;
+                    gap:8px;margin-bottom:12px">
+          <div>
+            <div class="input-label">Poids (kg)</div>
+            <input id="ffmi-poids" type="number" class="input"
+                   value="${poidsCorps || ''}" placeholder="80"
+                   oninput="Calculateur._calcFFMI()" min="40" max="200"/>
+          </div>
+          <div>
+            <div class="input-label">Taille (cm)</div>
+            <input id="ffmi-taille" type="number" class="input"
+                   value="${tailleCorps || ''}" placeholder="175"
+                   oninput="Calculateur._calcFFMI()" min="140" max="220"/>
+          </div>
+          <div>
+            <div class="input-label">% Masse grasse (optionnel)</div>
+            <input id="ffmi-gras" type="number" class="input"
+                   placeholder="15 (défaut)"
+                   oninput="Calculateur._calcFFMI()" min="3" max="50"/>
+          </div>
+          <div>
+            <div class="input-label">Genre</div>
+            <select id="ffmi-genre" class="input" onchange="Calculateur._calcFFMI()">
+              <option value="homme">👨 Homme</option>
+              <option value="femme">👩 Femme</option>
+            </select>
+          </div>
+        </div>
+        <div id="ffmi-result"></div>
+      </div>`;
+
+    if (poidsCorps && tailleCorps) this._calcFFMI();
+  },
+
+  _calcFFMI() {
+    const poids  = parseFloat(document.getElementById('ffmi-poids')?.value)  || 0;
+    const taille = parseFloat(document.getElementById('ffmi-taille')?.value) || 0;
+    const gras   = parseFloat(document.getElementById('ffmi-gras')?.value)   || null;
+    const res    = document.getElementById('ffmi-result');
+    if (!res || !poids || !taille) return;
+
+    const ffmiData = this.calculerFFMI(poids, taille, gras);
+    const imcData  = this.calculerIMC(poids, taille);
+    if (!ffmiData) return;
+
+    const cat  = ffmiData.categorie;
+    const seuils = [18, 20, 22, 24, 26];
+
+    res.innerHTML = `
+      <!-- Score FFMI -->
+      <div style="text-align:center;padding:16px;
+                  background:${cat.color}11;
+                  border:2px solid ${cat.color}33;
+                  border-radius:var(--radius-xl);margin-bottom:12px">
+        <div style="font-size:.6rem;color:var(--text-muted);margin-bottom:4px">
+          FFMI NORMALISÉ
+        </div>
+        <div style="font-size:3rem;font-weight:900;color:${cat.color}">
+          ${ffmiData.ffmiNorm}
+        </div>
+        <div style="font-size:1.2rem;margin-top:4px">${cat.emoji}</div>
+        <div style="font-size:.82rem;font-weight:700;
+                    color:${cat.color};margin-top:4px">
+          ${cat.label}
+        </div>
+        <div style="font-size:.65rem;color:var(--text-muted);margin-top:2px">
+          ${cat.info}
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                  gap:6px;margin-bottom:12px">
+        ${[
+          { label:'FFMI brut',      val:ffmiData.ffmi,        color:'var(--fd-indigo)'   },
+          { label:'Masse maigre',   val:`${ffmiData.masseMaigre}kg`, color:'var(--fd-mint)'     },
+          { label:'Masse grasse',   val:`${ffmiData.masseGrasse}kg`, color:'var(--fd-coral)'    }
+        ].map(s => `
+          <div style="text-align:center;padding:8px 4px;
+                      background:rgba(255,255,255,0.04);
+                      border-radius:var(--radius-md)">
+            <div style="font-size:.78rem;font-weight:700;color:${s.color}">
+              ${s.val}</div>
+            <div style="font-size:.55rem;color:var(--text-muted);margin-top:2px">
+              ${s.label}</div>
+          </div>`).join('')}
+      </div>
+
+      <!-- IMC -->
+      ${imcData ? `
+        <div style="display:flex;align-items:center;gap:10px;
+                    padding:10px 12px;margin-bottom:12px;
+                    background:rgba(255,255,255,0.04);
+                    border-radius:var(--radius-md)">
+          <span style="font-size:.85rem">${imcData.categorie.emoji}</span>
+          <div style="flex:1;font-size:.75rem">
+            IMC : <strong>${imcData.valeur}</strong>
+            — ${imcData.categorie.label}
+          </div>
+          <div style="font-size:.62rem;color:${imcData.categorie.color};font-weight:700">
+            ${imcData.categorie.label}
+          </div>
+        </div>` : ''}
+
+      <!-- Jauge FFMI -->
+      <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                  letter-spacing:.1em;color:var(--text-muted);margin-bottom:8px">
+        Échelle FFMI
+      </div>
+      <div style="position:relative;height:8px;
+                  background:linear-gradient(to right,
+                    #8bf0bb 0%,#4b4bf9 30%,#bfa1ff 55%,#ff8d96 80%,#f9ef77 100%);
+                  border-radius:99px;margin-bottom:4px">
+        <!-- Indicateur position -->
+        <div style="position:absolute;top:-3px;
+                    left:${Math.min(95, Math.max(0, (ffmiData.ffmiNorm-16)/(28-16)*100))}%;
+                    transform:translateX(-50%);
+                    width:14px;height:14px;
+                    background:white;border-radius:50%;
+                    border:3px solid var(--fd-indigo);
+                    box-shadow:0 2px 6px rgba(0,0,0,0.4)">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;
+                  font-size:.58rem;color:var(--text-muted)">
+        <span>16 — Natif</span>
+        <span>20 — Entraîné</span>
+        <span>24 — Avancé</span>
+        <span>26+ — Elite</span>
+      </div>
+    `;
+  },
+
+  // ─── ONGLET CALORIES ────────────────────────────────────
+  _rendreCalories(container) {
+    let poidsCorps = 0;
+    try { poidsCorps = Tracker.getProfil()?.poids || 0; } catch(e) {}
+
+    container.innerHTML = `
+      <div class="card mb-md">
+        <div class="card-label mb-md">🔥 Calories brûlées</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;
+                    gap:8px;margin-bottom:12px">
+          <div>
+            <div class="input-label">Poids (kg)</div>
+            <input id="cal-poids" type="number" class="input"
+                   value="${poidsCorps || ''}" placeholder="80"
+                   oninput="Calculateur._calcCalories()" min="30" max="200"/>
+          </div>
+          <div>
+            <div class="input-label">Durée (min)</div>
+            <input id="cal-duree" type="number" class="input"
+                   placeholder="60" value="60"
+                   oninput="Calculateur._calcCalories()" min="5" max="300"/>
+          </div>
+          <div>
+            <div class="input-label">Genre</div>
+            <select id="cal-genre" class="input" onchange="Calculateur._calcCalories()">
+              <option value="homme">👨 Homme</option>
+              <option value="femme">👩 Femme</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="font-size:.65rem;color:var(--text-muted);
+                    margin-bottom:8px;font-weight:600">
+          Activité
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${Object.entries(this.ACTIVITES).map(([id, act]) => `
+            <div onclick="Calculateur._selectActivite('${id}',this)"
+                 data-activite="${id}"
+                 style="display:flex;align-items:center;gap:10px;
+                        padding:10px 12px;cursor:pointer;
+                        background:rgba(255,255,255,0.03);
+                        border:1px solid rgba(255,255,255,0.07);
+                        border-radius:var(--radius-md);
+                        transition:all .15s"
+                 onmouseenter="this.style.borderColor='rgba(75,75,249,0.2)'"
+                 onmouseleave="if(!this.classList.contains('selected'))
+                   this.style.borderColor='rgba(255,255,255,0.07)'">
+              <div style="flex:1">
+                <div style="font-size:.78rem;font-weight:600">${act.label}</div>
+                <div style="font-size:.6rem;color:var(--text-muted)">
+                  MET ${act.met}
+                </div>
+              </div>
+              <div id="cal-${id}" style="font-size:.82rem;font-weight:700;
+                          color:var(--fd-lemon)">—</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+
+    this._calcCalories();
+  },
+
+  _activiteSelectionnee: null,
+
+  _selectActivite(id, el) {
+    this._activiteSelectionnee = id;
+    document.querySelectorAll('[data-activite]').forEach(b => {
+      b.style.background   = 'rgba(255,255,255,0.03)';
+      b.style.borderColor  = 'rgba(255,255,255,0.07)';
+    });
+    el.style.background  = 'rgba(75,75,249,0.1)';
+    el.style.borderColor = 'rgba(75,75,249,0.25)';
+    this._calcCalories();
+  },
+
+  _calcCalories() {
+    const poids = parseFloat(document.getElementById('cal-poids')?.value) || 0;
+    const duree = parseFloat(document.getElementById('cal-duree')?.value) || 60;
+    const genre = document.getElementById('cal-genre')?.value || 'homme';
+    if (!poids) return;
+
+    Object.keys(this.ACTIVITES).forEach(id => {
+      const el  = document.getElementById(`cal-${id}`);
+      if (!el) return;
+      const cal = this.calculerCalories(id, duree, poids, genre);
+      el.textContent = `${cal} kcal`;
+    });
+  },
+
+  // ─── ONGLET FC ──────────────────────────────────────────
+  _rendreFC(container) {
+    let agePre = 0;
+    try { agePre = Utils.storage.get('ft_profil_onboarding', {})?.age || 0; } catch(e) {}
+
+    container.innerHTML = `
+      <div class="card mb-md">
+        <div class="card-label mb-md">❤️ Zones de Fréquence Cardiaque</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;
+                    gap:8px;margin-bottom:12px">
+          <div>
+            <div class="input-label">Âge</div>
+            <input id="fc-age" type="number" class="input"
+                   value="${agePre || ''}" placeholder="25"
+                   oninput="Calculateur._calcFC()" min="10" max="90"/>
+          </div>
+          <div>
+            <div class="input-label">FC au repos (bpm)</div>
+            <input id="fc-repos" type="number" class="input"
+                   placeholder="60" value="60"
+                   oninput="Calculateur._calcFC()" min="30" max="100"/>
+          </div>
+        </div>
+        <div id="fc-result"></div>
+      </div>`;
+
+    if (agePre) this._calcFC();
+  },
+
+  _calcFC() {
+    const age    = parseInt(document.getElementById('fc-age')?.value)   || 0;
+    const repos  = parseInt(document.getElementById('fc-repos')?.value) || 60;
+    const res    = document.getElementById('fc-result');
+    if (!res || !age) return;
+
+    const fcMax = 220 - age;
+    const zones = this.calculerZonesFC(age, repos);
+
+    res.innerHTML = `
+      <!-- FC Max -->
+      <div style="text-align:center;padding:12px;
+                  background:rgba(255,141,150,0.08);
+                  border:1px solid rgba(255,141,150,0.2);
+                  border-radius:var(--radius-lg);margin-bottom:12px">
+        <div style="font-size:.6rem;color:var(--text-muted)">FC MAX ESTIMÉE</div>
+        <div style="font-size:2rem;font-weight:900;color:var(--fd-coral)">
+          ${fcMax} bpm
+        </div>
+        <div style="font-size:.65rem;color:var(--text-muted)">
+          Formule : 220 - âge · Méthode Karvonen
+        </div>
+      </div>
+
+      <!-- Zones -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${zones.map(z => `
+          <div style="display:flex;align-items:center;gap:10px;
+                      padding:12px 14px;
+                      background:${z.color}11;
+                      border:1px solid ${z.color}33;
+                      border-left:4px solid ${z.color};
+                      border-radius:var(--radius-md)">
+            <div style="width:40px;text-align:center;flex-shrink:0">
+              <div style="font-size:.72rem;font-weight:800;
+                          color:${z.color}">Z${z.zone}</div>
+              <div style="font-size:.55rem;color:var(--text-muted)">
+                ${z.pctMin}-${z.pctMax}%
+              </div>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:.78rem;font-weight:700">${z.nom}</div>
+              <div style="font-size:.62rem;color:var(--text-muted)">
+                ${z.objectif}
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:.78rem;font-weight:700;color:${z.color}">
+                ${z.fcMin}-${z.fcMax}
+              </div>
+              <div style="font-size:.55rem;color:var(--text-muted)">bpm</div>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <div style="margin-top:12px;padding:8px 12px;
                   background:rgba(75,75,249,0.06);
                   border-radius:var(--radius-md);
-                  border:1px solid rgba(75,75,249,0.2)">
-        <div style="font-weight:700;font-size:.9rem;
-                    margin-bottom:var(--space-sm)">
-          ${ex.emoji||'💪'} ${ex.nom||ref}
-          — 1RM : ${rm1}kg
-        </div>
-        ${recs.map(r => `
-          <div style="display:flex;justify-content:space-between;
-                      padding:var(--space-xs) 0;font-size:.78rem;
-                      border-bottom:1px solid var(--border-color)">
-            <span style="color:${r.color};font-weight:600">
-              ${r.emoji} ${r.objectif}
-            </span>
-            <span>
-              ${r.charge_min}–${r.charge_max}kg
-              (${r.reps} reps)
-            </span>
-          </div>`).join('')}
+                  font-size:.65rem;color:var(--text-muted)">
+        💡 Méthode de Karvonen — plus précise car intègre ta FC au repos
       </div>
     `;
   }
 };
 
 window.Calculateur = Calculateur;
-
-// ✅ Connecter getSuggestionCharge à Tracker
-if (window.Tracker) {
-  window.Tracker.getSuggestionCharge = (ref) =>
-    Calculateur.getSuggestionCharge(ref);
-}
-
-console.log('✅ Calculateur.js v2.0 chargé — 4 formules + Genre-aware + getSuggestionCharge');
+console.log('✅ Calculateur.js v1.0 — 1RM + Zones + Wilks + FFMI + Calories + FC');
