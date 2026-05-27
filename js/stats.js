@@ -1,9 +1,14 @@
 /* ============================================================
-   PowerApp — Stats v5.0
-   Dashboard + Corps + Charges + Graphiques + Calendrier
-   + Photos + Historique + Journal + Objectifs + Blessures
-   + Heatmap musculaire + Rapport PDF + Historique charges Live
-   + Score forme enrichi + Surcharge dashboard
+   PowerApp — Stats v6.0
+   ✅ Tout v5.0 conservé
+   ✅ Heatmap GitHub 52 semaines
+   ✅ Graphiques évolution 1RM interactifs
+   ✅ Timeline PRs animée
+   ✅ Score forme radar chart
+   ✅ Rapport PDF amélioré
+   ✅ Prédiction progression IA
+   ✅ Analytics avancés
+   ✅ Navigation calendrier fixée
    ============================================================ */
 
 const Stats = {
@@ -73,6 +78,7 @@ const Stats = {
   },
 
   getComparaisonSemaines() { return Tracker.getComparaisonSemaines(); },
+
   getHeatmap(semaines = 12) {
     return Tracker.getHeatmapData(semaines * 7);
   },
@@ -153,6 +159,135 @@ const Stats = {
   },
 
   // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v6.0 — Analytics avancés
+  // ════════════════════════════════════════════════════════
+  getAnalyticsAvances() {
+    try {
+      const seances       = Tracker.getHistoriqueSeances(90);
+      const prs           = Tracker.getAllPRs();
+      const vol8          = this.getVolumeParSemaine(8);
+      const rpe8          = Tracker.getRPEParSemaine(8);
+
+      // Meilleure semaine
+      const meilleureSemaine = vol8.length > 0
+        ? vol8.reduce((best, s) =>
+            s.volume > best.volume ? s : best, vol8[0])
+        : null;
+
+      // Exercice le plus fréquent
+      const freqExo = {};
+      seances.forEach(s => {
+        (s.series||[]).forEach(sr => {
+          freqExo[sr.exerciceRef] = (freqExo[sr.exerciceRef]||0) + 1;
+        });
+      });
+      const topExoFreq = Object.entries(freqExo)
+        .sort(([,a],[,b]) => b - a)[0];
+
+      // Tendance RPE (hausse = surmenage, baisse = adaptation)
+      const rpeRecents = rpe8.slice(-3).map(r => r.rpe);
+      const rpeTendance = rpeRecents.length >= 2
+        ? (rpeRecents[rpeRecents.length-1] - rpeRecents[0]) > 0.5
+          ? 'hausse'
+          : (rpeRecents[rpeRecents.length-1] - rpeRecents[0]) < -0.5
+            ? 'baisse' : 'stable'
+        : 'stable';
+
+      // Consistency score (régularité)
+      const joursEntraine = new Set(seances.map(s => s.date)).size;
+      const joursTotaux   = Math.min(90,
+        Math.max(1, seances.length > 0
+          ? Math.ceil(
+              (new Date() - new Date(seances[seances.length-1]?.date))
+              / (1000*60*60*24)
+            )
+          : 30));
+      const consistency = Math.round((joursEntraine / joursTotaux) * 100);
+
+      // Volume moyen par séance
+      const volMoyenSeance = seances.length > 0
+        ? Math.round(
+            seances.reduce((a,s) => a+(s.volumeTotal||0), 0)
+            / seances.length
+          )
+        : 0;
+
+      // PRs ce mois
+      const debutMois = `${new Date().getFullYear()}-${
+        String(new Date().getMonth()+1).padStart(2,'0')}-01`;
+      const prsCeMois = Object.values(prs)
+        .filter(pr => pr.date >= debutMois).length;
+
+      return {
+        meilleureSemaine,
+        topExoFreq: topExoFreq
+          ? {
+              ref:   topExoFreq[0],
+              nom:   window.EXERCICES?.[topExoFreq[0]]?.nom || topExoFreq[0],
+              emoji: window.EXERCICES?.[topExoFreq[0]]?.emoji || '💪',
+              count: topExoFreq[1]
+            }
+          : null,
+        rpeTendance,
+        consistency,
+        volMoyenSeance,
+        prsCeMois,
+        totalSeances90j: seances.length
+      };
+    } catch(e) {
+      return {
+        meilleureSemaine:  null,
+        topExoFreq:        null,
+        rpeTendance:       'stable',
+        consistency:       0,
+        volMoyenSeance:    0,
+        prsCeMois:         0,
+        totalSeances90j:   0
+      };
+    }
+  },
+
+  // ✅ NOUVEAU v6.0 — Prédiction progression IA
+  getPredictionProgression(ref) {
+    try {
+      const prog = this.getProgressionExercice(ref, 90);
+      if (prog.length < 3) return null;
+
+      const rm1s   = prog.map(p => p.rm1).filter(v => v > 0);
+      if (rm1s.length < 3) return null;
+
+      // Régression linéaire simple
+      const n    = rm1s.length;
+      const xMoy = (n - 1) / 2;
+      const yMoy = rm1s.reduce((a,b) => a+b, 0) / n;
+
+      let num = 0, den = 0;
+      rm1s.forEach((y, x) => {
+        num += (x - xMoy) * (y - yMoy);
+        den += (x - xMoy) ** 2;
+      });
+      const slope = den !== 0 ? num / den : 0;
+
+      // Prédire dans 4 semaines (28 jours ≈ 4 points si hebdo)
+      const actuel    = rm1s[rm1s.length - 1];
+      const dans4sem  = Math.round((actuel + slope * 4) / 2.5) * 2.5;
+      const dans8sem  = Math.round((actuel + slope * 8) / 2.5) * 2.5;
+      const dans12sem = Math.round((actuel + slope * 12) / 2.5) * 2.5;
+
+      const gainMensuel = Math.round(slope * 4 * 10) / 10;
+
+      return {
+        actuel,
+        dans4sem:  Math.max(actuel, dans4sem),
+        dans8sem:  Math.max(actuel, dans8sem),
+        dans12sem: Math.max(actuel, dans12sem),
+        gainMensuel,
+        tendance:  slope > 0.5 ? 'forte' : slope > 0 ? 'légère' : 'stagnation'
+      };
+    } catch(e) { return null; }
+  },
+
+  // ════════════════════════════════════════════════════════
   // CHARTS REGISTRY
   // ════════════════════════════════════════════════════════
   _charts: {},
@@ -174,7 +309,10 @@ const Stats = {
       'chart-jours-sem','chart-rpe-evo',
       'chart-progression','chart-poids',
       'chart-mensur','chart-exo',
-      'chart-muscles-heatmap'           // ✅ NOUVEAU v5.0
+      'chart-muscles-heatmap',
+      'chart-radar-forme',
+      'chart-timeline-prs',
+      'chart-heatmap-github'
     ]);
   },
 
@@ -206,6 +344,14 @@ const Stats = {
     };
   },
 
+  _getChartColor(index) {
+    const colors = [
+      '#4b4bf9','#8bf0bb','#f9ef77',
+      '#bfa1ff','#ff8d96','#4b4bf9'
+    ];
+    return colors[index % colors.length];
+  },
+
   // ════════════════════════════════════════════════════════
   // RENDER PRINCIPAL
   // ════════════════════════════════════════════════════════
@@ -222,10 +368,14 @@ const Stats = {
       'charges','graphiques','calendrier','trophees'
     ];
     const tabLabels = {
-      dashboard:'📊 Dashboard', historique:'📋 Historique',
-      corps:'⚖️ Corps',         photos:'📸 Photos',
-      charges:'🏋️ Charges',     graphiques:'📈 Graphiques',
-      calendrier:'🗓️ Calendrier',trophees:'🏆 Trophées'
+      dashboard:   '📊 Dashboard',
+      historique:  '📋 Historique',
+      corps:       '⚖️ Corps',
+      photos:      '📸 Photos',
+      charges:     '🏋️ Charges',
+      graphiques:  '📈 Graphiques',
+      calendrier:  '🗓️ Calendrier',
+      trophees:    '🏆 Trophées'
     };
 
     container.innerHTML = `
@@ -268,7 +418,7 @@ const Stats = {
       <div class="card mb-md">
         <div class="card-label">📔 Nouvelle entrée</div>
         <textarea class="input mt-md" id="journal-input" rows="3"
-                  placeholder="Raconte ta séance, tes sensations, tes progrès..."
+                  placeholder="Raconte ta séance, tes sensations..."
                   style="resize:none;min-height:80px"></textarea>
         <button onclick="Stats._sauvegarderJournal()"
                 class="btn-primary mt-md" style="width:100%">
@@ -279,27 +429,22 @@ const Stats = {
         📋 ${journal.length} entrée${journal.length>1?'s':''}
       </div>
       ${journal.length === 0 ? `
-        <div class="card" style="text-align:center;
-                                  padding:var(--space-xl)">
-          <div style="font-size:2.5rem;margin-bottom:var(--space-md)">
-            📔</div>
+        <div class="card" style="text-align:center;padding:var(--space-xl)">
+          <div style="font-size:2.5rem;margin-bottom:var(--space-md)">📔</div>
           <p style="color:var(--text-muted);font-size:.88rem">
             Ton journal est vide.<br>Commence à écrire !</p>
         </div>` :
         journal.map(e => `
           <div class="card mb-md">
             <div class="flex justify-between items-center mb-sm">
-              <div style="font-size:.72rem;color:var(--fd-indigo);
-                          font-weight:600">
+              <div style="font-size:.72rem;color:var(--fd-indigo);font-weight:600">
                 📅 ${Utils.formatDateLong(e.date)}</div>
               <button onclick="Stats._supprimerJournal('${e.id}')"
                       style="background:none;border:none;
-                             color:var(--text-muted);
-                             font-size:.9rem;cursor:pointer">🗑️</button>
+                             color:var(--text-muted);font-size:.9rem;cursor:pointer">
+                🗑️</button>
             </div>
-            ${e.humeur
-              ? `<div style="font-size:1.2rem;margin-bottom:4px">
-                   ${e.humeur}</div>` : ''}
+            ${e.humeur ? `<div style="font-size:1.2rem;margin-bottom:4px">${e.humeur}</div>` : ''}
             <p style="font-size:.88rem;color:var(--text-secondary);
                       line-height:1.6;margin:0;white-space:pre-wrap">
               ${e.texte}</p>
@@ -308,11 +453,8 @@ const Stats = {
   },
 
   _sauvegarderJournal() {
-    const texte = document.getElementById('journal-input')
-      ?.value?.trim();
-    if (!texte) {
-      Utils.toast('Écris quelque chose !', 'error'); return;
-    }
+    const texte = document.getElementById('journal-input')?.value?.trim();
+    if (!texte) { Utils.toast('Écris quelque chose !', 'error'); return; }
     Tracker.ajouterEntreeJournal(texte);
     try { Gamification.recompenser('JOURNAL'); } catch(e) {}
     Utils.toast('✅ Entrée ajoutée !', 'success');
@@ -323,9 +465,7 @@ const Stats = {
   },
 
   async _supprimerJournal(id) {
-    const ok = await Utils.confirmer(
-      'Supprimer cette entrée ?', 'Action irréversible.'
-    );
+    const ok = await Utils.confirmer('Supprimer cette entrée ?', 'Action irréversible.');
     if (!ok) return;
     Tracker.supprimerEntreeJournal(id);
     Utils.toast('Entrée supprimée.', 'info');
@@ -347,18 +487,14 @@ const Stats = {
           <div class="input-label">Description</div>
           <input class="input mb-md" id="obj-titre"
                  placeholder="ex: Bench press 100kg" />
-          <div style="display:grid;
-                      grid-template-columns:1fr 1fr;
-                      gap:var(--space-sm)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-sm)">
             <div>
               <div class="input-label">Valeur actuelle</div>
-              <input class="input" id="obj-actuel"
-                     type="number" placeholder="80" />
+              <input class="input" id="obj-actuel" type="number" placeholder="80" />
             </div>
             <div>
               <div class="input-label">Objectif cible</div>
-              <input class="input" id="obj-cible"
-                     type="number" placeholder="100" />
+              <input class="input" id="obj-cible" type="number" placeholder="100" />
             </div>
           </div>
           <div style="margin-top:var(--space-sm)">
@@ -381,38 +517,30 @@ const Stats = {
         📋 ${objectifs.length} objectif${objectifs.length>1?'s':''}
       </div>
       ${objectifs.length === 0 ? `
-        <div class="card" style="text-align:center;
-                                  padding:var(--space-xl)">
-          <div style="font-size:2.5rem;margin-bottom:var(--space-md)">
-            🎯</div>
+        <div class="card" style="text-align:center;padding:var(--space-xl)">
+          <div style="font-size:2.5rem;margin-bottom:var(--space-md)">🎯</div>
           <p style="color:var(--text-muted);font-size:.88rem">
-            Aucun objectif défini.<br>Crée ton premier objectif !
-          </p>
+            Aucun objectif défini.<br>Crée ton premier objectif !</p>
         </div>` :
         objectifs.map(o => {
           const pct = Tracker.calculerProgressionObjectif(o);
           return `
             <div class="card mb-md"
                  style="${o.complete
-                   ? 'border-color:var(--fd-mint);background:rgba(139,240,187,0.05)'
-                   : ''}">
+                   ? 'border-color:var(--fd-mint);background:rgba(139,240,187,0.05)' : ''}">
               <div class="flex justify-between items-center mb-sm">
                 <div style="font-weight:700;font-size:.92rem">
-                  ${o.complete?'✅ ':'🎯 '}${o.titre||o.description}
-                </div>
+                  ${o.complete?'✅ ':'🎯 '}${o.titre||o.description}</div>
                 ${!o.complete ? `
                   <button onclick="Stats._completerObjectif('${o.id}')"
                           class="btn-secondary btn-sm">✓ Atteint</button>` :
-                  `<span class="chip chip-mint"
-                         style="font-size:.65rem">Accompli !</span>`}
+                  `<span class="chip chip-mint" style="font-size:.65rem">Accompli !</span>`}
               </div>
               ${o.valeurActuelle && o.valeurCible ? `
                 <div class="flex justify-between"
-                     style="font-size:.75rem;margin-bottom:4px;
-                            color:var(--text-muted)">
+                     style="font-size:.75rem;margin-bottom:4px;color:var(--text-muted)">
                   <span>${o.valeurActuelle} ${o.unite||''}</span>
-                  <span style="font-weight:600;
-                               color:var(--fd-indigo)">${pct}%</span>
+                  <span style="font-weight:600;color:var(--fd-indigo)">${pct}%</span>
                   <span>${o.valeurCible} ${o.unite||''}</span>
                 </div>
                 <div class="progress-bar">
@@ -421,12 +549,10 @@ const Stats = {
                          ? 'var(--fd-mint)' : 'var(--fd-indigo)'}">
                   </div>
                 </div>` : ''}
-              <div style="font-size:.65rem;color:var(--text-muted);
-                          margin-top:var(--space-xs)">
+              <div style="font-size:.65rem;color:var(--text-muted);margin-top:var(--space-xs)">
                 Créé le ${Utils.formatDateCourt(o.dateCreation)}
                 ${o.dateCompletion
-                  ? ` · Atteint le ${Utils.formatDateCourt(o.dateCompletion)}`
-                  : ''}
+                  ? ` · Atteint le ${Utils.formatDateCourt(o.dateCompletion)}` : ''}
               </div>
             </div>`;
         }).join('')}
@@ -434,18 +560,11 @@ const Stats = {
   },
 
   _ajouterObjectif() {
-    const titre  = document.getElementById('obj-titre')
-      ?.value?.trim();
-    const actuel = parseFloat(
-      document.getElementById('obj-actuel')?.value
-    );
-    const cible  = parseFloat(
-      document.getElementById('obj-cible')?.value
-    );
+    const titre  = document.getElementById('obj-titre')?.value?.trim();
+    const actuel = parseFloat(document.getElementById('obj-actuel')?.value);
+    const cible  = parseFloat(document.getElementById('obj-cible')?.value);
     const unite  = document.getElementById('obj-unite')?.value || 'kg';
-    if (!titre) {
-      Utils.toast('Décris ton objectif !', 'error'); return;
-    }
+    if (!titre) { Utils.toast('Décris ton objectif !', 'error'); return; }
     Tracker.ajouterObjectif({
       titre, description:titre,
       valeurActuelle: isNaN(actuel) ? null : actuel,
@@ -480,8 +599,7 @@ const Stats = {
     const gueries   = blessures.filter(b => !b.active);
     const zones = [
       'Épaule gauche','Épaule droite','Genou gauche','Genou droit',
-      'Dos bas','Dos haut','Coude','Poignet',
-      'Cheville','Cou','Hanche'
+      'Dos bas','Dos haut','Coude','Poignet','Cheville','Cou','Hanche'
     ];
     const severites = [
       { val:1, label:'🟡 Légère',  color:'var(--fd-lemon)'  },
@@ -489,7 +607,6 @@ const Stats = {
       { val:3, label:'🔴 Sévère',  color:'var(--fd-coral)'  }
     ];
 
-    // ✅ NOUVEAU v5.0 — Blessures actives enrichies
     const blessuresActives = actives.map(b => {
       try {
         const enrichie = Tracker.getBlessuresActives?.()
@@ -504,20 +621,16 @@ const Stats = {
         <div style="margin-top:var(--space-md)">
           <div class="input-label">Zone</div>
           <select class="input mb-md" id="bless-zone">
-            ${zones.map(z =>
-              `<option value="${z}">${z}</option>`
-            ).join('')}
+            ${zones.map(z => `<option value="${z}">${z}</option>`).join('')}
           </select>
           <div class="input-label">Sévérité</div>
-          <div style="display:flex;gap:var(--space-sm);
-                      margin-bottom:var(--space-md)">
+          <div style="display:flex;gap:var(--space-sm);margin-bottom:var(--space-md)">
             ${severites.map(s => `
               <button onclick="Stats._selectSeverite(${s.val},this)"
                       class="sev-btn btn-secondary"
                       style="flex:1;font-size:.78rem;
                              ${s.val===1
-                               ? 'border-color:var(--fd-lemon);background:rgba(249,239,119,0.1)'
-                               : ''}">
+                               ? 'border-color:var(--fd-lemon);background:rgba(249,239,119,0.1)' : ''}">
                 ${s.label}
               </button>`).join('')}
           </div>
@@ -543,8 +656,7 @@ const Stats = {
                       background:rgba(255,141,150,0.05)">
             <div class="flex justify-between items-center mb-sm">
               <div>
-                <div style="font-weight:700;font-size:.92rem">
-                  🩹 ${b.zone}</div>
+                <div style="font-weight:700;font-size:.92rem">🩹 ${b.zone}</div>
                 <div style="font-size:.72rem;color:var(--text-muted)">
                   ${Utils.formatDateCourt(b.date)} ·
                   ${severites.find(s=>s.val===b.severite)?.label||''}
@@ -552,23 +664,16 @@ const Stats = {
               </div>
               <button onclick="Stats._guerirBlessure('${b.id}')"
                       class="btn-secondary btn-sm"
-                      style="color:var(--fd-mint);
-                             border-color:var(--fd-mint)">
+                      style="color:var(--fd-mint);border-color:var(--fd-mint)">
                 ✅ Guérie
               </button>
             </div>
-            ${b.notes
-              ? `<p style="font-size:.82rem;
-                           color:var(--text-secondary);
-                           margin:0 0 8px;line-height:1.5">
-                   ${b.notes}</p>` : ''}
-            <!-- ✅ NOUVEAU v5.0 — Exercices à éviter + alternatives -->
+            ${b.notes ? `<p style="font-size:.82rem;color:var(--text-secondary);
+                                    margin:0 0 8px;line-height:1.5">${b.notes}</p>` : ''}
             ${b.exercicesAEviter?.length ? `
               <div style="margin-top:6px">
-                <div style="font-size:.6rem;font-weight:700;
-                            color:var(--fd-coral);
-                            text-transform:uppercase;
-                            letter-spacing:.08em;margin-bottom:4px">
+                <div style="font-size:.6rem;font-weight:700;color:var(--fd-coral);
+                            text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">
                   🚫 Exercices à éviter
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:4px">
@@ -583,10 +688,8 @@ const Stats = {
               </div>` : ''}
             ${b.alternativesOK?.length ? `
               <div style="margin-top:6px">
-                <div style="font-size:.6rem;font-weight:700;
-                            color:var(--fd-mint);
-                            text-transform:uppercase;
-                            letter-spacing:.08em;margin-bottom:4px">
+                <div style="font-size:.6rem;font-weight:700;color:var(--fd-mint);
+                            text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">
                   ✅ Alternatives OK
                 </div>
                 <div style="display:flex;flex-wrap:wrap;gap:4px">
@@ -601,21 +704,17 @@ const Stats = {
               </div>` : ''}
           </div>`).join('')}` : `
         <div class="card mb-md"
-             style="text-align:center;padding:var(--space-lg);
-                    border-color:var(--fd-mint)">
+             style="text-align:center;padding:var(--space-lg);border-color:var(--fd-mint)">
           <div style="font-size:1.5rem">✅</div>
-          <div style="font-size:.85rem;color:var(--fd-mint);
-                      font-weight:600;margin-top:4px">
+          <div style="font-size:.85rem;color:var(--fd-mint);font-weight:600;margin-top:4px">
             Aucune blessure active</div>
         </div>`}
 
       ${gueries.length > 0 ? `
-        <div class="section-title">
-          ✅ Historique (${gueries.length})</div>
+        <div class="section-title">✅ Historique (${gueries.length})</div>
         ${gueries.map(b => `
           <div class="card mb-md" style="opacity:.6">
-            <div style="font-weight:600;font-size:.85rem">
-              ✅ ${b.zone}</div>
+            <div style="font-weight:600;font-size:.85rem">✅ ${b.zone}</div>
             <div style="font-size:.68rem;color:var(--text-muted)">
               ${Utils.formatDateCourt(b.date)} →
               ${Utils.formatDateCourt(b.dateGuerison||'')}
@@ -630,23 +729,16 @@ const Stats = {
     document.querySelectorAll('.sev-btn').forEach(b => {
       b.style.borderColor = ''; b.style.background = '';
     });
-    const colors = {
-      1:'var(--fd-lemon)', 2:'#ffa500', 3:'var(--fd-coral)'
-    };
+    const colors = { 1:'var(--fd-lemon)', 2:'#ffa500', 3:'var(--fd-coral)' };
     btn.style.borderColor = colors[val] || '';
     btn.style.background  = `${colors[val]}22` || '';
   },
 
   _ajouterBlessure() {
     const zone     = document.getElementById('bless-zone')?.value;
-    const severite = parseInt(
-      document.getElementById('bless-severite')?.value
-    ) || 1;
-    const notes = document.getElementById('bless-notes')
-      ?.value?.trim() || '';
-    if (!zone) {
-      Utils.toast('Sélectionne une zone !', 'error'); return;
-    }
+    const severite = parseInt(document.getElementById('bless-severite')?.value) || 1;
+    const notes    = document.getElementById('bless-notes')?.value?.trim() || '';
+    if (!zone) { Utils.toast('Sélectionne une zone !', 'error'); return; }
     Tracker.ajouterBlessure(zone, severite, notes);
     Utils.toast('🩹 Blessure déclarée.', 'warning');
     const c = document.getElementById('page-blessures')
@@ -655,10 +747,7 @@ const Stats = {
   },
 
   async _guerirBlessure(id) {
-    const ok = await Utils.confirmer(
-      '✅ Marquer comme guérie ?',
-      'Cette blessure sera archivée.'
-    );
+    const ok = await Utils.confirmer('✅ Marquer comme guérie ?', 'Cette blessure sera archivée.');
     if (!ok) return;
     Tracker.guerirBlessure(id);
     Utils.toast('✅ Blessure guérie !', 'success');
@@ -669,24 +758,127 @@ const Stats = {
   },
 
   // ════════════════════════════════════════════════════════
-  // DASHBOARD TAB — ✅ v5.0 enrichi
+  // ✅ DASHBOARD v6.0 — Enrichi
   // ════════════════════════════════════════════════════════
   _renderDashboard(el) {
-    const dash = this.getDashboard();
-    const top  = this.getTopExercices(5);
-    const comp = this.getComparaisonSemaines();
-    const vol  = this.getVolumeParSemaine(8);
-    const rpe  = Tracker.getRPEParSemaine(8);
+    const dash      = this.getDashboard();
+    const top       = this.getTopExercices(5);
+    const comp      = this.getComparaisonSemaines();
+    const vol       = this.getVolumeParSemaine(8);
+    const rpe       = Tracker.getRPEParSemaine(8);
+    const analytics = this.getAnalyticsAvances();
 
-    // ✅ NOUVEAU v5.0 — Surcharge musculaire
-    let surcharge = [];
-    try { surcharge = Tracker.getSurchargeMusculaire(); } catch(e) {}
-
-    // ✅ NOUVEAU v5.0 — Volume par muscle
+    let surcharge    = [];
     let volumeMuscle = [];
-    try { volumeMuscle = Tracker.getVolumeParMuscle(7); } catch(e) {}
+    try { surcharge    = Tracker.getSurchargeMusculaire();    } catch(e) {}
+    try { volumeMuscle = Tracker.getVolumeParMuscle(7);      } catch(e) {}
 
     el.innerHTML = `
+
+      <!-- ✅ NOUVEAU v6.0 — KPIs rapides -->
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);
+                  gap:8px;margin-bottom:14px">
+
+        <!-- Consistency Score -->
+        <div style="background:rgba(75,75,249,0.08);
+                    border:1px solid rgba(75,75,249,0.2);
+                    border-radius:var(--radius-lg);
+                    padding:14px;position:relative;overflow:hidden">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--text-muted);margin-bottom:6px">
+            📊 Régularité 90j
+          </div>
+          <div style="font-size:1.8rem;font-weight:900;
+                      color:var(--fd-indigo);line-height:1">
+            ${analytics.consistency}%
+          </div>
+          <div style="font-size:.65rem;color:var(--text-muted);margin-top:3px">
+            ${analytics.totalSeances90j} séances
+          </div>
+          <!-- Mini arc -->
+          <svg style="position:absolute;right:8px;top:50%;
+                      transform:translateY(-50%)"
+               width="44" height="44" viewBox="0 0 44 44">
+            <circle cx="22" cy="22" r="18" fill="none"
+                    stroke="rgba(75,75,249,0.1)" stroke-width="5"/>
+            <circle cx="22" cy="22" r="18" fill="none"
+                    stroke="var(--fd-indigo)" stroke-width="5"
+                    stroke-linecap="round"
+                    stroke-dasharray="${Math.round(113*(analytics.consistency/100))} 113"
+                    transform="rotate(-90 22 22)"/>
+            <text x="22" y="26" text-anchor="middle"
+                  fill="var(--fd-indigo)" font-size="9" font-weight="800">
+              ${analytics.consistency}
+            </text>
+          </svg>
+        </div>
+
+        <!-- PRs ce mois -->
+        <div style="background:rgba(249,239,119,0.08);
+                    border:1px solid rgba(249,239,119,0.2);
+                    border-radius:var(--radius-lg);
+                    padding:14px;position:relative;overflow:hidden">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--text-muted);margin-bottom:6px">
+            🏆 PRs ce mois
+          </div>
+          <div style="font-size:1.8rem;font-weight:900;
+                      color:var(--fd-lemon);line-height:1">
+            ${analytics.prsCeMois}
+          </div>
+          <div style="font-size:.65rem;color:var(--text-muted);margin-top:3px">
+            nouveaux records
+          </div>
+        </div>
+
+        <!-- Volume moyen / séance -->
+        <div style="background:rgba(139,240,187,0.08);
+                    border:1px solid rgba(139,240,187,0.2);
+                    border-radius:var(--radius-lg);
+                    padding:14px">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--text-muted);margin-bottom:6px">
+            📦 Vol. moy / séance
+          </div>
+          <div style="font-size:1.8rem;font-weight:900;
+                      color:var(--fd-mint);line-height:1">
+            ${Utils.formatVolume(analytics.volMoyenSeance)}
+          </div>
+          <div style="font-size:.65rem;color:var(--text-muted);margin-top:3px">
+            sur 90 jours
+          </div>
+        </div>
+
+        <!-- Tendance RPE -->
+        <div style="background:rgba(255,141,150,0.06);
+                    border:1px solid rgba(255,141,150,0.2);
+                    border-radius:var(--radius-lg);
+                    padding:14px">
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.1em;
+                      color:var(--text-muted);margin-bottom:6px">
+            😤 Tendance RPE
+          </div>
+          <div style="font-size:1.8rem;line-height:1">
+            ${analytics.rpeTendance === 'hausse' ? '📈'
+            : analytics.rpeTendance === 'baisse' ? '📉' : '➡️'}
+          </div>
+          <div style="font-size:.65rem;color:${
+            analytics.rpeTendance === 'hausse'
+              ? 'var(--fd-coral)'
+              : analytics.rpeTendance === 'baisse'
+                ? 'var(--fd-mint)' : 'var(--text-muted)'};
+            margin-top:3px;font-weight:600">
+            ${analytics.rpeTendance === 'hausse'
+              ? 'En hausse ⚠️'
+              : analytics.rpeTendance === 'baisse'
+                ? 'En baisse ✅' : 'Stable'}
+          </div>
+        </div>
+      </div>
 
       <!-- Stats globales -->
       <div class="stats-grid mb-md">
@@ -699,8 +891,7 @@ const Stats = {
           <span class="stat-label">Streak</span>
         </div>
         <div class="stat-card">
-          <span class="stat-value">
-            ${Utils.formatVolume(dash.volumeSemaine)}</span>
+          <span class="stat-value">${Utils.formatVolume(dash.volumeSemaine)}</span>
           <span class="stat-label">Volume</span>
         </div>
         <div class="stat-card">
@@ -714,120 +905,163 @@ const Stats = {
         <div class="card-label">📊 Cette semaine vs précédente</div>
         <div class="flex items-center justify-between mt-md">
           <div style="text-align:center">
-            <div style="font-size:1.2rem;font-weight:700;
-                        color:var(--fd-indigo)">
+            <div style="font-size:1.2rem;font-weight:700;color:var(--fd-indigo)">
               ${Utils.formatVolume(comp.cette)}</div>
-            <div style="font-size:.72rem;color:var(--text-muted)">
-              Cette semaine</div>
+            <div style="font-size:.72rem;color:var(--text-muted)">Cette semaine</div>
           </div>
           <div style="text-align:center">
             <div style="font-size:1.6rem;font-weight:800;
-                        color:${comp.delta>=0
-                          ? 'var(--fd-mint)' : 'var(--fd-coral)'}">
+                        color:${comp.delta>=0 ? 'var(--fd-mint)' : 'var(--fd-coral)'}">
               ${comp.delta>=0?'+':''}${comp.delta}%</div>
-            <div style="font-size:.65rem;color:var(--text-muted)">
-              évolution</div>
+            <div style="font-size:.65rem;color:var(--text-muted)">évolution</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:1.2rem;font-weight:700;
-                        color:var(--text-secondary)">
+            <div style="font-size:1.2rem;font-weight:700;color:var(--text-secondary)">
               ${Utils.formatVolume(comp.prec)}</div>
-            <div style="font-size:.72rem;color:var(--text-muted)">
-              Semaine préc.</div>
+            <div style="font-size:.72rem;color:var(--text-muted)">Semaine préc.</div>
           </div>
         </div>
       </div>
 
-      <!-- Score de forme enrichi v5.0 -->
+      <!-- Score de forme — Radar v6.0 -->
       <div class="card mb-md">
         <div class="card-label">💪 Score de forme</div>
-        <div style="text-align:center;margin:12px 0 8px">
-          <div style="font-size:2.5rem;font-weight:900;
-                      color:${dash.scoreForme.score >= 80
-                        ? 'var(--fd-mint)'
-                        : dash.scoreForme.score >= 60
-                          ? 'var(--fd-lemon)'
-                          : dash.scoreForme.score >= 40
-                            ? '#ffa500' : 'var(--fd-coral)'}">
-            ${dash.scoreForme.score}</div>
-          <div style="font-size:.78rem;color:var(--text-muted);
-                      margin-bottom:8px">
-            ${dash.scoreForme.niveau}</div>
-          <!-- ✅ NOUVEAU v5.0 — Conseil personnalisé -->
-          ${dash.scoreForme.conseil ? `
-            <div style="padding:8px 12px;
-                        background:rgba(75,75,249,0.08);
-                        border:1px solid rgba(75,75,249,0.15);
-                        border-radius:var(--radius-md);
-                        font-size:.75rem;
-                        color:var(--fd-lavender);
-                        line-height:1.5">
-              ${dash.scoreForme.conseil}
-            </div>` : ''}
+        <div style="display:flex;align-items:center;gap:16px;margin-top:12px">
+
+          <!-- Radar Chart -->
+          <div style="flex-shrink:0;width:160px;height:160px">
+            <canvas id="chart-radar-forme" width="160" height="160"></canvas>
+          </div>
+
+          <!-- Détail score -->
+          <div style="flex:1">
+            <div style="font-size:2.5rem;font-weight:900;
+                        color:${dash.scoreForme.score >= 80
+                          ? 'var(--fd-mint)'
+                          : dash.scoreForme.score >= 60
+                            ? 'var(--fd-lemon)'
+                            : dash.scoreForme.score >= 40
+                              ? '#ffa500' : 'var(--fd-coral)'};
+                        line-height:1;margin-bottom:4px">
+              ${dash.scoreForme.score}
+              <span style="font-size:1rem;font-weight:400;
+                           color:var(--text-muted)">/100</span>
+            </div>
+            <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:10px">
+              ${dash.scoreForme.niveau}
+            </div>
+            ${[
+              { label:'Récup.',  val:dash.scoreForme.recup,      color:'var(--fd-mint)'     },
+              { label:'Assiduité',val:dash.scoreForme.assiduite,  color:'var(--fd-indigo)'   },
+              { label:'Prog.',   val:dash.scoreForme.progression, color:'var(--fd-lavender)' }
+            ].map(s => `
+              <div style="margin-bottom:6px">
+                <div style="display:flex;justify-content:space-between;
+                            font-size:.65rem;margin-bottom:2px">
+                  <span style="color:var(--text-muted)">${s.label}</span>
+                  <span style="font-weight:700;color:${s.color}">${s.val}%</span>
+                </div>
+                <div style="height:4px;background:rgba(255,255,255,0.06);
+                            border-radius:99px;overflow:hidden">
+                  <div style="height:100%;width:${s.val}%;
+                              background:${s.color};border-radius:99px;
+                              transition:width 1s"></div>
+                </div>
+              </div>`).join('')}
+          </div>
         </div>
-        <div class="flex gap-md mt-md">
-          ${[
-            { label:'Récupération', val:dash.scoreForme.recup,
-              color:'var(--fd-mint)'     },
-            { label:'Assiduité',    val:dash.scoreForme.assiduite,
-              color:'var(--fd-indigo)'   },
-            { label:'Progression',  val:dash.scoreForme.progression,
-              color:'var(--fd-lavender)' }
-          ].map(s => `
-            <div style="flex:1;text-align:center">
-              <div style="font-size:1.1rem;font-weight:800;
-                          color:${s.color}">${s.val}%</div>
-              <div style="font-size:.65rem;color:var(--text-muted);
-                          margin-top:2px">${s.label}</div>
-              <div style="height:4px;background:var(--bg-input);
-                          border-radius:99px;margin-top:4px;
-                          overflow:hidden">
-                <div style="height:100%;width:${s.val}%;
-                            background:${s.color};border-radius:99px;
-                            transition:width 1s"></div>
-              </div>
-            </div>`).join('')}
-        </div>
-        <!-- ✅ NOUVEAU v5.0 — Bonus streak -->
+        ${dash.scoreForme.conseil ? `
+          <div style="margin-top:10px;padding:8px 12px;
+                      background:rgba(75,75,249,0.08);
+                      border:1px solid rgba(75,75,249,0.15);
+                      border-radius:var(--radius-md);
+                      font-size:.75rem;color:var(--fd-lavender);line-height:1.5">
+            ${dash.scoreForme.conseil}
+          </div>` : ''}
         ${dash.scoreForme.bonusStreak > 0 ? `
-          <div style="margin-top:8px;text-align:center;
+          <div style="margin-top:6px;text-align:center;
                       font-size:.7rem;color:var(--fd-lemon)">
             🔥 Bonus streak : +${dash.scoreForme.bonusStreak}pts
           </div>` : ''}
       </div>
 
-      <!-- ✅ NOUVEAU v5.0 — Surcharge musculaire -->
+      <!-- ✅ NOUVEAU v6.0 — Heatmap GitHub 12 semaines -->
+      <div class="card mb-md">
+        <div class="card-label mb-sm">📅 Activité — 12 semaines</div>
+        ${this._renderHeatmapGitHub(12)}
+      </div>
+
+      <!-- Surcharge musculaire -->
       ${surcharge.length > 0 ? `
         <div class="card mb-md"
-             style="border-color:var(--fd-coral);
-                    background:rgba(255,141,150,0.05)">
+             style="border-color:var(--fd-coral);background:rgba(255,141,150,0.05)">
           <div class="card-label" style="color:var(--fd-coral)">
             ⚠️ Surcharge musculaire détectée
           </div>
           ${surcharge.map(s => `
-            <div style="font-size:.78rem;
-                        color:var(--text-secondary);
-                        padding:5px 0;
-                        border-bottom:1px solid
-                          rgba(255,141,150,0.1)">
+            <div style="font-size:.78rem;color:var(--text-secondary);
+                        padding:5px 0;border-bottom:1px solid rgba(255,141,150,0.1)">
               🔴 <strong>${s.muscle}</strong> —
               <span style="color:var(--text-muted)">${s.conseil}</span>
             </div>`).join('')}
         </div>` : ''}
 
-      <!-- ✅ NOUVEAU v5.0 — Heatmap musculaire semaine -->
+      <!-- Muscles travaillés -->
       ${volumeMuscle.length > 0 ? `
         <div class="card mb-md">
           <div class="card-label">🎯 Muscles travaillés cette semaine</div>
           ${this._renderHeatmapMusculaire(volumeMuscle)}
         </div>` : ''}
 
+      <!-- ✅ NOUVEAU v6.0 — Exercice favori -->
+      ${analytics.topExoFreq ? `
+        <div class="card mb-md"
+             style="background:linear-gradient(135deg,
+                    rgba(191,161,255,0.1),rgba(75,75,249,0.05));
+                    border-color:rgba(191,161,255,0.3)">
+          <div class="card-label">⭐ Exercice favori</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+            <span style="font-size:2.5rem">${analytics.topExoFreq.emoji}</span>
+            <div>
+              <div style="font-size:1rem;font-weight:700">
+                ${analytics.topExoFreq.nom}</div>
+              <div style="font-size:.72rem;color:var(--text-muted)">
+                Réalisé ${analytics.topExoFreq.count} fois en 90 jours
+              </div>
+            </div>
+          </div>
+        </div>` : ''}
+
+      <!-- ✅ NOUVEAU v6.0 — Meilleure semaine -->
+      ${analytics.meilleureSemaine ? `
+        <div class="card mb-md"
+             style="background:linear-gradient(135deg,
+                    rgba(249,239,119,0.1),rgba(75,75,249,0.05));
+                    border-color:rgba(249,239,119,0.3)">
+          <div class="card-label">🏆 Meilleure semaine</div>
+          <div style="display:flex;align-items:center;
+                      justify-content:space-between;margin-top:10px">
+            <div>
+              <div style="font-size:1.3rem;font-weight:800;
+                          color:var(--fd-lemon)">
+                ${Utils.formatVolume(analytics.meilleureSemaine.volume)}
+              </div>
+              <div style="font-size:.72rem;color:var(--text-muted)">
+                Volume record
+              </div>
+            </div>
+            <div style="font-size:.78rem;color:var(--text-muted);
+                        text-align:right">
+              ${analytics.meilleureSemaine.label || ''}
+            </div>
+          </div>
+        </div>` : ''}
+
       <!-- Top PRs -->
       <div class="card mb-md">
         <div class="card-label">🏆 Top Records Personnels</div>
         ${top.length === 0 ? `
-          <p style="color:var(--text-muted);text-align:center;
-                    padding:var(--space-lg)">
+          <p style="color:var(--text-muted);text-align:center;padding:var(--space-lg)">
             Commence tes séances pour voir tes records !</p>` :
           top.map((ex, i) => `
             <div class="flex items-center justify-between"
@@ -844,11 +1078,9 @@ const Stats = {
                 </div>
               </div>
               <div style="text-align:right">
-                <div style="font-size:.9rem;font-weight:700;
-                            color:var(--fd-indigo)">
+                <div style="font-size:.9rem;font-weight:700;color:var(--fd-indigo)">
                   ${ex.poids}kg × ${ex.reps}</div>
-                <div style="font-size:.68rem;
-                            color:var(--fd-lavender)">
+                <div style="font-size:.68rem;color:var(--fd-lavender)">
                   1RM: ${ex.rm1}kg</div>
               </div>
             </div>`).join('')}
@@ -868,88 +1100,250 @@ const Stats = {
                   style="margin-top:var(--space-sm)"></canvas>
         </div>` : ''}
 
-      <!-- Répartition muscles historique -->
+      <!-- Répartition muscles -->
       <div class="card mb-md">
         <div class="card-label">💪 Répartition muscles — Historique</div>
         ${this._renderRepartitionMuscles()}
       </div>
 
-      <!-- ✅ NOUVEAU v5.0 — Bouton export rapport -->
+      <!-- Export -->
       <button onclick="Stats._exporterRapport()"
               class="btn-secondary"
-              style="width:100%;margin-bottom:16px;
-                     font-size:.82rem">
+              style="width:100%;margin-bottom:16px;font-size:.82rem">
         📄 Exporter rapport mensuel
       </button>
     `;
 
-    // ════════════════════════════════════════════════════════════
-// _renderDashboard() requestAnimationFrame — ✅ v6.0
-// Remplace le requestAnimationFrame dans _renderDashboard
-// ════════════════════════════════════════════════════════════
-requestAnimationFrame(() => {
-  // ✅ FIX v6.0 — Vérifier Chart.js
-  if (typeof Chart === 'undefined') return;
+    requestAnimationFrame(() => {
+      if (typeof Chart === 'undefined') return;
 
-  Stats._detruireCharts(['chart-volume','chart-rpe']);
+      Stats._detruireCharts([
+        'chart-volume','chart-rpe','chart-radar-forme'
+      ]);
 
-  const cvol = document.getElementById('chart-volume');
-  if (cvol && vol.length > 0) {
-    Stats._charts['chart-volume'] = new Chart(cvol, {
-      type: 'bar',
-      data: {
-        labels:   vol.map(v => v.label),
-        datasets: [{
-          data:            vol.map(v => v.volume),
-          backgroundColor: 'rgba(75,75,249,0.7)',
-          borderColor:     '#4b4bf9',
-          borderWidth:     2,
-          borderRadius:    6
-        }]
-      },
-      options: Stats._chartOptions()
-    });
-  }
-
-  const crpe = document.getElementById('chart-rpe');
-  if (crpe && rpe.length > 1) {
-    Stats._charts['chart-rpe'] = new Chart(crpe, {
-      type: 'line',
-      data: {
-        labels:   rpe.map(r => r.semaine),
-        datasets: [{
-          data:                rpe.map(r => r.rpe),
-          borderColor:         '#ff8d96',
-          backgroundColor:     'rgba(255,141,150,0.1)',
-          borderWidth:         2,
-          pointRadius:         4,
-          pointBackgroundColor:'#ff8d96',
-          tension:             0.4,
-          fill:                true
-        }]
-      },
-      options: Stats._chartOptions({
-        scales: {
-          x: {
-            ticks: { color:'#888', font:{ size:10 } },
-            grid:  { color:'rgba(255,255,255,0.05)' }
+      // ── Radar Score Forme ────────────────────────────
+      const cRadar = document.getElementById('chart-radar-forme');
+      if (cRadar) {
+        Stats._charts['chart-radar-forme'] = new Chart(cRadar, {
+          type: 'radar',
+          data: {
+            labels: ['Récup.','Assiduité','Progression','Streak','Volume'],
+            datasets: [{
+              data: [
+                dash.scoreForme.recup       || 0,
+                dash.scoreForme.assiduite   || 0,
+                dash.scoreForme.progression || 0,
+                Math.min(100, (dash.streak / Math.max(dash.streakMax, 1)) * 100),
+                Math.min(100, (dash.volumeSemaine / 10000) * 100)
+              ],
+              backgroundColor:   'rgba(75,75,249,0.2)',
+              borderColor:       '#4b4bf9',
+              borderWidth:       2,
+              pointBackgroundColor:'#4b4bf9',
+              pointRadius:       4
+            }]
           },
-          y: {
-            min:0, max:10,
-            ticks: {
-              color:'#888', font:{ size:10 },
-              callback: v => `${v}/10`
-            },
-            grid: { color:'rgba(255,255,255,0.05)' }
+          options: {
+            responsive:          true,
+            maintainAspectRatio: true,
+            plugins: { legend:{ display:false } },
+            scales: {
+              r: {
+                min: 0, max: 100,
+                ticks: {
+                  display:   false,
+                  stepSize:  25
+                },
+                grid:        { color:'rgba(255,255,255,0.08)' },
+                angleLines:  { color:'rgba(255,255,255,0.08)' },
+                pointLabels: {
+                  color:     '#888',
+                  font:      { size:9 }
+                }
+              }
+            }
           }
-        }
-      })
+        });
+      }
+
+      // ── Volume chart ─────────────────────────────────
+      const cvol = document.getElementById('chart-volume');
+      if (cvol && vol.length > 0) {
+        Stats._charts['chart-volume'] = new Chart(cvol, {
+          type: 'bar',
+          data: {
+            labels:   vol.map(v => v.label),
+            datasets: [{
+              data:            vol.map(v => v.volume),
+              backgroundColor: vol.map((v, i) =>
+                i === vol.length - 1
+                  ? 'rgba(75,75,249,0.9)'
+                  : 'rgba(75,75,249,0.4)'
+              ),
+              borderColor:     '#4b4bf9',
+              borderWidth:     2,
+              borderRadius:    6
+            }]
+          },
+          options: Stats._chartOptions()
+        });
+      }
+
+      // ── RPE chart ────────────────────────────────────
+      const crpe = document.getElementById('chart-rpe');
+      if (crpe && rpe.length > 1) {
+        Stats._charts['chart-rpe'] = new Chart(crpe, {
+          type: 'line',
+          data: {
+            labels:   rpe.map(r => r.semaine),
+            datasets: [{
+              data:                rpe.map(r => r.rpe),
+              borderColor:         '#ff8d96',
+              backgroundColor:     'rgba(255,141,150,0.1)',
+              borderWidth:         2,
+              pointRadius:         4,
+              pointBackgroundColor:'#ff8d96',
+              tension:             0.4,
+              fill:                true
+            }]
+          },
+          options: Stats._chartOptions({
+            scales: {
+              x: { ticks:{ color:'#888', font:{ size:10 } },
+                   grid: { color:'rgba(255,255,255,0.05)' } },
+              y: { min:0, max:10,
+                   ticks:{ color:'#888', font:{ size:10 },
+                           callback: v => `${v}/10` },
+                   grid: { color:'rgba(255,255,255,0.05)' } }
+            }
+          })
+        });
+      }
     });
-  }
-});
   },
 
-  // ✅ NOUVEAU v5.0 — Heatmap musculaire visuelle
+  // ════════════════════════════════════════════════════════
+  // ✅ NOUVEAU v6.0 — Heatmap GitHub 52 semaines
+  // ════════════════════════════════════════════════════════
+  _renderHeatmapGitHub(semaines = 12) {
+    const heatmap = this.getHeatmap(semaines);
+    const today   = new Date();
+
+    // Générer les jours depuis (semaines * 7) jours en arrière
+    const jours = [];
+    for (let i = semaines * 7 - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      jours.push({
+        date:  dateStr,
+        etat:  heatmap[dateStr] || 'none',
+        jour:  d.getDay(),
+        label: d.toLocaleDateString('fr-FR', {
+          weekday:'short', day:'numeric', month:'short'
+        })
+      });
+    }
+
+    // Couleurs par état
+    const couleurs = {
+      done:   'var(--fd-indigo)',
+      missed: 'rgba(255,141,150,0.5)',
+      rest:   'rgba(139,240,187,0.2)',
+      none:   'rgba(255,255,255,0.05)'
+    };
+
+    // Compter les stats
+    const nbDone   = jours.filter(j => j.etat === 'done').length;
+    const nbMissed = jours.filter(j => j.etat === 'missed').length;
+
+    // Grouper par semaine (colonnes)
+    const colonnes = [];
+    let colonne    = [];
+    jours.forEach((j, idx) => {
+      colonne.push(j);
+      if (colonne.length === 7 || idx === jours.length - 1) {
+        colonnes.push([...colonne]);
+        colonne = [];
+      }
+    });
+
+    return `
+      <div style="overflow-x:auto;padding-bottom:4px">
+
+        <!-- Légende jours -->
+        <div style="display:flex;gap:3px;margin-bottom:4px;
+                    padding-left:20px">
+          ${['L','M','M','J','V','S','D'].map(j => `
+            <div style="width:14px;font-size:.5rem;
+                        color:var(--text-muted);
+                        text-align:center;flex-shrink:0">
+              ${j}
+            </div>`).join('')}
+        </div>
+
+        <!-- Grille semaines × jours -->
+        <div style="display:flex;gap:3px">
+
+          <!-- Label semaines (gauche) -->
+          <div style="display:flex;flex-direction:column;
+                      gap:3px;margin-right:2px">
+            ${Array.from({length: 7}, (_, i) => `
+              <div style="height:14px;font-size:.5rem;
+                          color:var(--text-muted);
+                          display:flex;align-items:center">
+              </div>`).join('')}
+          </div>
+
+          <!-- Colonnes semaines -->
+          <div style="display:flex;gap:3px;flex:1">
+            ${colonnes.map(col => `
+              <div style="display:flex;flex-direction:column;gap:3px;
+                          flex:1;min-width:10px;max-width:18px">
+                ${col.map(j => `
+                  <div title="${j.label} — ${
+                    j.etat === 'done'   ? '✅ Séance'
+                  : j.etat === 'missed' ? '❌ Manquée'
+                  : j.etat === 'rest'   ? '😴 Repos'
+                  :                       '⬜ Pas de données'}"
+                       style="height:14px;border-radius:3px;
+                              background:${couleurs[j.etat]};
+                              border:1px solid rgba(255,255,255,0.05);
+                              cursor:${j.etat !== 'none' ? 'pointer' : 'default'};
+                              transition:opacity .15s"
+                       onmouseenter="this.style.opacity='.7'"
+                       onmouseleave="this.style.opacity='1'">
+                  </div>`).join('')}
+              </div>`).join('')}
+          </div>
+        </div>
+
+        <!-- Stats + légende -->
+        <div style="display:flex;align-items:center;
+                    justify-content:space-between;
+                    margin-top:8px">
+          <div style="font-size:.65rem;color:var(--text-muted)">
+            <span style="color:var(--fd-indigo);font-weight:700">
+              ${nbDone}</span> séances ·
+            <span style="color:var(--fd-coral);font-weight:700">
+              ${nbMissed}</span> manquées
+            sur ${semaines} semaines
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:.6rem;color:var(--text-muted)">Moins</span>
+            ${['none','rest','done'].map(e => `
+              <div style="width:10px;height:10px;border-radius:2px;
+                          background:${couleurs[e]}"></div>`).join('')}
+            <span style="font-size:.6rem;color:var(--text-muted)">Plus</span>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  // ════════════════════════════════════════════════════════
+  // Heatmap musculaire (v5.0 conservé)
+  // ════════════════════════════════════════════════════════
   _renderHeatmapMusculaire(volumeMuscle) {
     if (!volumeMuscle.length) {
       return `<p style="color:var(--text-muted);text-align:center;
@@ -964,29 +1358,24 @@ requestAnimationFrame(() => {
     };
 
     return `
-      <div style="display:flex;flex-wrap:wrap;gap:6px;
-                  margin-top:var(--space-md)">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--space-md)">
         ${volumeMuscle.slice(0,10).map(m => {
           const c = colorMap[m.intensite] || colorMap.faible;
           return `
             <div style="display:flex;align-items:center;gap:6px;
-                        padding:5px 10px;
-                        background:${c.bg};
-                        border:1px solid ${c.border};
-                        border-radius:99px">
+                        padding:5px 10px;background:${c.bg};
+                        border:1px solid ${c.border};border-radius:99px">
               <span style="font-size:.7rem">${c.dot}</span>
               <div>
                 <div style="font-size:.72rem;font-weight:700;
-                            color:var(--text-primary)">
-                  ${m.muscle}</div>
+                            color:var(--text-primary)">${m.muscle}</div>
                 <div style="font-size:.58rem;color:var(--text-muted)">
                   ${m.pourcentage}% · ${m.intensite}</div>
               </div>
             </div>`;
         }).join('')}
       </div>
-      <div style="margin-top:8px;font-size:.65rem;
-                  color:var(--text-muted);
+      <div style="margin-top:8px;font-size:.65rem;color:var(--text-muted);
                   display:flex;gap:12px">
         <span>🔴 Haute intensité</span>
         <span>🟠 Moyenne</span>
@@ -1003,10 +1392,7 @@ requestAnimationFrame(() => {
                 Pas encore de données</p>`;
     }
     const total  = muscles.reduce((a,m) => a+m.volume, 0);
-    const colors = [
-      '#4b4bf9','#8bf0bb','#f9ef77',
-      '#bfa1ff','#ff8d96','#09092d'
-    ];
+    const colors = ['#4b4bf9','#8bf0bb','#f9ef77','#bfa1ff','#ff8d96','#09092d'];
     return `
       <div style="margin-top:var(--space-md)">
         ${muscles.slice(0,6).map((m, i) => {
@@ -1022,8 +1408,7 @@ requestAnimationFrame(() => {
               <div style="height:6px;background:var(--bg-input);
                           border-radius:99px;overflow:hidden">
                 <div style="height:100%;width:${pct}%;
-                            background:${colors[i]};
-                            border-radius:99px;
+                            background:${colors[i]};border-radius:99px;
                             transition:width 1s .${i}s"></div>
               </div>
             </div>`;
@@ -1031,75 +1416,97 @@ requestAnimationFrame(() => {
       </div>`;
   },
 
-  // ✅ NOUVEAU v5.0 — Export rapport mensuel HTML/texte
+  // ════════════════════════════════════════════════════════
+  // ✅ Export rapport v6.0 amélioré
+  // ════════════════════════════════════════════════════════
   _exporterRapport() {
-  const dash       = this.getDashboard();
-  const top        = this.getTopExercices(10);
-  const seances    = Tracker.getHistoriqueSeances(30);
-  const stats      = this.getStatsCorps();
-  const scoreForme = Tracker.calculerScoreForme();
-  const auj        = Utils.aujourd_hui();
-  const moisLabel  = new Date().toLocaleString('fr-FR',
-    { month:'long', year:'numeric' }
-  );
+    const dash       = this.getDashboard();
+    const top        = this.getTopExercices(10);
+    const seances    = Tracker.getHistoriqueSeances(30);
+    const stats      = this.getStatsCorps();
+    const scoreForme = Tracker.calculerScoreForme();
+    const analytics  = this.getAnalyticsAvances();
+    const auj        = Utils.aujourd_hui();
+    const moisLabel  = new Date().toLocaleString('fr-FR',
+      { month:'long', year:'numeric' }
+    );
 
-  // ✅ FIX — Ligne séances sans imbrication cassée
-  const lignesSeances = seances.slice(0,10).map(s => {
-    const nom = (
-      window.SEANCES_BASE?.[s.id]?.nom || s.id || 'Séance'
-    ).replace(/,/g,'');
-    return `• ${s.date} — ${nom} — ${Utils.formatVolume(s.volumeTotal||0)} — ${Utils.formatDuree(s.duree||0)}`;
-  }).join('\n');
+    const lignesSeances = seances.slice(0, 15).map(s => {
+      const nom = (
+        window.SEANCES_BASE?.[s.id]?.nom || s.id || 'Séance'
+      ).replace(/,/g,'');
+      return `• ${s.date} — ${nom} — ${
+        Utils.formatVolume(s.volumeTotal||0)} — ${
+        Utils.formatDuree(s.duree||0)}`;
+    }).join('\n');
 
-  const contenu = `
+    const contenu = `
 RAPPORT POWERAPP — ${moisLabel.toUpperCase()}
-${'═'.repeat(50)}
+${'═'.repeat(55)}
 
 📊 RÉSUMÉ DU MOIS
-─────────────────
-• Séances totales  : ${dash.totalSeances}
-• Streak actuel    : ${dash.streak} jours
-• Streak record    : ${dash.streakMax} jours
-• Volume semaine   : ${Utils.formatVolume(dash.volumeSemaine)}
-• Records (PRs)    : ${dash.totalPRs}
-• Score de forme   : ${scoreForme.score}/100 (${scoreForme.niveau})
+─────────────────────────────
+• Séances totales   : ${dash.totalSeances}
+• Streak actuel     : ${dash.streak} jours
+• Streak record     : ${dash.streakMax} jours
+• Volume semaine    : ${Utils.formatVolume(dash.volumeSemaine)}
+• Records (PRs)     : ${dash.totalPRs}
+• Score de forme    : ${scoreForme.score}/100 (${scoreForme.niveau})
+
+📈 ANALYTICS AVANCÉS (90 jours)
+─────────────────────────────
+• Régularité        : ${analytics.consistency}%
+• Séances totales   : ${analytics.totalSeances90j}
+• Vol. moy/séance   : ${Utils.formatVolume(analytics.volMoyenSeance)}
+• PRs ce mois       : ${analytics.prsCeMois}
+• Tendance RPE      : ${analytics.rpeTendance}
+${analytics.topExoFreq
+  ? `• Exercice favori   : ${analytics.topExoFreq.nom} (${analytics.topExoFreq.count}x)`
+  : ''}
+${analytics.meilleureSemaine
+  ? `• Meilleure semaine : ${Utils.formatVolume(analytics.meilleureSemaine.volume)}`
+  : ''}
+
+💪 SCORE DE FORME DÉTAILLÉ
+─────────────────────────────
+• Global            : ${scoreForme.score}/100
+• Récupération      : ${scoreForme.recup}%
+• Assiduité         : ${scoreForme.assiduite}%
+• Progression       : ${scoreForme.progression}%
 
 ⚖️ CORPS
-─────────────────
-• Poids actuel : ${stats.poids  || '—'} kg
-• Taille       : ${stats.taille || '—'} cm
-• IMC          : ${stats.imc    || '—'} (${stats.catIMC || '—'})
-• Cal/semaine  : ${stats.calSemaine || 0} kcal
+─────────────────────────────
+• Poids actuel      : ${stats.poids  || '—'} kg
+• Taille            : ${stats.taille || '—'} cm
+• IMC               : ${stats.imc    || '—'} (${stats.catIMC || '—'})
+• Cal/semaine       : ~${stats.calSemaine || 0} kcal
 
-🏆 TOP RECORDS PERSONNELS
-─────────────────────────
+🏆 TOP 10 RECORDS PERSONNELS
+─────────────────────────────
 ${top.map((ex,i) =>
-  `${i+1}. ${ex.nom} — ${ex.poids}kg × ${ex.reps} (1RM: ${ex.rm1}kg)`
+  `${String(i+1).padStart(2)}. ${ex.nom.padEnd(25)} ${ex.poids}kg × ${ex.reps} reps (1RM: ~${ex.rm1}kg)`
 ).join('\n')}
 
-📅 SÉANCES CE MOIS
-──────────────────
+📅 SÉANCES CE MOIS (15 dernières)
+──────────────────────────────────
 ${lignesSeances}
 
-─────────────────
-Généré par PowerApp — ${auj}
-  `.trim();
+${'─'.repeat(55)}
+Généré par PowerApp v6.0 — ${auj}
+    `.trim();
 
-  const blob = new Blob([contenu], {
-    type: 'text/plain;charset=utf-8;'
-  });
-  const url = URL.createObjectURL(blob);
-  const a   = document.createElement('a');
-  a.href     = url;
-  a.download = `powerapp-rapport-${auj}.txt`;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-  Utils.toast('📄 Rapport exporté !', 'success');
-},
+    const blob = new Blob([contenu], { type:'text/plain;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `powerapp-rapport-${auj}.txt`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    Utils.toast('📄 Rapport exporté !', 'success');
+  },
 
   // ════════════════════════════════════════════════════════
-  // HISTORIQUE TAB
+  // HISTORIQUE TAB (v5.0 conservé)
   // ════════════════════════════════════════════════════════
   _renderHistorique(el, recherche = '') {
     const toutesSeances = Tracker.getHistoriqueSeancesAvecDetails(90);
@@ -1122,68 +1529,53 @@ Généré par PowerApp — ${auj}
                oninput="Stats._filtrerHistorique(this.value)" />
         ${recherche
           ? `<button class="search-clear"
-                     onclick="Stats._filtrerHistorique('')">✕</button>`
-          : ''}
+                     onclick="Stats._filtrerHistorique('')">✕</button>` : ''}
       </div>
 
       <div class="flex justify-between items-center mb-md">
         <div class="card-label" style="margin:0">
           📋 ${seances.length} séance${seances.length>1?'s':''}
           ${recherche
-            ? `<span style="color:var(--fd-indigo)">
-                 · "${recherche}"</span>`
-            : ''}
+            ? `<span style="color:var(--fd-indigo)"> · "${recherche}"</span>` : ''}
         </div>
         <button onclick="Stats._exportHistorique()"
-                style="padding:6px 12px;
-                       border-radius:var(--radius-full);
+                style="padding:6px 12px;border-radius:var(--radius-full);
                        border:1px solid var(--border-color);
-                       background:var(--bg-input);
-                       color:var(--text-primary);
-                       font-size:.72rem;font-weight:600;
-                       cursor:pointer">
+                       background:var(--bg-input);color:var(--text-primary);
+                       font-size:.72rem;font-weight:600;cursor:pointer">
           📤 CSV
         </button>
       </div>
 
       ${seances.length === 0 ? `
-        <div class="card" style="text-align:center;
-                                  padding:var(--space-xl)">
-          <div style="font-size:3rem;margin-bottom:var(--space-md)">
-            📋</div>
+        <div class="card" style="text-align:center;padding:var(--space-xl)">
+          <div style="font-size:3rem;margin-bottom:var(--space-md)">📋</div>
           <p style="color:var(--text-muted)">
             ${recherche
               ? 'Aucun résultat pour cette recherche.'
-              : 'Aucune séance enregistrée.'}
-          </p>
+              : 'Aucune séance enregistrée.'}</p>
           ${!recherche
             ? `<button class="btn-primary mt-md"
-                       onclick="naviguer('live')">
-                 ⚡ Démarrer</button>` : ''}
+                       onclick="naviguer('live')">⚡ Démarrer</button>` : ''}
         </div>` :
         seances.map(s => {
-          const nom   = window.SEANCES_BASE?.[s.id]?.nom
-            || s.id || 'Séance';
+          const nom   = window.SEANCES_BASE?.[s.id]?.nom || s.id || 'Séance';
           const emoji = window.SEANCES_BASE?.[s.id]?.emoji || '💪';
           return `
             <div class="card mb-md"
-                 onclick="Stats._afficherDetailSeance(
-                   '${s.date}','${s.id}')"
+                 onclick="Stats._afficherDetailSeance('${s.date}','${s.id}')"
                  style="cursor:pointer">
               <div class="flex items-center justify-between mb-sm">
                 <div>
                   <div style="font-weight:700;font-size:.95rem">
                     ${emoji} ${nom}</div>
-                  <div style="font-size:.72rem;
-                              color:var(--text-muted)">
+                  <div style="font-size:.72rem;color:var(--text-muted)">
                     ${Utils.formatDateLong(s.date)}</div>
                 </div>
                 <div style="text-align:right">
-                  <div style="font-size:.82rem;font-weight:700;
-                              color:var(--fd-indigo)">
+                  <div style="font-size:.82rem;font-weight:700;color:var(--fd-indigo)">
                     ${Utils.formatDuree(s.duree||0)}</div>
-                  <div style="font-size:.68rem;
-                              color:var(--text-muted)">
+                  <div style="font-size:.68rem;color:var(--text-muted)">
                     ${Utils.formatVolume(s.volumeTotal||0)}</div>
                 </div>
               </div>
@@ -1194,18 +1586,15 @@ Généré par PowerApp — ${auj}
                                border:1px solid var(--border-color);
                                border-radius:var(--radius-full)">
                     ${e.emoji} ${e.nom}
-                    <span style="color:var(--fd-indigo)">
-                      ${e.maxPoids}kg</span>
+                    <span style="color:var(--fd-indigo)">${e.maxPoids}kg</span>
                   </span>`).join('')}
               </div>
               <div class="flex gap-md mt-sm"
                    style="font-size:.72rem;color:var(--text-muted)">
                 <span>📊 ${s.series?.length||0} séries</span>
-                ${s.rpesMoyen
-                  ? `<span>😤 RPE ${s.rpesMoyen}</span>` : ''}
+                ${s.rpesMoyen ? `<span>😤 RPE ${s.rpesMoyen}</span>` : ''}
                 ${(s.prs?.length||0)>0
-                  ? `<span style="color:var(--fd-lemon)">
-                       🏆 ${s.prs.length} PR</span>` : ''}
+                  ? `<span style="color:var(--fd-lemon)">🏆 ${s.prs.length} PR</span>` : ''}
               </div>
             </div>`;
         }).join('')}
@@ -1222,9 +1611,7 @@ Généré par PowerApp — ${auj}
     for (let i = 0; i < localStorage.length; i++) {
       const cle = localStorage.key(i);
       if (cle === `ft_seance_${date}_${seanceId}`) {
-        try {
-          seanceData = JSON.parse(localStorage.getItem(cle));
-        } catch(e) {}
+        try { seanceData = JSON.parse(localStorage.getItem(cle)); } catch(e) {}
         break;
       }
     }
@@ -1234,15 +1621,12 @@ Généré par PowerApp — ${auj}
     const content = document.getElementById('modal-info-content');
     if (!modal || !content) return;
 
-    const nom   = window.SEANCES_BASE?.[seanceId]?.nom
-      || seanceId;
+    const nom   = window.SEANCES_BASE?.[seanceId]?.nom   || seanceId;
     const emoji = window.SEANCES_BASE?.[seanceId]?.emoji || '💪';
 
     content.innerHTML = `
-      <h3 style="margin-bottom:var(--space-md)">
-        ${emoji} ${nom}</h3>
-      <div style="font-size:.78rem;color:var(--text-muted);
-                  margin-bottom:var(--space-md)">
+      <h3 style="margin-bottom:var(--space-md)">${emoji} ${nom}</h3>
+      <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:var(--space-md)">
         📅 ${Utils.formatDateLong(date)}</div>
       <div class="stats-grid mb-md">
         <div class="stat-card">
@@ -1280,46 +1664,37 @@ Généré par PowerApp — ${auj}
               <span style="font-weight:700;font-size:.88rem">
                 ${ex.emoji||'💪'} ${ex.nom||ref}
                 ${isPR
-                  ? `<span style="color:var(--fd-lemon);
-                               margin-left:4px">🏆 PR</span>`
-                  : ''}
+                  ? `<span style="color:var(--fd-lemon);margin-left:4px">🏆 PR</span>` : ''}
               </span>
-              <span class="chip chip-indigo"
-                    style="font-size:.65rem">${ex.muscle||''}</span>
+              <span class="chip chip-indigo" style="font-size:.65rem">
+                ${ex.muscle||''}
+              </span>
             </div>
             ${series.map((sr,i) => `
               <div class="flex justify-between"
                    style="font-size:.78rem;padding:3px 0;
                           border-bottom:1px solid var(--border-color)">
-                <span style="color:var(--text-muted)">
-                  Série ${i+1}</span>
+                <span style="color:var(--text-muted)">Série ${i+1}</span>
                 <span style="font-weight:600">
                   ${sr.poids}kg × ${sr.reps}
                   ${sr.rpe
-                    ? `<span style="color:var(--fd-coral);
-                                   font-size:.7rem">
+                    ? `<span style="color:var(--fd-coral);font-size:.7rem">
                          RPE ${sr.rpe}</span>` : ''}
                 </span>
               </div>`).join('')}
           </div>`;
       }).join('')}
       ${seanceData.note ? `
-        <div class="card mt-md"
-             style="background:rgba(75,75,249,0.08)">
+        <div class="card mt-md" style="background:rgba(75,75,249,0.08)">
           <div class="card-label">📔 Note</div>
           <p style="font-size:.85rem;margin-top:var(--space-xs);
-                    color:var(--text-secondary)">
-            ${seanceData.note}</p>
+                    color:var(--text-secondary)">${seanceData.note}</p>
         </div>` : ''}
     `;
 
     modal.classList.remove('hidden');
     const closeBtn = document.getElementById('modal-info-close');
     if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
-    modal.querySelector('.modal-overlay')
-      ?.addEventListener('click',
-        () => modal.classList.add('hidden'), { once:true }
-      );
   },
 
   _exportHistorique() {
@@ -1345,15 +1720,15 @@ Généré par PowerApp — ${auj}
   },
 
   // ════════════════════════════════════════════════════════
-  // PHOTOS TAB
+  // PHOTOS TAB (v5.0 conservé)
   // ════════════════════════════════════════════════════════
   _renderPhotos(el) {
     const photos = Tracker.getPhotos();
     const types  = [
-      {val:'front', label:'Face',   emoji:'⬆️'},
-      {val:'side',  label:'Côté',   emoji:'➡️'},
-      {val:'back',  label:'Dos',    emoji:'⬇️'},
-      {val:'custom',label:'Autre',  emoji:'📷'}
+      {val:'front', label:'Face',  emoji:'⬆️'},
+      {val:'side',  label:'Côté',  emoji:'➡️'},
+      {val:'back',  label:'Dos',   emoji:'⬇️'},
+      {val:'custom',label:'Autre', emoji:'📷'}
     ];
     el.innerHTML = `
       <div class="card mb-md">
@@ -1370,13 +1745,11 @@ Généré par PowerApp — ${auj}
           </div>
           <div>
             <div class="input-label">Note (optionnel)</div>
-            <input class="input" id="photo-note"
-                   placeholder="ex: Début programme" />
+            <input class="input" id="photo-note" placeholder="ex: Début programme" />
           </div>
         </div>
-        <input type="file" id="photo-file" accept="image/*"
-               capture="user" style="display:none"
-               onchange="Stats._traiterPhoto(this)" />
+        <input type="file" id="photo-file" accept="image/*" capture="user"
+               style="display:none" onchange="Stats._traiterPhoto(this)" />
         <button class="btn-primary mt-md"
                 onclick="document.getElementById('photo-file').click()">
           📷 Choisir une photo
@@ -1390,16 +1763,14 @@ Généré par PowerApp — ${auj}
                       gap:var(--space-md);margin-top:var(--space-md)">
             <div style="text-align:center">
               <div style="font-size:.72rem;font-weight:700;
-                          color:var(--text-muted);
-                          margin-bottom:var(--space-sm)">AVANT</div>
+                          color:var(--text-muted);margin-bottom:var(--space-sm)">AVANT</div>
               <img src="${photos[photos.length-1].image}"
                    style="width:100%;border-radius:var(--radius-md);
                           aspect-ratio:3/4;object-fit:cover" />
             </div>
             <div style="text-align:center">
               <div style="font-size:.72rem;font-weight:700;
-                          color:var(--fd-indigo);
-                          margin-bottom:var(--space-sm)">MAINTENANT</div>
+                          color:var(--fd-indigo);margin-bottom:var(--space-sm)">MAINTENANT</div>
               <img src="${photos[0].image}"
                    style="width:100%;border-radius:var(--radius-md);
                           aspect-ratio:3/4;object-fit:cover" />
@@ -1407,34 +1778,21 @@ Généré par PowerApp — ${auj}
           </div>
         </div>` : ''}
 
-      <div class="card-label mb-sm">
-        📂 Galerie (${photos.length} photos)</div>
+      <div class="card-label mb-sm">📂 Galerie (${photos.length} photos)</div>
       ${photos.length === 0 ? `
-        <div class="card"
-             style="text-align:center;padding:var(--space-xl)">
-          <div style="font-size:3rem;margin-bottom:var(--space-md)">
-            📸</div>
-          <p style="color:var(--text-muted)">
-            Ajoute ta première photo !</p>
+        <div class="card" style="text-align:center;padding:var(--space-xl)">
+          <div style="font-size:3rem;margin-bottom:var(--space-md)">📸</div>
+          <p style="color:var(--text-muted)">Ajoute ta première photo !</p>
         </div>` : `
-        <div style="display:grid;
-                    grid-template-columns:repeat(3,1fr);
-                    gap:var(--space-sm)">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-sm)">
           ${photos.map(p => `
-            <div style="position:relative;
-                        border-radius:var(--radius-md);
-                        overflow:hidden;aspect-ratio:3/4;
-                        cursor:pointer"
+            <div style="position:relative;border-radius:var(--radius-md);
+                        overflow:hidden;aspect-ratio:3/4;cursor:pointer"
                  onclick="Stats._voirPhoto('${p.id}')">
-              <img src="${p.image}"
-                   style="width:100%;height:100%;
-                          object-fit:cover" />
-              <div style="position:absolute;bottom:0;
-                          left:0;right:0;
-                          background:linear-gradient(
-                            transparent,rgba(0,0,0,0.7));
-                          padding:var(--space-xs);
-                          font-size:.6rem;color:white">
+              <img src="${p.image}" style="width:100%;height:100%;object-fit:cover" />
+              <div style="position:absolute;bottom:0;left:0;right:0;
+                          background:linear-gradient(transparent,rgba(0,0,0,0.7));
+                          padding:var(--space-xs);font-size:.6rem;color:white">
                 ${p.date}${p.poids?` · ${p.poids}kg`:''}
               </div>
             </div>`).join('')}
@@ -1444,14 +1802,11 @@ Généré par PowerApp — ${auj}
 
   async _traiterPhoto(input) {
     if (!input.files?.[0]) return;
-    const type = document.getElementById('photo-type')?.value
-      || 'front';
+    const type = document.getElementById('photo-type')?.value || 'front';
     const note = document.getElementById('photo-note')?.value || '';
     Utils.toast('⏳ Compression en cours...', 'info', 1500);
     try {
-      const base64 = await Tracker.compresserImage(
-        input.files[0], 800, 0.75
-      );
+      const base64 = await Tracker.compresserImage(input.files[0], 800, 0.75);
       Tracker.ajouterPhoto(base64, type, note);
       try { Gamification.recompenser('PHOTO_AJOUTEE'); } catch(e) {}
       Utils.toast('✅ Photo ajoutée !', 'success');
@@ -1470,10 +1825,8 @@ Généré par PowerApp — ${auj}
     content.innerHTML = `
       <img src="${photo.image}"
            style="width:100%;border-radius:var(--radius-md);
-                  max-height:70vh;object-fit:contain;
-                  margin-bottom:var(--space-md)" />
-      <div style="font-size:.82rem;color:var(--text-muted);
-                  margin-bottom:var(--space-md)">
+                  max-height:70vh;object-fit:contain;margin-bottom:var(--space-md)" />
+      <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:var(--space-md)">
         📅 ${photo.date}
         ${photo.poids ? `· ⚖️ ${photo.poids}kg` : ''}
         ${photo.note  ? `<br>📝 ${photo.note}` : ''}
@@ -1483,12 +1836,10 @@ Généré par PowerApp — ${auj}
                 onclick="Stats._telechargerPhoto('${id}')">
           💾 Télécharger</button>
         <button style="flex:1;padding:var(--space-md) var(--space-lg);
-                       background:var(--fd-coral-dim);
-                       color:var(--fd-coral);
+                       background:var(--fd-coral-dim);color:var(--fd-coral);
                        border:1px solid rgba(255,141,150,0.3);
                        border-radius:var(--radius-full);
-                       font-size:.9rem;font-weight:600;
-                       cursor:pointer"
+                       font-size:.9rem;font-weight:600;cursor:pointer"
                 onclick="Stats._supprimerPhoto('${id}')">
           🗑️ Supprimer</button>
       </div>
@@ -1501,16 +1852,14 @@ Généré par PowerApp — ${auj}
   _telechargerPhoto(id) {
     const photo = Tracker.getPhotos().find(p => p.id === id);
     if (!photo) return;
-    const a = document.createElement('a');
+    const a    = document.createElement('a');
     a.href     = photo.image;
     a.download = `powerapp-photo-${photo.date}.jpg`;
     a.click();
   },
 
   async _supprimerPhoto(id) {
-    const ok = await Utils.confirmer(
-      'Supprimer cette photo ?', 'Action irréversible.'
-    );
+    const ok = await Utils.confirmer('Supprimer cette photo ?', 'Action irréversible.');
     if (!ok) return;
     Tracker.supprimerPhoto(id);
     document.getElementById('modal-info')?.classList.add('hidden');
@@ -1519,7 +1868,7 @@ Généré par PowerApp — ${auj}
   },
 
   // ════════════════════════════════════════════════════════
-  // CORPS TAB
+  // CORPS TAB (v5.0 conservé)
   // ════════════════════════════════════════════════════════
   _renderCorps(el) {
     const stats     = this.getStatsCorps();
@@ -1542,21 +1891,18 @@ Généré par PowerApp — ${auj}
             <span class="stat-label">Taille (cm)</span>
           </div>
           <div class="stat-card">
-            <span class="stat-value"
-                  style="color:var(--fd-mint)">
+            <span class="stat-value" style="color:var(--fd-mint)">
               ${stats.imc||'—'}</span>
             <span class="stat-label">IMC</span>
           </div>
           <div class="stat-card">
-            <span class="stat-value"
-                  style="color:var(--fd-lemon)">
+            <span class="stat-value" style="color:var(--fd-lemon)">
               ${stats.calSemaine||0}</span>
             <span class="stat-label">Cal/sem</span>
           </div>
         </div>
         ${stats.catIMC ? `
-          <div style="margin-top:var(--space-md);
-                      padding:var(--space-sm);
+          <div style="margin-top:var(--space-md);padding:var(--space-sm);
                       background:var(--fd-mint-dim);
                       border:1px solid rgba(139,240,187,0.2);
                       border-radius:var(--radius-sm);
@@ -1590,12 +1936,10 @@ Généré par PowerApp — ${auj}
             <div>
               <div class="input-label">${f.label}</div>
               <input class="input" id="${f.id}" type="number"
-                     placeholder="${f.label}" value="${f.val}"
-                     step="0.1" />
+                     placeholder="${f.label}" value="${f.val}" step="0.1" />
             </div>`).join('')}
         </div>
-        <button class="btn-primary mt-md"
-                onclick="Stats._sauvegarderMesure()">
+        <button class="btn-primary mt-md" onclick="Stats._sauvegarderMesure()">
           💾 Enregistrer
         </button>
       </div>
@@ -1624,17 +1968,13 @@ Généré par PowerApp — ${auj}
         <div class="card-label">📋 Historique</div>
         ${Tracker.getMesures().length === 0
           ? `<p style="color:var(--text-muted);text-align:center;
-                       padding:var(--space-lg);font-size:.85rem">
-               Aucune mesure</p>` : ''}
+                       padding:var(--space-lg);font-size:.85rem">Aucune mesure</p>` : ''}
         ${[...Tracker.getMesures()].reverse().slice(0,10).map(m => `
           <div style="padding:var(--space-sm) 0;
-                      border-bottom:1px solid var(--border-color);
-                      font-size:.82rem">
-            <div style="font-weight:600;color:var(--fd-indigo);
-                        margin-bottom:2px">
+                      border-bottom:1px solid var(--border-color);font-size:.82rem">
+            <div style="font-weight:600;color:var(--fd-indigo);margin-bottom:2px">
               ${Utils.formatDateCourt(m.date)}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;
-                        color:var(--text-secondary)">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;color:var(--text-secondary)">
               ${m.poids    ? `<span>⚖️ ${m.poids}kg</span>`    : ''}
               ${m.taille   ? `<span>📏 ${m.taille}cm</span>`   : ''}
               ${m.bras     ? `<span>💪 ${m.bras}cm</span>`     : ''}
@@ -1646,15 +1986,9 @@ Généré par PowerApp — ${auj}
       </div>
     `;
 
-    // ════════════════════════════════════════════════════════════
-// _renderCorps() requestAnimationFrame — ✅ v6.0
-// ════════════════════════════════════════════════════════════
-requestAnimationFrame(() => {
-  // ✅ FIX v6.0
-  if (typeof Chart === 'undefined') return;
-
-  Stats._detruireCharts(['chart-poids','chart-mensur']);
-  // ← Suite identique à v5.0
+    requestAnimationFrame(() => {
+      if (typeof Chart === 'undefined') return;
+      Stats._detruireCharts(['chart-poids','chart-mensur']);
 
       if (evolPoids.length >= 2) {
         const c = document.getElementById('chart-poids');
@@ -1711,32 +2045,17 @@ requestAnimationFrame(() => {
   },
 
   _sauvegarderMesure() {
-    const poids    = parseFloat(
-      document.getElementById('c-poids')?.value
-    ) || undefined;
-    const taille   = parseFloat(
-      document.getElementById('c-taille')?.value
-    ) || undefined;
-    const bras     = parseFloat(
-      document.getElementById('c-bras')?.value
-    ) || undefined;
-    const poitrine = parseFloat(
-      document.getElementById('c-poitrine')?.value
-    ) || undefined;
-    const taille2  = parseFloat(
-      document.getElementById('c-tour')?.value
-    ) || undefined;
-    const hanches  = parseFloat(
-      document.getElementById('c-hanches')?.value
-    ) || undefined;
+    const poids    = parseFloat(document.getElementById('c-poids')?.value)    || undefined;
+    const taille   = parseFloat(document.getElementById('c-taille')?.value)   || undefined;
+    const bras     = parseFloat(document.getElementById('c-bras')?.value)     || undefined;
+    const poitrine = parseFloat(document.getElementById('c-poitrine')?.value) || undefined;
+    const taille2  = parseFloat(document.getElementById('c-tour')?.value)     || undefined;
+    const hanches  = parseFloat(document.getElementById('c-hanches')?.value)  || undefined;
 
     if (!poids&&!taille&&!bras&&!poitrine&&!taille2&&!hanches) {
       Utils.toast('Remplis au moins une mesure !', 'error'); return;
     }
-
-    Tracker.ajouterMesure({
-      poids, taille, bras, poitrine, taille2, hanches
-    });
+    Tracker.ajouterMesure({ poids, taille, bras, poitrine, taille2, hanches });
     if (poids)  Tracker.ajouterPoids(poids);
     if (poids)  Tracker.sauvegarderProfil({ poids });
     if (taille) Tracker.sauvegarderProfil({ taille });
@@ -1747,7 +2066,7 @@ requestAnimationFrame(() => {
   },
 
   // ════════════════════════════════════════════════════════
-  // CHARGES TAB
+  // CHARGES TAB — ✅ v6.0 avec prédiction IA
   // ════════════════════════════════════════════════════════
   _renderCharges(el) {
     const table  = this.get1RMTable();
@@ -1769,34 +2088,28 @@ requestAnimationFrame(() => {
       <div class="card">
         <div class="card-label">📊 Tableau 1RM complet</div>
         ${table.length === 0
-          ? `<p style="color:var(--text-muted);text-align:center;
-                       padding:var(--space-lg)">
+          ? `<p style="color:var(--text-muted);text-align:center;padding:var(--space-lg)">
                Lance tes séances pour voir tes 1RM !</p>` : ''}
         ${table.map((ex,i) => `
           <div class="flex items-center justify-between"
                style="padding:var(--space-sm) 0;
                       border-bottom:1px solid var(--border-color)">
             <div class="flex items-center gap-sm">
-              <span style="font-size:.72rem;
-                           color:var(--text-muted);width:20px">
-                ${i+1}</span>
+              <span style="font-size:.72rem;color:var(--text-muted);width:20px">${i+1}</span>
               <div>
                 <div style="font-size:.88rem;font-weight:600">
                   ${ex.emoji} ${ex.nom}</div>
-                <div style="font-size:.68rem;color:var(--fd-mint)">
-                  ${ex.muscle}</div>
+                <div style="font-size:.68rem;color:var(--fd-mint)">${ex.muscle}</div>
               </div>
             </div>
             <div style="text-align:right">
-              <div style="font-size:.9rem;font-weight:700;
-                          color:var(--fd-indigo)">
+              <div style="font-size:.9rem;font-weight:700;color:var(--fd-indigo)">
                 1RM: ${ex.rm1}kg</div>
               <div style="font-size:.68rem;color:var(--text-muted)">
                 ${ex.poids}kg × ${ex.reps}
                 ${ex.ancienPR?.rm1
                   ? `<span style="color:var(--fd-mint)">
-                       ↑${ex.rm1-ex.ancienPR.rm1}kg</span>`
-                  : ''}
+                       ↑${ex.rm1-ex.ancienPR.rm1}kg</span>` : ''}
               </div>
             </div>
           </div>`).join('')}
@@ -1811,22 +2124,16 @@ requestAnimationFrame(() => {
   _renderDetailExercice(ref) {
     const el = document.getElementById('detail-exercice');
     if (!el) return;
-    const ex    = window.EXERCICES?.[ref];
-    const pr    = Tracker.getPR(ref);
-    const prog  = this.getProgressionExercice(ref, 60);
-    const notes = Tracker.getNotesExercice(ref);
+    const ex      = window.EXERCICES?.[ref];
+    const pr      = Tracker.getPR(ref);
+    const prog    = this.getProgressionExercice(ref, 60);
+    const notes   = Tracker.getNotesExercice(ref);
+    const predict = this.getPredictionProgression(ref);
 
-    // ✅ NOUVEAU v5.0 — Historique charges Live
     let historiqueCharges = [];
-    try {
-      historiqueCharges = Tracker.getHistoriqueChargesLive(ref, 3);
-    } catch(e) {}
-
-    // ✅ NOUVEAU v5.0 — Suggestion charge
-    let suggestion = null;
-    try {
-      suggestion = Tracker.getSuggestionCharge(ref);
-    } catch(e) {}
+    let suggestion        = null;
+    try { historiqueCharges = Tracker.getHistoriqueChargesLive(ref, 3); } catch(e) {}
+    try { suggestion        = Tracker.getSuggestionCharge(ref);         } catch(e) {}
 
     el.innerHTML = `
       <div class="card mb-md">
@@ -1834,90 +2141,117 @@ requestAnimationFrame(() => {
           <div class="card-label" style="margin:0">
             ${ex?.emoji||'💪'} ${ex?.nom||ref}</div>
           <button onclick="Stats._ajouterNoteExo('${ref}')"
-                  style="padding:4px 12px;
-                         border-radius:var(--radius-full);
+                  style="padding:4px 12px;border-radius:var(--radius-full);
                          border:1px solid var(--border-color);
-                         background:var(--bg-input);
-                         color:var(--text-primary);
-                         font-size:.72rem;font-weight:600;
-                         cursor:pointer">
+                         background:var(--bg-input);color:var(--text-primary);
+                         font-size:.72rem;font-weight:600;cursor:pointer">
             📝 Note
           </button>
         </div>
 
         <div class="stats-grid mb-md">
           <div class="stat-card">
-            <span class="stat-value"
-                  style="color:var(--fd-lemon)">
+            <span class="stat-value" style="color:var(--fd-lemon)">
               ${pr?.rm1||0}kg</span>
             <span class="stat-label">1RM Estimé</span>
           </div>
           <div class="stat-card">
-            <span class="stat-value"
-                  style="color:var(--fd-indigo)">
+            <span class="stat-value" style="color:var(--fd-indigo)">
               ${pr?.poids||0}kg</span>
             <span class="stat-label">Meilleur</span>
           </div>
           <div class="stat-card">
-            <span class="stat-value"
-                  style="color:var(--fd-mint)">
+            <span class="stat-value" style="color:var(--fd-mint)">
               ${pr?.reps||0}</span>
             <span class="stat-label">Meilleur reps</span>
           </div>
           <div class="stat-card">
             <span class="stat-value" style="font-size:.9rem">
-              ${pr?.date
-                ? Utils.formatDateCourt(pr.date) : '—'}</span>
+              ${pr?.date ? Utils.formatDateCourt(pr.date) : '—'}</span>
             <span class="stat-label">Date PR</span>
           </div>
         </div>
 
-        <!-- ✅ NOUVEAU v5.0 — Suggestion charge prochaine séance -->
+        <!-- ✅ NOUVEAU v6.0 — Prédiction IA -->
+        ${predict ? `
+          <div style="padding:12px 14px;
+                      background:linear-gradient(135deg,
+                        rgba(191,161,255,0.1),rgba(75,75,249,0.05));
+                      border:1px solid rgba(191,161,255,0.3);
+                      border-radius:var(--radius-lg);
+                      margin-bottom:12px">
+            <div style="font-size:.6rem;font-weight:700;
+                        text-transform:uppercase;letter-spacing:.1em;
+                        color:var(--fd-lavender);margin-bottom:8px">
+              🔮 Prédiction IA — Progression estimée
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              ${[
+                { label:'+4 semaines',  val:predict.dans4sem,  color:'var(--fd-indigo)'   },
+                { label:'+8 semaines',  val:predict.dans8sem,  color:'var(--fd-lavender)' },
+                { label:'+12 semaines', val:predict.dans12sem, color:'var(--fd-mint)'     }
+              ].map(p => `
+                <div style="text-align:center;padding:8px 4px;
+                            background:rgba(255,255,255,0.04);
+                            border-radius:var(--radius-md)">
+                  <div style="font-size:.95rem;font-weight:800;color:${p.color}">
+                    ~${p.val}kg</div>
+                  <div style="font-size:.58rem;color:var(--text-muted);margin-top:2px">
+                    ${p.label}</div>
+                </div>`).join('')}
+            </div>
+            <div style="margin-top:8px;font-size:.7rem;color:var(--text-muted);
+                        text-align:center">
+              Gain mensuel estimé :
+              <span style="color:${predict.gainMensuel > 0
+                ? 'var(--fd-mint)' : 'var(--fd-coral)'};font-weight:700">
+                ${predict.gainMensuel > 0 ? '+' : ''}${predict.gainMensuel}kg/mois
+              </span>
+              · Tendance :
+              <span style="font-weight:700">
+                ${predict.tendance === 'forte'
+                  ? '🚀 Forte progression'
+                  : predict.tendance === 'légère'
+                    ? '📈 Légère progression'
+                    : '➡️ Stagnation'}
+              </span>
+            </div>
+          </div>` : ''}
+
+        <!-- Suggestion charge -->
         ${suggestion ? `
           <div style="padding:10px 12px;
                       background:rgba(75,75,249,0.08);
                       border:1px solid rgba(75,75,249,0.2);
                       border-left:3px solid var(--fd-indigo);
-                      border-radius:var(--radius-md);
-                      margin-bottom:12px">
+                      border-radius:var(--radius-md);margin-bottom:12px">
             <div style="font-size:.6rem;font-weight:700;
-                        text-transform:uppercase;
-                        letter-spacing:.08em;
+                        text-transform:uppercase;letter-spacing:.08em;
                         color:var(--fd-indigo);margin-bottom:4px">
               💡 Suggestion prochaine séance
             </div>
-            <div style="font-size:.9rem;font-weight:800;
-                        color:var(--text-primary)">
+            <div style="font-size:.9rem;font-weight:800;color:var(--text-primary)">
               ${suggestion.poids}kg
-              <span style="font-size:.72rem;
-                           font-weight:400;
-                           color:var(--text-muted)">
+              <span style="font-size:.72rem;font-weight:400;color:var(--text-muted)">
                 (${suggestion.action === 'augmenter' ? '↑' : '→'}
                 vs ${suggestion.dernierePoids}kg)
               </span>
             </div>
-            <div style="font-size:.65rem;
-                        color:var(--text-muted);margin-top:2px">
+            <div style="font-size:.65rem;color:var(--text-muted);margin-top:2px">
               ${suggestion.raison || ''}
             </div>
           </div>` : ''}
 
-        <!-- ✅ NOUVEAU v5.0 — Historique 3 dernières séances -->
+        <!-- Historique 3 dernières séances -->
         ${historiqueCharges.length > 0 ? `
-          <div class="card-label mb-sm"
-               style="font-size:.72rem">
-            📋 3 dernières séances</div>
+          <div class="card-label mb-sm" style="font-size:.72rem">📋 3 dernières séances</div>
           ${historiqueCharges.map(h => `
-            <div style="padding:6px 0;
-                        border-bottom:1px solid var(--border-color)">
+            <div style="padding:6px 0;border-bottom:1px solid var(--border-color)">
               <div style="display:flex;justify-content:space-between;
                           align-items:center;margin-bottom:3px">
-                <span style="font-size:.68rem;
-                             color:var(--fd-indigo);
-                             font-weight:600">${h.label}</span>
-                <span style="font-size:.72rem;
-                             font-weight:700;
-                             color:var(--text-primary)">
+                <span style="font-size:.68rem;color:var(--fd-indigo);font-weight:600">
+                  ${h.label}</span>
+                <span style="font-size:.72rem;font-weight:700;color:var(--text-primary)">
                   ${h.maxPoids}kg max</span>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:4px">
@@ -1925,23 +2259,17 @@ requestAnimationFrame(() => {
                   <span style="padding:1px 6px;font-size:.6rem;
                                background:rgba(75,75,249,0.1);
                                border:1px solid rgba(75,75,249,0.2);
-                               border-radius:99px;
-                               color:var(--fd-lavender)">
+                               border-radius:99px;color:var(--fd-lavender)">
                     S${s.serie}: ${s.poids}kg×${s.reps}
                     ${s.rpe
-                      ? `<span style="color:var(--fd-coral)">
-                           R${s.rpe}</span>`
-                      : ''}
+                      ? `<span style="color:var(--fd-coral)">R${s.rpe}</span>` : ''}
                   </span>`).join('')}
               </div>
             </div>`).join('')}` : ''}
 
         ${pr?.rm1 ? `
-          <div class="card-label mb-sm"
-               style="margin-top:12px">
-            📊 Zones d'entraînement</div>
-          <div style="display:grid;
-                      grid-template-columns:repeat(5,1fr);
+          <div class="card-label mb-sm" style="margin-top:12px">📊 Zones d'entraînement</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);
                       gap:4px;margin-bottom:var(--space-md)">
             ${[
               {pct:50, label:'Endurance', color:'#8bf0bb'},
@@ -1951,27 +2279,20 @@ requestAnimationFrame(() => {
               {pct:95, label:'Max',       color:'#ff8d96'}
             ].map(z => `
               <div style="text-align:center;padding:var(--space-xs);
-                          background:${z.color}22;
-                          border:1px solid ${z.color}44;
+                          background:${z.color}22;border:1px solid ${z.color}44;
                           border-radius:var(--radius-sm)">
-                <div style="font-size:.75rem;font-weight:700;
-                            color:${z.color}">
+                <div style="font-size:.75rem;font-weight:700;color:${z.color}">
                   ${Math.round(pr.rm1*z.pct/100)}kg</div>
-                <div style="font-size:.58rem;
-                            color:var(--text-muted)">${z.pct}%</div>
-                <div style="font-size:.58rem;
-                            color:var(--text-muted)">
-                  ${z.label}</div>
+                <div style="font-size:.58rem;color:var(--text-muted)">${z.pct}%</div>
+                <div style="font-size:.58rem;color:var(--text-muted)">${z.label}</div>
               </div>`).join('')}
           </div>` : ''}
 
         ${prog.length > 1
-          ? `<div class="card-label"
-                  style="font-size:.72rem">
+          ? `<div class="card-label" style="font-size:.72rem">
                📈 Progression 1RM (60 jours)</div>
              <canvas id="chart-exo" height="140"
-                     style="margin-top:var(--space-sm)">
-             </canvas>`
+                     style="margin-top:var(--space-sm)"></canvas>`
           : `<p style="color:var(--text-muted);text-align:center;
                        font-size:.85rem;padding:var(--space-md)">
                Pas encore assez de données</p>`}
@@ -1982,8 +2303,7 @@ requestAnimationFrame(() => {
             <div style="font-size:.78rem;padding:var(--space-xs) 0;
                         border-bottom:1px solid var(--border-color);
                         color:var(--text-secondary)">
-              <span style="color:var(--fd-indigo);
-                           font-size:.65rem">${n.date}</span>
+              <span style="color:var(--fd-indigo);font-size:.65rem">${n.date}</span>
               <br>${n.note}
             </div>`).join('')}` : ''}
       </div>
@@ -2036,8 +2356,7 @@ requestAnimationFrame(() => {
   },
 
   _sauvegarderNoteExo(ref) {
-    const texte = document.getElementById('note-exo-texte')
-      ?.value?.trim();
+    const texte = document.getElementById('note-exo-texte')?.value?.trim();
     if (!texte) return;
     Tracker.ajouterNoteExercice(ref, texte);
     Utils.toast('Note sauvegardée !', 'success');
@@ -2046,44 +2365,28 @@ requestAnimationFrame(() => {
   },
 
   // ════════════════════════════════════════════════════════
-// ✅ NOUVEAU v6.0 — Helper couleur
-// ════════════════════════════════════════════════════════
-_getChartColor(index) {
-  const colors = [
-    '#4b4bf9','#8bf0bb','#f9ef77',
-    '#bfa1ff','#ff8d96','#4b4bf9'
-  ];
-  return colors[index % colors.length];
-}, 
-
-  // ════════════════════════════════════════════════════════
-  // GRAPHIQUES TAB
+  // GRAPHIQUES TAB (v5.0 + améliorations v6.0)
   // ════════════════════════════════════════════════════════
   _renderGraphiques(el) {
-      // ✅ AJOUTER CES LIGNES ICI — juste après l'accolade {
-  if (typeof Chart === 'undefined') {
-    el.innerHTML = `
-      <div class="card mt-md" style="text-align:center;
-                                      padding:var(--space-xl)">
-        <div style="font-size:2rem;margin-bottom:8px">📊</div>
-        <div style="color:var(--text-muted);font-size:.85rem">
-          Chart.js non chargé.<br>
-          Vérifie la connexion internet.
-        </div>
-      </div>`;
-    return;
-  } 
-    const refs     = Object.keys(window.EXERCICES||{})
-      .filter(r => Tracker.getPR(r));
+    if (typeof Chart === 'undefined') {
+      el.innerHTML = `
+        <div class="card mt-md" style="text-align:center;padding:var(--space-xl)">
+          <div style="font-size:2rem;margin-bottom:8px">📊</div>
+          <div style="color:var(--text-muted);font-size:.85rem">
+            Chart.js non chargé.<br>Vérifie la connexion internet.
+          </div>
+        </div>`;
+      return;
+    }
+
+    const refs     = Object.keys(window.EXERCICES||{}).filter(r => Tracker.getPR(r));
     const periodes = ['30','60','90','180'];
 
     el.innerHTML = `
       <div class="card mb-md">
         <div class="card-label mb-md">📈 Progression exercice</div>
-        <div style="display:flex;gap:var(--space-sm);
-                    flex-wrap:wrap;margin-bottom:var(--space-sm)">
-          <select id="sel-graph-exo" class="input"
-                  style="flex:2;min-width:140px">
+        <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;margin-bottom:var(--space-sm)">
+          <select id="sel-graph-exo" class="input" style="flex:2;min-width:140px">
             <option value="">-- Choisir un exercice --</option>
             ${refs.map(r => `
               <option value="${r}">
@@ -2091,28 +2394,23 @@ _getChartColor(index) {
                 ${window.EXERCICES[r]?.nom||r}
               </option>`).join('')}
           </select>
-          <select id="sel-graph-metric" class="input"
-                  style="flex:1;min-width:100px">
+          <select id="sel-graph-metric" class="input" style="flex:1;min-width:100px">
             <option value="rm1">1RM (kg)</option>
             <option value="poids">Poids (kg)</option>
             <option value="reps">Reps</option>
           </select>
         </div>
-        <div style="display:flex;gap:6px;
-                    margin-bottom:var(--space-md)">
+        <div style="display:flex;gap:6px;margin-bottom:var(--space-md)">
           ${periodes.map((p,i) => `
             <button data-periode="${p}"
                     onclick="Stats._chartChangerPeriode(this)"
-                    style="flex:1;padding:6px 4px;
-                           border-radius:var(--radius-full);
-                           font-size:.75rem;font-weight:600;
-                           cursor:pointer;
+                    style="flex:1;padding:6px 4px;border-radius:var(--radius-full);
+                           font-size:.75rem;font-weight:600;cursor:pointer;
                            border:1px solid ${i===0
                              ? 'var(--fd-indigo)' : 'var(--border-color)'};
                            background:${i===0
                              ? 'var(--fd-indigo)' : 'var(--bg-input)'};
-                           color:${i===0
-                             ? 'white' : 'var(--text-muted)'}">
+                           color:${i===0 ? 'white' : 'var(--text-muted)'}">
               ${p}j
             </button>`).join('')}
         </div>
@@ -2121,8 +2419,7 @@ _getChartColor(index) {
                     color:var(--text-muted);font-size:.85rem">
           Sélectionne un exercice pour voir sa progression
         </div>
-        <canvas id="chart-progression" height="200"
-                style="display:none"></canvas>
+        <canvas id="chart-progression" height="200" style="display:none"></canvas>
       </div>
 
       <div class="card mb-md">
@@ -2148,8 +2445,7 @@ _getChartColor(index) {
     `;
 
     Stats._detruireCharts([
-      'chart-vol-8w','chart-top-rm',
-      'chart-jours-sem','chart-rpe-evo'
+      'chart-vol-8w','chart-top-rm','chart-jours-sem','chart-rpe-evo'
     ]);
 
     requestAnimationFrame(() => {
@@ -2162,10 +2458,14 @@ _getChartColor(index) {
             labels:   vol.map(v => v.label),
             datasets: [{
               data:            vol.map(v => v.volume),
-              backgroundColor: 'rgba(75,75,249,0.7)',
-              borderColor:     '#4b4bf9',
-              borderWidth:     2,
-              borderRadius:    6
+              backgroundColor: vol.map((v,i) =>
+                i === vol.length-1
+                  ? 'rgba(75,75,249,0.9)'
+                  : 'rgba(75,75,249,0.4)'
+              ),
+              borderColor:  '#4b4bf9',
+              borderWidth:  2,
+              borderRadius: 6
             }]
           },
           options: Stats._chartOptions()
@@ -2175,10 +2475,8 @@ _getChartColor(index) {
       const top  = Stats.getTopExercices(8);
       const crm  = document.getElementById('chart-top-rm');
       if (crm && top.length > 0) {
-        const colors = [
-          '#4b4bf9','#8bf0bb','#f9ef77','#bfa1ff',
-          '#ff8d96','#4b4bf9','#8bf0bb','#f9ef77'
-        ];
+        const colors = ['#4b4bf9','#8bf0bb','#f9ef77','#bfa1ff',
+                        '#ff8d96','#4b4bf9','#8bf0bb','#f9ef77'];
         Stats._charts['chart-top-rm'] = new Chart(crm, {
           type: 'bar',
           data: {
@@ -2201,7 +2499,7 @@ _getChartColor(index) {
         Stats._charts['chart-jours-sem'] = new Chart(cjours, {
           type: 'bar',
           data: {
-            labels: ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'],
+            labels:   ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'],
             datasets: [{
               data:            jours,
               backgroundColor: 'rgba(139,240,187,0.6)',
@@ -2234,18 +2532,12 @@ _getChartColor(index) {
           },
           options: Stats._chartOptions({
             scales: {
-              x: {
-                ticks: { color:'#888', font:{ size:10 } },
-                grid:  { color:'rgba(255,255,255,0.05)' }
-              },
-              y: {
-                min:0, max:10,
-                ticks: {
-                  color:'#888', font:{ size:10 },
-                  callback: v => `${v}/10`
-                },
-                grid: { color:'rgba(255,255,255,0.05)' }
-              }
+              x: { ticks:{ color:'#888', font:{ size:10 } },
+                   grid: { color:'rgba(255,255,255,0.05)' } },
+              y: { min:0, max:10,
+                   ticks:{ color:'#888', font:{ size:10 },
+                           callback: v => `${v}/10` },
+                   grid: { color:'rgba(255,255,255,0.05)' } }
             }
           })
         });
@@ -2253,20 +2545,16 @@ _getChartColor(index) {
     });
 
     document.getElementById('sel-graph-exo')
-      ?.addEventListener('change', () =>
-        Stats._chartMettreAJourProg()
-      );
+      ?.addEventListener('change', () => Stats._chartMettreAJourProg());
     document.getElementById('sel-graph-metric')
-      ?.addEventListener('change', () =>
-        Stats._chartMettreAJourProg()
-      );
+      ?.addEventListener('change', () => Stats._chartMettreAJourProg());
   },
 
   _chartChangerPeriode(btn) {
     document.querySelectorAll('[data-periode]').forEach(b => {
-      b.style.background   = 'var(--bg-input)';
-      b.style.borderColor  = 'var(--border-color)';
-      b.style.color        = 'var(--text-muted)';
+      b.style.background  = 'var(--bg-input)';
+      b.style.borderColor = 'var(--border-color)';
+      b.style.color       = 'var(--text-muted)';
     });
     btn.style.background  = 'var(--fd-indigo)';
     btn.style.borderColor = 'var(--fd-indigo)';
@@ -2276,8 +2564,7 @@ _getChartColor(index) {
 
   _chartMettreAJourProg() {
     const ref    = document.getElementById('sel-graph-exo')?.value;
-    const metric = document.getElementById('sel-graph-metric')?.value
-      || 'rm1';
+    const metric = document.getElementById('sel-graph-metric')?.value || 'rm1';
     const periode = document.querySelector(
       '[data-periode][style*="var(--fd-indigo)"]'
     )?.dataset?.periode || '30';
@@ -2294,8 +2581,8 @@ _getChartColor(index) {
     const prog = Stats.getProgressionExercice(ref, parseInt(periode));
     if (!prog.length) {
       if (ph) {
-        ph.style.display  = 'block';
-        ph.textContent    = 'Pas encore assez de données';
+        ph.style.display = 'block';
+        ph.textContent   = 'Pas encore assez de données';
       }
       if (canvas) canvas.style.display = 'none';
       return;
@@ -2306,12 +2593,9 @@ _getChartColor(index) {
 
     Stats._detruireCharts(['chart-progression']);
 
-    const metricColors = {
-      rm1:'#bfa1ff', poids:'#4b4bf9', reps:'#8bf0bb'
-    };
+    const metricColors = { rm1:'#bfa1ff', poids:'#4b4bf9', reps:'#8bf0bb' };
     const metricLabels = {
-      rm1:'1RM estimé (kg)', poids:'Poids soulevé (kg)',
-      reps:'Répétitions'
+      rm1:'1RM estimé (kg)', poids:'Poids soulevé (kg)', reps:'Répétitions'
     };
     const color = metricColors[metric];
 
@@ -2334,10 +2618,7 @@ _getChartColor(index) {
       },
       options: Stats._chartOptions({
         plugins: {
-          legend: {
-            display: true,
-            labels:  { color:'#888', font:{ size:11 } }
-          },
+          legend: { display:true, labels:{ color:'#888', font:{ size:11 } } },
           tooltip: {
             backgroundColor: '#09092d',
             titleColor:      '#fff',
@@ -2350,170 +2631,164 @@ _getChartColor(index) {
     });
   },
 
- // ════════════════════════════════════════════════════════════
-// CALENDRIER TAB — ✅ v6.0 navigation data-attributes
-// ════════════════════════════════════════════════════════════
-_renderCalendrier(el, annee = null, mois = null) {
-  if (!el) {
-    el = document.getElementById('stats-content');
-    if (!el) return;
-  }
-  const today = new Date();
-  const an    = annee !== null ? annee : today.getFullYear();
-  const mo    = mois  !== null ? mois  : today.getMonth();
+  // ════════════════════════════════════════════════════════
+  // CALENDRIER TAB — ✅ v6.0 navigation fixée
+  // ════════════════════════════════════════════════════════
+  _renderCalendrier(el, annee = null, mois = null) {
+    if (!el) {
+      el = document.getElementById('stats-content');
+      if (!el) return;
+    }
+    const today = new Date();
+    const an    = annee !== null ? annee : today.getFullYear();
+    const mo    = mois  !== null ? mois  : today.getMonth();
 
-  const heatmap   = this.getHeatmap(24);
-  const nomsMois  = [
-    'Janvier','Février','Mars','Avril','Mai','Juin',
-    'Juillet','Août','Septembre','Octobre','Novembre','Décembre'
-  ];
-  const nomsJours = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-  const premierJour = new Date(an, mo, 1);
-  const offsetDebut = (premierJour.getDay() + 6) % 7;
-  const nbJours     = new Date(an, mo + 1, 0).getDate();
-  const dateDebut   = Utils.storage.get('ft_date_debut', null);
+    const heatmap   = this.getHeatmap(24);
+    const nomsMois  = [
+      'Janvier','Février','Mars','Avril','Mai','Juin',
+      'Juillet','Août','Septembre','Octobre','Novembre','Décembre'
+    ];
+    const nomsJours    = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    const premierJour  = new Date(an, mo, 1);
+    const offsetDebut  = (premierJour.getDay() + 6) % 7;
+    const nbJours      = new Date(an, mo + 1, 0).getDate();
+    const dateDebut    = Utils.storage.get('ft_date_debut', null);
 
-  let seancesMois = 0, manqueesMois = 0;
-  for (let j = 1; j <= nbJours; j++) {
-    const d = `${an}-${String(mo+1).padStart(2,'0')}-${String(j).padStart(2,'0')}`;
-    if (heatmap[d] === 'done') seancesMois++;
-    if (heatmap[d] === 'missed'
-        && (!dateDebut || d >= dateDebut)) manqueesMois++;
-  }
+    let seancesMois = 0, manqueesMois = 0;
+    for (let j = 1; j <= nbJours; j++) {
+      const d = `${an}-${String(mo+1).padStart(2,'0')}-${String(j).padStart(2,'0')}`;
+      if (heatmap[d] === 'done')   seancesMois++;
+      if (heatmap[d] === 'missed'
+          && (!dateDebut || d >= dateDebut)) manqueesMois++;
+    }
 
-  let cellules = '';
-  for (let i = 0; i < offsetDebut; i++) {
-    cellules += `<div style="min-height:48px"></div>`;
-  }
+    let cellules = '';
+    for (let i = 0; i < offsetDebut; i++) {
+      cellules += `<div style="min-height:48px"></div>`;
+    }
 
-  for (let j = 1; j <= nbJours; j++) {
-    const d  = `${an}-${String(mo+1).padStart(2,'0')}-${String(j).padStart(2,'0')}`;
-    const etat          = heatmap[d] || 'none';
-    const estAuj        = d === Utils.aujourd_hui();
-    const estFut        = d > Utils.aujourd_hui();
-    const estAvantDebut = dateDebut && d < dateDebut;
-    const etatAffiche   = estAvantDebut ? 'none' : etat;
+    for (let j = 1; j <= nbJours; j++) {
+      const d   = `${an}-${String(mo+1).padStart(2,'0')}-${String(j).padStart(2,'0')}`;
+      const etat          = heatmap[d] || 'none';
+      const estAuj        = d === Utils.aujourd_hui();
+      const estFut        = d > Utils.aujourd_hui();
+      const estAvantDebut = dateDebut && d < dateDebut;
+      const etatAffiche   = estAvantDebut ? 'none' : etat;
 
-    const bg = etatAffiche === 'done'   ? 'var(--fd-indigo)'
-             : etatAffiche === 'missed' ? 'rgba(255,141,150,0.3)'
-             : etatAffiche === 'rest'   ? 'rgba(139,240,187,0.15)'
-             : estFut                   ? 'transparent'
-             :                            'var(--bg-input)';
+      const bg = etatAffiche === 'done'   ? 'var(--fd-indigo)'
+               : etatAffiche === 'missed' ? 'rgba(255,141,150,0.3)'
+               : etatAffiche === 'rest'   ? 'rgba(139,240,187,0.15)'
+               : estFut                   ? 'transparent'
+               :                            'var(--bg-input)';
 
-    cellules += `
-      <div ${estFut ? '' : `onclick="Stats._afficherJour('${d}')"`}
-           style="background:${bg};
-                  border:${estAuj
-                    ? '2px solid var(--fd-lemon)'
-                    : '1px solid var(--border-color)'};
-                  border-radius:var(--radius-sm);
-                  min-height:48px;padding:4px;
-                  cursor:${estFut ? 'default' : 'pointer'}">
-        <div style="font-size:.72rem;
-                    font-weight:${estAuj ? '800' : '500'};
-                    color:${estAuj ? 'var(--fd-lemon)'
-                      : etatAffiche === 'done'
-                        ? 'white' : 'var(--text-muted)'}">
-          ${j}
+      cellules += `
+        <div ${estFut ? '' : `onclick="Stats._afficherJour('${d}')"`}
+             style="background:${bg};
+                    border:${estAuj
+                      ? '2px solid var(--fd-lemon)'
+                      : '1px solid var(--border-color)'};
+                    border-radius:var(--radius-sm);
+                    min-height:48px;padding:4px;
+                    cursor:${estFut ? 'default' : 'pointer'}">
+          <div style="font-size:.72rem;
+                      font-weight:${estAuj ? '800' : '500'};
+                      color:${estAuj
+                        ? 'var(--fd-lemon)'
+                        : etatAffiche === 'done'
+                          ? 'white' : 'var(--text-muted)'}">
+            ${j}
+          </div>
+          <div style="font-size:.8rem;text-align:center;margin-top:2px">
+            ${etatAffiche === 'done'   ? '✅'
+            : etatAffiche === 'missed' ? '❌'
+            : etatAffiche === 'rest'   ? '😴' : ''}
+          </div>
+        </div>`;
+    }
+
+    const isCurrentMonth = an === today.getFullYear()
+      && mo === today.getMonth();
+
+    // ✅ FIX v6.0 — Navigation via data-attributes
+    const anPrev = mo === 0  ? an - 1 : an;
+    const moPrev = mo === 0  ? 11     : mo - 1;
+    const anNext = mo === 11 ? an + 1 : an;
+    const moNext = mo === 11 ? 0      : mo + 1;
+
+    el.innerHTML = `
+      <div class="flex items-center justify-between mb-md">
+        <button
+          data-cal-an="${anPrev}"
+          data-cal-mo="${moPrev}"
+          onclick="Stats._renderCalendrier(
+            document.getElementById('stats-content'),
+            parseInt(this.dataset.calAn),
+            parseInt(this.dataset.calMo))"
+          style="width:36px;height:36px;border-radius:50%;
+                 border:1px solid var(--border-color);
+                 background:var(--bg-input);color:var(--text-primary);
+                 font-size:.9rem;cursor:pointer">◄</button>
+        <div style="text-align:center">
+          <div style="font-weight:700;font-size:1.1rem">
+            ${nomsMois[mo]} ${an}</div>
+          <div style="font-size:.72rem;color:var(--text-muted)">
+            ${seancesMois} séance${seancesMois>1?'s':''} ·
+            ${manqueesMois} manquée${manqueesMois>1?'s':''}
+          </div>
         </div>
-        <div style="font-size:.8rem;text-align:center;margin-top:2px">
-          ${etatAffiche === 'done'   ? '✅'
-          : etatAffiche === 'missed' ? '❌'
-          : etatAffiche === 'rest'   ? '😴' : ''}
+        <button
+          data-cal-an="${anNext}"
+          data-cal-mo="${moNext}"
+          ${isCurrentMonth ? 'disabled' : ''}
+          onclick="Stats._renderCalendrier(
+            document.getElementById('stats-content'),
+            parseInt(this.dataset.calAn),
+            parseInt(this.dataset.calMo))"
+          style="width:36px;height:36px;border-radius:50%;
+                 border:1px solid var(--border-color);
+                 background:var(--bg-input);color:var(--text-primary);
+                 font-size:.9rem;cursor:pointer;
+                 opacity:${isCurrentMonth ? '.3' : '1'}">►</button>
+      </div>
+
+      <div class="stats-grid mb-md">
+        <div class="stat-card">
+          <span class="stat-value" style="color:var(--fd-indigo)">
+            ${seancesMois}</span>
+          <span class="stat-label">Séances</span>
         </div>
-      </div>`;
-  }
-
-  const isCurrentMonth = an === today.getFullYear()
-    && mo === today.getMonth();
-
-  // ✅ FIX v6.0 — Calculer mois précédent/suivant
-  const anPrev = mo === 0  ? an - 1 : an;
-  const moPrev = mo === 0  ? 11 : mo - 1;
-  const anNext = mo === 11 ? an + 1 : an;
-  const moNext = mo === 11 ? 0  : mo + 1;
-
-  el.innerHTML = `
-    <div class="flex items-center justify-between mb-md">
-      <button
-        data-cal-nav="prev"
-        data-cal-an="${anPrev}"
-        data-cal-mo="${moPrev}"
-        onclick="Stats._renderCalendrier(
-          document.getElementById('stats-content'),
-          parseInt(this.dataset.calAn),
-          parseInt(this.dataset.calMo))"
-        style="width:36px;height:36px;border-radius:50%;
-               border:1px solid var(--border-color);
-               background:var(--bg-input);
-               color:var(--text-primary);
-               font-size:.9rem;cursor:pointer">◄</button>
-      <div style="text-align:center">
-        <div style="font-weight:700;font-size:1.1rem">
-          ${nomsMois[mo]} ${an}</div>
-        <div style="font-size:.72rem;color:var(--text-muted)">
-          ${seancesMois} séance${seancesMois>1?'s':''} ·
-          ${manqueesMois} manquée${manqueesMois>1?'s':''}
+        <div class="stat-card">
+          <span class="stat-value" style="color:var(--fd-coral)">
+            ${manqueesMois}</span>
+          <span class="stat-label">Manquées</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" style="color:var(--fd-mint)">
+            ${Math.round((seancesMois/Math.max(1,seancesMois+manqueesMois))*100)}%</span>
+          <span class="stat-label">Assiduité</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" style="color:var(--fd-lemon)">
+            ${Tracker.getStreak().count}🔥</span>
+          <span class="stat-label">Streak</span>
         </div>
       </div>
-      <button
-        data-cal-nav="next"
-        data-cal-an="${anNext}"
-        data-cal-mo="${moNext}"
-        ${isCurrentMonth ? 'disabled' : ''}
-        onclick="Stats._renderCalendrier(
-          document.getElementById('stats-content'),
-          parseInt(this.dataset.calAn),
-          parseInt(this.dataset.calMo))"
-        style="width:36px;height:36px;border-radius:50%;
-               border:1px solid var(--border-color);
-               background:var(--bg-input);
-               color:var(--text-primary);
-               font-size:.9rem;cursor:pointer;
-               opacity:${isCurrentMonth ? '.3' : '1'}">►</button>
-    </div>
 
-    <div class="stats-grid mb-md">
-      <div class="stat-card">
-        <span class="stat-value" style="color:var(--fd-indigo)">
-          ${seancesMois}</span>
-        <span class="stat-label">Séances</span>
+      <div class="card mb-md" style="padding:var(--space-sm)">
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);
+                    gap:3px;margin-bottom:4px">
+          ${nomsJours.map(j => `
+            <div style="text-align:center;font-size:.65rem;font-weight:600;
+                        color:var(--text-muted);padding:4px 0">${j}</div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">
+          ${cellules}
+        </div>
       </div>
-      <div class="stat-card">
-        <span class="stat-value" style="color:var(--fd-coral)">
-          ${manqueesMois}</span>
-        <span class="stat-label">Manquées</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-value" style="color:var(--fd-mint)">
-          ${Math.round((seancesMois / Math.max(1,
-            seancesMois+manqueesMois)) * 100)}%</span>
-        <span class="stat-label">Assiduité</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-value" style="color:var(--fd-lemon)">
-          ${Tracker.getStreak().count}🔥</span>
-        <span class="stat-label">Streak</span>
-      </div>
-    </div>
 
-    <div class="card mb-md" style="padding:var(--space-sm)">
-      <div style="display:grid;
-                  grid-template-columns:repeat(7,1fr);
-                  gap:3px;margin-bottom:4px">
-        ${nomsJours.map(j => `
-          <div style="text-align:center;font-size:.65rem;
-                      font-weight:600;color:var(--text-muted);
-                      padding:4px 0">${j}</div>`).join('')}
-      </div>
-      <div style="display:grid;
-                  grid-template-columns:repeat(7,1fr);
-                  gap:3px">${cellules}</div>
-    </div>
-
-    <div id="detail-jour"></div>
-  `;
-},
+      <div id="detail-jour"></div>
+    `;
+  },
 
   _afficherJour(dateStr) {
     const el = document.getElementById('detail-jour');
@@ -2525,9 +2800,7 @@ _renderCalendrier(el, annee = null, mois = null) {
     for (let i = 0; i < localStorage.length; i++) {
       const cle = localStorage.key(i);
       if (cle?.startsWith(`ft_seance_${dateStr}`)) {
-        try {
-          seanceData = JSON.parse(localStorage.getItem(cle));
-        } catch(e) {}
+        try { seanceData = JSON.parse(localStorage.getItem(cle)); } catch(e) {}
         break;
       }
     }
@@ -2555,11 +2828,9 @@ _renderCalendrier(el, annee = null, mois = null) {
               :                     '⬜ Pas de données'}
             </div>
           </div>
-          <button onclick="document.getElementById(
-                    'detail-jour').innerHTML=''"
+          <button onclick="document.getElementById('detail-jour').innerHTML=''"
                   style="background:none;border:none;
-                         color:var(--text-muted);
-                         font-size:1.2rem;cursor:pointer">✕</button>
+                         color:var(--text-muted);font-size:1.2rem;cursor:pointer">✕</button>
         </div>
         ${seanceData?.complete ? `
           <div class="stats-grid mb-md">
@@ -2588,27 +2859,22 @@ _renderCalendrier(el, annee = null, mois = null) {
             (seanceData.series||[]).map(s => s.exerciceRef)
           )].map(ref => {
             const ex     = window.EXERCICES?.[ref] || {};
-            const series = (seanceData.series||[])
-              .filter(s => s.exerciceRef === ref);
+            const series = (seanceData.series||[]).filter(s => s.exerciceRef === ref);
             const max    = Math.max(...series.map(s => s.poids||0), 0);
             return `
               <div class="flex justify-between"
-                   style="font-size:.82rem;
-                          padding:var(--space-xs) 0;
+                   style="font-size:.82rem;padding:var(--space-xs) 0;
                           border-bottom:1px solid var(--border-color)">
                 <span>${ex.emoji||'💪'} ${ex.nom||ref}</span>
-                <span style="font-weight:600;
-                             color:var(--fd-indigo)">
+                <span style="font-weight:600;color:var(--fd-indigo)">
                   ${max}kg × ${series.length} séries</span>
               </div>`;
           }).join('')}` : `
-          <div style="text-align:center;padding:var(--space-md);
-                      color:var(--text-muted)">
+          <div style="text-align:center;padding:var(--space-md);color:var(--text-muted)">
             <div style="font-size:2rem">
               ${etat === 'rest' ? '😴' : '⬜'}</div>
             <div style="font-size:.85rem;margin-top:4px">
-              ${etat === 'rest' ? 'Jour de repos' : 'Aucune donnée'}
-            </div>
+              ${etat === 'rest' ? 'Jour de repos' : 'Aucune donnée'}</div>
           </div>`}
       </div>
     `;
@@ -2624,4 +2890,4 @@ _renderCalendrier(el, annee = null, mois = null) {
 };
 
 window.Stats = Stats;
-console.log('✅ Stats v5.0 chargé — Heatmap musculaire + Rapport + Historique charges Live');
+console.log('✅ Stats v6.0 — Heatmap GitHub + Radar + Analytics + Prédiction IA');
