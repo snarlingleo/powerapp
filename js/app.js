@@ -185,13 +185,13 @@ case 'live': {
     } else if (typeof Coach.renderCoachTab === 'function') {
       Coach.renderCoachTab(container);
     } else {
-      throw new Error('Aucune méthode render disponible');
+      throw new Error('Aucune méthode render');
     }
   } catch(e) {
     console.error('[Coach]', e);
     _rendrePlaceholder(
       container, '🤖', 'Coach IA',
-      'Module Coach non disponible. Vérifie que coach.js est chargé.'
+      'Vérifie que coach.js est chargé avant app.js dans index.html'
     );
   }
   break;
