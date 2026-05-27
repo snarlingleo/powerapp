@@ -8891,11 +8891,6 @@ function _terminerOb() {
       });
     } else {
       // ✅ Fallback si Profil.js absent
-      profil = {
-        nom:    window._obData.nom || 'Athlète',
-        avatar: '💪'
-      };
-      // Sauvegarder manuellement
       const data = {
         nom:            window._obData.nom      || 'Athlète',
         poids:          window._obData.poids    || 80,
@@ -8909,97 +8904,113 @@ function _terminerOb() {
         avatar:         '💪',
         dateCreation:   Utils.aujourd_hui()
       };
-      // Sauvegarder dans ft_profil ET ft_profil_onboarding
       Utils.storage.set('ft_profil', data);
       Utils.storage.set('ft_profil_onboarding', data);
       profil = data;
     }
 
     Programme.setDateDebut(Utils.aujourd_hui());
-    Gamification.ajouterXP(200, 'Bienvenue');
 
-    // ✅ Générer et appliquer le programme IA
+    try { Gamification.ajouterXP(200, 'Bienvenue'); } catch(e) {}
+
+    // ✅ FIX v7.0 — Générer programme IA avec protection Coach
     if (window._obProgrammePropose) {
       try {
-        const config = {
-          ...window._obProgrammePropose,
-          jours_specifiques: null
-        };
+        // Vérifier que Coach est chargé
+        if (typeof Coach === 'undefined' || !Coach?.ProgrammeIA) {
+          console.warn(
+            '[Onboarding] Coach.js non chargé — programme ignoré'
+          );
+        } else {
+          const config = {
+            ...window._obProgrammePropose,
+            jours_specifiques: null
+          };
 
-        const aujourdhuiIdx = Utils.indexJourSemaine(
-          Utils.aujourd_hui()
-        );
-        const nbJours    = config.nbJours || 4;
-        const joursFinaux = [];
+          const aujourdhuiIdx = Utils.indexJourSemaine(
+            Utils.aujourd_hui()
+          );
+          const nbJours    = config.nbJours || 4;
+          const joursFinaux = [];
 
-        for (
-          let offset = 0;
-          offset < 7 && joursFinaux.length < nbJours;
-          offset++
-        ) {
-          const jourCible = (aujourdhuiIdx + offset) % 7;
-          const dernier   = joursFinaux[joursFinaux.length - 1];
-          const estConsec = dernier !== undefined
-            && (jourCible - dernier + 7) % 7 === 1;
-
-          if (nbJours <= 4 && estConsec
-              && joursFinaux.length > 0) {
-            continue;
-          }
-          joursFinaux.push(jourCible);
-        }
-
-        if (joursFinaux.length < nbJours) {
           for (
-            let i = 0;
-            i < 7 && joursFinaux.length < nbJours;
-            i++
+            let offset = 0;
+            offset < 7 && joursFinaux.length < nbJours;
+            offset++
           ) {
-            const jourCible = (aujourdhuiIdx + i) % 7;
-            if (!joursFinaux.includes(jourCible)) {
-              joursFinaux.push(jourCible);
+            const jourCible = (aujourdhuiIdx + offset) % 7;
+            const dernier   = joursFinaux[joursFinaux.length - 1];
+            const estConsec = dernier !== undefined
+              && (jourCible - dernier + 7) % 7 === 1;
+
+            if (nbJours <= 4 && estConsec
+                && joursFinaux.length > 0) {
+              continue;
+            }
+            joursFinaux.push(jourCible);
+          }
+
+          if (joursFinaux.length < nbJours) {
+            for (
+              let i = 0;
+              i < 7 && joursFinaux.length < nbJours;
+              i++
+            ) {
+              const jourCible = (aujourdhuiIdx + i) % 7;
+              if (!joursFinaux.includes(jourCible)) {
+                joursFinaux.push(jourCible);
+              }
             }
           }
+
+          config.jours_specifiques = joursFinaux;
+
+          const programme = Coach.ProgrammeIA.generer(config);
+          console.log(
+            '[Onboarding] Programme IA généré ✅',
+            programme
+          );
+          Utils.toast(
+            `🧠 Programme ${programme?.styleLabel || 'IA'} activé !`,
+            'success', 3000
+          );
         }
-
-        config.jours_specifiques = joursFinaux;
-
-        const programme = Coach.ProgrammeIA.generer(config);
-        console.log(
-          '[Onboarding] Programme IA généré ✅',
-          programme
-        );
-        Utils.toast(
-          `🧠 Programme ${programme.styleLabel} activé !`,
-          'success', 3000
-        );
       } catch(e) {
-        console.error(
+        console.warn(
           '[Onboarding] Erreur génération programme:', e
         );
       }
     }
 
+    // ✅ FIX v7.0 — Ouvrir IA avec protection Coach
     if (window._obOuvrirIA) {
       window._obOuvrirIA = false;
       document.getElementById('onboarding-screen')
         ?.classList.add('hidden');
       document.getElementById('app-wrapper')
-        ?.style.setProperty('display','flex');
+        ?.style.setProperty('display', 'flex');
       naviguer('home');
-      setTimeout(() => {
-        Coach.ProgrammeIA._modeQuestionnaire = true;
-        Coach.ProgrammeIA._etapeActuelle     = 0;
-        Coach.ProgrammeIA._reponses          = {};
-        naviguer('adaptatif');
-      }, 500);
+
+      // Vérifier Coach avant d'ouvrir
+      if (typeof Coach !== 'undefined' && Coach?.ProgrammeIA) {
+        setTimeout(() => {
+          Coach.ProgrammeIA._modeQuestionnaire = true;
+          Coach.ProgrammeIA._etapeActuelle     = 0;
+          Coach.ProgrammeIA._reponses          = {};
+          naviguer('adaptatif');
+        }, 500);
+      } else {
+        console.warn(
+          '[Onboarding] Coach.js absent — redirection home'
+        );
+      }
       return;
     }
 
     document.getElementById('onboarding-screen')
       ?.classList.add('hidden');
     document.getElementById('app-wrapper')
-      ?.style.setProperty('display','flex');
+      ?.style.setProperty('display', 'flex');
 
     naviguer('home');
 
@@ -9007,7 +9018,8 @@ function _terminerOb() {
       `Bienvenue ${profil.nom || 'Athlète'} ! 🎉`,
       'success', 4000
     );
-    Utils.confetti(2000);
+
+    try { Utils.confetti(2000); } catch(e) {}
 
     window._obProgrammePropose = null;
     window._obProgrammeValide  = null;
@@ -9015,12 +9027,10 @@ function _terminerOb() {
 
   } catch(e) {
     console.error('[App] Erreur onboarding:', e);
-    // ✅ FIX — Ne pas recharger brutalement
-    // Juste afficher l'app
     document.getElementById('onboarding-screen')
       ?.classList.add('hidden');
     document.getElementById('app-wrapper')
-      ?.style.setProperty('display','flex');
+      ?.style.setProperty('display', 'flex');
     naviguer('home');
   }
 }
