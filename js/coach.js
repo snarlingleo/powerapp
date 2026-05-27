@@ -12,6 +12,27 @@
 'use strict';
 
 const Coach = {
+   // ════════════════════════════════════════════════════════
+// getAnalyseSemaine — requis par app.js _rendreHome()
+// ════════════════════════════════════════════════════════
+getAnalyseSemaine() {
+  try {
+    const seances  = Tracker.getSeancesParSemaine()    || 0;
+    const objectif = Utils.storage.get(
+      'ft_objectif_seances_semaine', 4
+    );
+    const volume   = Tracker.getVolumeSemaine()        || 0;
+    const rpe      = Tracker.getRPEMoyen7Jours()       || 0;
+    return {
+      seances,
+      objectif,
+      volume,
+      rpe: rpe > 0 ? parseFloat(rpe.toFixed(1)) : 0
+    };
+  } catch(e) {
+    return { seances:0, objectif:4, volume:0, rpe:0 };
+  }
+},
 
   // ════════════════════════════════════════════════════════
   // HISTORIQUE CHAT
