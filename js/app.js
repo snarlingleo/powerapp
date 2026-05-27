@@ -3163,8 +3163,10 @@ ${!derniereSerie ? `
                 text-align:center">
       ${(() => {
         const repsTarget = parseInt(
-          '${ex.reps}'.split('-')[0]
-        ) || 10;
+  document.getElementById(
+    `lr-reps-${exoIdx}-${serieIdx}`
+  )?.value || '10'
+) || 10;
         const repsFaites = parseInt(
           document.getElementById(
             `lr-reps-${exoIdx}-${serieIdx}`
@@ -8723,17 +8725,6 @@ function _renderEtapeOnboarding(etape, data) {
           </button>` : ''}
       </div>
     </div>`;
-}
-
-function _selectGenre(val, btn) {
-  window._obData.genre = val;
-  document.querySelectorAll('.ob-genre-btn').forEach(b => {
-    b.style.background  = 'rgba(255,255,255,0.04)';
-    b.style.borderColor = 'rgba(255,255,255,0.1)';
-  });
-  btn.style.background  = 'rgba(75,75,249,0.2)';
-  btn.style.borderColor = 'var(--fd-indigo)';
-  Utils.vibrer([20]);
 }
 
 function _selectGenre(val, btn) {
