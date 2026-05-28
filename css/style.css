@@ -3415,3 +3415,14 @@ button:focus-visible,
 .chart-line-glow {
   filter:drop-shadow(0 0 6px var(--fd-indigo));
 }
+/* ✅ Fix onboarding — ne jamais bloquer le reste */
+#onboarding-screen.hidden {
+  display:none !important;
+  pointer-events:none !important;
+  z-index:-1 !important;
+}
+
+.onboarding.hidden {
+  display:none !important;
+  pointer-events:none !important;
+}
