@@ -2827,16 +2827,16 @@ PM.obTerminer = function() {
 
     // Attendre que le DOM soit prêt
     setTimeout(() => {
-      PM.navbar.render();
-      PM.header.render();
+      // PM.navbar.render();
+     //  PM.header.render();
       PM.splash.hide();
 
       // Override naviguer pour sync navbar
       const _navOrig = window.naviguer;
       if (typeof _navOrig === 'function') {
         window.naviguer = function(page, opts) {
-          PM.navbar.setActive(page);
-          PM.header.update();
+          //PM.navbar.setActive(page);
+          //PM.header.update();
           return _navOrig(page, opts);
         };
       }
