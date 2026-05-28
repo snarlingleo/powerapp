@@ -1402,7 +1402,7 @@ window.PlanningEditor = PlanningEditor;
 window.WidgetsHome = WidgetsHome;
 
 // ════════════════════════════════════════════════════════════
-// PAGE HOME — Avec widgets personnalisables
+// PAGE HOME v2 — Premium
 // ════════════════════════════════════════════════════════════
 function _rendreHome(container) {
   let profil   = { nom:'Athlète', avatar:'💪' };
@@ -1416,14 +1416,14 @@ function _rendreHome(container) {
   let msg      = { emoji:'💡', message:'Bonne séance !' };
   let defisSem = [];
 
-  try { profil    = Tracker.getProfil();                } catch(e) {}
-  try { seance    = Programme.getSeanceduJour();        } catch(e) {}
-  try { prochaine = Programme.getProchaineSeance();     } catch(e) {}
-  try { infos     = Programme.getInfosProgramme();      } catch(e) {}
-  try { streak    = Tracker.getStreak();                } catch(e) {}
-  try { xp        = Gamification.getXP();              } catch(e) {}
-  try { analyse   = Coach.getAnalyseSemaine();          } catch(e) {}
-  try { msg       = Coach.getMessageDuJour();           } catch(e) {}
+  try { profil    = Tracker.getProfil();            } catch(e) {}
+  try { seance    = Programme.getSeanceduJour();    } catch(e) {}
+  try { prochaine = Programme.getProchaineSeance(); } catch(e) {}
+  try { infos     = Programme.getInfosProgramme();  } catch(e) {}
+  try { streak    = Tracker.getStreak();            } catch(e) {}
+  try { xp        = Gamification.getXP();           } catch(e) {}
+  try { analyse   = Coach.getAnalyseSemaine();      } catch(e) {}
+  try { msg       = Coach.getMessageDuJour();       } catch(e) {}
   try {
     defisSem = (Defis.mettreAJourProgression() || [])
       .filter(d => !d.complete).slice(0, 2);
@@ -1436,795 +1436,396 @@ function _rendreHome(container) {
     weekday:'long', day:'numeric', month:'short'
   });
 
-  const tempsSalle   = Utils.storage.get('ft_temps_salle', 60);
-  const exosAdaptes  = seance
+  const tempsSalle  = Utils.storage.get('ft_temps_salle', 60);
+  const exosAdaptes = seance
     ? getExercicesSelonTemps(seance.exercices || [], tempsSalle)
     : [];
 
-  // ✅ Récupérer ordre et état des widgets
-  const widgets = WidgetsHome.getConfig();
-
-  // ✅ Générateur de chaque widget
-  function genererWidget(id) {
-    switch(id) {
-
-      // ── GREETING ──────────────────────────────────────
-      case 'greeting': return `
-        <div style="padding:8px 0 16px">
-          <div style="font-size:.7rem;color:var(--text-muted);
-                      font-weight:600;margin-bottom:3px;
-                      display:flex;align-items:center;gap:6px">
-            <div style="width:5px;height:5px;border-radius:50%;
-                        background:var(--fd-mint);
-                        box-shadow:0 0 6px var(--fd-mint)"></div>
-            ${dateLabel} · ${infos.label} · Cycle ${infos.cycle}
-          </div>
-          <div style="font-size:1.6rem;font-weight:800;
-                      letter-spacing:-.03em;line-height:1.1">
-            ${salut},
-            <span style="background:linear-gradient(135deg,
-                         #ffffff 0%,var(--fd-lavender) 100%);
-                         -webkit-background-clip:text;
-                         -webkit-text-fill-color:transparent;
-                         background-clip:text">
-              ${profil.nom}
-            </span>
-            ${profil.avatar || '💪'}
-          </div>
-          <div style="font-size:.72rem;color:var(--text-muted);
-                      margin-top:4px;display:flex;
-                      align-items:center;gap:5px">
-            <div style="width:4px;height:4px;border-radius:50%;
-                        background:var(--fd-indigo)"></div>
-            ${infos.phase.emoji} ${infos.phase.nom}
-          </div>
-        </div>`;
-
-      // ── SEARCH ────────────────────────────────────────
-      case 'search': return `
-        <div style="position:relative;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:10px;
-                      background:var(--bg-input);
-                      border:1px solid var(--border-color);
-                      border-radius:var(--radius-md);
-                      padding:10px 14px;transition:border-color .2s"
-               id="home-search-wrap">
-            <span style="font-size:1rem;flex-shrink:0">🔍</span>
-            <input id="home-search-input"
-                   type="text"
-                   placeholder="Rechercher une séance, exercice, page…"
-                   autocomplete="off"
-                   style="flex:1;background:none;border:none;
-                          color:var(--text-primary);font-size:.82rem;
-                          outline:none"
-                   oninput="_homeSearchLive(this.value)"
-                   onkeydown="if(event.key==='Enter'){
-                     rechercherDepuisHome(this.value);
-                     this.blur();
-                   }"/>
-            <button id="home-search-clear"
-                    onclick="_homeSearchClear()"
-                    style="display:none;background:none;border:none;
-                           color:var(--text-muted);font-size:1rem;
-                           cursor:pointer;padding:0">✕</button>
-          </div>
-          <div id="home-search-suggestions"
-               style="display:none;position:absolute;top:100%;
-                      left:0;right:0;z-index:200;
-                      background:var(--bg-card);
-                      border:1px solid var(--border-color);
-                      border-radius:var(--radius-md);
-                      margin-top:4px;overflow:hidden;
-                      box-shadow:0 8px 24px rgba(0,0,0,0.3)">
-          </div>
-        </div>`;
-
-      // ── STREAK + XP ───────────────────────────────────
-      case 'streak_xp': return `
-        <div style="display:grid;grid-template-columns:1fr 1fr;
-                    gap:10px;margin-bottom:14px">
-
-          <div style="background:rgba(255,255,255,0.04);
-                      border:1px solid rgba(255,255,255,0.08);
-                      border-radius:var(--radius-lg);padding:14px;
-                      display:flex;align-items:center;gap:12px;
-                      position:relative;overflow:hidden;cursor:pointer"
-               onclick="naviguer('stats')">
-            <div style="position:absolute;top:-15px;right:-15px;
-                        width:60px;height:60px;border-radius:50%;
-                        background:rgba(249,239,119,0.06)"></div>
-            <svg width="48" height="48" viewBox="0 0 48 48" style="flex-shrink:0">
-              <circle cx="24" cy="24" r="20" fill="none"
-                      stroke="rgba(249,239,119,0.12)" stroke-width="4"/>
-              <circle cx="24" cy="24" r="20" fill="none"
-                      stroke="var(--fd-lemon)" stroke-width="4"
-                      stroke-linecap="round" stroke-dasharray="126"
-                      stroke-dashoffset="${126 - Math.min(126, streak.count * 4)}"
-                      transform="rotate(-90 24 24)"
-                      style="filter:drop-shadow(0 0 3px var(--fd-lemon))"/>
-              <text x="24" y="29" text-anchor="middle"
-                    fill="var(--fd-lemon)" font-size="13"
-                    font-weight="800">🔥</text>
-            </svg>
-            <div>
-              <div style="font-size:1.3rem;font-weight:800;
-                          color:var(--fd-lemon);line-height:1">
-                ${streak.count}
-              </div>
-              <div style="font-size:.6rem;color:var(--text-muted);
-                          text-transform:uppercase;letter-spacing:.06em;
-                          margin-top:2px">Streak</div>
-              <div style="font-size:.58rem;color:var(--text-muted);
-                          margin-top:1px">jours consec.</div>
-            </div>
-          </div>
-
-          <div style="background:rgba(255,255,255,0.04);
-                      border:1px solid rgba(255,255,255,0.08);
-                      border-radius:var(--radius-lg);padding:14px;
-                      display:flex;align-items:center;gap:12px;
-                      position:relative;overflow:hidden;cursor:pointer"
-               onclick="naviguer('gamification')">
-            <div style="position:absolute;top:-15px;right:-15px;
-                        width:60px;height:60px;border-radius:50%;
-                        background:rgba(75,75,249,0.08)"></div>
-            <svg width="48" height="48" viewBox="0 0 48 48" style="flex-shrink:0">
-              <circle cx="24" cy="24" r="20" fill="none"
-                      stroke="rgba(75,75,249,0.15)" stroke-width="4"/>
-              <circle cx="24" cy="24" r="20" fill="none"
-                      stroke="var(--fd-indigo)" stroke-width="4"
-                      stroke-linecap="round" stroke-dasharray="126"
-                      stroke-dashoffset="${126 - Math.min(126,(xp.pourcentage/100)*126)}"
-                      transform="rotate(-90 24 24)"
-                      style="filter:drop-shadow(0 0 3px var(--fd-indigo))"/>
-              <text x="24" y="29" text-anchor="middle"
-                    fill="var(--fd-lavender)" font-size="10"
-                    font-weight="800">N${xp.niveau.numero}</text>
-            </svg>
-            <div>
-              <div style="font-size:1.2rem;font-weight:800;
-                          color:var(--fd-lavender);line-height:1">
-                ${xp.total}
-              </div>
-              <div style="font-size:.6rem;color:var(--text-muted);
-                          text-transform:uppercase;letter-spacing:.06em;
-                          margin-top:2px">XP total</div>
-              <div style="font-size:.58rem;color:var(--text-muted);
-                          margin-top:1px">${xp.niveau.nom}</div>
-            </div>
-          </div>
-        </div>`;
-
-      // ── SÉANCE HERO ───────────────────────────────────
-     case 'seance_hero': return (() => {
-
-  // ✅ Vérifier si séance du jour déjà faite
+  // ✅ Séance du jour faite ?
   let seanceFaite = false;
-  let statsSeance = { volume:0, duree:0, prs:0, series:0 };
-
+  let statsSeance = { volume:0, series:0, prs:0 };
   try {
-    const seanceDuJour = Tracker.getSeanceDuJour();
-    if (seanceDuJour?.terminee || seanceDuJour?.series?.length > 0) {
+    const sd = Tracker.getSeanceDuJour();
+    if (sd?.terminee || sd?.series?.length > 0) {
       seanceFaite = true;
       statsSeance = {
-        volume:  seanceDuJour.volumeTotal || 0,
-        duree:   seanceDuJour.duree       || 0,
-        prs:    (seanceDuJour.prs || []).length,
-        series:  seanceDuJour.series?.length || 0
+        volume: sd.volumeTotal   || 0,
+        series: sd.series?.length || 0,
+        prs:    (sd.prs || []).length
       };
     }
   } catch(e) {}
 
-  // ✅ SÉANCE FAITE — Carte verte
-  if (seanceFaite && seance) return `
-    <div style="border-radius:var(--radius-xl);
-                padding:20px;margin-bottom:14px;
-                position:relative;overflow:hidden;
-                background:linear-gradient(135deg,
-                  rgba(139,240,187,0.2) 0%,
-                  rgba(139,240,187,0.06) 60%,
-                  rgba(75,75,249,0.05) 100%);
-                border:1px solid rgba(139,240,187,0.4);
-                box-shadow:0 4px 24px rgba(139,240,187,0.15)">
+  const widgets = WidgetsHome.getConfig();
 
-      <!-- Glow -->
-      <div style="position:absolute;top:-40px;right:-30px;
-                  width:160px;height:160px;
-                  background:radial-gradient(circle,
-                    rgba(139,240,187,0.2) 0%,transparent 70%);
-                  pointer-events:none"></div>
+  // ── Générateur widgets ──
+  function genererWidget(id) {
+    switch(id) {
 
-      <!-- Badge fait -->
-      <div style="display:flex;align-items:center;gap:6px;
-                  margin-bottom:10px;position:relative;z-index:1">
-        <div style="width:7px;height:7px;border-radius:50%;
-                    background:var(--fd-mint);
-                    box-shadow:0 0 8px var(--fd-mint)"></div>
-        <div style="font-size:.6rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.12em;
-                    color:var(--fd-mint)">
-          ✅ Séance du jour complétée !
-        </div>
-      </div>
-
-      <!-- Nom séance -->
-      <div style="font-size:1.4rem;font-weight:800;
-                  letter-spacing:-.02em;margin-bottom:4px;
-                  position:relative;z-index:1">
-        ${seance.emoji} ${seance.nom}
-      </div>
-
-      <!-- Stats séance -->
-      <div style="display:grid;
-                  grid-template-columns:repeat(3,1fr);
-                  gap:8px;margin:14px 0;
-                  position:relative;z-index:1">
-        ${[
-          { emoji:'📦', val:Utils.formatVolume(statsSeance.volume),
-            label:'Volume',   color:'var(--fd-mint)'    },
-          { emoji:'💪', val:statsSeance.series,
-            label:'Séries',   color:'var(--fd-indigo)'  },
-          { emoji:'🏆', val:statsSeance.prs || '—',
-            label:'Records',  color:'var(--fd-lemon)'   }
-        ].map(s => `
-          <div style="background:rgba(255,255,255,0.05);
-                      border:1px solid rgba(139,240,187,0.15);
-                      border-radius:var(--radius-md);
-                      padding:10px 6px;text-align:center">
-            <div style="font-size:.85rem;margin-bottom:2px">
-              ${s.emoji}
-            </div>
-            <div style="font-size:.95rem;font-weight:800;
-                        color:${s.color};line-height:1">
-              ${s.val}
-            </div>
-            <div style="font-size:.52rem;color:var(--text-muted);
-                        margin-top:3px;text-transform:uppercase;
-                        letter-spacing:.04em">
-              ${s.label}
-            </div>
-          </div>`).join('')}
-      </div>
-
-      <!-- Boutons -->
-      <div style="display:flex;gap:8px;
-                  position:relative;z-index:1">
-        <button onclick="naviguer('live')"
-                style="flex:1;padding:10px;
-                       background:rgba(139,240,187,0.15);
-                       border:1px solid rgba(139,240,187,0.3);
-                       border-radius:var(--radius-full);
-                       font-size:.75rem;font-weight:700;
-                       color:var(--fd-mint);cursor:pointer">
-          📊 Voir le résumé
-        </button>
-        <button onclick="naviguer('stats')"
-                style="flex:1;padding:10px;
-                       background:rgba(75,75,249,0.12);
-                       border:1px solid rgba(75,75,249,0.25);
-                       border-radius:var(--radius-full);
-                       font-size:.75rem;font-weight:700;
-                       color:var(--fd-indigo);cursor:pointer">
-          📈 Mes stats
-        </button>
-      </div>
-
-      <!-- Prochaine séance -->
-      ${prochaine ? `
-        <div style="margin-top:14px;padding-top:14px;
-                    border-top:1px solid rgba(139,240,187,0.15);
-                    position:relative;z-index:1">
-          <div style="font-size:.6rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--text-muted);margin-bottom:6px">
-            📅 Prochaine séance
+      case 'greeting': return `
+        <div style="padding:8px 0 18px;animation:fadeUp .3s ease">
+          <div style="font-size:.68rem;color:var(--text-muted);font-weight:600;
+                      margin-bottom:5px;display:flex;align-items:center;gap:6px">
+            <div style="width:6px;height:6px;border-radius:50%;
+                        background:var(--fd-mint);box-shadow:0 0 6px var(--fd-mint);
+                        animation:pulse 2s infinite"></div>
+            ${dateLabel} · ${infos.label} · Cycle ${infos.cycle}
           </div>
-          <div style="display:flex;align-items:center;
-                      justify-content:space-between">
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:1.2rem">${prochaine.emoji}</span>
-              <div>
-                <div style="font-size:.82rem;font-weight:700">
-                  ${prochaine.nom}
-                </div>
-                <div style="font-size:.62rem;color:var(--text-muted)">
-                  ${prochaine.dansJours === 1
-                    ? 'Demain'
-                    : `Dans ${prochaine.dansJours} jours`}
-                  · ~${prochaine.duree_estimee || 60}min
-                </div>
-              </div>
-            </div>
-            <span style="font-size:.7rem;color:var(--text-muted)">›</span>
+          <div style="font-size:1.7rem;font-weight:800;letter-spacing:-.03em;line-height:1.1">
+            ${salut},
+            <span style="background:linear-gradient(135deg,#fff 0%,var(--fd-lavender) 100%);
+                         -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                         background-clip:text">${profil.nom}</span>
+            ${profil.avatar || '💪'}
           </div>
-        </div>` : ''}
-    </div>`;
-
-  // ✅ SÉANCE PAS ENCORE FAITE — Carte normale
-  return seance ? `
-    <div style="border-radius:var(--radius-xl);padding:20px;
-                margin-bottom:14px;position:relative;overflow:hidden;
-                background:linear-gradient(135deg,
-                  rgba(75,75,249,0.22) 0%,
-                  rgba(75,75,249,0.07) 55%,
-                  rgba(191,161,255,0.05) 100%);
-                border:1px solid rgba(75,75,249,0.4);
-                box-shadow:0 4px 24px rgba(75,75,249,0.2)">
-      <div style="position:absolute;top:-50px;right:-30px;
-                  width:180px;height:180px;
-                  background:radial-gradient(circle,
-                    rgba(75,75,249,0.2) 0%,transparent 70%);
-                  pointer-events:none"></div>
-      <div style="display:flex;align-items:center;gap:6px;
-                  margin-bottom:10px;position:relative;z-index:1">
-        <div style="width:7px;height:7px;border-radius:50%;
-                    background:var(--fd-indigo);
-                    box-shadow:0 0 8px var(--fd-indigo);
-                    animation:pulse 2s infinite"></div>
-        <div style="font-size:.6rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.12em;
-                    color:var(--fd-indigo)">Séance du jour</div>
-      </div>
-      <div style="font-size:1.4rem;font-weight:800;
-                  letter-spacing:-.02em;margin-bottom:4px;
-                  position:relative;z-index:1">
-        ${seance.emoji} ${seance.nom}
-      </div>
-      <div style="font-size:.75rem;color:var(--text-muted);
-                  margin-bottom:16px;position:relative;z-index:1">
-        ~${seance.duree_estimee}min
-        · ${seance.exercices?.length || 0} exercices
-      </div>
-      <div style="display:flex;align-items:center;
-                  justify-content:space-between;
-                  position:relative;z-index:1">
-        <div style="display:flex;gap:5px;flex-wrap:wrap">
-          ${(seance.muscles || []).map(m => `
-            <span style="padding:4px 10px;border-radius:99px;
-                         font-size:.6rem;font-weight:700;
-                         text-transform:uppercase;letter-spacing:.04em;
-                         background:rgba(75,75,249,0.2);
-                         color:var(--fd-lavender);
-                         border:1px solid rgba(75,75,249,0.3)">
-              ${m}
-            </span>`).join('')}
-        </div>
-        <div style="display:flex;gap:6px;align-items:center">
-  <button onclick="naviguer('live')"
-          style="display:flex;align-items:center;gap:8px;
-                 padding:12px 20px;background:var(--fd-indigo);
-                 color:white;border:none;border-radius:99px;
-                 font-size:.82rem;font-weight:700;cursor:pointer;
-                 white-space:nowrap;
-                 box-shadow:0 4px 20px rgba(75,75,249,0.5)">
-    ▶ Démarrer
-  </button>
-
-  <!-- ✅ NOUVEAU — Bouton Ultra depuis Home -->
-  <button onclick="_lancerModeUltra('${seance.id}')"
-          style="padding:12px 14px;
-                 background:rgba(249,239,119,0.12);
-                 border:1px solid rgba(249,239,119,0.3);
-                 border-radius:99px;
-                 font-size:.82rem;font-weight:700;
-                 color:var(--fd-lemon);cursor:pointer;
-                 white-space:nowrap">
-    ⚡
-  </button>
-</div>
-      </div>
-    </div>` : `
-    <div style="border-radius:var(--radius-xl);padding:20px;
-                margin-bottom:14px;
-                background:rgba(139,240,187,0.06);
-                border:1px solid rgba(139,240,187,0.2);
-                text-align:center">
-      <div style="font-size:2rem;margin-bottom:6px">😴</div>
-      <div style="font-weight:700;font-size:1rem">Jour de repos</div>
-      ${prochaine ? `
-        <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">
-          Prochaine : ${prochaine.emoji} ${prochaine.nom}
-          ${prochaine.dansJours > 0
-            ? `dans ${prochaine.dansJours}j` : 'demain'}
-        </div>` : ''}
-    </div>`;
-})();
-
-      // ── TEMPS À LA SALLE ──────────────────────────────
-      case 'temps_salle': return `
-        <div style="background:rgba(255,255,255,0.04);
-                    border:1px solid rgba(255,255,255,0.08);
-                    border-radius:var(--radius-lg);
-                    padding:16px;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:7px;
-                      margin-bottom:12px">
-            <div style="width:3px;height:14px;border-radius:99px;
-                        background:var(--fd-lemon)"></div>
-            <span style="font-size:.6rem;font-weight:700;
-                         text-transform:uppercase;letter-spacing:.1em;
-                         color:var(--text-muted)">
-              ⏱ Temps disponible à la salle
-            </span>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:5px;
+                      display:flex;align-items:center;gap:5px">
+            <div style="width:4px;height:4px;border-radius:50%;
+                        background:var(--fd-indigo)"></div>
+            ${infos.phase.emoji} ${infos.phase.nom} · ${xp.niveau.nom}
           </div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);
-                      gap:8px;margin-bottom:12px">
-            ${[
-              {min:30,  label:'30 min', icon:'⚡', desc:'Express' },
-              {min:60,  label:'1 h',    icon:'💪', desc:'Standard'},
-              {min:90,  label:'1h30',   icon:'🏋️', desc:'Complet' },
-              {min:120, label:'2 h',    icon:'🔥', desc:'Intense' }
-            ].map(t => `
-              <button onclick="_choisirTempsSalle(${t.min})"
-                      id="btn-temps-${t.min}"
-                      style="padding:10px 4px;text-align:center;
-                             background:${tempsSalle === t.min
-                               ? 'rgba(75,75,249,0.25)'
-                               : 'rgba(75,75,249,0.08)'};
-                             border:2px solid ${tempsSalle === t.min
-                               ? 'var(--fd-indigo)'
-                               : 'rgba(75,75,249,0.15)'};
-                             border-radius:var(--radius-md);
-                             cursor:pointer;transition:all .2s">
-                <div style="font-size:1rem;margin-bottom:3px">
-                  ${t.icon}
-                </div>
-                <div style="font-size:.72rem;font-weight:800;
-                            color:${tempsSalle === t.min
-                              ? 'var(--fd-indigo)'
-                              : 'var(--text-primary)'}">
-                  ${t.label}
-                </div>
-                <div style="font-size:.55rem;color:var(--text-muted);
-                            margin-top:1px">${t.desc}</div>
-              </button>`).join('')}
-          </div>
-          <div style="padding:10px 12px;
-                      background:rgba(75,75,249,0.08);
-                      border:1px solid rgba(75,75,249,0.15);
-                      border-radius:var(--radius-sm);
-                      font-size:.75rem;color:var(--text-muted)">
-            ${_getRecommandationTemps(tempsSalle, seance)}
-          </div>
-          ${seance && exosAdaptes.length > 0 ? `
-            <div style="margin-top:12px">
-              <div style="font-size:.6rem;font-weight:700;
-                          text-transform:uppercase;letter-spacing:.08em;
-                          color:var(--text-muted);margin-bottom:8px">
-                Programme adapté · ${exosAdaptes.length} exercices
-              </div>
-              <div style="display:flex;flex-direction:column;gap:5px">
-                ${exosAdaptes.map(ex => {
-                  const exoData = (window.EXERCICES || {})[ex.ref] || {};
-                  const pr = (() => {
-                    try { return Tracker.getPR(ex.ref); }
-                    catch(e) { return null; }
-                  })();
-                  return `
-                    <div onclick="naviguer('live')"
-                         style="display:flex;align-items:center;
-                                gap:10px;padding:9px 12px;
-                                background:var(--bg-input);
-                                border-radius:var(--radius-sm);
-                                border:1px solid var(--border-color);
-                                cursor:pointer">
-                      <div style="width:30px;height:30px;border-radius:8px;
-                                  flex-shrink:0;
-                                  background:rgba(75,75,249,0.12);
-                                  border:1px solid rgba(75,75,249,0.2);
-                                  display:flex;align-items:center;
-                                  justify-content:center;font-size:.9rem">
-                        ${exoData.emoji || '💪'}
-                      </div>
-                      <div style="flex:1">
-                        <div style="font-size:.8rem;font-weight:700">
-                          ${exoData.nom || ex.ref}
-                        </div>
-                        <div style="font-size:.6rem;color:var(--text-muted)">
-                          ${exoData.muscle || ''}
-                          ${pr ? `· <span style="color:var(--fd-lemon)">
-                            PR ${pr.poids}kg</span>` : ''}
-                        </div>
-                      </div>
-                      <div style="text-align:right;flex-shrink:0">
-                        <div style="font-size:.75rem;font-weight:700;
-                                    color:var(--fd-indigo)">
-                          ${ex.series}×${ex.reps}
-                        </div>
-                        <div style="font-size:.58rem;color:var(--text-muted)">
-                          ⏱ ${ex.repos || 60}s
-                        </div>
-                      </div>
-                    </div>`;
-                }).join('')}
-              </div>
-              <button onclick="naviguer('live')"
-                      style="width:100%;margin-top:10px;padding:11px;
-                             background:var(--fd-indigo);color:white;
-                             border:none;border-radius:var(--radius-md);
-                             font-size:.82rem;font-weight:700;cursor:pointer;
-                             box-shadow:0 4px 16px rgba(75,75,249,0.4)">
-                ▶ Démarrer cette séance
-              </button>
-            </div>` : ''}
         </div>`;
 
-      // ── PROGRESSION LIVE ──────────────────────────────
-      case 'progression_live': return (() => {
-        try {
-          const seanceAujourdhui = Tracker.getSeanceDuJour();
-          if (!seanceAujourdhui?.series?.length) return '';
-          const series     = seanceAujourdhui.series || [];
-          const volumeAuj  = seanceAujourdhui.volumeTotal || 0;
-          const prsAuj     = seanceAujourdhui.prs?.length || 0;
-          const seanceBase = (window.SEANCES_BASE||{})[seanceAujourdhui.id];
-          const totalSeries = (seanceBase?.exercices||[])
-            .reduce((a,e) => a+(e.series||0), 0) || 1;
-          const pct = Math.min(100,
-            Math.round((series.length/totalSeries)*100));
-          return `
-            <div style="background:linear-gradient(135deg,
-                        rgba(75,75,249,0.15),rgba(139,240,187,0.05));
-                        border:1px solid rgba(75,75,249,0.3);
-                        border-radius:var(--radius-lg);
-                        padding:14px 16px;margin-bottom:14px"
-                 onclick="naviguer('live')">
-              <div style="display:flex;justify-content:space-between;
-                          align-items:center;margin-bottom:8px">
-                <div style="font-size:.6rem;font-weight:700;
-                            text-transform:uppercase;letter-spacing:.1em;
-                            color:var(--fd-indigo)">
-                  ⚡ Séance en cours
-                </div>
-                <div style="font-size:.72rem;font-weight:700;
-                            color:var(--fd-lemon)">${pct}%</div>
+      case 'streak_xp': return `
+        <div style="display:grid;grid-template-columns:1fr 1fr;
+                    gap:10px;margin-bottom:14px">
+
+          <!-- Streak -->
+          <div style="background:var(--bg-card);border:1px solid var(--border-color);
+                      border-radius:18px;padding:14px;
+                      display:flex;align-items:center;gap:12px;
+                      position:relative;overflow:hidden;cursor:pointer;
+                      transition:all .25s;animation:fadeUp .4s ease"
+               onclick="naviguer('stats')"
+               onmouseenter="this.style.borderColor='rgba(249,239,119,.3)';this.style.transform='translateY(-2px)'"
+               onmouseleave="this.style.borderColor='var(--border-color)';this.style.transform=''">
+            <div style="position:absolute;top:-12px;right:-12px;width:50px;height:50px;
+                        border-radius:50%;background:rgba(249,239,119,.05)"></div>
+            <svg width="50" height="50" viewBox="0 0 50 50" style="flex-shrink:0">
+              <circle cx="25" cy="25" r="21" fill="none"
+                      stroke="rgba(249,239,119,.12)" stroke-width="5"/>
+              <circle cx="25" cy="25" r="21" fill="none"
+                      stroke="var(--fd-lemon)" stroke-width="5"
+                      stroke-linecap="round"
+                      stroke-dasharray="${Math.min(132, streak.count * 5)} ${132 - Math.min(132, streak.count * 5)}"
+                      transform="rotate(-90 25 25)"
+                      style="filter:drop-shadow(0 0 4px var(--fd-lemon));transition:stroke-dasharray .8s"/>
+              <text x="25" y="30" text-anchor="middle"
+                    fill="var(--fd-lemon)" font-size="14" font-weight="800">🔥</text>
+            </svg>
+            <div>
+              <div style="font-size:1.5rem;font-weight:800;color:var(--fd-lemon);line-height:1">
+                ${streak.count}
               </div>
-              <div style="height:6px;background:rgba(255,255,255,0.08);
-                          border-radius:99px;overflow:hidden;
-                          margin-bottom:10px">
-                <div style="height:100%;width:${pct}%;
-                            background:linear-gradient(90deg,
-                              var(--fd-indigo),var(--fd-mint));
-                            border-radius:99px;transition:width .5s">
-                </div>
+              <div style="font-size:.58rem;color:var(--text-muted);
+                          text-transform:uppercase;letter-spacing:.06em;margin-top:2px">
+                Streak
               </div>
-              <div style="display:flex;gap:12px">
-                <div style="text-align:center;flex:1">
-                  <div style="font-size:.95rem;font-weight:800;
-                              color:var(--fd-mint)">
-                    ${series.length}
-                  </div>
-                  <div style="font-size:.55rem;color:var(--text-muted);
-                              text-transform:uppercase">Séries</div>
-                </div>
-                <div style="text-align:center;flex:1">
-                  <div style="font-size:.95rem;font-weight:800;
-                              color:var(--fd-indigo)">
-                    ${Utils.formatVolume(volumeAuj)}
-                  </div>
-                  <div style="font-size:.55rem;color:var(--text-muted);
-                              text-transform:uppercase">Volume</div>
-                </div>
-                ${prsAuj > 0 ? `
-                  <div style="text-align:center;flex:1">
-                    <div style="font-size:.95rem;font-weight:800;
-                                color:var(--fd-lemon)">
-                      ${prsAuj} 🏆
-                    </div>
-                    <div style="font-size:.55rem;color:var(--text-muted);
-                                text-transform:uppercase">Records</div>
-                  </div>` : ''}
+              <div style="font-size:.55rem;color:var(--text-muted)">jours</div>
+            </div>
+          </div>
+
+          <!-- XP -->
+          <div style="background:var(--bg-card);border:1px solid var(--border-color);
+                      border-radius:18px;padding:14px;
+                      display:flex;align-items:center;gap:12px;
+                      position:relative;overflow:hidden;cursor:pointer;
+                      transition:all .25s;animation:fadeUp .4s .1s ease both"
+               onclick="naviguer('gamification')"
+               onmouseenter="this.style.borderColor='rgba(75,75,249,.3)';this.style.transform='translateY(-2px)'"
+               onmouseleave="this.style.borderColor='var(--border-color)';this.style.transform=''">
+            <div style="position:absolute;top:-12px;right:-12px;width:50px;height:50px;
+                        border-radius:50%;background:rgba(75,75,249,.06)"></div>
+            <svg width="50" height="50" viewBox="0 0 50 50" style="flex-shrink:0">
+              <circle cx="25" cy="25" r="21" fill="none"
+                      stroke="rgba(75,75,249,.15)" stroke-width="5"/>
+              <circle cx="25" cy="25" r="21" fill="none"
+                      stroke="var(--fd-indigo)" stroke-width="5"
+                      stroke-linecap="round"
+                      stroke-dasharray="${Math.round((xp.pourcentage/100)*132)} ${132 - Math.round((xp.pourcentage/100)*132)}"
+                      transform="rotate(-90 25 25)"
+                      style="filter:drop-shadow(0 0 4px var(--fd-indigo));transition:stroke-dasharray .8s"/>
+              <text x="25" y="29" text-anchor="middle"
+                    fill="var(--fd-lavender)" font-size="9" font-weight="800">
+                N${xp.niveau.numero}
+              </text>
+            </svg>
+            <div>
+              <div style="font-size:1.3rem;font-weight:800;color:var(--fd-lavender);line-height:1">
+                ${xp.total}
               </div>
-            </div>`;
-        } catch(e) { return ''; }
+              <div style="font-size:.58rem;color:var(--text-muted);
+                          text-transform:uppercase;letter-spacing:.06em;margin-top:2px">
+                XP total
+              </div>
+              <div style="font-size:.55rem;color:var(--text-muted)">${xp.niveau.nom}</div>
+            </div>
+          </div>
+        </div>`;
+
+      case 'seance_hero': return (() => {
+
+        // ── SÉANCE FAITE ──
+        if (seanceFaite && seance) return `
+          <div style="background:linear-gradient(135deg,
+                      rgba(139,240,187,.2) 0%,rgba(139,240,187,.06) 60%,
+                      rgba(75,75,249,.04) 100%);
+                      border:1px solid rgba(139,240,187,.4);
+                      border-radius:22px;padding:20px;margin-bottom:14px;
+                      position:relative;overflow:hidden;
+                      box-shadow:0 4px 24px rgba(139,240,187,.12);
+                      animation:fadeUp .4s .2s ease both">
+            <div style="position:absolute;top:-40px;right:-30px;width:150px;height:150px;
+                        background:radial-gradient(circle,rgba(139,240,187,.18) 0%,transparent 70%);
+                        pointer-events:none"></div>
+
+            <div style="display:flex;align-items:center;gap:6px;
+                        margin-bottom:10px;position:relative;z-index:1">
+              <div style="width:7px;height:7px;border-radius:50%;
+                          background:var(--fd-mint);box-shadow:0 0 8px var(--fd-mint)"></div>
+              <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                          letter-spacing:.12em;color:var(--fd-mint)">
+                ✅ Séance du jour complétée !
+              </div>
+            </div>
+
+            <div style="font-size:1.35rem;font-weight:800;margin-bottom:14px;
+                        position:relative;z-index:1">
+              ${seance.emoji} ${seance.nom}
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                        gap:8px;margin-bottom:14px;position:relative;z-index:1">
+              ${[
+                {emoji:'📦',val:Utils.formatVolume(statsSeance.volume),label:'Volume', c:'var(--fd-mint)'   },
+                {emoji:'💪',val:statsSeance.series,                    label:'Séries', c:'var(--fd-indigo)' },
+                {emoji:'🏆',val:statsSeance.prs||'—',                  label:'Records',c:'var(--fd-lemon)'  }
+              ].map(s=>`
+                <div style="background:rgba(255,255,255,.05);
+                            border:1px solid rgba(139,240,187,.15);
+                            border-radius:12px;padding:10px 6px;text-align:center">
+                  <div style="font-size:.85rem;margin-bottom:2px">${s.emoji}</div>
+                  <div style="font-size:.95rem;font-weight:800;color:${s.c}">${s.val}</div>
+                  <div style="font-size:.52rem;color:var(--text-muted);margin-top:2px;
+                              text-transform:uppercase;letter-spacing:.04em">${s.label}</div>
+                </div>`).join('')}
+            </div>
+
+            <div style="display:flex;gap:8px;position:relative;z-index:1">
+              <button onclick="naviguer('live')"
+                      style="flex:1;padding:10px;background:rgba(139,240,187,.15);
+                             border:1px solid rgba(139,240,187,.3);border-radius:99px;
+                             font-size:.75rem;font-weight:700;color:var(--fd-mint);cursor:pointer">
+                📊 Résumé
+              </button>
+              <button onclick="naviguer('stats')"
+                      style="flex:1;padding:10px;background:rgba(75,75,249,.12);
+                             border:1px solid rgba(75,75,249,.25);border-radius:99px;
+                             font-size:.75rem;font-weight:700;color:var(--fd-indigo);cursor:pointer">
+                📈 Stats
+              </button>
+            </div>
+          </div>`;
+
+        // ── SÉANCE À FAIRE ──
+        return seance ? `
+          <div style="background:linear-gradient(135deg,
+                      rgba(75,75,249,.22) 0%,rgba(75,75,249,.07) 55%,
+                      rgba(191,161,255,.05) 100%);
+                      border:1px solid rgba(75,75,249,.4);
+                      border-radius:22px;padding:20px;margin-bottom:14px;
+                      position:relative;overflow:hidden;
+                      box-shadow:0 4px 24px rgba(75,75,249,.2);
+                      animation:fadeUp .4s .2s ease both">
+            <div style="position:absolute;top:-50px;right:-30px;width:180px;height:180px;
+                        background:radial-gradient(circle,rgba(75,75,249,.2) 0%,transparent 70%);
+                        pointer-events:none"></div>
+
+            <div style="display:flex;align-items:center;gap:6px;
+                        margin-bottom:10px;position:relative;z-index:1">
+              <div style="width:7px;height:7px;border-radius:50%;
+                          background:var(--fd-indigo);
+                          box-shadow:0 0 8px var(--fd-indigo);
+                          animation:pulse 2s infinite"></div>
+              <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                          letter-spacing:.12em;color:var(--fd-indigo)">
+                Séance du jour
+              </div>
+            </div>
+
+            <div style="font-size:1.4rem;font-weight:800;letter-spacing:-.02em;
+                        margin-bottom:4px;position:relative;z-index:1">
+              ${seance.emoji} ${seance.nom}
+            </div>
+            <div style="font-size:.75rem;color:var(--text-muted);
+                        margin-bottom:16px;position:relative;z-index:1">
+              ~${seance.duree_estimee}min · ${seance.exercices?.length || 0} exercices
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;
+                        position:relative;z-index:1">
+              <div style="display:flex;gap:5px;flex-wrap:wrap">
+                ${(seance.muscles || []).map(m=>`
+                  <span style="padding:4px 10px;border-radius:99px;
+                               font-size:.6rem;font-weight:700;
+                               text-transform:uppercase;letter-spacing:.04em;
+                               background:rgba(75,75,249,.2);color:var(--fd-lavender);
+                               border:1px solid rgba(75,75,249,.3)">${m}</span>
+                `).join('')}
+              </div>
+              <div style="display:flex;gap:6px">
+                <button onclick="naviguer('live')"
+                        style="padding:12px 20px;background:var(--fd-indigo);
+                               color:white;border:none;border-radius:99px;
+                               font-size:.82rem;font-weight:700;cursor:pointer;
+                               box-shadow:0 4px 20px rgba(75,75,249,.5);
+                               transition:all .2s"
+                        onmouseenter="this.style.transform='scale(1.05)'"
+                        onmouseleave="this.style.transform=''">
+                  ▶ Démarrer
+                </button>
+                <button onclick="_lancerModeUltra('${seance.id}')"
+                        style="padding:12px 14px;background:rgba(249,239,119,.12);
+                               border:1px solid rgba(249,239,119,.3);border-radius:99px;
+                               font-size:.82rem;font-weight:700;
+                               color:var(--fd-lemon);cursor:pointer">⚡</button>
+              </div>
+            </div>
+          </div>` : `
+          <div style="border-radius:22px;padding:20px;margin-bottom:14px;
+                      background:rgba(139,240,187,.06);
+                      border:1px solid rgba(139,240,187,.2);text-align:center">
+            <div style="font-size:2rem;margin-bottom:6px">😴</div>
+            <div style="font-weight:700;font-size:1rem">Jour de repos</div>
+            ${prochaine ? `
+              <div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">
+                Prochaine : ${prochaine.emoji} ${prochaine.nom}
+                ${prochaine.dansJours > 0
+                  ? `dans ${prochaine.dansJours}j` : 'demain'}
+              </div>` : ''}
+          </div>`;
       })();
 
-      // ── TIMERS REPOS ──────────────────────────────────
-      case 'timers_repos': return `
-        <div style="font-size:.58rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.1em;
-                    color:var(--text-muted);
-                    margin:14px 0 8px;
-                    display:flex;align-items:center;gap:8px">
-          ⏱ Timers repos
-          <div style="flex:1;height:1px;background:var(--border-color)">
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);
-                    gap:7px;margin-bottom:14px">
-          ${[
-            {icon:'⚡', val:'45s',  label:'Express', sec:45  },
-            {icon:'💪', val:'60s',  label:'Normal',  sec:60  },
-            {icon:'🏋️', val:'90s',  label:'Force',   sec:90  },
-            {icon:'🔥', val:'2min', label:'Lourd',   sec:120 }
-          ].map(t => `
-            <div onclick="TimerManager.demarrerRepos(${t.sec})"
-                 style="background:rgba(255,255,255,0.04);
-                        border:1px solid rgba(255,255,255,0.08);
-                        border-radius:var(--radius-md);
-                        padding:12px 6px;text-align:center;
-                        cursor:pointer;transition:all .2s"
-                 onmousedown="this.style.transform='scale(.94)'"
-                 onmouseup="this.style.transform=''">
-              <div style="font-size:1.2rem;margin-bottom:4px">
-                ${t.icon}
-              </div>
-              <div style="font-size:.78rem;font-weight:800;
-                          color:var(--fd-indigo)">${t.val}</div>
-              <div style="font-size:.55rem;color:var(--text-muted);
-                          text-transform:uppercase;letter-spacing:.04em;
-                          margin-top:1px">${t.label}</div>
-            </div>`).join('')}
-        </div>`;
-
-      // ── PLANNING SEMAINE ──────────────────────────────
-      case 'planning_semaine': return `
-  <div style="font-size:.58rem;font-weight:700;
-              text-transform:uppercase;letter-spacing:.1em;
-              color:var(--text-muted);
-              margin:14px 0 8px;
-              display:flex;align-items:center;gap:8px">
-    📅 Planning semaine
-    <div style="flex:1;height:1px;background:var(--border-color)"></div>
-    ${Programme.estPlanningCustom() ? `
-      <button onclick="PlanningEditor.resetPlanning()"
-              style="font-size:.58rem;font-weight:700;
-                     padding:3px 8px;
-                     background:rgba(255,141,150,0.1);
-                     border:1px solid rgba(255,141,150,0.2);
-                     border-radius:99px;
-                     color:var(--fd-coral);cursor:pointer">
-        🔄 Reset
-      </button>` : ''}
-  </div>
-  <div style="background:rgba(255,255,255,0.04);
-              border:1px solid rgba(255,255,255,0.08);
-              border-radius:var(--radius-lg);
-              padding:14px 16px;margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;
-                align-items:center;margin-bottom:10px">
-      <div style="font-size:.72rem;font-weight:700;
-                  color:var(--text-muted)">
-        ${analyse.seances}/${analyse.objectif} séances
-      </div>
-      <div style="font-size:.72rem;font-weight:700;
-                  color:var(--fd-mint)">
-        ${Math.round((analyse.seances/Math.max(analyse.objectif,1))*100)}%
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);
-                gap:4px">
-      ${(() => {
-        const planning = (() => {
-          try { return Programme.getSeancesSemaine(); }
-          catch(e) { return []; }
-        })();
+      case 'planning_semaine': return (() => {
+        let planning = [];
+        try { planning = Programme.getSeancesSemaine(); } catch(e) {}
         if (!planning.length) return '';
-        return planning.map(jour => `
-          <div style="display:flex;flex-direction:column;
-                      align-items:center;gap:4px">
-            <div onclick="PlanningEditor.ouvrirChoixSeance(${jour.jour})"
-                 style="width:36px;height:36px;border-radius:10px;
-                        display:flex;align-items:center;
-                        justify-content:center;
-                        font-size:.75rem;font-weight:700;
-                        cursor:pointer;
-                        position:relative;
-                        transition:all .2s;
-                        ${jour.estAujourdhui
-                          ? 'background:var(--fd-indigo);color:white;box-shadow:0 0 12px rgba(75,75,249,0.5)'
-                          : jour.seance
-                            ? 'background:rgba(75,75,249,0.2);border:1px solid rgba(75,75,249,0.4);color:var(--fd-lavender)'
-                            : 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text-muted)'}"
-                 title="${jour.seance ? jour.seance.nom : 'Repos'} — Cliquer pour changer">
-              ${jour.estAujourdhui ? '▶'
-                : jour.seance ? jour.seance.emoji : '😴'}
-              <!-- Petit badge édition -->
-              <div style="position:absolute;top:-4px;right:-4px;
-                          width:12px;height:12px;
-                          background:rgba(75,75,249,0.8);
-                          border-radius:50%;
-                          display:flex;align-items:center;
-                          justify-content:center;
-                          font-size:.45rem;color:white">
-                ✏️
+
+        const pct = Math.min(100,
+          Math.round((analyse.seances / Math.max(analyse.objectif,1)) * 100));
+
+        return `
+          <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;
+                      letter-spacing:.1em;color:var(--text-muted);
+                      display:flex;align-items:center;gap:8px;margin:16px 0 10px">
+            📅 Planning semaine
+            <div style="flex:1;height:1px;background:rgba(255,255,255,.06)"></div>
+            <span style="font-weight:700;color:var(--fd-mint)">${pct}%</span>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--border-color);
+                      border-radius:18px;padding:14px 16px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;margin-bottom:10px">
+              <div style="font-size:.72rem;font-weight:700;color:var(--text-muted)">
+                ${analyse.seances}/${analyse.objectif} séances
               </div>
             </div>
-            <div style="font-size:.5rem;color:var(--text-muted);
-                        text-transform:uppercase;font-weight:600">
-              ${jour.label}
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+              ${planning.map(jour => `
+                <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+                  <div onclick="PlanningEditor.ouvrirChoixSeance(${jour.jour})"
+                       style="width:36px;height:36px;border-radius:10px;
+                              display:flex;align-items:center;justify-content:center;
+                              font-size:.78rem;font-weight:700;cursor:pointer;
+                              position:relative;transition:all .2s;
+                              ${jour.estAujourdhui
+                                ? 'background:var(--fd-indigo);color:white;box-shadow:0 0 12px rgba(75,75,249,.5)'
+                                : jour.seance
+                                  ? 'background:rgba(75,75,249,.2);border:1px solid rgba(75,75,249,.4);color:var(--fd-lavender)'
+                                  : 'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--text-muted)'}"
+                       onmouseenter="this.style.transform='scale(1.1)'"
+                       onmouseleave="this.style.transform=''">
+                    ${jour.estAujourdhui ? '▶' : jour.seance ? jour.seance.emoji : '·'}
+                  </div>
+                  <div style="font-size:.48rem;color:var(--text-muted);
+                              text-transform:uppercase;font-weight:600">
+                    ${jour.label}
+                  </div>
+                </div>`).join('')}
             </div>
-            ${jour.seance ? `
-              <div style="font-size:.45rem;color:var(--text-muted);
-                          text-align:center;
-                          max-width:36px;
-                          overflow:hidden;
-                          text-overflow:ellipsis;
-                          white-space:nowrap;
-                          line-height:1.2">
-                ${jour.seance.nom.split(' ')[0]}
-              </div>` : `
-              <div style="font-size:.45rem;color:var(--text-muted)">
-                Repos
-              </div>`}
-          </div>`).join('');
-      })()}
-    </div>
-    <div class="progress-bar mt-sm">
-      <div class="progress-fill"
-           style="width:${Math.min(100,
-             Math.round((analyse.seances/
-               Math.max(analyse.objectif,1))*100))}%">
-      </div>
-    </div>
-  </div>`;
+            <div style="height:5px;background:rgba(255,255,255,.06);
+                        border-radius:99px;overflow:hidden;margin-top:12px">
+              <div style="height:100%;width:${pct}%;
+                          background:linear-gradient(90deg,var(--fd-indigo),var(--fd-mint));
+                          border-radius:99px;animation:progressFill .8s ease"></div>
+            </div>
+          </div>`;
+      })();
 
-      // ── STATS SEMAINE ─────────────────────────────────
       case 'stats_semaine': return `
         <div style="display:grid;grid-template-columns:repeat(3,1fr);
                     gap:8px;margin-bottom:14px">
           ${[
-            {label:'Séances',  val:`${analyse.seances}/${analyse.objectif}`,
-             color:'var(--fd-indigo)'},
-            {label:'Volume',   val:Utils.formatVolume(analyse.volume),
-             color:'var(--fd-mint)'},
-            {label:'RPE moy.', val:analyse.rpe>0?`${analyse.rpe}/10`:'—',
-             color:'var(--fd-lemon)'}
-          ].map(s => `
-            <div style="background:rgba(255,255,255,0.04);
-                        border:1px solid rgba(255,255,255,0.08);
-                        border-radius:var(--radius-md);
-                        padding:12px 8px;text-align:center;
-                        cursor:pointer"
-                 onclick="naviguer('stats')">
-              <div style="font-size:1rem;font-weight:800;
-                          color:${s.color};line-height:1">
-                ${s.val}
-              </div>
-              <div style="font-size:.55rem;color:var(--text-muted);
-                          margin-top:4px;text-transform:uppercase;
-                          letter-spacing:.04em">${s.label}</div>
+            {label:'Séances', val:`${analyse.seances}/${analyse.objectif}`,c:'var(--fd-indigo)',emoji:'📅'},
+            {label:'Volume',  val:Utils.formatVolume(analyse.volume),      c:'var(--fd-mint)',  emoji:'📦'},
+            {label:'RPE moy.',val:analyse.rpe>0?`${analyse.rpe}/10`:'—',  c:'var(--fd-lemon)', emoji:'😤'}
+          ].map((s,i)=>`
+            <div style="background:var(--bg-card);border:1px solid var(--border-color);
+                        border-radius:14px;padding:12px 8px;text-align:center;
+                        cursor:pointer;transition:all .2s;
+                        animation:fadeUp .4s ${i*.08}s ease both"
+                 onclick="naviguer('stats')"
+                 onmouseenter="this.style.transform='translateY(-3px)'"
+                 onmouseleave="this.style.transform=''">
+              <div style="font-size:.82rem;margin-bottom:4px">${s.emoji}</div>
+              <div style="font-size:.95rem;font-weight:800;color:${s.c}">${s.val}</div>
+              <div style="font-size:.52rem;color:var(--text-muted);margin-top:3px;
+                          text-transform:uppercase;letter-spacing:.04em">${s.label}</div>
             </div>`).join('')}
         </div>`;
 
-      // ── COACH DU JOUR ─────────────────────────────────
-      case 'coach_jour': return `
-        <div onclick="naviguer('coach')"
-             style="background:rgba(255,255,255,0.04);
-                    border:1px solid rgba(255,255,255,0.08);
-                    border-left:3px solid var(--fd-lavender);
-                    border-radius:var(--radius-lg);
-                    padding:14px 16px;margin-bottom:14px;
-                    cursor:pointer">
-          <div style="font-size:.62rem;font-weight:700;
-                      text-transform:uppercase;letter-spacing:.1em;
-                      color:var(--fd-lavender);margin-bottom:5px">
-            ${msg.emoji} Coach du jour
-          </div>
-          <p style="font-size:.82rem;color:var(--text-secondary);
-                    line-height:1.55;margin:0">
-            ${msg.message}
-          </p>
+      case 'timers_repos': return `
+        <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;
+                    letter-spacing:.1em;color:var(--text-muted);
+                    display:flex;align-items:center;gap:8px;margin:16px 0 10px">
+          ⏱ Timers repos
+          <div style="flex:1;height:1px;background:rgba(255,255,255,.06)"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);
+                    gap:8px;margin-bottom:14px">
+          ${[
+            {icon:'⚡',val:'45s', label:'Express',sec:45,  c:'#4b4bf9'},
+            {icon:'💪',val:'60s', label:'Normal', sec:60,  c:'#8bf0bb'},
+            {icon:'🏋️',val:'90s', label:'Force',  sec:90,  c:'#f9ef77'},
+            {icon:'🔥',val:'2min',label:'Lourd',  sec:120, c:'#ff8d96'}
+          ].map((t,i)=>`
+            <div onclick="TimerManager.demarrerRepos(${t.sec})"
+                 style="background:var(--bg-card);border:1px solid var(--border-color);
+                        border-radius:14px;padding:12px 4px;text-align:center;
+                        cursor:pointer;transition:all .2s;
+                        animation:fadeUp .4s ${.3+i*.06}s ease both"
+                 onmouseenter="this.style.background='${t.c}12';this.style.borderColor='${t.c}33';this.style.transform='scale(.95)'"
+                 onmouseleave="this.style.background='var(--bg-card)';this.style.borderColor='var(--border-color)';this.style.transform=''">
+              <div style="font-size:1.2rem;margin-bottom:4px">${t.icon}</div>
+              <div style="font-size:.8rem;font-weight:800;color:${t.c}">${t.val}</div>
+              <div style="font-size:.52rem;color:var(--text-muted);margin-top:1px;
+                          text-transform:uppercase">${t.label}</div>
+            </div>`).join('')}
         </div>`;
 
-      // ── DÉFIS ─────────────────────────────────────────
       case 'defis': return defisSem.length > 0 ? `
-        <div style="font-size:.58rem;font-weight:700;
-                    text-transform:uppercase;letter-spacing:.1em;
-                    color:var(--text-muted);margin:0 0 8px;
-                    display:flex;align-items:center;gap:8px">
+        <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;
+                    letter-spacing:.1em;color:var(--text-muted);
+                    display:flex;align-items:center;gap:8px;margin:0 0 10px">
           🏆 Défis en cours
-          <div style="flex:1;height:1px;background:var(--border-color)">
-          </div>
+          <div style="flex:1;height:1px;background:rgba(255,255,255,.06)"></div>
         </div>
-        <div style="background:rgba(255,255,255,0.04);
-                    border:1px solid rgba(255,255,255,0.08);
-                    border-radius:var(--radius-lg);
-                    padding:16px;margin-bottom:12px;cursor:pointer"
+        <div style="background:var(--bg-card);border:1px solid var(--border-color);
+                    border-radius:18px;padding:16px;margin-bottom:14px;cursor:pointer;
+                    animation:fadeUp .4s .4s ease both"
              onclick="naviguer('defis')">
           ${defisSem.map(d => {
-            const pct = Math.round(
-              (d.progression/Math.max(d.cible,1))*100
-            );
+            const pct = Math.round((d.progression/Math.max(d.cible,1))*100);
             return `
               <div style="margin-bottom:10px">
                 <div style="display:flex;justify-content:space-between;
@@ -2234,240 +1835,83 @@ function _rendreHome(container) {
                     ${d.progression}/${d.cible}
                   </span>
                 </div>
-                <div style="height:4px;background:var(--bg-input);
+                <div style="height:5px;background:rgba(255,255,255,.05);
                             border-radius:99px;overflow:hidden">
                   <div style="height:100%;width:${pct}%;
-                              background:linear-gradient(90deg,
-                                var(--fd-lemon),var(--fd-mint));
-                              border-radius:99px">
-                  </div>
+                              background:linear-gradient(90deg,var(--fd-lemon),var(--fd-mint));
+                              border-radius:99px;animation:progressFill .8s ease;
+                              box-shadow:0 0 6px var(--fd-lemon)"></div>
                 </div>
               </div>`;
           }).join('')}
         </div>` : '';
 
-      // ── HUMEUR / FATIGUE ──────────────────────────────
-      case 'humeur_fatigue':
-        return _renderHumeurFatigue();
+      case 'coach_jour': return `
+        <div onclick="naviguer('coach')"
+             style="background:var(--bg-card);
+                    border:1px solid var(--border-color);
+                    border-left:3px solid var(--fd-lavender);
+                    border-radius:18px;padding:14px 16px;margin-bottom:14px;
+                    cursor:pointer;transition:all .2s;
+                    animation:fadeUp .4s .5s ease both"
+             onmouseenter="this.style.transform='translateX(4px)'"
+             onmouseleave="this.style.transform=''">
+          <div style="font-size:.62rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.1em;color:var(--fd-lavender);margin-bottom:5px">
+            ${msg.emoji} Coach du jour
+          </div>
+          <p style="font-size:.82rem;color:rgba(255,255,255,.7);
+                    line-height:1.55;margin:0">
+            ${msg.message}
+          </p>
+        </div>`;
 
-      // ── NUTRITION RAPIDE ──────────────────────────────
-      case 'nutrition_rapide': return (() => {
-        try {
-          const obj   = Nutrition.getObjectifs();
-          const eau   = Nutrition.getEau();
-          const totaux = Nutrition.getTotauxJournal();
-          const pctEau = Math.min(100,
-            Math.round((eau/(obj.eau*1000))*100));
-          const pctProt = Math.min(100,
-            Math.round((totaux.prot/Math.max(obj.proteines,1))*100));
-          const pctCal  = Math.min(100,
-            Math.round((totaux.cal/Math.max(obj.calories,1))*100));
-
-          return `
-            <div style="background:rgba(255,255,255,0.04);
-                        border:1px solid rgba(255,255,255,0.08);
-                        border-radius:var(--radius-lg);
-                        padding:14px 16px;margin-bottom:14px;
-                        cursor:pointer"
-                 onclick="naviguer('nutrition')">
-              <div style="display:flex;align-items:center;
-                          justify-content:space-between;
-                          margin-bottom:10px">
-                <div style="font-size:.6rem;font-weight:700;
-                            text-transform:uppercase;letter-spacing:.1em;
-                            color:var(--text-muted)">
-                  🥗 Nutrition du jour
-                </div>
-                <div style="font-size:.65rem;color:var(--fd-indigo)">
-                  Voir →
-                </div>
-              </div>
-              ${[
-                {label:'Calories',  pct:pctCal,  color:'var(--fd-lemon)',
-                 val:`${totaux.cal}/${obj.calories}kcal`},
-                {label:'Protéines', pct:pctProt, color:'var(--fd-coral)',
-                 val:`${totaux.prot}/${obj.proteines}g`},
-                {label:'Eau',       pct:pctEau,  color:'var(--fd-indigo)',
-                 val:`${(eau/1000).toFixed(1)}/${obj.eau}L`}
-              ].map(m => `
-                <div style="margin-bottom:6px">
-                  <div style="display:flex;justify-content:space-between;
-                              margin-bottom:2px">
-                    <span style="font-size:.65rem;
-                                 color:var(--text-muted)">${m.label}</span>
-                    <span style="font-size:.65rem;font-weight:700;
-                                 color:${m.color}">${m.val}</span>
-                  </div>
-                  <div style="height:4px;background:rgba(255,255,255,0.05);
-                              border-radius:99px;overflow:hidden">
-                    <div style="height:100%;width:${m.pct}%;
-                                background:${m.color};border-radius:99px">
-                    </div>
-                  </div>
-                </div>`).join('')}
-              <div style="display:flex;gap:6px;margin-top:8px">
-                ${[150,250,500].map(ml => `
-                  <button onclick="event.stopPropagation();
-                                   Nutrition._ajouterEauRapide(${ml})"
-                          style="flex:1;padding:5px 2px;font-size:.65rem;
-                                 font-weight:700;
-                                 background:rgba(75,75,249,0.1);
-                                 border:1px solid rgba(75,75,249,0.2);
-                                 border-radius:var(--radius-full);
-                                 color:var(--fd-indigo);cursor:pointer">
-                    💧+${ml}
-                  </button>`).join('')}
-              </div>
-            </div>`;
-        } catch(e) { return ''; }
-      })();
-
-      // ── PRs RÉCENTS ───────────────────────────────────
-      case 'pr_du_jour': return (() => {
-        try {
-          const prs    = Tracker.getAllPRs();
-          const recent = Object.entries(prs)
-            .filter(([,pr]) => pr.date === Utils.aujourd_hui()
-              || pr.date >= Utils.ajouterJours(Utils.aujourd_hui(),-7))
-            .sort(([,a],[,b]) =>
-              (b.date||'').localeCompare(a.date||''))
-            .slice(0, 3);
-
-          if (!recent.length) return '';
-
-          return `
-            <div style="background:rgba(249,239,119,0.06);
-                        border:1px solid rgba(249,239,119,0.2);
-                        border-radius:var(--radius-lg);
-                        padding:14px 16px;margin-bottom:14px">
-              <div style="font-size:.6rem;font-weight:700;
-                          text-transform:uppercase;letter-spacing:.1em;
-                          color:var(--fd-lemon);margin-bottom:10px">
-                🏅 Records récents (7 jours)
-              </div>
-              ${recent.map(([ref, pr]) => {
-                const ex = (window.EXERCICES||{})[ref]||{};
-                return `
-                  <div style="display:flex;align-items:center;gap:8px;
-                              padding:6px 0;
-                              border-bottom:1px solid rgba(249,239,119,0.1)">
-                    <span style="font-size:1rem">${ex.emoji||'💪'}</span>
-                    <div style="flex:1">
-                      <div style="font-size:.78rem;font-weight:700">
-                        ${ex.nom||ref}
-                      </div>
-                      <div style="font-size:.6rem;color:var(--text-muted)">
-                        ${pr.date}
-                      </div>
-                    </div>
-                    <div style="text-align:right">
-                      <div style="font-size:.78rem;font-weight:800;
-                                  color:var(--fd-lemon)">
-                        ${pr.poids}kg×${pr.reps}
-                      </div>
-                      <div style="font-size:.6rem;color:var(--fd-lavender)">
-                        1RM ~${pr.rm1||'?'}kg
-                      </div>
-                    </div>
-                  </div>`;
-              }).join('')}
-            </div>`;
-        } catch(e) { return ''; }
-      })();
-
-      // ── MÉTÉO MOTIVATION ──────────────────────────────
-      case 'meteo_sport': return (() => {
-        try {
-          const forme  = Tracker.calculerScoreForme();
-          const score  = forme.score || 0;
-          const meteo  = score >= 80 ? {emoji:'☀️',label:'Excellente forme',color:'var(--fd-lemon)'}
-                       : score >= 60 ? {emoji:'⛅',label:'Bonne forme',     color:'var(--fd-mint)'}
-                       : score >= 40 ? {emoji:'🌤',label:'Forme correcte',  color:'var(--fd-indigo)'}
-                       :               {emoji:'🌧',label:'Récupération',     color:'var(--fd-coral)'};
-          const conseil = score >= 70
-            ? 'Tu es au top ! C\'est le moment de viser des records.'
-            : score >= 50
-              ? 'Bonne séance en vue. Reste concentré sur ta technique.'
-              : 'Écoute ton corps. Une séance légère vaut mieux que rien.';
-
-          return `
-            <div style="background:rgba(255,255,255,0.04);
-                        border:1px solid rgba(255,255,255,0.08);
-                        border-left:3px solid ${meteo.color};
-                        border-radius:var(--radius-lg);
-                        padding:14px 16px;margin-bottom:14px">
-              <div style="display:flex;align-items:center;
-                          gap:12px;margin-bottom:8px">
-                <span style="font-size:2rem">${meteo.emoji}</span>
-                <div>
-                  <div style="font-size:.82rem;font-weight:700;
-                              color:${meteo.color}">
-                    ${meteo.label}
-                  </div>
-                  <div style="font-size:.65rem;color:var(--text-muted)">
-                    Score de forme : ${score}/100
-                  </div>
-                </div>
-                <div style="margin-left:auto">
-                  <svg width="44" height="44" viewBox="0 0 44 44">
-                    <circle cx="22" cy="22" r="18"
-                            fill="none"
-                            stroke="rgba(255,255,255,0.05)"
-                            stroke-width="6"/>
-                    <circle cx="22" cy="22" r="18"
-                            fill="none"
-                            stroke="${meteo.color}"
-                            stroke-width="6"
-                            stroke-linecap="round"
-                            stroke-dasharray="${Math.round(113*(score/100))} 113"
-                            transform="rotate(-90 22 22)"/>
-                    <text x="22" y="26"
-                          text-anchor="middle"
-                          fill="${meteo.color}"
-                          font-size="9"
-                          font-weight="800">
-                      ${score}
-                    </text>
-                  </svg>
-                </div>
-              </div>
-              <p style="font-size:.78rem;color:var(--text-secondary);
-                        line-height:1.5;margin:0">
-                ${conseil}
-              </p>
-            </div>`;
-        } catch(e) { return ''; }
-      })();
+      case 'humeur_fatigue': return _renderHumeurFatigue();
 
       default: return '';
     }
   }
 
-  // ✅ BOUTON PERSONNALISER (toujours visible)
+  // ── Injecter CSS animations ──
+  if (!document.getElementById('css-home-v2')) {
+    const s = document.createElement('style');
+    s.id = 'css-home-v2';
+    s.textContent = `
+      @keyframes fadeUp {
+        from{opacity:0;transform:translateY(14px);}
+        to  {opacity:1;transform:translateY(0);}
+      }
+      @keyframes pulse {
+        0%,100%{opacity:1;box-shadow:0 0 6px currentColor;}
+        50%    {opacity:.6;box-shadow:0 0 12px currentColor;}
+      }
+      @keyframes progressFill {
+        from{width:0%;}
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  // ── Bouton personnaliser ──
   const btnPerso = `
-    <div style="display:flex;justify-content:flex-end;
-                margin-bottom:8px">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
       <button onclick="_ouvrirConfigWidgets()"
               style="display:flex;align-items:center;gap:6px;
                      padding:6px 12px;font-size:.68rem;font-weight:700;
-                     background:rgba(75,75,249,0.1);
-                     border:1px solid rgba(75,75,249,0.2);
-                     border-radius:var(--radius-full);
-                     color:var(--fd-indigo);cursor:pointer">
+                     background:rgba(75,75,249,.1);
+                     border:1px solid rgba(75,75,249,.2);
+                     border-radius:99px;color:var(--fd-indigo);cursor:pointer">
         🎛️ Personnaliser
       </button>
     </div>`;
 
-  // ✅ Construire le HTML dans l'ordre des widgets
   const htmlWidgets = widgets
     .filter(w => w.actif)
     .map(w => genererWidget(w.id))
     .join('');
 
-  container.innerHTML = btnPerso + htmlWidgets
-    + '<div style="height:8px"></div>';
+  container.innerHTML = btnPerso + htmlWidgets + '<div style="height:8px"></div>';
 
-  // ✅ Events post-render
   requestAnimationFrame(() => {
     _attacherHumeurFatigueEvents();
     _attacherSearchEvents();
@@ -2793,82 +2237,187 @@ function _attacherHumeurFatigueEvents() {
 }
 
 // ════════════════════════════════════════════════════════════
-// PAGE TRAINING
+// PAGE TRAINING v2 — Premium
 // ════════════════════════════════════════════════════════════
 function _rendreTraining(container) {
-  let infos    = { semaine:1, cycle:1, phase:{ nom:'Reprise', emoji:'🌱', couleur:'#8bf0bb', intensite:.65 } };
+  let infos    = { semaine:1, cycle:1,
+                   phase:{ nom:'Reprise', emoji:'🌱', couleur:'#8bf0bb', intensite:.65 },
+                   progression:25 };
   let seances  = [];
   let planning = [];
 
   try { infos    = Programme.getInfosProgramme(); } catch(e) {}
-  try { seances  = Programme.getAllSeances();      } catch(e) {}
-  try { planning = Programme.getSeancesSemaine(); } catch(e) {}
+  try { seances  = Programme.getAllSeances();     } catch(e) {}
+  try { planning = Programme.getSeancesSemaine();} catch(e) {}
 
   container.innerHTML = `
-    <div class="card mb-md"
-         style="background:linear-gradient(135deg,var(--fd-indigo) 0%,#7b2ff7 100%);
-                border:none;color:white;text-align:center">
-      <div style="font-size:2rem">${infos.phase.emoji}</div>
-      <div style="font-size:1.1rem;font-weight:800;margin-top:4px">${infos.phase.nom}</div>
+
+    <!-- Hero programme -->
+    <div style="background:linear-gradient(135deg,var(--fd-indigo) 0%,#7b2ff7 100%);
+                border:none;border-radius:22px;color:white;text-align:center;
+                padding:20px;margin-bottom:14px;position:relative;overflow:hidden;
+                animation:fadeUp .3s ease">
+      <div style="position:absolute;top:-30px;right:-20px;width:130px;height:130px;
+                  border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.12),transparent 70%);
+                  pointer-events:none"></div>
+      <div style="font-size:2rem;margin-bottom:6px">${infos.phase.emoji}</div>
+      <div style="font-size:1.1rem;font-weight:800">${infos.phase.nom}</div>
       <div style="font-size:.78rem;opacity:.8;margin-top:2px">
         Semaine ${infos.semaine} · Cycle ${infos.cycle}
         · ${Math.round((infos.phase.intensite || 0) * 100)}% intensité
       </div>
-      <div style="height:6px;background:rgba(255,255,255,0.2);
-                  border-radius:3px;margin-top:var(--space-md);overflow:hidden">
+      <div style="height:6px;background:rgba(255,255,255,.2);
+                  border-radius:3px;margin-top:14px;overflow:hidden">
         <div style="height:100%;background:var(--fd-lemon);
-                    width:${infos.progression || 0}%;border-radius:3px"></div>
+                    width:${infos.progression || 0}%;border-radius:3px;
+                    animation:progressFill .8s ease"></div>
       </div>
-      <div style="font-size:.65rem;opacity:.6;margin-top:4px">
+      <div style="font-size:.62rem;opacity:.6;margin-top:4px">
         ${infos.progression || 0}% du cycle
       </div>
     </div>
 
-    <div class="section-title">📅 Planning semaine</div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);
-                gap:3px;margin-bottom:var(--space-md)">
-      ${planning.map(jour => `
-  <div style="text-align:center;padding:var(--space-sm) 2px;
-              background:${jour.estAujourdhui
-                ? 'var(--fd-indigo)'
-                : jour.seance ? 'rgba(75,75,249,0.15)' : 'var(--bg-input)'};
-              border-radius:var(--radius-sm);
-              cursor:pointer;position:relative"
-       onclick="PlanningEditor.ouvrirChoixSeance(${jour.jour})">
-    <div style="font-size:.6rem;
-                color:${jour.estAujourdhui ? 'white' : 'var(--text-muted)'};
-                font-weight:${jour.estAujourdhui ? '700' : '400'}">
-      ${jour.label}
-    </div>
-    <div style="font-size:.9rem;margin-top:2px">
-      ${jour.seance ? jour.seance.emoji : jour.estRepos ? '😴' : '·'}
-    </div>
-    <div style="position:absolute;top:2px;right:2px;
-                font-size:.5rem;opacity:.5">✏️</div>
-  </div>`).join('')}
+    <!-- Planning semaine -->
+    <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;
+                letter-spacing:.1em;color:var(--text-muted);
+                display:flex;align-items:center;gap:8px;margin:0 0 10px">
+      📅 Planning semaine
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.06)"></div>
+      ${(() => { try { return Programme.estPlanningCustom() ? `
+        <button onclick="PlanningEditor.resetPlanning()"
+                style="font-size:.58rem;font-weight:700;padding:3px 8px;
+                       background:rgba(255,141,150,.1);
+                       border:1px solid rgba(255,141,150,.2);
+                       border-radius:99px;color:var(--fd-coral);cursor:pointer">
+          🔄 Reset
+        </button>` : ''; } catch(e){return '';} })()}
     </div>
 
-    <div class="section-title">🏋️ Séances</div>
-    ${seances.map(s => _renderCarteSeanceTraining(s)).join('')}
-
-    <div class="flex justify-between items-center mt-md mb-sm">
-      <div class="section-title" style="margin:0">⚡ Supersets</div>
-      <button onclick="naviguer('supersets')"
-              style="background:none;border:none;font-size:.72rem;
-                     color:var(--fd-indigo);cursor:pointer;font-weight:600">
-        Gérer →
-      </button>
-    </div>
-    <div class="card" style="text-align:center;padding:var(--space-md)">
-      <div style="font-size:1.5rem;margin-bottom:4px">⚡</div>
-      <div style="font-size:.82rem;color:var(--text-muted)">
-        Configure tes supersets pour maximiser ton efficacité
+    <div style="background:var(--bg-card);border:1px solid var(--border-color);
+                border-radius:18px;padding:14px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">
+        ${planning.map(jour => `
+          <div style="text-align:center;padding:8px 2px;border-radius:10px;
+                      cursor:pointer;position:relative;transition:all .2s;
+                      ${jour.estAujourdhui
+                        ? 'background:var(--fd-indigo)'
+                        : jour.seance
+                          ? 'background:rgba(75,75,249,.15)'
+                          : 'background:rgba(255,255,255,.03)'}"
+               onclick="PlanningEditor.ouvrirChoixSeance(${jour.jour})"
+               onmouseenter="this.style.transform='scale(1.05)'"
+               onmouseleave="this.style.transform=''">
+            <div style="font-size:.58rem;
+                        color:${jour.estAujourdhui ? 'white' : 'var(--text-muted)'};
+                        font-weight:${jour.estAujourdhui ? '700' : '400'}">
+              ${jour.label}
+            </div>
+            <div style="font-size:.95rem;margin-top:2px">
+              ${jour.seance ? jour.seance.emoji : jour.estRepos ? '😴' : '·'}
+            </div>
+            <div style="position:absolute;top:2px;right:2px;
+                        font-size:.4rem;opacity:.4">✏️</div>
+          </div>`).join('')}
       </div>
-      <button onclick="naviguer('supersets')" class="btn-secondary mt-md" style="font-size:.82rem">
+    </div>
+
+    <!-- Séances -->
+    <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;
+                letter-spacing:.1em;color:var(--text-muted);
+                display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      🏋️ Séances du programme
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.06)"></div>
+    </div>
+
+    ${seances.map((s, i) => _renderCarteSeanceTraining(s, i)).join('')}
+
+    <!-- Supersets -->
+    <div style="background:var(--bg-card);border:1px solid var(--border-color);
+                border-radius:18px;padding:16px;text-align:center;margin-top:8px">
+      <div style="font-size:1.5rem;margin-bottom:6px">⚡</div>
+      <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:10px">
+        Configure tes supersets pour maximiser l'efficacité
+      </div>
+      <button onclick="naviguer('supersets')"
+              style="padding:10px 20px;background:var(--fd-indigo);border:none;
+                     border-radius:99px;color:white;font-size:.8rem;
+                     font-weight:700;cursor:pointer;
+                     box-shadow:0 4px 14px rgba(75,75,249,.35)">
         Voir les supersets
       </button>
     </div>
   `;
+}
+
+function _renderCarteSeanceTraining(seance, idx = 0) {
+  let supersets = [];
+  try { supersets = Superset.getSupersets(seance.id); } catch(e) {}
+
+  const COLORS = ['#ff4d6d','#8bf0bb','#4b4bf9','#f9ef77','#bfa1ff','#ff8d96'];
+  const color  = COLORS[idx % COLORS.length];
+
+  return `
+    <div style="background:var(--bg-card);border:1px solid var(--border-color);
+                border-radius:18px;padding:16px;margin-bottom:10px;
+                cursor:pointer;transition:all .2s;
+                animation:fadeUp .3s ${idx * .08}s ease both"
+         onmouseenter="this.style.borderColor='${color}33';this.style.transform='translateX(4px)'"
+         onmouseleave="this.style.borderColor='var(--border-color)';this.style.transform=''">
+
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;
+                  margin-bottom:10px">
+        <div>
+          <div style="font-size:1rem;font-weight:700">
+            ${seance.emoji} ${seance.nom}
+          </div>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">
+            ~${seance.duree_estimee}min · ${seance.exercices?.length || 0} exercices
+            ${supersets.length > 0
+              ? ` · ⚡ ${supersets.length} superset${supersets.length>1?'s':''}`
+              : ''}
+          </div>
+        </div>
+        <button onclick="naviguer('live',{seanceId:'${seance.id}'})"
+                style="padding:9px 18px;background:var(--fd-indigo);
+                       border:none;border-radius:99px;
+                       font-size:.78rem;font-weight:700;color:white;cursor:pointer;
+                       box-shadow:0 3px 14px rgba(75,75,249,.35);
+                       transition:all .2s"
+                onmouseenter="this.style.transform='scale(1.05)'"
+                onmouseleave="this.style.transform=''">
+          ▶ Start
+        </button>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+        ${(seance.muscles || []).map(m=>`
+          <span style="padding:3px 9px;border-radius:99px;font-size:.6rem;
+                       font-weight:700;text-transform:uppercase;
+                       background:${color}18;color:${color};
+                       border:1px solid ${color}33">${m}</span>
+        `).join('')}
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap">
+        ${(seance.exercices || []).slice(0, 5).map(ex => {
+          const exo = (window.EXERCICES || {})[ex.ref] || {};
+          return `
+            <span style="display:inline-flex;align-items:center;gap:3px;
+                         padding:3px 8px;border-radius:99px;font-size:.62rem;
+                         background:rgba(255,255,255,.04);
+                         border:1px solid rgba(255,255,255,.08);
+                         color:var(--text-muted);margin:2px">
+              ${exo.emoji || '💪'} ${exo.nom || ex.ref}
+            </span>`;
+        }).join('')}
+        ${(seance.exercices || []).length > 5
+          ? `<span style="padding:3px 8px;border-radius:99px;font-size:.62rem;
+                          background:rgba(75,75,249,.1);color:var(--fd-indigo);
+                          border:1px solid rgba(75,75,249,.2);margin:2px">
+               +${(seance.exercices||[]).length - 5}
+             </span>` : ''}
+      </div>
+    </div>`;
 }
 
 function _renderCarteSeanceTraining(seance) {
@@ -5087,79 +4636,69 @@ function _renderLiveHeader(seance) {
   let charge = null;
   try { charge = Predict.analyserFatigue(); } catch(e) {}
 
-  // ✅ Créer la barre sticky si pas encore là
-  setTimeout(() => {
-  LiveStickyBar.init(seance);
-}, 100);
+  setTimeout(() => { LiveStickyBar.init(seance); }, 100);
 
-// ✅ Stocker les exercices pour le mode guidé
-window._liveExercices = window._liveExercices || {};
-window._liveExercices[seance.id] = seance.exercices || [];
+  window._liveExercices = window._liveExercices || {};
+  window._liveExercices[seance.id] = seance.exercices || [];
 
   return `
-    <div class="card mb-md"
-         style="background:linear-gradient(135deg,
-                rgba(75,75,249,0.15),rgba(139,240,187,0.05));
-                border-color:var(--fd-indigo)">
-      <div class="flex justify-between items-center">
+    <div style="background:linear-gradient(135deg,
+                rgba(75,75,249,.15),rgba(139,240,187,.05));
+                border:1px solid rgba(75,75,249,.35);
+                border-radius:20px;padding:18px;margin-bottom:14px;
+                animation:fadeUp .3s ease">
+
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
           <div style="font-size:1.2rem;font-weight:800">
             ${seance.emoji} ${seance.nom}
           </div>
-          <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">
-            ~${seance.duree_estimee}min
-            · ${seance.exercices?.length || 0} exos
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px">
+            ~${seance.duree_estimee}min · ${seance.exercices?.length || 0} exos
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;
-                    align-items:flex-end;gap:6px">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           ${charge ? `
-            <div style="text-align:center">
-              <div style="font-size:1rem;font-weight:700;
+            <div style="text-align:center;padding:4px 10px;
+                        background:rgba(255,255,255,.06);border-radius:99px;
+                        border:1px solid rgba(255,255,255,.1)">
+              <div style="font-size:.82rem;font-weight:700;
                           color:${charge.recommandation?.couleur||'white'}">
                 ${charge.score}/100
               </div>
-              <div style="font-size:.6rem;color:var(--text-muted)">
-                ${charge.recommandation?.emoji||'💪'} Forme
-              </div>
             </div>` : ''}
-          <div id="chrono-container"></div>
+
           <button id="btn-demarrer-chrono"
                   onclick="App._demarrerSeanceManuellement('${seance.id}')"
                   style="display:flex;align-items:center;gap:6px;
-                         padding:8px 14px;background:var(--fd-mint);
-                         border:none;border-radius:var(--radius-full);
-                         font-size:.72rem;font-weight:800;
+                         padding:9px 16px;background:var(--fd-mint);
+                         border:none;border-radius:99px;
+                         font-size:.75rem;font-weight:800;
                          color:#09092d;cursor:pointer;
-                         box-shadow:0 4px 16px rgba(139,240,187,0.4);
-                         margin-top:4px;transition:all .2s"
-                  onmousedown="this.style.transform='scale(.95)'"
-                  onmouseup="this.style.transform=''">
-            ▶ Démarrer le chrono
+                         box-shadow:0 4px 16px rgba(139,240,187,.4);
+                         transition:all .2s"
+                  onmouseenter="this.style.transform='scale(1.04)'"
+                  onmouseleave="this.style.transform=''">
+            ▶ Démarrer
           </button>
-          <button id="btn-mode-guide"
-        onclick="_toggleModeGuide('${seance.id}')"
-                  style="display:flex;align-items:center;gap:4px;
-                         padding:5px 10px;
-                         background:rgba(75,75,249,0.12);
-                         border:1px solid rgba(75,75,249,0.25);
-                         border-radius:var(--radius-full);
-                         font-size:.68rem;font-weight:600;
-                         color:var(--fd-indigo);cursor:pointer;
-                         margin-top:4px">
-            🎙️ Mode guidé
-          </button>
-             <button onclick="_lancerModeUltra('${seance.id}')"
-        style="display:flex;align-items:center;gap:4px;
-               padding:5px 10px;
-               background:rgba(249,239,119,0.12);
-               border:1px solid rgba(249,239,119,0.25);
-               border-radius:var(--radius-full);
-               font-size:.68rem;font-weight:700;
-               color:var(--fd-lemon);cursor:pointer;
-               margin-top:4px">
-  ⚡ Mode Ultra
-</button>
+
+          <div style="display:flex;gap:6px">
+            <button id="btn-mode-guide"
+                    onclick="_toggleModeGuide('${seance.id}')"
+                    style="padding:5px 10px;background:rgba(75,75,249,.12);
+                           border:1px solid rgba(75,75,249,.25);border-radius:99px;
+                           font-size:.65rem;font-weight:600;
+                           color:var(--fd-indigo);cursor:pointer">
+              🎙️ Mode guidé
+            </button>
+            <button onclick="_lancerModeUltra('${seance.id}')"
+                    style="padding:5px 10px;background:rgba(249,239,119,.12);
+                           border:1px solid rgba(249,239,119,.25);border-radius:99px;
+                           font-size:.65rem;font-weight:700;
+                           color:var(--fd-lemon);cursor:pointer">
+              ⚡ Ultra
+            </button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -5628,83 +5167,202 @@ function _getChargeReco(ref) {
 }
 
 // ════════════════════════════════════════════════════════════
-// PAGE PROFIL
+// PAGE PROFIL v2 — Premium
 // ════════════════════════════════════════════════════════════
 function _rendreProfil(container) {
-  let profil   = { nom:'Athlète', avatar:'💪', poids:80, taille:175, objectif:'forme' };
+  let profil   = { nom:'Athlète', avatar:'💪', objectif:'forme' };
   let xp       = { total:0, niveau:{ emoji:'💪', numero:1, nom:'Débutant' } };
-  let streak   = { count:0, max:0 };
+  let streak   = { count:0 };
   let total    = 0;
-  let trophees = 0;
+  let trophees = [];
 
-  try { profil   = Tracker.getProfil();           } catch(e) {}
-  try { xp       = Gamification.getXP();          } catch(e) {}
-  try { streak   = Tracker.getStreak();           } catch(e) {}
-  try { total    = Tracker.getTotalSeances();      } catch(e) {}
-  try { trophees = Gamification.getTrophees().filter(t => t.debloquee).length; } catch(e) {}
+  try { profil   = Tracker.getProfil();              } catch(e) {}
+  try { xp       = Gamification.getXP();             } catch(e) {}
+  try { streak   = Tracker.getStreak();              } catch(e) {}
+  try { total    = Tracker.getTotalSeances();         } catch(e) {}
+  try { trophees = Gamification.getTrophees();       } catch(e) {}
+
+  const trophDebloquees = trophees.filter(t => t.debloquee);
+
+  // ── CSS profil ──
+  if (!document.getElementById('css-profil-v2')) {
+    const s = document.createElement('style');
+    s.id = 'css-profil-v2';
+    s.textContent = `
+      @keyframes avatarPulse {
+        0%,100%{box-shadow:0 0 20px rgba(75,75,249,.5);}
+        50%    {box-shadow:0 0 36px rgba(75,75,249,.8);}
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  const menuItems = [
+    { page:'journal',     emoji:'📔', label:'Journal',          color:'#f9ef77' },
+    { page:'objectifs',   emoji:'🎯', label:'Objectifs',        color:'#ff4d6d' },
+    { page:'coach',       emoji:'🤖', label:'Coach IA',         color:'#bfa1ff' },
+    { page:'defis',       emoji:'🏆', label:'Défis',            color:'#f9ef77' },
+    { page:'predict',     emoji:'📈', label:'Prédictions',      color:'#8bf0bb' },
+    { page:'adaptatif',   emoji:'🧠', label:'Prog. Adaptatif',  color:'#bfa1ff' },
+    { page:'gamification',emoji:'⭐', label:'XP & Niveaux',     color:'#f9ef77' },
+    { page:'history',     emoji:'📅', label:'Historique',       color:'#4b4bf9' },
+    { page:'photos',      emoji:'📸', label:'Photos',           color:'#ff8d96' },
+    { page:'blessures',   emoji:'🩹', label:'Blessures',        color:'#ff8d96' },
+    { page:'supersets',   emoji:'⚡', label:'Supersets',        color:'#8bf0bb' },
+    { page:'circuit',     emoji:'🔥', label:'HIIT & Cardio',    color:'#f9ef77' },
+    { page:'galerie',     emoji:'💪', label:'Galerie exercices',color:'#4b4bf9' },
+    { page:'nutrition',   emoji:'🥗', label:'Nutrition',        color:'#8bf0bb' },
+    { page:'export',      emoji:'📤', label:'Exporter',         color:'#8bf0bb' },
+    { page:'social',      emoji:'📱', label:'Réseaux sociaux',  color:'#bfa1ff' },
+    { page:'offline',     emoji:'📵', label:'Hors-ligne',       color:'#ff8d96' },
+    { page:'settings',    emoji:'⚙️', label:'Paramètres',       color:'#bfa1ff' }
+  ];
 
   container.innerHTML = `
-    <div class="card mb-md"
-         style="background:linear-gradient(135deg,var(--fd-indigo),#7b2ff7);
-                border:none;color:white;text-align:center">
-      <div style="font-size:3rem;margin-bottom:4px">${profil.avatar || '💪'}</div>
-      <div style="font-size:1.3rem;font-weight:800">${profil.nom}</div>
+
+    <!-- Hero profil -->
+    <div style="background:linear-gradient(135deg,var(--fd-indigo),#7b2ff7);
+                border:none;border-radius:22px;padding:24px 20px;
+                text-align:center;margin-bottom:14px;
+                position:relative;overflow:hidden;animation:fadeUp .3s ease">
+      <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;
+                  border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.12),transparent 70%);
+                  pointer-events:none"></div>
+
+      <!-- Avatar -->
+      <div style="position:relative;display:inline-block;margin-bottom:12px">
+        <div style="width:80px;height:80px;border-radius:50%;
+                    border:3px solid rgba(255,255,255,.3);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:2.5rem;margin:0 auto;
+                    background:rgba(255,255,255,.1);
+                    animation:avatarPulse 3s ease-in-out infinite">
+          ${profil.avatar || '💪'}
+        </div>
+        <div style="position:absolute;bottom:2px;right:2px;
+                    width:22px;height:22px;border-radius:50%;
+                    background:var(--fd-lemon);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:.65rem;border:2px solid #09092d;
+                    color:#09092d;font-weight:800">
+          ${xp.niveau.numero}
+        </div>
+      </div>
+
+      <div style="font-size:1.4rem;font-weight:800">${profil.nom}</div>
       <div style="font-size:.82rem;opacity:.8;margin-top:4px">
         ${xp.niveau.emoji} ${xp.niveau.nom} · ${xp.total} XP
       </div>
-      <div class="stats-grid mt-md" style="background:none">
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                  background:rgba(255,255,255,.1);border-radius:14px;
+                  padding:12px;gap:8px;margin-top:16px">
         ${[
-          { val:total,        label:'Séances'  },
-          { val:streak.count, label:'Streak'   },
-          { val:trophees,     label:'Trophées' }
-        ].map(s => `
-          <div>
-            <div style="font-size:1.2rem;font-weight:800">${s.val}</div>
-            <div style="font-size:.65rem;opacity:.7">${s.label}</div>
+          [total,           'Séances'],
+          [streak.count,    'Streak' ],
+          [trophDebloquees.length,'🏆']
+        ].map(([v,l])=>`
+          <div style="text-align:center">
+            <div style="font-size:1.3rem;font-weight:800">${v}</div>
+            <div style="font-size:.58rem;opacity:.6;text-transform:uppercase">${l}</div>
           </div>`).join('')}
       </div>
     </div>
 
-    ${[
-      { page:'journal',      emoji:'📔', label:'Journal'             },
-      { page:'objectifs',    emoji:'🎯', label:'Objectifs'           },
-      { page:'blessures',    emoji:'🩹', label:'Blessures'           },
-      { page:'coach',        emoji:'🤖', label:'Coach IA'            },
-      { page:'defis',        emoji:'🏆', label:'Défis'               },
-      { page:'predict',      emoji:'🔮', label:'Prédictions IA'      },
-      { page:'calculateur',  emoji:'🧮', label:'Calculateur'         }, 
-      { page:'export',       emoji:'📤', label:'Exporter mes données'},
-      { page:'supersets',    emoji:'⚡', label:'Supersets'           },
-      { page:'social',       emoji:'📱', label:'Réseaux sociaux'     },
-      { page:'offline',      emoji:'📵', label:'Hors-ligne'          },
-      { page:'gamification', emoji:'⭐', label:'XP & Niveaux'        },
-      { page:'history',      emoji:'📅', label:'Historique'          },
-      { page:'photos',       emoji:'📸', label:'Photos'              },
-      { page:'circuit',      emoji:'🔄', label:'Circuit Training'    },
-      { page:'circuit',      emoji:'⚡', label:'HIIT & Cardio'       }, 
-      { page:'adaptatif',    emoji:'🧠', label:'Programme Adaptatif' },
-      { page:'nutrition',    emoji:'🥗', label:'Nutrition'           },
-      { page:'galerie',      emoji:'💪', label:'Galerie exercices'   },
-      { page:'settings',     emoji:'⚙️', label:'Paramètres'         }
-    ].map(s => `
-      <div class="card mb-md" style="cursor:pointer" onclick="naviguer('${s.page}')">
-        <div class="flex justify-between items-center">
-          <div style="display:flex;align-items:center;gap:var(--space-md)">
-            <span style="font-size:1.3rem">${s.emoji}</span>
-            <span style="font-weight:600;font-size:.92rem">${s.label}</span>
-          </div>
-          <span style="color:var(--text-muted);font-size:.9rem">›</span>
-        </div>
-      </div>`).join('')}
+    <!-- Trophées -->
+    <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;
+                letter-spacing:.1em;color:var(--text-muted);
+                display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      🏆 Trophées (${trophDebloquees.length}/${trophees.length})
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.06)"></div>
+    </div>
 
-    <div class="card mb-md" style="border-color:rgba(255,141,150,0.3)">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);
+                gap:8px;margin-bottom:14px">
+      ${trophees.slice(0, 8).map((t, i) => `
+        <div style="background:${t.debloquee
+                      ? 'rgba(249,239,119,.08)'
+                      : 'var(--bg-card)'};
+                    border:1px solid ${t.debloquee
+                      ? 'rgba(249,239,119,.25)'
+                      : 'var(--border-color)'};
+                    border-radius:14px;padding:10px 6px;
+                    text-align:center;transition:all .2s;
+                    animation:countUp .4s ${i*.06}s ease both"
+             onmouseenter="this.style.transform='scale(1.05)'"
+             onmouseleave="this.style.transform=''">
+          <div style="font-size:1.3rem;
+                      ${!t.debloquee?'filter:grayscale(1);opacity:.3':''}">
+            ${t.emoji || '🏆'}
+          </div>
+          <div style="font-size:.52rem;font-weight:700;margin-top:4px;
+                      color:${t.debloquee ? 'var(--fd-lemon)' : 'var(--text-muted)'};
+                      line-height:1.2">
+            ${t.nom || '???'}
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Menu grid -->
+    <div style="font-size:.58rem;font-weight:800;text-transform:uppercase;
+                letter-spacing:.1em;color:var(--text-muted);
+                display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      🔗 Accès rapide
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.06)"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${menuItems.map((s, i) => `
+        <div onclick="naviguer('${s.page}')"
+             style="display:flex;align-items:center;gap:10px;
+                    padding:13px 14px;background:var(--bg-card);
+                    border:1px solid var(--border-color);
+                    border-radius:14px;cursor:pointer;transition:all .18s;
+                    animation:slideIn .3s ${i*.04}s ease both"
+             onmouseenter="this.style.background='${s.color}15';
+                           this.style.borderColor='${s.color}44';
+                           this.style.transform='scale(1.02)'"
+             onmouseleave="this.style.background='var(--bg-card)';
+                           this.style.borderColor='var(--border-color)';
+                           this.style.transform='scale(1)'">
+          <div style="width:34px;height:34px;border-radius:10px;
+                      background:${s.color}18;border:1px solid ${s.color}33;
+                      display:flex;align-items:center;justify-content:center;
+                      font-size:1.1rem;flex-shrink:0">
+            ${s.emoji}
+          </div>
+          <span style="font-size:.78rem;font-weight:600;
+                       color:rgba(255,255,255,.8);
+                       overflow:hidden;text-overflow:ellipsis;
+                       white-space:nowrap;flex:1">
+            ${s.label}
+          </span>
+        </div>`).join('')}
+    </div>
+
+    <!-- Reset -->
+    <div style="margin-top:14px">
       <button onclick="UI.confirmerReset()"
-              style="width:100%;background:none;border:none;
-                     color:var(--fd-coral);font-size:.85rem;
-                     font-weight:600;cursor:pointer;padding:var(--space-sm)">
+              style="width:100%;padding:12px;
+                     background:rgba(255,141,150,.06);
+                     border:1px solid rgba(255,141,150,.15);
+                     border-radius:14px;color:var(--fd-coral);
+                     font-size:.82rem;font-weight:600;cursor:pointer">
         🗑️ Réinitialiser toutes les données
       </button>
     </div>
+
+    <!-- CSS animations -->
+    <style>
+      @keyframes countUp {
+        from{opacity:0;transform:scale(.5);}
+        to  {opacity:1;transform:scale(1);}
+      }
+      @keyframes slideIn {
+        from{opacity:0;transform:translateX(-10px);}
+        to  {opacity:1;transform:translateX(0);}
+      }
+    </style>
   `;
 }
 
