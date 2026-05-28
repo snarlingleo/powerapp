@@ -1279,14 +1279,1273 @@ function _rendreProfil(container) {
     <div style="height:8px"></div>
   `;
 }
+// ═══════════════════════════════════════════════════════════
+// PAGE LIVE v2
+// ═══════════════════════════════════════════════════════════
+function _rendreLive(container, options = {}) {
+
+  const seanceId = options.seanceId
+    || PM.get(() => Programme.getSeanceduJour()?.id, null);
+
+  const seance = PM.get(() =>
+    seanceId
+      ? Programme.getSeanceById(seanceId)
+      : Programme.getSeanceduJour(),
+    null);
+
+  if (!seance) {
+    container.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;
+                  justify-content:center;min-height:60vh;text-align:center;
+                  padding:32px 16px">
+        <div style="font-size:3rem;margin-bottom:16px">😴</div>
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:8px">
+          Aucune séance aujourd'hui
+        </div>
+        <div style="font-size:.82rem;color:rgba(255,255,255,.4);margin-bottom:20px">
+          Jour de repos ou programme non configuré
+        </div>
+        <button onclick="naviguer('training')"
+                class="pm-btn-primary">
+          📅 Voir le programme
+        </button>
+      </div>`;
+    return;
+  }
+
+  // ── Data ──
+  const etat    = PM.get(() => Tracker.getEtatSeance(seance.id), {
+    series: [], exoActif: 0, serieActive: 0, debut: null, terminee: false
+  });
+  const charge  = PM.get(() => Predict.analyserFatigue(), null);
+  const supersets = PM.get(() => Superset.getSupersets(seance.id), []);
+
+  const exercices = seance.exercices || [];
+  const exoIdx    = Math.min(etat.exoActif || 0, exercices.length - 1);
+  const exoRef    = exercices[exoIdx];
+  const exo       = PM.get(() => (window.EXERCICES||{})[exoRef?.ref||exoRef] || {}, {});
+  const serieIdx  = etat.serieActive || 0;
+  const nbSeries  = exoRef?.series || 4;
+  const seriesFaites = (etat.series || []).filter(s =>
+    s.exoIndex === exoIdx
+  );
+
+  // Total séries programme
+  const totalSeries = exercices.reduce((s, ex) => s + (ex.series || 4), 0);
+  const seriesFaitesTotal = (etat.series || []).length;
+  const pct = Math.round((seriesFaitesTotal / Math.max(totalSeries, 1)) * 100);
+
+  // Chrono
+  const tempsEcoule = etat.debut
+    ? Math.floor((Date.now() - etat.debut) / 1000)
+    : 0;
+  const mm = String(Math.floor(tempsEcoule / 60)).padStart(2, '0');
+  const ss = String(tempsEcoule % 60).padStart(2, '0');
+
+  // PR
+  const pr = PM.get(() =>
+    Tracker.getPR(exoRef?.ref || exoRef), null);
+
+  // Recommandation poids
+  const reco = PM.get(() =>
+    Predict.getRecommandation(exoRef?.ref || exoRef), null);
+
+  container.innerHTML = `
+
+    <!-- Barre sticky progress -->
+    <div style="background:rgba(9,9,45,.97);backdrop-filter:blur(16px);
+                border-bottom:1px solid rgba(75,75,249,.3);
+                padding:10px 16px;margin:-16px -16px 16px;
+                position:sticky;top:0;z-index:50">
+      <div style="display:flex;align-items:center;justify-content:space-between;
+                  margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:7px;height:7px;border-radius:50%;
+                      background:var(--fd-mint);
+                      box-shadow:0 0 6px var(--fd-mint);
+                      animation:pm-liveDot 1.5s infinite"></div>
+          <span style="font-size:.82rem;font-weight:800;color:var(--fd-mint)">
+            ⏱️ ${mm}:${ss}
+          </span>
+        </div>
+        <span style="font-size:.72rem;font-weight:600;
+                     color:rgba(255,255,255,.5)">
+          ${seance.emoji} ${seance.nom}
+        </span>
+        <button onclick="_pauserSeance && _pauserSeance()"
+                style="padding:5px 12px;background:rgba(255,255,255,.06);
+                       border:1px solid rgba(255,255,255,.1);border-radius:99px;
+                       font-size:.65rem;font-weight:700;
+                       color:rgba(255,255,255,.6);cursor:pointer">
+          ⏸ Pause
+        </button>
+      </div>
+      <div style="display:flex;justify-content:space-between;
+                  font-size:.6rem;color:rgba(255,255,255,.3);
+                  margin-bottom:4px">
+        <span>Exo ${exoIdx+1}/${exercices.length}
+          · ${seriesFaitesTotal} séries faites</span>
+        <span style="font-weight:700;color:var(--fd-indigo)">${pct}%</span>
+      </div>
+      <div style="height:4px;background:rgba(255,255,255,.06);
+                  border-radius:99px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;
+                    background:linear-gradient(90deg,var(--fd-indigo),var(--fd-mint));
+                    border-radius:99px;box-shadow:0 0 8px var(--fd-indigo);
+                    transition:width .5s ease"></div>
+      </div>
+    </div>
+
+    <!-- Header séance -->
+    <div class="pm-card" style="background:linear-gradient(135deg,
+         rgba(75,75,249,.15),rgba(139,240,187,.05));
+         border-color:rgba(75,75,249,.3);margin-bottom:12px;
+         animation:pm-fadeUp .3s ease">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:1.1rem;font-weight:800">
+            ${seance.emoji} ${seance.nom}
+          </div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:2px">
+            ~${seance.duree_estimee||60}min
+            · ${exercices.length} exercices
+            ${supersets.length > 0
+              ? ` · ⚡ ${supersets.length} superset${supersets.length>1?'s':''}`
+              : ''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          ${charge ? `
+            <div style="font-size:.72rem;font-weight:700;
+                        color:${charge.recommandation?.couleur||'white'}">
+              Forme: ${charge.score}/100
+            </div>` : ''}
+          <button id="btn-demarrer-chrono"
+                  onclick="typeof App!=='undefined'
+                    &&App._demarrerSeanceManuellement('${seance.id}')"
+                  style="padding:8px 16px;background:var(--fd-mint);border:none;
+                         border-radius:99px;font-size:.75rem;font-weight:800;
+                         color:#09092d;cursor:pointer;
+                         box-shadow:0 4px 16px rgba(139,240,187,.4)">
+            ▶ Démarrer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timer repos (si actif) -->
+    <div id="pm-repos-overlay" style="display:none">
+      <div class="pm-repos-overlay">
+        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.15em;color:var(--fd-mint);margin-bottom:12px">
+          😴 REPOS
+        </div>
+        <div style="position:relative;width:140px;height:140px;margin:0 auto 16px">
+          <svg width="140" height="140" style="transform:rotate(-90deg)">
+            <circle cx="70" cy="70" r="60" fill="none"
+                    stroke="rgba(139,240,187,.1)" stroke-width="8"/>
+            <circle id="pm-repos-ring" cx="70" cy="70" r="60" fill="none"
+                    stroke="var(--fd-mint)" stroke-width="8"
+                    stroke-linecap="round"
+                    stroke-dasharray="377" stroke-dashoffset="0"
+                    style="filter:drop-shadow(0 0 6px var(--fd-mint));
+                           transition:stroke-dashoffset 1s linear"/>
+          </svg>
+          <div style="position:absolute;top:50%;left:50%;
+                      transform:translate(-50%,-50%);text-align:center">
+            <div id="pm-repos-count"
+                 style="font-size:2.8rem;font-weight:800;color:var(--fd-mint);
+                        font-variant-numeric:tabular-nums">
+              90
+            </div>
+            <div style="font-size:.6rem;color:rgba(255,255,255,.4)">secondes</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button onclick="PM.reposPlus15()"
+                  style="padding:10px 18px;background:rgba(255,255,255,.06);
+                         border:1px solid rgba(255,255,255,.1);border-radius:12px;
+                         font-size:.82rem;font-weight:700;
+                         color:rgba(255,255,255,.7);cursor:pointer">
+            +15s
+          </button>
+          <button onclick="PM.reposPasser()"
+                  style="padding:10px 24px;background:var(--fd-indigo);border:none;
+                         border-radius:12px;font-size:.85rem;font-weight:700;
+                         color:white;cursor:pointer;
+                         box-shadow:0 4px 16px rgba(75,75,249,.4)">
+            ⚡ Passer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exercice actuel -->
+    <div class="pm-card" style="animation:pm-fadeUp .3s .1s ease both">
+
+      <!-- Header exo -->
+      <div style="display:flex;justify-content:space-between;
+                  align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div style="font-weight:700;font-size:1rem">
+            ${exo.emoji||'🏋️'} ${exo.nom||exoRef?.ref||'Exercice'}
+          </div>
+          <div style="font-size:.68rem;color:var(--fd-mint);margin-top:2px">
+            ${exo.muscle||exo.groupe||''}
+          </div>
+          <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-top:3px">
+            ${nbSeries} séries
+            · ${exoRef?.reps||'8-10'} reps
+            · repos ${exoRef?.repos||90}s
+          </div>
+        </div>
+        <div style="text-align:right">
+          ${pr ? `
+            <div style="font-size:.72rem;color:var(--fd-lemon);font-weight:700">
+              🏆 PR ${pr.poids}kg×${pr.reps}
+            </div>` : ''}
+          ${reco ? `
+            <div style="font-size:.62rem;color:var(--fd-indigo);margin-top:2px">
+              💡 Reco ${reco.poids}kg
+            </div>` : ''}
+        </div>
+      </div>
+
+      <!-- Séries faites -->
+      ${seriesFaites.map((s, i) => `
+        <div class="pm-serie done">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:.78rem;font-weight:800;color:var(--fd-mint)">
+              S${i+1}/${nbSeries}
+            </div>
+            <div style="font-size:.72rem;font-weight:700;color:var(--fd-mint)">
+              ✅ ${s.poids||0}kg × ${s.reps||0} reps
+              ${s.rpe ? `· RPE ${s.rpe}` : ''}
+            </div>
+          </div>
+        </div>`).join('')}
+
+      <!-- Série active -->
+      <div class="pm-serie active" id="pm-serie-active">
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;margin-bottom:14px">
+          <div style="font-size:.78rem;font-weight:800;color:var(--fd-indigo)">
+            S${seriesFaites.length+1}/${nbSeries}
+          </div>
+          <div style="padding:3px 10px;background:rgba(75,75,249,.15);
+                      border:1px solid rgba(75,75,249,.3);border-radius:99px;
+                      font-size:.6rem;font-weight:700;color:var(--fd-indigo)">
+            ⚡ Active
+          </div>
+        </div>
+
+        <!-- Inputs poids + reps -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;
+                    gap:10px;margin-bottom:14px">
+
+          <!-- Poids -->
+          <div>
+            <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:6px">
+              🏋️ Charge (kg)
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button onclick="PM.inputDelta('pm-poids',-2.5)"
+                      class="pm-inp-btn minus"
+                      style="width:38px;height:38px;flex-shrink:0;border-radius:10px;
+                             font-size:1rem;font-weight:800;cursor:pointer;
+                             background:rgba(255,141,150,.12);
+                             border:1.5px solid rgba(255,141,150,.3);
+                             color:var(--fd-coral);transition:all .15s"
+                      ontouchstart="" onmousedown="this.style.transform='scale(.88)'"
+                      onmouseup="this.style.transform=''">−</button>
+              <input id="pm-poids" class="pm-input"
+                     value="${reco?.poids || pr?.poids || exoRef?.charge_depart || 20}"
+                     type="number" step="2.5" min="0"/>
+              <button onclick="PM.inputDelta('pm-poids',2.5)"
+                      style="width:38px;height:38px;flex-shrink:0;border-radius:10px;
+                             font-size:1rem;font-weight:800;cursor:pointer;
+                             background:rgba(139,240,187,.12);
+                             border:1.5px solid rgba(139,240,187,.3);
+                             color:var(--fd-mint);transition:all .15s"
+                      ontouchstart="" onmousedown="this.style.transform='scale(.88)'"
+                      onmouseup="this.style.transform=''">+</button>
+            </div>
+          </div>
+
+          <!-- Reps -->
+          <div>
+            <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;
+                        letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:6px">
+              🔁 Répétitions
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <button onclick="PM.inputDelta('pm-reps',-1)"
+                      style="width:38px;height:38px;flex-shrink:0;border-radius:10px;
+                             font-size:1rem;font-weight:800;cursor:pointer;
+                             background:rgba(255,141,150,.12);
+                             border:1.5px solid rgba(255,141,150,.3);
+                             color:var(--fd-coral);transition:all .15s"
+                      ontouchstart="" onmousedown="this.style.transform='scale(.88)'"
+                      onmouseup="this.style.transform=''">−</button>
+              <input id="pm-reps" class="pm-input"
+                     value="${exoRef?.reps_cible || 10}"
+                     type="number" step="1" min="1"/>
+              <button onclick="PM.inputDelta('pm-reps',1)"
+                      style="width:38px;height:38px;flex-shrink:0;border-radius:10px;
+                             font-size:1rem;font-weight:800;cursor:pointer;
+                             background:rgba(139,240,187,.12);
+                             border:1.5px solid rgba(139,240,187,.3);
+                             color:var(--fd-mint);transition:all .15s"
+                      ontouchstart="" onmousedown="this.style.transform='scale(.88)'"
+                      onmouseup="this.style.transform=''">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RPE -->
+        <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:6px">
+          😤 RPE · optionnel
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:14px" id="pm-rpe-row">
+          ${[6,7,8,9,10].map(r=>`
+            <div class="pm-rpe-btn"
+                 onclick="PM.setRPE(${r},this)"
+                 style="flex:1;padding:8px 2px;font-size:.78rem;font-weight:700;
+                        background:rgba(255,255,255,.04);
+                        border:1px solid rgba(255,255,255,.08);
+                        border-radius:8px;color:rgba(255,255,255,.4);
+                        cursor:pointer;transition:all .15s;text-align:center">
+              ${r}
+            </div>`).join('')}
+        </div>
+
+        <!-- Bouton série -->
+        <button onclick="PM.validerSerie('${seance.id}',${exoIdx},${seriesFaites.length})"
+                style="width:100%;padding:18px;background:var(--fd-indigo);border:none;
+                       border-radius:14px;font-size:1rem;font-weight:800;color:white;
+                       cursor:pointer;letter-spacing:.02em;
+                       box-shadow:0 4px 20px rgba(75,75,249,.4);
+                       transition:all .15s"
+                onmousedown="this.style.transform='scale(.97)'"
+                onmouseup="this.style.transform=''">
+          ✅ SÉRIE FAITE
+        </button>
+      </div>
+
+      <!-- Séries en attente -->
+      ${Array.from({ length: Math.max(0, nbSeries - seriesFaites.length - 1) },
+        (_, i) => `
+          <div class="pm-serie" style="opacity:.45">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:.78rem;font-weight:600;
+                          color:rgba(255,255,255,.4)">
+                S${seriesFaites.length + 2 + i}/${nbSeries}
+              </div>
+              <div style="font-size:.62rem;color:rgba(255,255,255,.3)">
+                ○ En attente
+              </div>
+            </div>
+          </div>`).join('')}
+    </div>
+
+    <!-- Exercices restants -->
+    ${exercices.length > 1 ? `
+      ${PM.sectionTitle('📋 Exercices restants')}
+      ${exercices.slice(exoIdx + 1, exoIdx + 4).map((ex, i) => {
+        const e = PM.get(() => (window.EXERCICES||{})[ex.ref||ex] || {}, {});
+        return `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+                      background:rgba(255,255,255,.03);
+                      border:1px solid rgba(255,255,255,.06);
+                      border-radius:12px;margin-bottom:6px;opacity:.7">
+            <span style="font-size:1.1rem">${e.emoji||'💪'}</span>
+            <div style="flex:1">
+              <div style="font-size:.8rem;font-weight:600">${e.nom||ex.ref||ex}</div>
+              <div style="font-size:.62rem;color:rgba(255,255,255,.35)">
+                ${ex.series||4} × ${ex.reps||'8-10'}
+              </div>
+            </div>
+          </div>`;
+      }).join('')}` : ''}
+
+    <!-- Terminer -->
+    <button onclick="PM.terminerSeance('${seance.id}')"
+            style="width:100%;padding:16px;margin-top:12px;
+                   background:rgba(139,240,187,.12);
+                   border:1px solid rgba(139,240,187,.25);
+                   border-radius:14px;font-size:.88rem;font-weight:700;
+                   color:var(--fd-mint);cursor:pointer;transition:all .2s"
+            onmouseenter="this.style.background='rgba(139,240,187,.2)'"
+            onmouseleave="this.style.background='rgba(139,240,187,.12)'">
+      🏁 Terminer la séance
+    </button>
+
+    <div style="height:16px"></div>
+  `;
+}
 
 // ═══════════════════════════════════════════════════════════
-// EXPORT — rendre disponible globalement
+// PAGE ONBOARDING v2
 // ═══════════════════════════════════════════════════════════
-window._rendreHome     = _rendreHome;
-window._rendreStats    = _rendreStats;
-window._rendreTraining = _rendreTraining;
-window._rendreProfil   = _rendreProfil;
-window.PM              = PM;
+function _afficherOnboarding() {
 
-console.log('✅ UI Premium v2 chargé — Home + Stats + Training + Profil');
+  // ── État onboarding ──
+  window._OB = window._OB || {
+    etape: 1,
+    total: 7,
+    data: {
+      nom: '', poids: 80, taille: 175, age: 25,
+      genre: null, objectif: null, niveau: null,
+      lieu: null, muscles: new Set(), jours: 4
+    }
+  };
+
+  const screen = document.getElementById('onboarding-screen')
+    || document.getElementById('app-wrapper');
+
+  if (!screen) {
+    console.error('[OB] Écran onboarding introuvable');
+    return;
+  }
+
+  // ── CSS Onboarding ──
+  if (!document.getElementById('css-ob-v2')) {
+    const s = document.createElement('style');
+    s.id = 'css-ob-v2';
+    s.textContent = `
+      #onboarding-screen {
+        display:flex !important;
+        flex-direction:column;
+        min-height:100vh;
+        background:var(--bg-app, #070714);
+        overflow-y:auto;
+        -webkit-overflow-scrolling:touch;
+      }
+      .ob-wrap {
+        max-width:480px;margin:0 auto;
+        padding:20px 16px 40px;
+        min-height:100vh;
+        display:flex;flex-direction:column;
+      }
+      .ob-header {
+        display:flex;align-items:center;
+        justify-content:space-between;
+        margin-bottom:24px;
+      }
+      .ob-steps {
+        display:flex;gap:5px;
+      }
+      .ob-step-dot {
+        height:6px;border-radius:99px;
+        background:rgba(255,255,255,.1);
+        transition:all .3s;
+      }
+      .ob-step-dot.active {
+        width:24px;background:var(--fd-indigo);
+      }
+      .ob-step-dot.done {
+        width:8px;background:rgba(75,75,249,.4);
+      }
+      .ob-step-dot.todo {
+        width:8px;
+      }
+      .ob-etape {
+        font-size:.62rem;font-weight:700;
+        text-transform:uppercase;letter-spacing:.1em;
+        color:var(--fd-indigo);margin-bottom:6px;
+      }
+      .ob-titre {
+        font-size:1.5rem;font-weight:800;
+        letter-spacing:-.02em;margin-bottom:6px;
+        color:white;
+      }
+      .ob-sous {
+        font-size:.82rem;color:rgba(255,255,255,.45);
+        margin-bottom:20px;line-height:1.5;
+      }
+      .ob-content { flex:1; }
+      .ob-footer {
+        margin-top:auto;padding-top:20px;
+      }
+      .ob-btn-next {
+        width:100%;padding:17px;
+        background:var(--fd-indigo);border:none;
+        border-radius:99px;font-size:.95rem;
+        font-weight:800;color:white;cursor:pointer;
+        box-shadow:0 4px 20px rgba(75,75,249,.4);
+        transition:all .2s;margin-bottom:8px;
+      }
+      .ob-btn-next:hover { transform:scale(1.01); }
+      .ob-btn-next:active { transform:scale(.98); }
+      .ob-btn-back {
+        width:100%;padding:12px;background:none;border:none;
+        font-size:.82rem;color:rgba(255,255,255,.4);cursor:pointer;
+      }
+      .ob-input {
+        width:100%;padding:16px;font-size:1rem;font-weight:600;
+        background:rgba(255,255,255,.06);
+        border:2px solid rgba(255,255,255,.1);
+        border-radius:16px;color:white;outline:none;
+        transition:border-color .2s;margin-bottom:10px;
+        -webkit-appearance:none;
+      }
+      .ob-input:focus { border-color:var(--fd-indigo); }
+      .ob-input::placeholder { color:rgba(255,255,255,.25); }
+      .ob-3col {
+        display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+        margin-bottom:10px;
+      }
+      .ob-inp-group label {
+        font-size:.6rem;font-weight:700;text-transform:uppercase;
+        letter-spacing:.08em;color:rgba(255,255,255,.4);
+        display:block;margin-bottom:6px;
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  // ── Générer une étape ──
+  function genEtape(n) {
+    const d = window._OB.data;
+
+    const steps = {
+
+      // ── ÉTAPE 1 : Prénom + mensurations ──
+      1: {
+        titre: 'Bienvenue ! ⚡',
+        sous:  'Commençons par te connaître',
+        html: `
+          <div>
+            <label style="font-size:.62rem;font-weight:700;text-transform:uppercase;
+                          letter-spacing:.08em;color:rgba(255,255,255,.4);
+                          display:block;margin-bottom:6px">
+              TON PRÉNOM *
+            </label>
+            <input id="ob-nom" class="ob-input"
+                   placeholder="ex: Othmane"
+                   value="${d.nom}"
+                   oninput="window._OB.data.nom=this.value"/>
+
+            <div class="ob-3col" style="margin-top:10px">
+              <div class="ob-inp-group">
+                <label>Poids (kg)</label>
+                <input id="ob-poids" class="ob-input"
+                       type="number" value="${d.poids}" min="30" max="300"
+                       oninput="window._OB.data.poids=+this.value"/>
+              </div>
+              <div class="ob-inp-group">
+                <label>Taille (cm)</label>
+                <input id="ob-taille" class="ob-input"
+                       type="number" value="${d.taille}" min="100" max="250"
+                       oninput="window._OB.data.taille=+this.value"/>
+              </div>
+              <div class="ob-inp-group">
+                <label>Âge</label>
+                <input id="ob-age" class="ob-input"
+                       type="number" value="${d.age}" min="12" max="99"
+                       oninput="window._OB.data.age=+this.value"/>
+              </div>
+            </div>
+          </div>`
+      },
+
+      // ── ÉTAPE 2 : Genre ──
+      2: {
+        titre: 'Ton genre 👤',
+        sous:  'Pour personnaliser ton programme',
+        html: `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            ${[
+              {val:'homme',emoji:'👨',label:'Homme',  desc:'Force & Volume'},
+              {val:'femme', emoji:'👩',label:'Femme',  desc:'Galbe & Mobilité'}
+            ].map(g=>`
+              <div class="pm-ob-option ${d.genre===g.val?'selected':''}"
+                   style="flex-direction:column;text-align:center;padding:24px 12px;
+                          ${d.genre===g.val
+                            ?'border-color:rgba(75,75,249,.5);background:rgba(75,75,249,.15)'
+                            :''}"
+                   onclick="
+                     document.querySelectorAll('.pm-ob-option').forEach(e=>
+                       e.classList.remove('selected'));
+                     this.classList.add('selected');
+                     window._OB.data.genre='${g.val}'">
+                <div style="font-size:3rem;margin-bottom:10px">${g.emoji}</div>
+                <div style="font-size:1rem;font-weight:800;margin-bottom:4px">${g.label}</div>
+                <div style="font-size:.7rem;color:rgba(255,255,255,.45)">${g.desc}</div>
+              </div>`).join('')}
+          </div>`
+      },
+
+      // ── ÉTAPE 3 : Objectif ──
+      3: {
+        titre: 'Ton objectif 🎯',
+        sous:  "Qu'est-ce qui te motive le plus ?",
+        html: `
+          <div>
+            ${[
+              {val:'masse',   emoji:'💪',label:'Prise de masse',   desc:'Volume · Charges lourdes',    c:'#ff4d6d'},
+              {val:'perte',   emoji:'🔥',label:'Perte de poids',   desc:'Cardio · Déficit calorique',  c:'#f9ef77'},
+              {val:'seche',   emoji:'✂️', label:'Sèche',           desc:'Muscle · Brûler les graisses',c:'#8bf0bb'},
+              {val:'force',   emoji:'🏋️',label:'Force pure',       desc:'Charges max · Faibles reps',  c:'#bfa1ff'},
+              {val:'forme',   emoji:'✨',label:'Forme générale',    desc:'Équilibre · Bien-être',       c:'#f9ef77'}
+            ].map(o=>`
+              <div class="pm-ob-option ${d.objectif===o.val?'selected':''}"
+                   style="${d.objectif===o.val
+                     ?'border-color:rgba(75,75,249,.5);background:rgba(75,75,249,.15)'
+                     :''}"
+                   onclick="
+                     document.querySelectorAll('.pm-ob-option').forEach(e=>
+                       e.classList.remove('selected'));
+                     this.classList.add('selected');
+                     window._OB.data.objectif='${o.val}'">
+                <div style="width:44px;height:44px;flex-shrink:0;border-radius:12px;
+                            background:${o.c}22;border:1px solid ${o.c}33;
+                            display:flex;align-items:center;justify-content:center;
+                            font-size:1.3rem">${o.emoji}</div>
+                <div style="flex:1">
+                  <div style="font-size:.88rem;font-weight:800">${o.label}</div>
+                  <div style="font-size:.65rem;color:rgba(255,255,255,.4);
+                              margin-top:2px">${o.desc}</div>
+                </div>
+                ${d.objectif===o.val
+                  ?`<div style="color:var(--fd-indigo);font-size:1.1rem">✓</div>`:''}
+              </div>`).join('')}
+          </div>`
+      },
+
+      // ── ÉTAPE 4 : Niveau ──
+      4: {
+        titre: 'Ton niveau 📊',
+        sous:  "Pour adapter l'intensité",
+        html: `
+          <div>
+            ${[
+              {val:'debutant',     emoji:'🌱',label:'Débutant',       desc:'< 1 an · 3j/sem · Repos 60s'},
+              {val:'intermediaire',emoji:'💪',label:'Intermédiaire',  desc:'1-3 ans · 4j/sem · Repos 75s'},
+              {val:'avance',       emoji:'🔥',label:'Avancé',         desc:'3+ ans · 5j/sem · Repos 90s'}
+            ].map(n=>`
+              <div class="pm-ob-option ${d.niveau===n.val?'selected':''}"
+                   style="${d.niveau===n.val
+                     ?'border-color:rgba(75,75,249,.5);background:rgba(75,75,249,.15)'
+                     :''}"
+                   onclick="
+                     document.querySelectorAll('.pm-ob-option').forEach(e=>
+                       e.classList.remove('selected'));
+                     this.classList.add('selected');
+                     window._OB.data.niveau='${n.val}'">
+                <div style="width:52px;height:52px;flex-shrink:0;border-radius:14px;
+                            background:rgba(75,75,249,.15);
+                            border:1px solid rgba(75,75,249,.2);
+                            display:flex;align-items:center;justify-content:center;
+                            font-size:1.6rem">${n.emoji}</div>
+                <div style="flex:1">
+                  <div style="font-size:.95rem;font-weight:800">${n.label}</div>
+                  <div style="font-size:.68rem;color:rgba(255,255,255,.4);
+                              margin-top:3px">${n.desc}</div>
+                </div>
+                ${d.niveau===n.val
+                  ?`<div style="color:var(--fd-indigo);font-size:1.2rem">✓</div>`:''}
+              </div>`).join('')}
+          </div>`
+      },
+
+      // ── ÉTAPE 5 : Lieu ──
+      5: {
+        titre: "Où tu t'entraînes ? 📍",
+        sous:  'Pour adapter les exercices',
+        html: `
+          <div>
+            ${[
+              {val:'salle',    emoji:'🏋️',label:'Salle de sport',
+               desc:'Tous les équipements',  bonus:'Machines + Câbles + Rack'},
+              {val:'maison',   emoji:'🏠',label:'À la maison',
+               desc:'Haltères, élastiques',  bonus:'Exercices adaptés maison'},
+              {val:'exterieur',emoji:'🌳',label:'En extérieur',
+               desc:'Parcs, barres',         bonus:'Cardio + Poids de corps'}
+            ].map(l=>`
+              <div class="pm-ob-option ${d.lieu===l.val?'selected':''}"
+                   style="${d.lieu===l.val
+                     ?'border-color:rgba(139,240,187,.4);background:rgba(139,240,187,.08)'
+                     :''}"
+                   onclick="
+                     document.querySelectorAll('.pm-ob-option').forEach(e=>
+                       e.classList.remove('selected'));
+                     this.classList.add('selected');
+                     window._OB.data.lieu='${l.val}'">
+                <div style="width:56px;height:56px;flex-shrink:0;border-radius:16px;
+                            background:rgba(139,240,187,.1);
+                            border:1px solid rgba(139,240,187,.2);
+                            display:flex;align-items:center;justify-content:center;
+                            font-size:2rem">${l.emoji}</div>
+                <div style="flex:1">
+                  <div style="font-size:.9rem;font-weight:800">${l.label}</div>
+                  <div style="font-size:.65rem;color:rgba(255,255,255,.4);
+                              margin-top:2px">${l.desc}</div>
+                  <div style="font-size:.62rem;color:var(--fd-mint);
+                              margin-top:3px;font-weight:600">
+                    ✅ ${l.bonus}
+                  </div>
+                </div>
+                ${d.lieu===l.val
+                  ?`<div style="color:var(--fd-mint);font-size:1.2rem">✓</div>`:''}
+              </div>`).join('')}
+          </div>`
+      },
+
+      // ── ÉTAPE 6 : Muscles cibles ──
+      6: {
+        titre: 'Muscles prioritaires 💪',
+        sous:  'Optionnel — laisse vide pour un programme complet',
+        html: `
+          <div>
+            <!-- Corps SVG -->
+            <div style="display:flex;justify-content:center;margin-bottom:16px">
+              <svg width="220" height="280" viewBox="0 0 220 280" fill="none">
+                <!-- Corps base -->
+                <ellipse cx="110" cy="38" rx="22" ry="26"
+                         fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)" stroke-width="1.5"/>
+                <rect x="86" y="62" width="48" height="72" rx="10"
+                      fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)" stroke-width="1.5"/>
+                <rect x="54" y="66" width="30" height="60" rx="8"
+                      fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.1)" stroke-width="1.5"/>
+                <rect x="136" y="66" width="30" height="60" rx="8"
+                      fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.1)" stroke-width="1.5"/>
+                <rect x="88" y="134" width="20" height="72" rx="8"
+                      fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)" stroke-width="1.5"/>
+                <rect x="112" y="134" width="20" height="72" rx="8"
+                      fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)" stroke-width="1.5"/>
+                <rect x="90" y="206" width="18" height="60" rx="7"
+                      fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.1)" stroke-width="1.5"/>
+                <rect x="112" y="206" width="18" height="60" rx="7"
+                      fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.1)" stroke-width="1.5"/>
+
+                <!-- Zones cliquables colorées -->
+                <!-- Pectoraux -->
+                <rect id="ob-z-pec" x="90" y="66" width="40" height="30" rx="6"
+                      fill="rgba(75,75,249,0)" stroke="rgba(75,75,249,0)"
+                      style="cursor:pointer;transition:all .2s"
+                      onclick="PM.obToggleMuscle('pectoraux','#4b4bf9',this)"/>
+                <!-- Épaules -->
+                <ellipse id="ob-z-del-g" cx="80" cy="74" rx="13" ry="11"
+                         fill="rgba(191,161,255,0)" stroke="rgba(191,161,255,0)"
+                         style="cursor:pointer;transition:all .2s"
+                         onclick="PM.obToggleMuscle('deltoides','#bfa1ff',this)"/>
+                <ellipse id="ob-z-del-d" cx="140" cy="74" rx="13" ry="11"
+                         fill="rgba(191,161,255,0)" stroke="rgba(191,161,255,0)"
+                         style="cursor:pointer;transition:all .2s"
+                         onclick="PM.obToggleMuscle('deltoides','#bfa1ff',this)"/>
+                <!-- Biceps -->
+                <rect id="ob-z-bi-g" x="56" y="74" width="22" height="30" rx="6"
+                      fill="rgba(139,240,187,0)" stroke="rgba(139,240,187,0)"
+                      style="cursor:pointer;transition:all .2s"
+                      onclick="PM.obToggleMuscle('biceps','#8bf0bb',this)"/>
+                <rect id="ob-z-bi-d" x="142" y="74" width="22" height="30" rx="6"
+                      fill="rgba(139,240,187,0)" stroke="rgba(139,240,187,0)"
+                      style="cursor:pointer;transition:all .2s"
+                      onclick="PM.obToggleMuscle('biceps','#8bf0bb',this)"/>
+                <!-- Abdos -->
+                <rect id="ob-z-abs" x="94" y="98" width="32" height="38" rx="6"
+                      fill="rgba(249,239,119,0)" stroke="rgba(249,239,119,0)"
+                      style="cursor:pointer;transition:all .2s"
+                      onclick="PM.obToggleMuscle('abdominaux','#f9ef77',this)"/>
+                <!-- Quadriceps -->
+                <rect id="ob-z-quad-g" x="90" y="140" width="18" height="44" rx="7"
+                      fill="rgba(34,197,94,0)" stroke="rgba(34,197,94,0)"
+                      style="cursor:pointer;transition:all .2s"
+                      onclick="PM.obToggleMuscle('quadriceps','#22c55e',this)"/>
+                <rect id="ob-z-quad-d" x="112" y="140" width="18" height="44" rx="7"
+                      fill="rgba(34,197,94,0)" stroke="rgba(34,197,94,0)"
+                      style="cursor:pointer;transition:all .2s"
+                      onclick="PM.obToggleMuscle('quadriceps','#22c55e',this)"/>
+
+                <!-- Labels fixes -->
+                <text x="110" y="85" text-anchor="middle"
+                      fill="rgba(255,255,255,.25)" font-size="7"
+                      font-family="-apple-system,sans-serif" pointer-events="none">PEC</text>
+                <text x="66" y="93" text-anchor="middle"
+                      fill="rgba(255,255,255,.2)" font-size="6"
+                      font-family="-apple-system,sans-serif" pointer-events="none">BI</text>
+                <text x="154" y="93" text-anchor="middle"
+                      fill="rgba(255,255,255,.2)" font-size="6"
+                      font-family="-apple-system,sans-serif" pointer-events="none">BI</text>
+                <text x="110" y="122" text-anchor="middle"
+                      fill="rgba(255,255,255,.25)" font-size="7"
+                      font-family="-apple-system,sans-serif" pointer-events="none">ABS</text>
+                <text x="99" y="168" text-anchor="middle"
+                      fill="rgba(255,255,255,.25)" font-size="6"
+                      font-family="-apple-system,sans-serif" pointer-events="none">Q</text>
+                <text x="121" y="168" text-anchor="middle"
+                      fill="rgba(255,255,255,.25)" font-size="6"
+                      font-family="-apple-system,sans-serif" pointer-events="none">Q</text>
+              </svg>
+            </div>
+
+            <!-- Chips muscles sélectionnés -->
+            <div id="ob-muscles-chips"
+                 style="display:flex;flex-wrap:wrap;gap:6px;
+                        justify-content:center;min-height:28px;
+                        margin-bottom:12px">
+              ${d.muscles.size === 0
+                ? `<span style="font-size:.68rem;color:rgba(255,255,255,.3);
+                               font-style:italic">
+                     Clique sur le corps pour cibler des muscles
+                   </span>`
+                : [...d.muscles].map(m => PM.obChipHTML(m)).join('')}
+            </div>
+
+            <div style="padding:10px 14px;background:rgba(75,75,249,.06);
+                        border:1px solid rgba(75,75,249,.15);border-radius:12px;
+                        font-size:.72rem;color:rgba(255,255,255,.4);text-align:center">
+              💡 Laisse vide pour un programme corps complet
+            </div>
+          </div>`
+      },
+
+      // ── ÉTAPE 7 : Programme IA ──
+      7: {
+        titre: '🧠 Ton programme IA',
+        sous:  'Personnalisé en fonction de tes réponses',
+        html: `
+          <div>
+            <!-- Message Coach -->
+            <div style="background:rgba(75,75,249,.08);
+                        border:1px solid rgba(75,75,249,.2);
+                        border-left:3px solid var(--fd-indigo);
+                        border-radius:14px;padding:14px 16px;margin-bottom:16px">
+              <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                          letter-spacing:.1em;color:var(--fd-indigo);margin-bottom:6px">
+                🤖 Coach IA
+              </div>
+              <p style="font-size:.8rem;color:rgba(255,255,255,.75);
+                        line-height:1.6;margin:0">
+                ${d.nom ? d.nom+',' : 'Bienvenue,'} j'ai analysé ton profil et créé
+                un programme
+                ${d.objectif === 'masse'  ? 'Push/Pull/Legs pour ta prise de masse' :
+                  d.objectif === 'perte'  ? 'Full Body pour ta perte de poids' :
+                  d.objectif === 'force'  ? 'de force pure avec 5×5' :
+                  d.objectif === 'seche'  ? 'de sèche avec supersets' :
+                  'équilibré corps complet'}.
+                ${d.niveau === 'debutant' ? '3 séances/sem pour bien débuter.' :
+                  d.niveau === 'avance'   ? '5 séances/sem pour maximiser tes gains.' :
+                  '4 séances/sem adaptées à ton niveau.'} 💪
+              </p>
+            </div>
+
+            <!-- Badges récap -->
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">
+              ${[
+                d.genre === 'homme' ? {l:'👨 Homme',    c:'#bfa1ff'} :
+                                     {l:'👩 Femme',    c:'#bfa1ff'},
+                {l: d.niveau === 'debutant'     ? '🌱 Débutant'
+                   : d.niveau === 'avance'       ? '🔥 Avancé'
+                   : '💪 Intermédiaire',           c:'#4b4bf9'},
+                {l: d.objectif === 'masse'  ? '💪 Masse'
+                   : d.objectif === 'perte' ? '🔥 Perte poids'
+                   : d.objectif === 'force' ? '🏋️ Force'
+                   : d.objectif === 'seche' ? '✂️ Sèche'
+                   : '✨ Forme',                   c:'#ff4d6d'},
+                {l: d.lieu === 'salle'    ? '🏋️ Salle'
+                   : d.lieu === 'maison'  ? '🏠 Maison'
+                   : '🌳 Extérieur',               c:'#8bf0bb'},
+                {l: d.niveau === 'debutant' ? 'PPL · 3j/sem'
+                   : d.niveau === 'avance'  ? 'PPL · 5j/sem'
+                   : 'PPL · 4j/sem',               c:'#ff8d96'}
+              ].map(b=>`
+                <span style="padding:4px 10px;background:${b.c}22;
+                             border:1px solid ${b.c}44;border-radius:99px;
+                             font-size:.62rem;font-weight:700;color:${b.c}">
+                  ${b.l}
+                </span>`).join('')}
+            </div>
+
+            <!-- Planning aperçu -->
+            <div style="background:rgba(255,255,255,.03);
+                        border:1px solid rgba(255,255,255,.07);
+                        border-radius:14px;padding:12px;margin-bottom:14px">
+              <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;
+                          letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:10px">
+                📅 Planning — commence aujourd'hui
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+                ${['L','M','M','J','V','S','D'].map((day,i)=>{
+                  const nbJ = d.niveau==='debutant' ? 3
+                            : d.niveau==='avance'   ? 5 : 4;
+                  const seances = nbJ===3 ? [0,2,4]
+                                : nbJ===5 ? [0,1,2,4,5]
+                                : [0,2,4,6];
+                  const hasSe = seances.includes(i);
+                  const emojis = ['⬆️','⬇️','🦵','🔄','⬆️','⬇️','🦵'];
+                  return `
+                    <div style="display:flex;flex-direction:column;
+                                align-items:center;gap:3px">
+                      <div style="width:34px;height:34px;border-radius:10px;
+                                  display:flex;align-items:center;justify-content:center;
+                                  font-size:.75rem;font-weight:700;
+                                  ${i===0
+                                    ?'background:var(--fd-indigo);color:white;box-shadow:0 0 10px rgba(75,75,249,.5)'
+                                    :hasSe
+                                      ?'background:rgba(75,75,249,.2);border:1px solid rgba(75,75,249,.3);color:var(--fd-lavender)'
+                                      :'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.3)'}">
+                        ${i===0 ? '▶' : hasSe ? emojis[i] : '😴'}
+                      </div>
+                      <div style="font-size:.46rem;color:rgba(255,255,255,.3);
+                                  text-transform:uppercase">${day}</div>
+                    </div>`;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- Boutons -->
+            <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+              <button onclick="window._OB.etape=1;_afficherOnboarding()"
+                      style="padding:12px;background:rgba(255,255,255,.06);
+                             border:1px solid rgba(255,255,255,.1);border-radius:12px;
+                             font-size:.75rem;font-weight:700;
+                             color:rgba(255,255,255,.5);cursor:pointer">
+                ✏️ Modifier
+              </button>
+              <button onclick="PM.obTerminer()"
+                      style="padding:12px;background:var(--fd-mint);border:none;
+                             border-radius:12px;font-size:.85rem;font-weight:800;
+                             color:#09092d;cursor:pointer;
+                             box-shadow:0 4px 16px rgba(139,240,187,.4)">
+                ✅ J'adopte ce programme !
+              </button>
+            </div>
+          </div>`
+      }
+    };
+
+    return steps[n] || steps[1];
+  }
+
+  // ── Render l'écran ──
+  const e    = window._OB.etape;
+  const tot  = window._OB.total;
+  const step = genEtape(e);
+
+  screen.style.display    = 'flex';
+  screen.style.flexDirection = 'column';
+  screen.style.pointerEvents = 'all';
+
+  screen.innerHTML = `
+    <div class="ob-wrap">
+
+      <!-- Header -->
+      <div class="ob-header">
+        <div class="ob-steps">
+          ${Array.from({length:tot},(_,i)=>`
+            <div class="ob-step-dot ${
+              i+1 === e ? 'active' : i+1 < e ? 'done' : 'todo'
+            }"></div>`).join('')}
+        </div>
+        ${e > 1 ? `
+          <button onclick="window._OB.etape--;_afficherOnboarding()"
+                  style="background:none;border:none;font-size:.8rem;
+                         color:rgba(255,255,255,.4);cursor:pointer;padding:4px">
+            ← Retour
+          </button>` : '<div></div>'}
+      </div>
+
+      <!-- Étape -->
+      <div class="ob-etape">Étape ${e} / ${tot}</div>
+      <div class="ob-titre">${step.titre}</div>
+      <div class="ob-sous">${step.sous}</div>
+
+      <!-- Contenu -->
+      <div class="ob-content">
+        ${step.html}
+      </div>
+
+      <!-- Footer -->
+      <div class="ob-footer">
+        ${e < tot ? `
+          <button class="ob-btn-next"
+                  onclick="PM.obSuivant()">
+            ${e === tot - 1 ? 'Voir mon programme →' : 'Suivant →'}
+          </button>` : ''}
+        ${e > 1 ? `
+          <button class="ob-btn-back"
+                  onclick="window._OB.etape--;_afficherOnboarding()">
+            ← Retour
+          </button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS PM — Live + Onboarding
+// ═══════════════════════════════════════════════════════════
+
+// ── Input delta ──
+PM.inputDelta = function(id, delta) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const val = parseFloat(el.value) || 0;
+  el.value  = Math.max(0, Math.round((val + delta) * 4) / 4);
+  el.dispatchEvent(new Event('input'));
+};
+
+// ── RPE select ──
+PM.setRPE = function(val, el) {
+  document.querySelectorAll('#pm-rpe-row .pm-rpe-btn')
+    .forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  window._PM_RPE = val;
+};
+
+// ── Valider série ──
+PM.validerSerie = function(seanceId, exoIdx, serieIdx) {
+  const poids = parseFloat(document.getElementById('pm-poids')?.value) || 0;
+  const reps  = parseInt(document.getElementById('pm-reps')?.value)   || 0;
+  const rpe   = window._PM_RPE || null;
+
+  if (!poids || !reps) {
+    PM.toast('Entre le poids et les reps !', 'error');
+    return;
+  }
+
+  // Appeler la vraie fonction si elle existe
+  if (typeof validerSerie === 'function') {
+    try { validerSerie(seanceId, exoIdx, serieIdx, poids, reps, rpe); return; }
+    catch(e) { console.warn('[PM] validerSerie error:', e); }
+  }
+  if (typeof Tracker?.enregistrerSerie === 'function') {
+    try {
+      Tracker.enregistrerSerie({ seanceId, exoIdx, serieIdx, poids, reps, rpe });
+    } catch(e) { console.warn('[PM] enregistrerSerie error:', e); }
+  }
+
+  PM.toast(`✅ Série validée !\n${poids}kg × ${reps} reps`, 'success');
+
+  // Vérifier PR
+  const pr = PM.get(() => Tracker.getPR(null), null);
+  if (pr && poids >= pr.poids && reps >= pr.reps) {
+    setTimeout(() => PM.toast('🏆 NOUVEAU RECORD !\nFélicitations !', 'pr', 3500), 500);
+  }
+
+  // Démarrer repos
+  PM.demarrerRepos(90);
+
+  // Re-render
+  setTimeout(() => {
+    const page = document.querySelector('.page.active');
+    if (page) _rendreLive(page, { seanceId });
+  }, 300);
+};
+
+// ── Timer repos ──
+PM._reposTimer  = null;
+PM._reposRestant = 0;
+
+PM.demarrerRepos = function(sec) {
+  const overlay = document.getElementById('pm-repos-overlay');
+  if (!overlay) return;
+
+  clearInterval(PM._reposTimer);
+  PM._reposRestant = sec;
+  overlay.style.display = 'block';
+
+  const ring  = document.getElementById('pm-repos-ring');
+  const count = document.getElementById('pm-repos-count');
+  const total = 377;
+
+  PM._reposTimer = setInterval(() => {
+    PM._reposRestant--;
+    if (count) count.textContent = PM._reposRestant;
+    if (ring) {
+      const offset = total - (PM._reposRestant / sec) * total;
+      ring.style.strokeDashoffset = offset;
+    }
+    if (PM._reposRestant <= 0) {
+      clearInterval(PM._reposTimer);
+      overlay.style.display = 'none';
+      PM.toast('⏱ Repos terminé — C\'est parti !', 'info');
+      try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch(e){}
+    }
+  }, 1000);
+};
+
+PM.reposPlus15 = function() { PM._reposRestant += 15; };
+
+PM.reposPasser = function() {
+  clearInterval(PM._reposTimer);
+  const overlay = document.getElementById('pm-repos-overlay');
+  if (overlay) overlay.style.display = 'none';
+};
+
+// ── Terminer séance ──
+PM.terminerSeance = function(seanceId) {
+  if (!confirm('Terminer la séance ?')) return;
+  try {
+    if (typeof Tracker?.terminerSeance === 'function') {
+      Tracker.terminerSeance(seanceId);
+    }
+    if (typeof Gamification?.ajouterXP === 'function') {
+      Gamification.ajouterXP(100, 'Séance terminée');
+    }
+  } catch(e) {}
+  PM.toast('🎉 Séance terminée !\nBravo pour l\'effort !', 'success', 3500);
+  setTimeout(() => naviguer('home'), 800);
+};
+
+// ── Onboarding : suivant ──
+PM.obSuivant = function() {
+  const d = window._OB.data;
+  const e = window._OB.etape;
+
+  // Validations
+  if (e === 1 && !d.nom.trim()) {
+    PM.toast('Entre ton prénom pour continuer !', 'error'); return;
+  }
+  if (e === 2 && !d.genre) {
+    PM.toast('Sélectionne ton genre', 'error'); return;
+  }
+  if (e === 3 && !d.objectif) {
+    PM.toast('Choisis ton objectif', 'error'); return;
+  }
+  if (e === 4 && !d.niveau) {
+    PM.toast('Choisis ton niveau', 'error'); return;
+  }
+  if (e === 5 && !d.lieu) {
+    PM.toast('Choisis ton lieu d\'entraînement', 'error'); return;
+  }
+
+  window._OB.etape++;
+  _afficherOnboarding();
+};
+
+// ── Onboarding : terminer ──
+PM.obTerminer = function() {
+  const d = window._OB.data;
+
+  const profil = {
+    nom:            d.nom || 'Athlète',
+    poids:          d.poids,
+    taille:         d.taille,
+    age:            d.age,
+    genre:          d.genre || 'homme',
+    objectif:       d.objectif || 'forme',
+    niveau:         d.niveau || 'intermediaire',
+    lieu:           d.lieu || 'salle',
+    muscles_cibles: [...(d.muscles || new Set())],
+    avatar:         '💪',
+    dateCreation:   new Date().toISOString().split('T')[0]
+  };
+
+  // Sauvegarder
+  try {
+    if (typeof Utils?.storage?.set === 'function') {
+      Utils.storage.set('ft_profil', profil);
+      Utils.storage.set('ft_profil_onboarding', profil);
+    } else {
+      localStorage.setItem('ft_profil', JSON.stringify(profil));
+      localStorage.setItem('ft_profil_onboarding', JSON.stringify(profil));
+    }
+  } catch(e) { console.error('[OB] Save error:', e); }
+
+  // Générer programme IA
+  try {
+    if (typeof Programme?.genererProgramme === 'function') {
+      Programme.genererProgramme(profil);
+    } else if (typeof Coach?.genererProgramme === 'function') {
+      Coach.genererProgramme(profil);
+    }
+  } catch(e) { console.warn('[OB] Programme gen:', e); }
+
+  // Masquer onboarding
+  const screen = document.getElementById('onboarding-screen');
+  if (screen) {
+    screen.style.display      = 'none';
+    screen.style.pointerEvents = 'none';
+  }
+
+  // Afficher app
+  const app = document.getElementById('app-wrapper');
+  if (app) {
+    app.style.display      = 'flex';
+    app.style.pointerEvents = 'all';
+  }
+
+  PM.toast(`Bienvenue ${profil.nom} ! 🎉\nTon programme est prêt`, 'success', 3500);
+  setTimeout(() => {
+    try { naviguer('home'); } catch(e) {}
+  }, 300);
+};
+
+// ── Onboarding : toggle muscle ──
+PM._obMuscles = new Set();
+
+PM.obToggleMuscle = function(muscle, couleur, el) {
+  const d = window._OB?.data;
+  if (!d) return;
+
+  const ZONES = {
+    pectoraux:  ['ob-z-pec'],
+    deltoides:  ['ob-z-del-g','ob-z-del-d'],
+    biceps:     ['ob-z-bi-g','ob-z-bi-d'],
+    abdominaux: ['ob-z-abs'],
+    quadriceps: ['ob-z-quad-g','ob-z-quad-d']
+  };
+
+  if (d.muscles.has(muscle)) {
+    d.muscles.delete(muscle);
+    (ZONES[muscle]||[]).forEach(id => {
+      const z = document.getElementById(id);
+      if (z) { z.setAttribute('fill','rgba(0,0,0,0)'); z.setAttribute('stroke','rgba(0,0,0,0)'); }
+    });
+  } else {
+    d.muscles.add(muscle);
+    (ZONES[muscle]||[]).forEach(id => {
+      const z = document.getElementById(id);
+      if (z) { z.setAttribute('fill',couleur+'40'); z.setAttribute('stroke',couleur); }
+    });
+  }
+
+  // Update chips
+  const chips = document.getElementById('ob-muscles-chips');
+  if (chips) {
+    chips.innerHTML = d.muscles.size === 0
+      ? `<span style="font-size:.68rem;color:rgba(255,255,255,.3);font-style:italic">
+           Clique sur le corps pour cibler des muscles
+         </span>`
+      : [...d.muscles].map(m => PM.obChipHTML(m)).join('');
+  }
+};
+
+PM.obChipHTML = function(muscle) {
+  const COLORS = {
+    pectoraux:'#4b4bf9', deltoides:'#bfa1ff',
+    biceps:'#8bf0bb', abdominaux:'#f9ef77', quadriceps:'#22c55e',
+    fessiers:'#ff8d96', ischio:'#f9ef77', mollets:'#bfa1ff'
+  };
+  const LABELS = {
+    pectoraux:'Pectoraux', deltoides:'Deltoïdes',
+    biceps:'Biceps', abdominaux:'Abdominaux', quadriceps:'Quadriceps',
+    fessiers:'Fessiers', ischio:'Ischio', mollets:'Mollets'
+  };
+  const c = COLORS[muscle] || '#4b4bf9';
+  return `
+    <span onclick="PM.obToggleMuscle('${muscle}','${c}',null)"
+          style="display:inline-flex;align-items:center;gap:4px;
+                 padding:4px 10px;background:${c}22;
+                 border:1px solid ${c}55;border-radius:99px;
+                 font-size:.65rem;font-weight:700;color:${c};
+                 cursor:pointer">
+      ${LABELS[muscle]||muscle}
+      <span style="opacity:.6">✕</span>
+    </span>`;
+};
+
+window._rendreHome        = _rendreHome;
+window._rendreStats       = _rendreStats;
+window._rendreTraining    = _rendreTraining;
+window._rendreProfil      = _rendreProfil;
+window._rendreLive        = _rendreLive;
+window._afficherOnboarding = _afficherOnboarding;
+window.PM                  = PM;
+
+console.log('✅ UI Premium v2 — Live + Onboarding chargés');
