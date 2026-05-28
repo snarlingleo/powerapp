@@ -13,14 +13,26 @@ window._timerInterval = null;
 // ════════════════════════════════════════════════════════════
 // NAVIGATION
 // ════════════════════════════════════════════════════════════
+// ✅ REMPLACE le bloc naviguer complet par celui-ci :
 function naviguer(page, options = {}) {
   try {
-    document.querySelectorAll('.page').forEach(p => {
-      p.classList.remove('active');
-      p.style.display = 'none';
-    });
+    // ✅ Page précédente — animation sortie
+    const pagePrecedente = document.querySelector('.page.active');
+    if (pagePrecedente) {
+      pagePrecedente.style.animation = 'pageOut .2s ease forwards';
+      setTimeout(() => {
+        pagePrecedente.classList.remove('active');
+        pagePrecedente.style.display  = 'none';
+        pagePrecedente.style.animation = '';
+      }, 180);
+    } else {
+      document.querySelectorAll('.page').forEach(p => {
+        p.classList.remove('active');
+        p.style.display = 'none';
+      });
+    }
 
-    // ✅ NOUVEAU — Nav Glassmorphism Neon
+    // ✅ Nav Glassmorphism Neon
     window._pageActive = page;
     _rendreNavBar();
 
@@ -32,8 +44,16 @@ function naviguer(page, options = {}) {
       return;
     }
 
-    pageEl.classList.add('active');
-    pageEl.style.display = 'block';
+    // ✅ Nouvelle page — animation entrée (légèrement différée)
+    setTimeout(() => {
+      pageEl.style.display   = 'block';
+      pageEl.style.animation = 'pageIn .25s ease forwards';
+      pageEl.classList.add('active');
+
+      setTimeout(() => {
+        pageEl.style.animation = '';
+      }, 280);
+    }, 60);
 
     _updateHeader(page);
 
@@ -46,9 +66,31 @@ function naviguer(page, options = {}) {
         window._pageHistory.shift();
       }
     }
-   _rendreContenu(page, pageEl, options);
+    window._pageActive = page;
+
+    // ✅ Rendu contenu après animation
+    setTimeout(() => {
+      _rendreContenu(page, pageEl, options);
+    }, 80);
 
     UI.fermerMenu();
+
+    // ✅ Injecter CSS animations pages
+    if (!document.getElementById('css-page-transitions')) {
+      const s = document.createElement('style');
+      s.id = 'css-page-transitions';
+      s.textContent = `
+        @keyframes pageIn {
+          from { opacity:0; transform:translateY(12px) scale(.98); }
+          to   { opacity:1; transform:translateY(0)    scale(1);   }
+        }
+        @keyframes pageOut {
+          from { opacity:1; transform:translateY(0)     scale(1);   }
+          to   { opacity:0; transform:translateY(-8px)  scale(.99); }
+        }
+      `;
+      document.head.appendChild(s);
+    }
 
   } catch(e) {
     console.error('[App] Erreur navigation:', e);
@@ -287,42 +329,103 @@ function _rendreNavBar() {
 }
 
 // ════════════════════════════════════════════════════════════
-// HEADER
+// HEADER — Neon Premium avec couleur par page
 // ════════════════════════════════════════════════════════════
 function _updateHeader(page) {
   const configs = {
-    home:         { emoji:'⚡', titre:'PowerApp'           },
-    training:     { emoji:'📅', titre:'Programme'          },
-    live:         { emoji:'💪', titre:'Séance live'        },
-    stats:        { emoji:'📊', titre:'Statistiques'       },
-    profil:       { emoji:'👤', titre:'Profil'             },
-    coach:        { emoji:'🤖', titre:'Coach IA'           },
-    defis:        { emoji:'🏆', titre:'Défis'              },
-    predict:      { emoji:'📈', titre:'Prédictions'        },
-    share:        { emoji:'📤', titre:'Partage'            },
-    gamification: { emoji:'⭐', titre:'Niveaux & XP'       },
-    history:      { emoji:'📅', titre:'Historique'         },
-    photos:       { emoji:'📸', titre:'Photos'             },
-    social:       { emoji:'📱', titre:'Réseaux'            },
-    supersets:    { emoji:'⚡', titre:'Supersets'          },
-    offline:      { emoji:'📵', titre:'Hors-ligne'         },
-    settings:     { emoji:'⚙️', titre:'Paramètres'         },
-    nutrition:    { emoji:'🥗', titre:'Nutrition'          },
-    mon_profil:   { emoji:'👤', titre:'Mon profil'         },
-    journal:      { emoji:'📔', titre:'Journal'            },
-    objectifs:    { emoji:'🎯', titre:'Objectifs'          },
-    circuit:      { emoji:'🔄', titre:'Circuit Training'   },
-    circuit:      { emoji:'⚡', titre:'HIIT & Cardio'      }, 
-    adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif'},
-    galerie:      { emoji:'💪', titre:'Galerie exercices'  },
-    blessures:    { emoji:'🩹', titre:'Blessures'          }
+    home:         { emoji:'⚡', titre:'PowerApp',          color:'#4b4bf9' },
+    training:     { emoji:'📅', titre:'Programme',         color:'#ff4d6d' },
+    live:         { emoji:'💪', titre:'Séance live',       color:'#8bf0bb' },
+    stats:        { emoji:'📊', titre:'Statistiques',      color:'#f9ef77' },
+    profil:       { emoji:'👤', titre:'Profil',            color:'#bfa1ff' },
+    coach:        { emoji:'🤖', titre:'Coach IA',          color:'#bfa1ff' },
+    defis:        { emoji:'🏆', titre:'Défis',             color:'#f9ef77' },
+    predict:      { emoji:'📈', titre:'Prédictions',       color:'#8bf0bb' },
+    share:        { emoji:'📤', titre:'Partage',           color:'#4b4bf9' },
+    gamification: { emoji:'⭐', titre:'Niveaux & XP',      color:'#f9ef77' },
+    history:      { emoji:'📅', titre:'Historique',        color:'#4b4bf9' },
+    photos:       { emoji:'📸', titre:'Photos',            color:'#ff8d96' },
+    social:       { emoji:'📱', titre:'Réseaux',           color:'#bfa1ff' },
+    supersets:    { emoji:'⚡', titre:'Supersets',         color:'#8bf0bb' },
+    offline:      { emoji:'📵', titre:'Hors-ligne',        color:'#ff8d96' },
+    settings:     { emoji:'⚙️', titre:'Paramètres',        color:'#bfa1ff' },
+    nutrition:    { emoji:'🥗', titre:'Nutrition',         color:'#8bf0bb' },
+    mon_profil:   { emoji:'👤', titre:'Mon profil',        color:'#bfa1ff' },
+    journal:      { emoji:'📔', titre:'Journal',           color:'#f9ef77' },
+    objectifs:    { emoji:'🎯', titre:'Objectifs',         color:'#ff4d6d' },
+    adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif',color:'#bfa1ff'},
+    galerie:      { emoji:'💪', titre:'Galerie exercices', color:'#8bf0bb' },
+    blessures:    { emoji:'🩹', titre:'Blessures',         color:'#ff8d96' },
+    circuit:      { emoji:'⚡', titre:'HIIT & Cardio',     color:'#f9ef77' }
   };
 
   const cfg = configs[page] || configs.home;
+
+  // ✅ Mettre à jour emoji + titre
   const emojiEl = document.getElementById('header-emoji');
   const titleEl = document.getElementById('header-title');
-  if (emojiEl) emojiEl.textContent = cfg.emoji;
-  if (titleEl) titleEl.textContent = cfg.titre;
+
+  if (emojiEl) {
+    emojiEl.textContent = cfg.emoji;
+    emojiEl.style.cssText = `
+      font-size:1.3rem;
+      filter:drop-shadow(0 0 8px ${cfg.color});
+      transition:all .3s;
+      animation:headerEmojiPop .4s cubic-bezier(.34,1.56,.64,1);
+    `;
+  }
+
+  if (titleEl) {
+    titleEl.textContent = cfg.titre;
+    titleEl.style.cssText = `
+      font-size:1rem;
+      font-weight:800;
+      letter-spacing:-.02em;
+      background:linear-gradient(135deg, #ffffff 0%, ${cfg.color} 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      transition:all .3s;
+    `;
+  }
+
+  // ✅ Mettre à jour la couleur du header
+  const header = document.querySelector('.app-header');
+  if (header) {
+    header.style.cssText = `
+      position:fixed;
+      top:0;left:50%;
+      transform:translateX(-50%);
+      width:100%;max-width:480px;
+      background:rgba(9,9,45,0.95);
+      backdrop-filter:blur(24px);
+      -webkit-backdrop-filter:blur(24px);
+      border-bottom:1px solid ${cfg.color}33;
+      box-shadow:0 1px 20px ${cfg.color}22;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 16px;
+      height:var(--header-height, 56px);
+      z-index:200;
+      transition:border-color .4s, box-shadow .4s;
+    `;
+  }
+
+  // ✅ Injecter animation pop emoji
+  if (!document.getElementById('css-header-anim')) {
+    const s = document.createElement('style');
+    s.id = 'css-header-anim';
+    s.textContent = `
+      @keyframes headerEmojiPop {
+        0%   { transform:scale(.6) rotate(-10deg); opacity:.5; }
+        60%  { transform:scale(1.2) rotate(5deg);  opacity:1;  }
+        100% { transform:scale(1)   rotate(0deg);  opacity:1;  }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
   _updateHeaderXP();
 }
 
@@ -9699,129 +9802,273 @@ const MenuGlobal = {
   toggle() { this._ouvert ? this.fermer() : this.ouvrir(); },
 
   ouvrir() {
-    this._ouvert = true;
-    const old = document.getElementById('menu-global-panel');
-    if (old) old.remove();
+  this._ouvert = true;
+  const old = document.getElementById('menu-global-panel');
+  if (old) old.remove();
 
-    const btn = document.getElementById('btn-menu-global');
-    if (btn) btn.textContent = '✕';
+  const btn = document.getElementById('btn-menu-global');
+  if (btn) {
+    btn.textContent = '✕';
+    btn.style.background = 'rgba(75,75,249,0.2)';
+    btn.style.borderColor = 'rgba(75,75,249,0.4)';
+    btn.style.color = 'white';
+  }
 
-    const panel = document.createElement('div');
-    panel.id    = 'menu-global-panel';
-    panel.style.cssText = `
-      position:fixed;top:var(--header-height);left:50%;transform:translateX(-50%);
-      width:100%;max-width:480px;
-      max-height:calc(100vh - var(--header-height) - var(--nav-height));
-      overflow-y:auto;z-index:300;background:var(--bg-app);
-      border-bottom:1px solid var(--border-color);
-      animation:slideDown .25s ease;padding:12px;scrollbar-width:none;`;
+  const panel = document.createElement('div');
+  panel.id    = 'menu-global-panel';
+  panel.style.cssText = `
+    position:fixed;
+    top:var(--header-height, 56px);
+    left:50%;transform:translateX(-50%);
+    width:100%;max-width:480px;
+    max-height:calc(100vh - var(--header-height) - var(--nav-height));
+    overflow-y:auto;
+    z-index:300;
+    background:rgba(9,9,45,0.97);
+    backdrop-filter:blur(32px);
+    -webkit-backdrop-filter:blur(32px);
+    border-bottom:1px solid rgba(75,75,249,0.2);
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    animation:menuSlideDown .3s cubic-bezier(.34,1.2,.64,1);
+    padding:16px 12px;
+    scrollbar-width:none;
+  `;
 
-    let profil   = { nom:'Athlète', avatar:'💪' };
-    let xp       = { total:0, niveau:{ emoji:'💪', numero:1, nom:'Débutant' } };
-    let streak   = { count:0 };
-    let total    = 0;
-    let trophees = 0;
+  // ✅ Injecter animation menu
+  if (!document.getElementById('css-menu-anim')) {
+    const s = document.createElement('style');
+    s.id = 'css-menu-anim';
+    s.textContent = `
+      @keyframes menuSlideDown {
+        from { opacity:0; transform:translateX(-50%) translateY(-20px); }
+        to   { opacity:1; transform:translateX(-50%) translateY(0);     }
+      }
+      @keyframes menuSlideUp {
+        from { opacity:1; transform:translateX(-50%) translateY(0);     }
+        to   { opacity:0; transform:translateX(-50%) translateY(-20px); }
+      }
+      #menu-global-panel::-webkit-scrollbar { display:none; }
+    `;
+    document.head.appendChild(s);
+  }
 
-    try { profil   = Tracker.getProfil();    } catch(e) {}
-    try { xp       = Gamification.getXP();   } catch(e) {}
-    try { streak   = Tracker.getStreak();    } catch(e) {}
-    try { total    = Tracker.getTotalSeances(); } catch(e) {}
-    try { trophees = Gamification.getTrophees().filter(t => t.debloquee).length; } catch(e) {}
+  let profil   = { nom:'Athlète', avatar:'💪' };
+  let xp       = { total:0, niveau:{ emoji:'💪', numero:1, nom:'Débutant' } };
+  let streak   = { count:0 };
+  let total    = 0;
+  let trophees = 0;
 
-    const items = [
-      { page:'mon_profil',   emoji:'✏️', label:'Modifier profil'      },
-      { page:'journal',      emoji:'📔', label:'Journal'              },
-      { page:'objectifs',    emoji:'🎯', label:'Objectifs'            },
-      { page:'blessures',    emoji:'🩹', label:'Blessures'            },
-      { page:'coach',        emoji:'🤖', label:'Coach IA'             },
-      { page:'defis',        emoji:'🏆', label:'Défis'                },
-      { page:'predict',      emoji:'📈', label:'Prédictions'          },
-      { page:'gamification', emoji:'⭐', label:'XP & Niveaux'         },
-      { page:'history',      emoji:'📅', label:'Historique'           },
-      { page:'photos',       emoji:'📸', label:'Photos'               },
-      { page:'social',       emoji:'📱', label:'Réseaux sociaux'      },
-      { page:'supersets',    emoji:'⚡', label:'Supersets'            },
-      { page:'circuit',      emoji:'🔄', label:'Circuit Training'     },
-      { page:'adaptatif',    emoji:'🧠', label:'Programme Adaptatif'  },
-      { page:'themes',       emoji:'🎨', label:'Thèmes'               },
-      { page:'sounds',       emoji:'🔊', label:'Sons & Animations'    },
-      { page:'export',       emoji:'📤', label:'Exporter'             }, 
-      { page:'galerie',      emoji:'💪', label:'Galerie exercices'    },
-      { page:'offline',      emoji:'📵', label:'Hors-ligne'           },
-      { page:'settings',     emoji:'⚙️', label:'Paramètres'          }
-    ];
+  try { profil   = Tracker.getProfil();    } catch(e) {}
+  try { xp       = Gamification.getXP();   } catch(e) {}
+  try { streak   = Tracker.getStreak();    } catch(e) {}
+  try { total    = Tracker.getTotalSeances(); } catch(e) {}
+  try { trophees = Gamification.getTrophees()
+          .filter(t => t.debloquee).length; } catch(e) {}
 
-    panel.innerHTML = `
-      <div style="background:linear-gradient(135deg,rgba(75,75,249,0.2),rgba(75,75,249,0.05));
-                  border:1px solid rgba(75,75,249,0.3);border-radius:var(--radius-lg);
-                  padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:14px;
-                  cursor:pointer"
-           onclick="MenuGlobal.naviguerEt('mon_profil')">
-        <div style="width:50px;height:50px;background:rgba(75,75,249,0.2);
-                    border:2px solid rgba(75,75,249,0.4);border-radius:50%;
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:1.6rem;flex-shrink:0">${profil.avatar || '💪'}</div>
-        <div style="flex:1">
-          <div style="font-size:1rem;font-weight:800;color:white">${profil.nom}</div>
-          <div style="font-size:.72rem;color:var(--fd-lavender);margin-top:2px">
-            ${xp.niveau.emoji} ${xp.niveau.nom} · ${xp.total} XP
-          </div>
+  // ✅ Sections du menu avec catégories
+  const sections = [
+    {
+      titre: '👤 Profil',
+      items: [
+        { page:'mon_profil',  emoji:'✏️', label:'Modifier profil',   color:'#bfa1ff' },
+        { page:'objectifs',   emoji:'🎯', label:'Objectifs',         color:'#ff4d6d' },
+        { page:'journal',     emoji:'📔', label:'Journal',           color:'#f9ef77' },
+        { page:'blessures',   emoji:'🩹', label:'Blessures',         color:'#ff8d96' },
+        { page:'photos',      emoji:'📸', label:'Photos',            color:'#ff8d96' },
+        { page:'gamification',emoji:'⭐', label:'XP & Niveaux',      color:'#f9ef77' }
+      ]
+    },
+    {
+      titre: '🏋️ Entraînement',
+      items: [
+        { page:'coach',       emoji:'🤖', label:'Coach IA',          color:'#bfa1ff' },
+        { page:'defis',       emoji:'🏆', label:'Défis',             color:'#f9ef77' },
+        { page:'predict',     emoji:'📈', label:'Prédictions',       color:'#8bf0bb' },
+        { page:'adaptatif',   emoji:'🧠', label:'Programme Adaptatif',color:'#bfa1ff'},
+        { page:'supersets',   emoji:'⚡', label:'Supersets',         color:'#8bf0bb' },
+        { page:'circuit',     emoji:'🔥', label:'HIIT & Cardio',     color:'#f9ef77' },
+        { page:'galerie',     emoji:'💪', label:'Galerie exercices', color:'#4b4bf9' }
+      ]
+    },
+    {
+      titre: '📊 Données',
+      items: [
+        { page:'history',     emoji:'📅', label:'Historique',        color:'#4b4bf9' },
+        { page:'export',      emoji:'📤', label:'Exporter',          color:'#8bf0bb' },
+        { page:'social',      emoji:'📱', label:'Réseaux sociaux',   color:'#bfa1ff' },
+        { page:'offline',     emoji:'📵', label:'Hors-ligne',        color:'#ff8d96' }
+      ]
+    },
+    {
+      titre: '⚙️ App',
+      items: [
+        { page:'themes',      emoji:'🎨', label:'Thèmes',            color:'#bfa1ff' },
+        { page:'sounds',      emoji:'🔊', label:'Sons',              color:'#8bf0bb' },
+        { page:'settings',    emoji:'⚙️', label:'Paramètres',        color:'#bfa1ff' }
+      ]
+    }
+  ];
+
+  panel.innerHTML = `
+
+    <!-- ── PROFIL CARD ── -->
+    <div onclick="MenuGlobal.naviguerEt('mon_profil')"
+         style="background:linear-gradient(135deg,
+                rgba(75,75,249,0.2) 0%,
+                rgba(75,75,249,0.05) 100%);
+                border:1px solid rgba(75,75,249,0.3);
+                border-radius:20px;
+                padding:16px;margin-bottom:20px;
+                display:flex;align-items:center;gap:14px;
+                cursor:pointer;
+                transition:all .2s"
+         onmouseenter="this.style.borderColor='rgba(75,75,249,0.5)';
+                       this.style.transform='scale(1.01)'"
+         onmouseleave="this.style.borderColor='rgba(75,75,249,0.3)';
+                       this.style.transform='scale(1)'">
+
+      <!-- Avatar -->
+      <div style="width:52px;height:52px;
+                  background:rgba(75,75,249,0.2);
+                  border:2px solid rgba(75,75,249,0.4);
+                  border-radius:50%;flex-shrink:0;
+                  display:flex;align-items:center;
+                  justify-content:center;font-size:1.8rem;
+                  box-shadow:0 0 16px rgba(75,75,249,0.3)">
+        ${profil.avatar || '💪'}
+      </div>
+
+      <!-- Infos -->
+      <div style="flex:1;min-width:0">
+        <div style="font-size:1rem;font-weight:800;color:white;
+                    overflow:hidden;text-overflow:ellipsis;
+                    white-space:nowrap">
+          ${profil.nom}
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
-          ${[[total,'Séances'],[streak.count,'Streak'],[trophees,'Trophées']].map(([v,l]) => `
-            <div>
-              <div style="font-size:.9rem;font-weight:800;color:var(--fd-indigo)">${v}</div>
-              <div style="font-size:.5rem;color:var(--text-muted);text-transform:uppercase">${l}</div>
-            </div>`).join('')}
+        <div style="font-size:.72rem;color:rgba(191,161,255,0.8);
+                    margin-top:2px">
+          ${xp.niveau.emoji} ${xp.niveau.nom} · ${xp.total} XP
         </div>
       </div>
 
-      <div style="display:flex;flex-direction:column;gap:4px">
-        ${items.map(item => `
-          <div onclick="MenuGlobal.naviguerEt('${item.page}')"
-               style="display:flex;align-items:center;gap:14px;padding:13px 16px;
-                      background:var(--bg-card);border:1px solid var(--border-color);
-                      border-radius:var(--radius-md);cursor:pointer;transition:all .15s"
-               onmouseenter="this.style.borderColor='rgba(75,75,249,0.3)';
-                             this.style.background='rgba(75,75,249,0.06)'"
-               onmouseleave="this.style.borderColor='var(--border-color)';
-                             this.style.background='var(--bg-card)'">
-            <span style="font-size:1.2rem;flex-shrink:0">${item.emoji}</span>
-            <span style="font-size:.9rem;font-weight:600;color:var(--text-primary);flex:1">
-              ${item.label}
-            </span>
-            <span style="color:var(--text-muted);font-size:.85rem">›</span>
+      <!-- Stats mini -->
+      <div style="display:flex;gap:12px;text-align:center;
+                  flex-shrink:0">
+        ${[
+          [total,        'Séances', '#4b4bf9'],
+          [streak.count, 'Streak',  '#f9ef77'],
+          [trophees,     '🏆',      '#ff8d96']
+        ].map(([v, l, c]) => `
+          <div>
+            <div style="font-size:.95rem;font-weight:800;color:${c}">
+              ${v}
+            </div>
+            <div style="font-size:.52rem;color:rgba(255,255,255,0.4);
+                        text-transform:uppercase;letter-spacing:.04em">
+              ${l}
+            </div>
           </div>`).join('')}
       </div>
+    </div>
 
-      <div style="margin-top:8px;padding:4px">
-        <button onclick="UI.confirmerReset()"
-                style="width:100%;padding:12px;background:rgba(255,141,150,0.08);
-                       border:1px solid rgba(255,141,150,0.2);border-radius:var(--radius-md);
-                       color:var(--fd-coral);font-size:.82rem;font-weight:600;cursor:pointer">
-          🗑️ Réinitialiser les données
-        </button>
-      </div>
-      <div style="height:12px"></div>
-    `;
+    <!-- ── SECTIONS ── -->
+    ${sections.map(sec => `
+      <div style="margin-bottom:20px">
 
-    document.body.appendChild(panel);
-    setTimeout(() => {
-      document.addEventListener('click', this._fermerSidehors.bind(this));
-    }, 100);
-  },
+        <!-- Titre section -->
+        <div style="font-size:.58rem;font-weight:800;
+                    text-transform:uppercase;letter-spacing:.12em;
+                    color:rgba(255,255,255,0.25);
+                    padding:0 4px;margin-bottom:8px">
+          ${sec.titre}
+        </div>
+
+        <!-- Grid items -->
+        <div style="display:grid;
+                    grid-template-columns:1fr 1fr;
+                    gap:8px">
+          ${sec.items.map(item => `
+            <div onclick="MenuGlobal.naviguerEt('${item.page}')"
+                 style="display:flex;align-items:center;gap:10px;
+                        padding:11px 12px;
+                        background:rgba(255,255,255,0.04);
+                        border:1px solid rgba(255,255,255,0.07);
+                        border-radius:14px;cursor:pointer;
+                        transition:all .18s"
+                 onmouseenter="
+                   this.style.background='${item.color}15';
+                   this.style.borderColor='${item.color}44';
+                   this.style.transform='scale(1.02)'"
+                 onmouseleave="
+                   this.style.background='rgba(255,255,255,0.04)';
+                   this.style.borderColor='rgba(255,255,255,0.07)';
+                   this.style.transform='scale(1)'">
+
+              <!-- Icône -->
+              <div style="width:32px;height:32px;
+                          border-radius:10px;flex-shrink:0;
+                          background:${item.color}18;
+                          border:1px solid ${item.color}33;
+                          display:flex;align-items:center;
+                          justify-content:center;font-size:1rem">
+                ${item.emoji}
+              </div>
+
+              <!-- Label -->
+              <span style="font-size:.78rem;font-weight:600;
+                           color:rgba(255,255,255,0.8);
+                           overflow:hidden;text-overflow:ellipsis;
+                           white-space:nowrap;flex:1">
+                ${item.label}
+              </span>
+            </div>`).join('')}
+        </div>
+      </div>`).join('')}
+
+    <!-- ── RESET ── -->
+    <div style="padding:4px;margin-top:4px">
+      <button onclick="UI.confirmerReset()"
+              style="width:100%;padding:12px;
+                     background:rgba(255,141,150,0.06);
+                     border:1px solid rgba(255,141,150,0.15);
+                     border-radius:14px;
+                     color:var(--fd-coral);
+                     font-size:.8rem;font-weight:600;
+                     cursor:pointer;transition:all .2s"
+              onmouseenter="this.style.background='rgba(255,141,150,0.12)'"
+              onmouseleave="this.style.background='rgba(255,141,150,0.06)'">
+        🗑️ Réinitialiser les données
+      </button>
+    </div>
+
+    <div style="height:16px"></div>
+  `;
+
+  document.body.appendChild(panel);
+  setTimeout(() => {
+    document.addEventListener('click', this._fermerSidehors.bind(this));
+  }, 100);
+},
 
   fermer() {
-    this._ouvert = false;
-    const panel  = document.getElementById('menu-global-panel');
-    if (panel) {
-      panel.style.animation = 'slideUp .2s ease forwards';
-      setTimeout(() => panel.remove(), 200);
-    }
-    const btn = document.getElementById('btn-menu-global');
-    if (btn) btn.textContent = '☰';
-    document.removeEventListener('click', this._fermerSidehors.bind(this));
-  },
+  this._ouvert = false;
+  const panel  = document.getElementById('menu-global-panel');
+  if (panel) {
+    panel.style.animation =
+      'menuSlideUp .25s cubic-bezier(.34,1,.64,1) forwards';
+    setTimeout(() => panel.remove(), 240);
+  }
+  const btn = document.getElementById('btn-menu-global');
+  if (btn) {
+    btn.textContent   = '☰';
+    btn.style.background  = 'var(--bg-input)';
+    btn.style.borderColor = 'var(--border-color)';
+    btn.style.color       = '';
+  }
+  document.removeEventListener(
+    'click', this._fermerSidehors.bind(this)
+  );
+},
 
   naviguerEt(page) {
     this.fermer();
