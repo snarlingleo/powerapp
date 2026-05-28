@@ -7421,7 +7421,10 @@ window.GalerieExercices = GalerieExercices;
 async function init() {
   try {
     console.log('🚀 PowerApp v4.0 — Init...');
-
+    const obScreen = document.getElementById('onboarding-screen');
+    if (obScreen) {
+      obScreen.style.pointerEvents = 'none';
+    } 
     try { i18n?.init?.(); } catch(e) {}
 
     // ✅ FIX v4.0 — Vérifier ft_profil ET ft_profil_onboarding
@@ -8943,11 +8946,22 @@ function _terminerOb() {
     // ✅ FIX v7.0 — Ouvrir IA avec protection Coach
     if (window._obOuvrirIA) {
       window._obOuvrirIA = false;
-      document.getElementById('onboarding-screen')
-        ?.classList.add('hidden');
-      document.getElementById('app-wrapper')
-        ?.style.setProperty('display', 'flex');
-      naviguer('home');
+       document.getElementById('onboarding-screen')
+      ?.classList.add('hidden');
+    
+    // ✅ Ajoute aussi style.display
+    const obScreen = document.getElementById('onboarding-screen');
+    if (obScreen) {
+      obScreen.classList.add('hidden');
+      obScreen.style.display   = 'none';     // ← AJOUTE ÇA
+      obScreen.style.zIndex    = '-1';        // ← AJOUTE ÇA
+      obScreen.style.pointerEvents = 'none'; // ← AJOUTE ÇA
+    }
+
+    document.getElementById('app-wrapper')
+      ?.style.setProperty('display', 'flex');
+
+    naviguer('home');
 
       // Vérifier Coach avant d'ouvrir
       if (typeof Coach !== 'undefined' && Coach?.ProgrammeIA) {
