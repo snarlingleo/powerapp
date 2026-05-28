@@ -327,57 +327,119 @@ const Utils = {
     return liste[Math.floor(Math.random() * liste.length)];
   },
 
-  // ════════════════════════════════════════════════════════
-  // TOAST
-  // ════════════════════════════════════════════════════════
-  toast(message, type = 'info', duree = 3000) {
-    try {
-      const container = document.getElementById('toast-container');
-      if (!container) {
-        console.log(`[Toast] ${type}: ${message}`);
-        return;
-      }
+// ════════════════════════════════════════════════════════════
+// TOAST — Premium avec icônes et animations
+// ════════════════════════════════════════════════════════════
+toast(message, type = 'success', duree = 2500) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
 
-      const colors = {
-        success: { bg:'var(--fd-mint)',     text:'#09092d' },
-        error:   { bg:'var(--fd-coral)',    text:'#09092d' },
-        warning: { bg:'#ffa500',            text:'#09092d' },
-        info:    { bg:'var(--fd-indigo)',   text:'white'   },
-        pr:      { bg:'var(--fd-lemon)',    text:'#09092d' },
-        dark:    { bg:'var(--fd-midnight)', text:'white'   }
-      };
-
-      const c     = colors[type] || colors.info;
-      const toast = document.createElement('div');
-      toast.style.cssText = `
-        background:${c.bg};
-        color:${c.text};
-        padding:10px 18px;
-        border-radius:99px;
-        font-size:.82rem;
-        font-weight:700;
-        max-width:100%;
-        text-align:center;
-        pointer-events:auto;
-        box-shadow:0 4px 20px rgba(0,0,0,0.3);
-        animation:toastIn .3s ease;
-        cursor:pointer;
-        word-break:break-word`;
-
-      toast.textContent = message;
-      toast.onclick     = () => toast.remove();
-      container.appendChild(toast);
-
-      setTimeout(() => {
-        if (!toast.parentNode) return;
-        toast.style.animation = 'toastOut .3s ease forwards';
-        setTimeout(() => toast.remove(), 300);
-      }, duree);
-
-    } catch(e) {
-      console.log(`[Toast] ${message}`);
+  // ── Config par type ──
+  const configs = {
+    success: {
+      emoji: '✅',
+      css: `background:rgba(139,240,187,0.15);
+            border:1px solid rgba(139,240,187,0.35);
+            color:var(--fd-mint);`
+    },
+    error: {
+      emoji: '❌',
+      css: `background:rgba(255,141,150,0.15);
+            border:1px solid rgba(255,141,150,0.35);
+            color:var(--fd-coral);`
+    },
+    pr: {
+      emoji: '🏆',
+      css: `background:linear-gradient(135deg,
+              rgba(249,239,119,0.2),rgba(249,239,119,0.05));
+            border:1px solid rgba(249,239,119,0.4);
+            color:var(--fd-lemon);`
+    },
+    info: {
+      emoji: 'ℹ️',
+      css: `background:rgba(75,75,249,0.15);
+            border:1px solid rgba(75,75,249,0.3);
+            color:#818cf8;`
+    },
+    warning: {
+      emoji: '⚠️',
+      css: `background:rgba(249,239,119,0.12);
+            border:1px solid rgba(249,239,119,0.3);
+            color:var(--fd-lemon);`
     }
-  },
+  };
+
+  const cfg = configs[type] || configs.info;
+
+  // ── Créer le toast ──
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    ${cfg.css}
+    padding:12px 16px;
+    border-radius:14px;
+    display:flex;align-items:flex-start;gap:10px;
+    font-size:.82rem;font-weight:700;
+    animation:toastSlideIn .35s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    backdrop-filter:blur(12px);
+    pointer-events:all;
+    max-width:320px;
+    cursor:pointer;
+  `;
+
+  // ── Parser le message (titre | sous-titre) ──
+  const parts = message.split('\n');
+  const titre = parts[0] || '';
+  const sous  = parts[1] || '';
+
+  toast.innerHTML = `
+    <span style="font-size:1.2rem;flex-shrink:0;margin-top:-1px">
+      ${cfg.emoji}
+    </span>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:800;line-height:1.2;
+                  overflow:hidden;text-overflow:ellipsis;
+                  white-space:nowrap">
+        ${titre}
+      </div>
+      ${sous ? `
+        <div style="font-size:.72rem;opacity:.8;margin-top:2px">
+          ${sous}
+        </div>` : ''}
+    </div>
+    <button onclick="this.parentElement.remove()"
+            style="background:none;border:none;
+                   color:currentColor;font-size:.9rem;
+                   cursor:pointer;opacity:.5;
+                   flex-shrink:0;padding:0;margin-top:-1px"
+            ontouchstart="">✕</button>
+  `;
+
+  // ── Clic pour fermer ──
+  toast.addEventListener('click', (e) => {
+    if (e.target.tagName !== 'BUTTON') {
+      toast.style.animation = 'toastSlideOut .3s ease forwards';
+      setTimeout(() => toast.remove(), 300);
+    }
+  });
+
+  container.appendChild(toast);
+
+  // ── Limite 4 toasts simultanés ──
+  const toasts = container.children;
+  if (toasts.length > 4) {
+    const oldest = toasts[0];
+    oldest.style.animation = 'toastSlideOut .3s ease forwards';
+    setTimeout(() => oldest.remove(), 300);
+  }
+
+  // ── Auto-suppression ──
+  setTimeout(() => {
+    if (!toast.parentElement) return;
+    toast.style.animation = 'toastSlideOut .3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, duree);
+},
 
   // ════════════════════════════════════════════════════════
   // CONFIRM MODAL
