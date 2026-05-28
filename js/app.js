@@ -62,16 +62,12 @@ function retourArriere() {
 }
 
 // ════════════════════════════════════════════════════════════
-// NAV BAR — Glassmorphism Neon (SVG inline, sans dépendance)
+// NAV BAR — Glassmorphism Neon (adapté à .app-nav)
 // ════════════════════════════════════════════════════════════
 function _rendreNavBar() {
-  const nav = document.querySelector('.nav-bar')
-    || document.querySelector('nav')
-    || document.getElementById('nav-bar')
-    || document.getElementById('bottom-nav');
+  const nav = document.querySelector('.app-nav');
   if (!nav) return;
 
-  // ── Couleurs neon par page ──
   const NEON = {
     home:      { c:'#4b4bf9', bg:'rgba(75,75,249,0.18)',
                  b:'rgba(75,75,249,0.55)',  g:'rgba(75,75,249,0.4)'    },
@@ -85,34 +81,23 @@ function _rendreNavBar() {
                  b:'rgba(191,161,255,0.55)',g:'rgba(191,161,255,0.4)'  }
   };
 
-  // ── Icônes SVG inline ──
   const ICONS = {
     home: `<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
            <polyline points="9 22 9 12 15 12 15 22"/>`,
-
     training: `<rect x="3" y="4" width="18" height="18" rx="2"/>
                <line x1="16" y1="2" x2="16" y2="6"/>
                <line x1="8" y1="2" x2="8" y2="6"/>
                <line x1="3" y1="10" x2="21" y2="10"/>`,
-
     live: `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`,
-
     stats: `<line x1="18" y1="20" x2="18" y2="10"/>
             <line x1="12" y1="20" x2="12" y2="4"/>
             <line x1="6"  y1="20" x2="6"  y2="14"/>`,
-
     nutrition: `<path d="M7 21h10"/>
                 <path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z"/>
-                <path d="M11.38 12a2.4 2.4 0 0 1-.4-4.77
-                         2.4 2.4 0 0 1 3.2-2.77
-                         2.4 2.4 0 0 1 3.47-.63
-                         2.4 2.4 0 0 1 3.37 3.37
-                         2.4 2.4 0 0 1-1.1 3.7
-                         2.51 2.51 0 0 1 .03.5"/>
+                <path d="M11.38 12a2.4 2.4 0 0 1-.4-4.77 2.4 2.4 0 0 1 3.2-2.77 2.4 2.4 0 0 1 3.47-.63 2.4 2.4 0 0 1 3.37 3.37 2.4 2.4 0 0 1-1.1 3.7 2.51 2.51 0 0 1 .03.5"/>
                 <path d="M13 12a4 4 0 0 1-4 4"/>`
   };
 
-  // ── Pages de la navbar ──
   const pages = [
     { id:'home',      label:'Home'  },
     { id:'training',  label:'Prog.' },
@@ -121,82 +106,135 @@ function _rendreNavBar() {
     { id:'nutrition', label:'Nutri.'}
   ];
 
-  // ── Style du conteneur ──
+  // ✅ Style du conteneur — garde .app-nav mais override le look
   nav.style.cssText = `
-    background:rgba(9,9,45,0.92) !important;
+    position:fixed;
+    bottom:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:100%;
+    max-width:480px;
+    background:rgba(9,9,45,0.95) !important;
     backdrop-filter:blur(24px) !important;
     -webkit-backdrop-filter:blur(24px) !important;
     border-top:1px solid rgba(255,255,255,0.08) !important;
     display:flex !important;
     justify-content:space-around !important;
     align-items:center !important;
-    padding:8px 8px 12px !important;
+    padding:8px 8px env(safe-area-inset-bottom, 8px) !important;
+    z-index:100;
+    height:var(--nav-height, 70px);
   `;
 
   nav.innerHTML = pages.map(p => {
     const actif = window._pageActive === p.id;
     const n     = NEON[p.id] || NEON.home;
 
+    // ✅ Bouton live spécial (plus grand)
+    const isLive = p.id === 'live';
+
     return `
-      <div onclick="naviguer('${p.id}')"
-           style="display:flex;flex-direction:column;
-                  align-items:center;gap:5px;
-                  cursor:pointer;position:relative;
-                  padding:4px 10px;
-                  transition:transform .2s ease"
-           onmouseenter="this.style.transform='translateY(-3px)'"
-           onmouseleave="this.style.transform='translateY(0)'">
+      <button class="nav-btn ${actif ? 'active' : ''}"
+              id="nav-${p.id}"
+              onclick="naviguer('${p.id}')"
+              style="
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                gap:4px;
+                background:none;
+                border:none;
+                cursor:pointer;
+                position:relative;
+                padding:4px ${isLive ? '12px' : '8px'};
+                transition:transform .2s;
+                flex:1;
+              "
+              onmouseenter="this.style.transform='translateY(-2px)'"
+              onmouseleave="this.style.transform='translateY(0)'">
 
         <!-- Icône glass -->
         <div style="
-          width:46px;height:46px;
-          border-radius:14px;
-          display:flex;align-items:center;justify-content:center;
-          position:relative;overflow:hidden;
-          background:${actif ? n.bg : 'rgba(255,255,255,0.05)'};
-          border:1px solid ${actif ? n.b : 'rgba(255,255,255,0.1)'};
-          backdrop-filter:blur(10px);
-          transform:${actif ? 'scale(1.08)' : 'scale(1)'};
+          width:${isLive ? '52px' : '44px'};
+          height:${isLive ? '52px' : '44px'};
+          border-radius:${isLive ? '16px' : '13px'};
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          position:relative;
+          overflow:hidden;
+          background:${actif ? n.bg : isLive ? 'rgba(139,240,187,0.08)' : 'rgba(255,255,255,0.05)'};
+          border:${actif
+            ? `1.5px solid ${n.b}`
+            : isLive
+              ? '1.5px solid rgba(139,240,187,0.25)'
+              : '1px solid rgba(255,255,255,0.08)'};
           transition:all .3s cubic-bezier(.34,1.56,.64,1);
+          transform:${actif ? 'scale(1.1)' : 'scale(1)'};
           box-shadow:${actif
-            ? `0 0 18px ${n.g}, 0 0 36px ${n.g}44,
-               inset 0 1px 0 rgba(255,255,255,.2)`
-            : 'none'};
+            ? `0 0 16px ${n.g}, 0 0 32px ${n.g}55, inset 0 1px 0 rgba(255,255,255,.18)`
+            : isLive
+              ? '0 0 10px rgba(139,240,187,0.15)'
+              : 'none'};
+          ${actif ? 'animation:neonPulse 2.5s ease-in-out infinite;' : ''}
         ">
 
-          <!-- Reflet haut -->
+          <!-- Shine -->
           <div style="
-            position:absolute;top:0;left:0;right:0;height:40%;
+            position:absolute;top:0;left:0;right:0;
+            height:45%;
             background:linear-gradient(180deg,
-              rgba(255,255,255,0.12) 0%,transparent 100%);
-            border-radius:14px 14px 0 0;
-            pointer-events:none;z-index:2">
-          </div>
+              rgba(255,255,255,0.14) 0%,
+              transparent 100%);
+            border-radius:inherit;
+            pointer-events:none;
+            z-index:2;
+          "></div>
 
           <!-- SVG Icon -->
-          <svg viewBox="0 0 24 24"
-               style="
-                 width:22px;height:22px;
-                 stroke:${actif ? n.c : 'rgba(255,255,255,0.5)'};
-                 stroke-width:${actif ? '2.2' : '1.8'};
-                 fill:none;
-                 stroke-linecap:round;
-                 stroke-linejoin:round;
-                 position:relative;z-index:1;
-                 transition:all .3s;
-                 filter:${actif
-                   ? `drop-shadow(0 0 5px ${n.c})`
-                   : 'none'};
-               ">
+          <svg viewBox="0 0 24 24" style="
+            width:${isLive ? '24px' : '20px'};
+            height:${isLive ? '24px' : '20px'};
+            stroke:${actif
+              ? n.c
+              : isLive
+                ? 'rgba(139,240,187,0.8)'
+                : 'rgba(255,255,255,0.45)'};
+            stroke-width:${actif ? '2.2' : '1.8'};
+            fill:none;
+            stroke-linecap:round;
+            stroke-linejoin:round;
+            position:relative;
+            z-index:1;
+            transition:all .3s;
+            filter:${actif ? `drop-shadow(0 0 5px ${n.c})` : 'none'};
+          ">
             ${ICONS[p.id] || ICONS.home}
           </svg>
+
+          <!-- Badge Live animé -->
+          ${isLive && !actif ? `
+            <div style="
+              position:absolute;top:4px;right:4px;
+              width:7px;height:7px;
+              border-radius:50%;
+              background:var(--fd-mint);
+              box-shadow:0 0 6px var(--fd-mint);
+              animation:pulseLive 1.5s ease-in-out infinite;
+            "></div>` : ''}
         </div>
 
         <!-- Label -->
         <span style="
-          font-size:.52rem;font-weight:700;
-          text-transform:uppercase;letter-spacing:.06em;
-          color:${actif ? 'white' : 'rgba(255,255,255,0.35)'};
+          font-size:${isLive ? '.56rem' : '.52rem'};
+          font-weight:${actif ? '800' : '600'};
+          text-transform:uppercase;
+          letter-spacing:.05em;
+          color:${actif
+            ? 'white'
+            : isLive
+              ? 'rgba(139,240,187,0.6)'
+              : 'rgba(255,255,255,0.3)'};
           transition:color .3s;
           white-space:nowrap;
         ">
@@ -205,17 +243,47 @@ function _rendreNavBar() {
 
         <!-- Point actif -->
         <div style="
-          position:absolute;bottom:-2px;
-          left:50%;transform:translateX(-50%);
-          width:4px;height:4px;border-radius:50%;
+          position:absolute;
+          bottom:0px;
+          left:50%;
+          transform:translateX(-50%);
+          width:${actif ? '20px' : '4px'};
+          height:2px;
+          border-radius:99px;
           background:${n.c};
-          box-shadow:0 0 6px ${n.c};
+          box-shadow:0 0 8px ${n.c};
           opacity:${actif ? '1' : '0'};
-          transition:opacity .3s;
+          transition:all .35s cubic-bezier(.34,1.56,.64,1);
         "></div>
-      </div>
+
+      </button>
     `;
   }).join('');
+
+  // ✅ Injecter le CSS des animations (une seule fois)
+  if (!document.getElementById('css-neon-nav')) {
+    const style = document.createElement('style');
+    style.id = 'css-neon-nav';
+    style.textContent = `
+      @keyframes neonPulse {
+        0%,100% {
+          box-shadow:0 0 16px var(--ng,rgba(75,75,249,.4)),
+                     0 0 32px var(--ng,rgba(75,75,249,.2)),
+                     inset 0 1px 0 rgba(255,255,255,.18);
+        }
+        50% {
+          box-shadow:0 0 24px var(--ng,rgba(75,75,249,.6)),
+                     0 0 48px var(--ng,rgba(75,75,249,.3)),
+                     inset 0 1px 0 rgba(255,255,255,.25);
+        }
+      }
+      @keyframes pulseLive {
+        0%,100% { opacity:1; transform:scale(1); }
+        50%      { opacity:.5; transform:scale(1.3); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 }
 
 // ════════════════════════════════════════════════════════════
