@@ -27,9 +27,11 @@ function naviguer(page, options = {}) {
       }, 160);
     } else if (!pagePrecedente) {
       document.querySelectorAll('.page').forEach(p => {
-        p.classList.remove('active');
-        p.style.display = 'none';
-      });
+  if (p.id !== `page-${page}`) {
+    p.style.display = 'none';
+    p.classList.remove('active');
+  }
+});
     }
 
     // ── Nav Glassmorphism Neon ──
