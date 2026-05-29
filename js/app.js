@@ -103,17 +103,17 @@ function _rendreNavBar() {
   if (!nav) return;
 
   const NEON = {
-    home:      { c:'#4b4bf9', bg:'rgba(75,75,249,0.18)',
-                 b:'rgba(75,75,249,0.55)',  g:'rgba(75,75,249,0.4)'    },
-    training:  { c:'#ff4d6d', bg:'rgba(255,77,109,0.18)',
-                 b:'rgba(255,77,109,0.55)', g:'rgba(255,77,109,0.4)'   },
-    live:      { c:'#8bf0bb', bg:'rgba(139,240,187,0.15)',
-                 b:'rgba(139,240,187,0.5)', g:'rgba(139,240,187,0.35)' },
-    stats:     { c:'#f9ef77', bg:'rgba(249,239,119,0.15)',
-                 b:'rgba(249,239,119,0.5)', g:'rgba(249,239,119,0.35)' },
-    nutrition: { c:'#bfa1ff', bg:'rgba(191,161,255,0.18)',
-                 b:'rgba(191,161,255,0.55)',g:'rgba(191,161,255,0.4)'  }
-  };
+  home:      { c:'#00cfff', bg:'rgba(0,207,255,0.18)',
+               b:'rgba(0,207,255,0.55)',  g:'rgba(0,207,255,0.4)'    },
+  training:  { c:'#0066ff', bg:'rgba(0,102,255,0.18)',
+               b:'rgba(0,102,255,0.55)',  g:'rgba(0,102,255,0.4)'    },
+  live:      { c:'#00cfff', bg:'rgba(0,207,255,0.15)',
+               b:'rgba(0,207,255,0.5)',   g:'rgba(0,207,255,0.35)'   },
+  stats:     { c:'#0099ff', bg:'rgba(0,153,255,0.15)',
+               b:'rgba(0,153,255,0.5)',   g:'rgba(0,153,255,0.35)'   },
+  nutrition: { c:'#7b00ff', bg:'rgba(123,0,255,0.18)',
+               b:'rgba(123,0,255,0.55)',  g:'rgba(123,0,255,0.4)'    }
+};
 
   const ICONS = {
     home: `<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -325,34 +325,34 @@ function _rendreNavBar() {
 // ════════════════════════════════════════════════════════════
 function _updateHeader(page) {
   const configs = {
-    home:         { emoji:'⚡', titre:'PowerApp',           color:'#4b4bf9' },
-    training:     { emoji:'📅', titre:'Programme',          color:'#ff4d6d' },
-    live:         { emoji:'💪', titre:'Séance live',        color:'#8bf0bb' },
-    stats:        { emoji:'📊', titre:'Statistiques',       color:'#f9ef77' },
-    profil:       { emoji:'👤', titre:'Profil',             color:'#bfa1ff' },
-    coach:        { emoji:'🤖', titre:'Coach IA',           color:'#bfa1ff' },
-    defis:        { emoji:'🏆', titre:'Défis',              color:'#f9ef77' },
-    predict:      { emoji:'📈', titre:'Prédictions',        color:'#8bf0bb' },
-    share:        { emoji:'📤', titre:'Partage',            color:'#4b4bf9' },
-    gamification: { emoji:'⭐', titre:'Niveaux & XP',       color:'#f9ef77' },
-    history:      { emoji:'📅', titre:'Historique',         color:'#4b4bf9' },
-    photos:       { emoji:'📸', titre:'Photos',             color:'#ff8d96' },
-    social:       { emoji:'📱', titre:'Réseaux',            color:'#bfa1ff' },
-    supersets:    { emoji:'⚡', titre:'Supersets',          color:'#8bf0bb' },
-    offline:      { emoji:'📵', titre:'Hors-ligne',         color:'#ff8d96' },
-    settings:     { emoji:'⚙️', titre:'Paramètres',         color:'#bfa1ff' },
-    nutrition:    { emoji:'🥗', titre:'Nutrition',          color:'#8bf0bb' },
-    journal:      { emoji:'📔', titre:'Journal',            color:'#f9ef77' },
-    objectifs:    { emoji:'🎯', titre:'Objectifs',          color:'#ff4d6d' },
-    circuit:      { emoji:'⚡', titre:'HIIT & Cardio',      color:'#f9ef77' },
-    adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif',color:'#bfa1ff' },
-    galerie:      { emoji:'💪', titre:'Galerie exercices',  color:'#8bf0bb' },
-    blessures:    { emoji:'🩹', titre:'Blessures',          color:'#ff8d96' },
-    calculateur:  { emoji:'🧮', titre:'Calculateur',        color:'#8bf0bb' },
-    export:       { emoji:'📤', titre:'Export',             color:'#4b4bf9' },
-    themes:       { emoji:'🎨', titre:'Thèmes',             color:'#bfa1ff' },
-    sounds:       { emoji:'🔊', titre:'Sons',               color:'#8bf0bb' }
-  };
+  home:         { emoji:'⚡', titre:'POWERAPP',            color:'#00cfff' },
+  training:     { emoji:'📅', titre:'PROGRAMME',           color:'#0066ff' },
+  live:         { emoji:'💪', titre:'SÉANCE LIVE',         color:'#00cfff' },
+  stats:        { emoji:'📊', titre:'STATISTIQUES',        color:'#0099ff' },
+  profil:       { emoji:'👤', titre:'PROFIL',              color:'#7b00ff' },
+  coach:        { emoji:'🤖', titre:'COACH IA',            color:'#7b00ff' },
+  defis:        { emoji:'🏆', titre:'DÉFIS',               color:'#0099ff' },
+  predict:      { emoji:'📈', titre:'PRÉDICTIONS',         color:'#00cfff' },
+  share:        { emoji:'📤', titre:'PARTAGE',             color:'#0066ff' },
+  gamification: { emoji:'⭐', titre:'NIVEAUX & XP',        color:'#0099ff' },
+  history:      { emoji:'📅', titre:'HISTORIQUE',          color:'#0066ff' },
+  photos:       { emoji:'📸', titre:'PHOTOS',              color:'#7b00ff' },
+  social:       { emoji:'📱', titre:'RÉSEAUX',             color:'#7b00ff' },
+  supersets:    { emoji:'⚡', titre:'SUPERSETS',           color:'#00cfff' },
+  offline:      { emoji:'📵', titre:'HORS-LIGNE',          color:'#7b00ff' },
+  settings:     { emoji:'⚙️', titre:'PARAMÈTRES',          color:'#7b00ff' },
+  nutrition:    { emoji:'🥗', titre:'NUTRITION',           color:'#00cfff' },
+  journal:      { emoji:'📔', titre:'JOURNAL',             color:'#0099ff' },
+  objectifs:    { emoji:'🎯', titre:'OBJECTIFS',           color:'#0066ff' },
+  circuit:      { emoji:'⚡', titre:'HIIT & CARDIO',       color:'#0099ff' },
+  adaptatif:    { emoji:'🧠', titre:'PROG. ADAPTATIF',     color:'#7b00ff' },
+  galerie:      { emoji:'💪', titre:'GALERIE EXERCICES',   color:'#00cfff' },
+  blessures:    { emoji:'🩹', titre:'BLESSURES',           color:'#7b00ff' },
+  calculateur:  { emoji:'🧮', titre:'CALCULATEUR',         color:'#00cfff' },
+  export:       { emoji:'📤', titre:'EXPORT',              color:'#0066ff' },
+  themes:       { emoji:'🎨', titre:'THÈMES',              color:'#7b00ff' },
+  sounds:       { emoji:'🔊', titre:'SONS',                color:'#00cfff' }
+};
 
   const cfg = configs[page] || configs.home;
 
@@ -373,15 +373,17 @@ function _updateHeader(page) {
   if (titleEl) {
     titleEl.textContent = cfg.titre;
     titleEl.style.cssText = `
-      font-size:1rem;
-      font-weight:800;
-      letter-spacing:-.02em;
-      background:linear-gradient(135deg,#ffffff 0%,${cfg.color} 100%);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
-      background-clip:text;
-      transition:all .3s;
-    `;
+  font-size:0.72rem;
+  font-weight:900;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  font-family:'Orbitron',monospace;
+  background:linear-gradient(135deg,#ffffff 0%,${cfg.color} 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  transition:all .3s;
+`;
   }
 
   // ── Header container ──
@@ -3338,7 +3340,7 @@ modifierReps(exoIdx, delta) {
   overlay.id    = 'repos-auto-overlay';
   overlay.style.cssText = `
     position:fixed;inset:0;z-index:900;
-    background:rgba(9,9,45,0.97);
+    background:rgba(2,6,16,0.98);
     display:flex;flex-direction:column;
     align-items:center;justify-content:center;
     padding:24px;text-align:center;
@@ -7836,8 +7838,10 @@ if (app) {
       }
     } catch(e) {}
 
-    naviguer('home');
-    _updateHeaderXP();
+    setTimeout(() => {
+  naviguer('home');
+  _updateHeaderXP();
+}, 100);
 
     // ✅ FIX BACKGROUND TIMER
     document.addEventListener('visibilitychange', () => {
