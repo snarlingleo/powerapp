@@ -2409,6 +2409,7 @@ function _rendreTraining(container) {
 // 12. PAGE PROFIL v2
 // ═══════════════════════════════════════════════════════════
 function _rendreProfil(container) {
+  container.innerHTML = ''; 
   const profil   = PM.get(() => Tracker.getProfil(), { nom:'Athlète', avatar:'💪' });
   const xp       = PM.get(() => Gamification.getXP(),
                      { total:0, niveau:{ emoji:'💪', numero:1, nom:'Débutant' } });
@@ -4788,27 +4789,9 @@ const Profil = {
 
   // ── renderPage (conservé pour compatibilité app.js) ──
   renderPage(container) {
-    if (!container) return;
-    try { _rendreProfil(container); } catch(e) {
-      // Fallback si _rendreProfil pas encore disponible
-      const profil = this.get();
-      const resume = this.getResume(profil);
-      container.innerHTML = `
-        <div style="text-align:center;padding:40px">
-          <div style="font-size:3rem">${resume.avatar}</div>
-          <div style="font-size:1.2rem;font-weight:800;margin-top:8px">${resume.nom}</div>
-          <div style="font-size:.8rem;color:rgba(255,255,255,.4);margin-top:4px">
-            ${resume.objectif} · ${resume.niveau}
-          </div>
-          <button onclick="Profil._ouvrirEdition()"
-                  style="margin-top:16px;padding:12px 24px;
-                         background:var(--fd-indigo);border:none;border-radius:99px;
-                         color:white;font-weight:700;cursor:pointer">
-            ✏️ Modifier mon profil
-          </button>
-        </div>`;
-    }
-  }
+  // Ne rien faire — app.js appelle _rendreProfil() directement
+  return;
+}
 };
 
 window.Profil = Profil;
