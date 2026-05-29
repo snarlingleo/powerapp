@@ -5630,6 +5630,8 @@ function _getChargeReco(ref) {
 // PAGE PROFIL
 // ════════════════════════════════════════════════════════════
 function _rendreProfil(container) {
+  if (!container) return;
+  
   let profil   = { nom:'Athlète', avatar:'💪', poids:80, taille:175, objectif:'forme' };
   let xp       = { total:0, niveau:{ emoji:'💪', numero:1, nom:'Débutant' } };
   let streak   = { count:0, max:0 };
@@ -5640,8 +5642,10 @@ function _rendreProfil(container) {
   try { xp       = Gamification.getXP();          } catch(e) {}
   try { streak   = Tracker.getStreak();           } catch(e) {}
   try { total    = Tracker.getTotalSeances();      } catch(e) {}
-  try { trophees = Gamification.getTrophees().filter(t => t.debloquee).length; } catch(e) {}
+  try { trophees = Gamification.getTrophees()
+          .filter(t => t.debloquee).length;        } catch(e) {}
 
+  // ✅ Une seule zone de rendu — pas de double
   container.innerHTML = `
     <div class="card mb-md"
          style="background:linear-gradient(135deg,var(--fd-indigo),#7b2ff7);
@@ -5664,6 +5668,24 @@ function _rendreProfil(container) {
       </div>
     </div>
 
+    <!-- Bouton modifier profil -->
+    <div class="card mb-md"
+         style="background:rgba(75,75,249,0.1);
+                border:1px solid rgba(75,75,249,0.3);
+                cursor:pointer"
+         onclick="Profil._ouvrirEdition()">
+      <div style="display:flex;align-items:center;
+                  justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:1.3rem">✏️</span>
+          <span style="font-weight:700;font-size:.92rem">
+            Modifier mon profil
+          </span>
+        </div>
+        <span style="color:var(--fd-indigo);font-size:.9rem">›</span>
+      </div>
+    </div>
+
     ${[
       { page:'journal',      emoji:'📔', label:'Journal'             },
       { page:'objectifs',    emoji:'🎯', label:'Objectifs'           },
@@ -5671,7 +5693,7 @@ function _rendreProfil(container) {
       { page:'coach',        emoji:'🤖', label:'Coach IA'            },
       { page:'defis',        emoji:'🏆', label:'Défis'               },
       { page:'predict',      emoji:'🔮', label:'Prédictions IA'      },
-      { page:'calculateur',  emoji:'🧮', label:'Calculateur'         }, 
+      { page:'calculateur',  emoji:'🧮', label:'Calculateur'         },
       { page:'export',       emoji:'📤', label:'Exporter mes données'},
       { page:'supersets',    emoji:'⚡', label:'Supersets'           },
       { page:'social',       emoji:'📱', label:'Réseaux sociaux'     },
@@ -5679,34 +5701,38 @@ function _rendreProfil(container) {
       { page:'gamification', emoji:'⭐', label:'XP & Niveaux'        },
       { page:'history',      emoji:'📅', label:'Historique'          },
       { page:'photos',       emoji:'📸', label:'Photos'              },
-      { page:'circuit',      emoji:'🔄', label:'Circuit Training'    },
-      { page:'circuit',      emoji:'⚡', label:'HIIT & Cardio'       }, 
+      { page:'circuit',      emoji:'⚡', label:'HIIT & Cardio'       },
       { page:'adaptatif',    emoji:'🧠', label:'Programme Adaptatif' },
       { page:'nutrition',    emoji:'🥗', label:'Nutrition'           },
       { page:'galerie',      emoji:'💪', label:'Galerie exercices'   },
       { page:'settings',     emoji:'⚙️', label:'Paramètres'         }
     ].map(s => `
-      <div class="card mb-md" style="cursor:pointer" onclick="naviguer('${s.page}')">
+      <div class="card mb-md" style="cursor:pointer"
+           onclick="naviguer('${s.page}')">
         <div class="flex justify-between items-center">
-          <div style="display:flex;align-items:center;gap:var(--space-md)">
+          <div style="display:flex;align-items:center;
+                      gap:var(--space-md)">
             <span style="font-size:1.3rem">${s.emoji}</span>
-            <span style="font-weight:600;font-size:.92rem">${s.label}</span>
+            <span style="font-weight:600;font-size:.92rem">
+              ${s.label}
+            </span>
           </div>
           <span style="color:var(--text-muted);font-size:.9rem">›</span>
         </div>
       </div>`).join('')}
 
-    <div class="card mb-md" style="border-color:rgba(255,141,150,0.3)">
+    <div class="card mb-md"
+         style="border-color:rgba(255,141,150,0.3)">
       <button onclick="UI.confirmerReset()"
               style="width:100%;background:none;border:none;
                      color:var(--fd-coral);font-size:.85rem;
-                     font-weight:600;cursor:pointer;padding:var(--space-sm)">
+                     font-weight:600;cursor:pointer;
+                     padding:var(--space-sm)">
         🗑️ Réinitialiser toutes les données
       </button>
     </div>
   `;
 }
-
 // ════════════════════════════════════════════════════════════
 // PAGE SETTINGS
 // ════════════════════════════════════════════════════════════
