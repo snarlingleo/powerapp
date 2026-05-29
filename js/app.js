@@ -5721,19 +5721,18 @@ function _rendreProfil(container) {
       { page:'galerie',      emoji:'💪', label:'Galerie exercices'   },
       { page:'settings',     emoji:'⚙️', label:'Paramètres'         }
     ].map(s => `
-      <div class="card mb-md" style="cursor:pointer"
-           onclick="naviguer('${s.page}')">
-        <div class="flex justify-between items-center">
-          <div style="display:flex;align-items:center;
-                      gap:var(--space-md)">
-            <span style="font-size:1.3rem">${s.emoji}</span>
-            <span style="font-weight:600;font-size:.92rem">
-              ${s.label}
-            </span>
-          </div>
-          <span style="color:var(--text-muted);font-size:.9rem">›</span>
-        </div>
-      </div>`).join('')}
+  <div class="card mb-md" style="cursor:pointer"
+       onclick="${s.page === '__modifier__' 
+         ? 'Profil._ouvrirEdition()' 
+         : `naviguer('${s.page}')`}">
+    <div class="flex justify-between items-center">
+      <div style="display:flex;align-items:center;gap:var(--space-md)">
+        <span style="font-size:1.3rem">${s.emoji}</span>
+        <span style="font-weight:600;font-size:.92rem">${s.label}</span>
+      </div>
+      <span style="color:var(--text-muted);font-size:.9rem">›</span>
+    </div>
+  </div>`).join('')}
 
     <div class="card mb-md"
          style="border-color:rgba(255,141,150,0.3)">
@@ -9834,7 +9833,7 @@ const MenuGlobal = {
       {
         titre: '👤 Profil',
         items: [
-          { page:'mon_profil',  emoji:'✏️', label:'Modifier profil',    color:'#bfa1ff' },
+          { page:'__modifier__',  emoji:'✏️', label:'Modifier profil',    color:'#bfa1ff' },
           { page:'objectifs',   emoji:'🎯', label:'Objectifs',          color:'#ff4d6d' },
           { page:'journal',     emoji:'📔', label:'Journal',            color:'#f9ef77' },
           { page:'blessures',   emoji:'🩹', label:'Blessures',          color:'#ff8d96' },
