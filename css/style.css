@@ -4076,6 +4076,37 @@ h1, h2, h3,
 [data-theme="light"] .modal-inner {
   background: rgba(2,6,16,0.98) !important;
 }
+/* ✅ FIX — App wrapper visible */
+#app-wrapper {
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* ✅ FIX — Pages */
+.page {
+  min-height: calc(100vh - var(--header-height) - var(--nav-height)) !important;
+  padding: var(--space-md) !important;
+}
+
+.page.active {
+  display: block !important;
+}
+
+/* ✅ FIX — Main content */
+.app-main {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding-top: calc(var(--header-height) + 12px) !important;
+  padding-bottom: calc(var(--nav-height) + 12px) !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
 
 /* ════════════════════════════════════════════════════════════
    FIN — CYBER BLOCK BLUE OVERRIDE
