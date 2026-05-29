@@ -7788,10 +7788,23 @@ async function init() {
       return;
     }
 
-    const splash = document.getElementById('splash-screen');
-    const app    = document.getElementById('app-wrapper');
-    if (splash) splash.style.display = 'none';
-    if (app)    app.style.display    = 'flex';
+   // ✅ FIX — Cacher splash + afficher app
+const splash = document.getElementById('splash-screen');
+const app    = document.getElementById('app-wrapper');
+
+if (splash) {
+  splash.style.opacity    = '0';
+  splash.style.transition = 'opacity 0.3s ease';
+  setTimeout(() => {
+    splash.style.display = 'none';
+  }, 300);
+}
+
+if (app) {
+  app.style.display    = 'flex';
+  app.style.flexDirection = 'column';
+  app.style.minHeight  = '100vh';
+}
 
     try { Tracker.init?.();                          } catch(e) {}
     try { Programme.getDateDebut();                  } catch(e) {}
