@@ -589,333 +589,890 @@ const PM = {
 };
 
 // ═══════════════════════════════════════════════════════════
-// 3. SONS UI
+// 3. SONS UI — Fusion sounds.js v2.0
 // ═══════════════════════════════════════════════════════════
-PM.sons = {
+const Sounds = {
+
+  CLE_CONFIG: 'ft_sounds_config',
   _ctx: null,
-  _get() {
+
+  getConfig() {
+    return PM.get(() => Utils.storage.get(this.CLE_CONFIG, {
+      actif: true, volume: 0.6,
+      haptic: true, animations: true
+    }), { actif:true, volume:0.6, haptic:true, animations:true });
+  },
+
+  setConfig(data) {
+    const cfg = { ...this.getConfig(), ...data };
+    try { Utils.storage.set(this.CLE_CONFIG, cfg); } catch(e) {}
+    return cfg;
+  },
+
+  _getCtx() {
     if (!this._ctx) {
       try {
-        this._ctx = new (window.AudioContext||window.webkitAudioContext)();
-      } catch(e) {}
+        this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch(e) { return null; }
     }
+    if (this._ctx.state === 'suspended') this._ctx.resume().catch(() => {});
     return this._ctx;
   },
-  _play(freq, type='sine', dur=.12, vol=.25, delay=0) {
-    const ctx = this._get(); if (!ctx) return;
+
+  _jouerNote(freq, duree, type = 'sine', volume = 0.3, delai = 0) {
     try {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.type = type;
-      o.frequency.setValueAtTime(freq, ctx.currentTime + delay);
-      g.gain.setValueAtTime(vol, ctx.currentTime + delay);
-      g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime+delay+dur);
-      o.start(ctx.currentTime + delay);
-      o.stop(ctx.currentTime + delay + dur);
+      const cfg = this.getConfig();
+      if (!cfg.actif) return;
+      const ctx = this._getCtx();
+      if (!ctx) return;
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + delai);
+      const vol   = cfg.volume * volume;
+      const start = ctx.currentTime + delai;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(vol, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + duree);
+      osc.start(start);
+      osc.stop(start + duree + 0.05);
     } catch(e) {}
   },
-  clic()   { this._play(600,'sine',.06,.1); },
-  succes() {
-    this._play(440,'sine',.1,.2);
-    this._play(554,'sine',.1,.2,.1);
-    this._play(659,'sine',.15,.2,.2);
-  },
-  erreur() { this._play(180,'square',.2,.2); },
-  timer()  {
-    this._play(880,'sine',.1,.3);
-    this._play(880,'sine',.1,.3,.15);
-    this._play(1320,'sine',.2,.3,.3);
-  },
-  pr()     { [261,329,392,523].forEach((f,i)=>this._play(f,'sine',.2,.25,i*.08)); },
-  niveau() { [523,659,784,1047].forEach((f,i)=>this._play(f,'sine',.25,.3,i*.1)); }
-};
 
-// ═══════════════════════════════════════════════════════════
-// 4. SPLASH SCREEN
-// ═══════════════════════════════════════════════════════════
-PM.splash = {
-  show() {
-    if (document.getElementById('pm-splash')) return;
-    const div = document.createElement('div');
-    div.id = 'pm-splash';
-    div.innerHTML = `
-      <div id="pm-splash-logo">⚡</div>
-      <div style="font-size:1.4rem;font-weight:800;
-                  background:linear-gradient(135deg,#fff,var(--fd-lavender));
-                  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                  background-clip:text;margin-bottom:4px">
-        PowerApp
-      </div>
-      <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-bottom:20px">
-        Ton coach fitness personnel
-      </div>
-      <div id="pm-splash-bar">
-        <div id="pm-splash-fill"></div>
-      </div>
-      <div id="pm-splash-msg"
-           style="font-size:.65rem;color:rgba(255,255,255,.3);margin-top:10px">
-        Chargement...
-      </div>`;
-    document.body.appendChild(div);
-
-    const msgs = [
-      'Chargement du programme...',
-      'Analyse de tes données...',
-      'Préparation du Coach IA...',
-      'Presque prêt...'
-    ];
-    let pct = 0;
-    const fill = document.getElementById('pm-splash-fill');
-    const msg  = document.getElementById('pm-splash-msg');
-    const iv = setInterval(() => {
-      pct += Math.random() * 18 + 8;
-      if (pct > 100) pct = 100;
-      if (fill) fill.style.width = pct + '%';
-      if (msg)  msg.textContent  = msgs[Math.floor((pct/100)*msgs.length)] || msgs[3];
-      if (pct >= 100) clearInterval(iv);
-    }, 120);
-  },
-
-  hide() {
-    const div = document.getElementById('pm-splash');
-    if (!div) return;
-    div.style.transition = 'opacity .4s ease';
-    div.style.opacity    = '0';
-    setTimeout(() => div.remove(), 400);
-  }
-};
-
-// ═══════════════════════════════════════════════════════════
-// 5. NAVBAR PREMIUM
-// ═══════════════════════════════════════════════════════════
-PM.navbar = {
-  items: [
-    { id:'home',     icon:'🏠', label:'Home'     },
-    { id:'training', icon:'📅', label:'Training' },
-    { id:'live',     icon:'⚡', label:'Live'     },
-    { id:'stats',    icon:'📊', label:'Stats'    },
-    { id:'profil',   icon:'👤', label:'Profil'   }
-  ],
-  _active: 'home',
-
-  render() {
-    let nav = document.getElementById('pm-navbar');
-    if (!nav) {
-      nav = document.createElement('div');
-      nav.id = 'pm-navbar';
-      document.body.appendChild(nav);
-    }
-    nav.innerHTML = this.items.map(item => `
-      <div class="pm-nav-item ${this._active===item.id?'active':''}"
-           onclick="PM.navbar.goto('${item.id}')"
-           id="pm-nav-${item.id}">
-        <div class="pm-nav-icon">${item.icon}</div>
-        <div class="pm-nav-label">${item.label}</div>
-        <div class="pm-nav-indicator"></div>
-      </div>`).join('');
-  },
-
-  goto(page) {
-    this._active = page;
-    // Update active state sans re-render complet
-    document.querySelectorAll('.pm-nav-item').forEach(el => {
-      el.classList.remove('active');
+  _jouerAcord(notes, type = 'sine', volume = 0.3) {
+    notes.forEach(([freq, delai, duree]) => {
+      this._jouerNote(freq, duree, type, volume, delai);
     });
-    const el = document.getElementById(`pm-nav-${page}`);
-    if (el) el.classList.add('active');
-    PM.sons.clic();
-    try { navigator.vibrate?.(20); } catch(e) {}
-    try { naviguer(page); } catch(e) {
-      console.warn('[PM.navbar] naviguer() non trouvé:', e);
-    }
   },
 
-  setActive(page) {
-    this._active = page;
-    document.querySelectorAll('.pm-nav-item').forEach(el => {
-      el.classList.remove('active');
-    });
-    const el = document.getElementById(`pm-nav-${page}`);
-    if (el) el.classList.add('active');
-  }
-};
+  SONS: {
+    success:     () => Sounds._jouerAcord([[523,.00,.15],[659,.10,.15],[784,.20,.25]],'sine',.3),
+    error:       () => Sounds._jouerAcord([[200,.00,.15],[150,.12,.15]],'sawtooth',.2),
+    serie:       () => Sounds._jouerNote(880,.08,'sine',.25),
+    pr:          () => Sounds._jouerAcord([[392,.00,.12],[523,.06,.12],[659,.12,.12],[784,.18,.12],[1047,.24,.30]],'sine',.35),
+    levelup:     () => Sounds._jouerAcord([[523,.00,.10],[659,.08,.10],[784,.16,.10],[1047,.24,.10],[1319,.32,.40]],'triangle',.4),
+    trophee:     () => Sounds._jouerAcord([[784,.00,.15],[880,.10,.15],[988,.20,.15],[1047,.30,.40]],'sine',.35),
+    tick:        () => Sounds._jouerNote(1200,.05,'square',.15),
+    repos_start: () => Sounds._jouerAcord([[659,.00,.12],[523,.10,.20]],'sine',.25),
+    repos_fin:   () => Sounds._jouerAcord([[523,.00,.10],[659,.08,.10],[784,.16,.20]],'sine',.3),
+    clic:        () => Sounds._jouerNote(440,.04,'sine',.1),
+    seance_fin:  () => Sounds._jouerAcord([[523,.00,.12],[659,.10,.12],[784,.20,.12],[1047,.30,.12],[784,.42,.12],[1047,.52,.40]],'sine',.4),
+    defi:        () => Sounds._jouerAcord([[392,.00,.10],[494,.08,.10],[587,.16,.10],[784,.24,.30]],'triangle',.35),
+    notif:       () => Sounds._jouerAcord([[880,.00,.08],[1100,.10,.12]],'sine',.2),
+    countdown_3: () => Sounds._jouerNote(440,.1,'square',.2),
+    countdown_2: () => Sounds._jouerNote(520,.1,'square',.22),
+    countdown_1: () => Sounds._jouerNote(660,.1,'square',.25),
+    countdown_go:() => Sounds._jouerAcord([[660,.00,.1],[880,.08,.2]],'square',.35)
+  },
 
-// ═══════════════════════════════════════════════════════════
-// 6. HEADER PREMIUM
-// ═══════════════════════════════════════════════════════════
-PM.header = {
-  render() {
-    let h = document.getElementById('pm-header');
-    if (!h) {
-      h = document.createElement('div');
-      h.id = 'pm-header';
-      document.body.appendChild(h);
-    }
+  jouer(nom, force = false) {
+    try {
+      const cfg = this.getConfig();
+      if (!cfg.actif && !force) return;
+      const son = this.SONS[nom];
+      if (son) son();
+    } catch(e) {}
+  },
 
-    const profil = PM.get(() => Tracker.getProfil(), { nom:'Athlète', avatar:'💪' });
-    const xp     = PM.get(() => Gamification.getXP(),
-                     { total:0, pourcentage:0,
-                       niveau:{ numero:1, emoji:'💪', nom:'Débutant' } });
-    const streak = PM.get(() => Tracker.getStreak(), { count:0 });
+  PATTERNS: {
+    leger:    [10],
+    moyen:    [30],
+    fort:     [100],
+    double:   [30,50,30],
+    triple:   [30,30,30,30,30],
+    success:  [10,50,10,50,100],
+    pr:       [50,50,50,50,200],
+    levelup:  [100,50,100,50,200],
+    erreur:   [200],
+    countdown:[30,50,30,50,30,50,100]
+  },
 
-    h.innerHTML = `
-      <!-- Logo + titre -->
-      <div style="display:flex;align-items:center;gap:8px">
-        <div style="font-size:1.3rem">⚡</div>
-        <div>
-          <div style="font-size:.88rem;font-weight:800;line-height:1">
-            PowerApp
-          </div>
-          <div style="font-size:.55rem;color:rgba(255,255,255,.4)">
-            ${PM.dateFR()}
-          </div>
+  vibrer(pattern = 'moyen') {
+    try {
+      const cfg = this.getConfig();
+      if (!cfg.haptic) return;
+      const p = typeof pattern === 'string'
+        ? (this.PATTERNS[pattern] || [30]) : pattern;
+      if (navigator.vibrate) navigator.vibrate(p);
+    } catch(e) {}
+  },
+
+  confetti(dureeMs = 3000, intensite = 'normal') {
+    const cfg = this.getConfig();
+    if (!cfg.animations) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = `
+      position:fixed;inset:0;z-index:9998;
+      pointer-events:none;width:100%;height:100%`;
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+
+    const ctx     = canvas.getContext('2d');
+    const couleurs = ['#4b4bf9','#8bf0bb','#f9ef77','#bfa1ff','#ff8d96','#fff','#ffa500'];
+    const nb = intensite==='burst'?200:intensite==='fort'?150:intensite==='leger'?50:100;
+
+    const particules = Array.from({ length:nb }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height * -1,
+      w: Math.random() * 12 + 4,
+      h: Math.random() * 6  + 2,
+      color: couleurs[Math.floor(Math.random() * couleurs.length)],
+      vx: (Math.random() - .5) * 4,
+      vy: Math.random() * 4 + 2,
+      vr: (Math.random() - .5) * .3,
+      r:  Math.random() * Math.PI * 2,
+      op: 1,
+      forme: Math.random() > .5 ? 'rect' : 'cercle'
+    }));
+
+    let t0 = null;
+    const animer = ts => {
+      if (!t0) t0 = ts;
+      const el = ts - t0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particules.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.r += p.vr; p.vy += .08;
+        if (el > dureeMs * .7)
+          p.op = Math.max(0, 1-(el-dureeMs*.7)/(dureeMs*.3));
+        ctx.save();
+        ctx.globalAlpha = p.op;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.r);
+        ctx.fillStyle = p.color;
+        if (p.forme === 'cercle') {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w/2, 0, Math.PI*2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        }
+        ctx.restore();
+      });
+      if (el < dureeMs) requestAnimationFrame(animer);
+      else canvas.remove();
+    };
+    requestAnimationFrame(animer);
+  },
+
+  celebrerPR(nomExo = '', valeur = 0) {
+    this.jouer('pr');
+    this.vibrer('pr');
+    this.confetti(4000, 'fort');
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position:fixed;inset:0;z-index:9997;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      background:rgba(9,9,45,.85);
+      animation:pm-fadeIn .3s ease;pointer-events:none`;
+    overlay.innerHTML = `
+      <div style="text-align:center;animation:pm-ringPop .4s ease">
+        <div style="font-size:4rem;margin-bottom:8px">🏆</div>
+        <div style="font-size:.65rem;font-weight:700;
+                    text-transform:uppercase;letter-spacing:.2em;
+                    color:var(--fd-lemon);margin-bottom:6px">
+          NOUVEAU RECORD !
         </div>
-      </div>
-
-      <!-- XP mini + streak -->
-      <div style="flex:1;max-width:140px;padding:0 8px">
-        <div style="display:flex;justify-content:space-between;
-                    font-size:.55rem;color:rgba(255,255,255,.4);
-                    margin-bottom:3px">
-          <span>${xp.niveau.emoji} Niv.${xp.niveau.numero}</span>
-          <span style="color:var(--fd-indigo)">${xp.total} XP</span>
+        <div style="font-size:1.8rem;font-weight:900;color:var(--fd-lemon)">
+          ${nomExo}
         </div>
-        <div class="pm-xp-bar" style="height:5px">
-          <div class="pm-xp-fill" style="width:${xp.pourcentage}%"></div>
-        </div>
-      </div>
-
-      <!-- Streak + avatar -->
-      <div style="display:flex;align-items:center;gap:8px">
-        <div style="display:flex;align-items:center;gap:3px;
-                    padding:4px 8px;border-radius:99px;
-                    background:rgba(249,239,119,.1);
-                    border:1px solid rgba(249,239,119,.2)">
-          <span style="font-size:.75rem">🔥</span>
-          <span style="font-size:.72rem;font-weight:700;color:var(--fd-lemon)">
-            ${streak.count}
-          </span>
-        </div>
-        <div onclick="PM.navbar.goto('profil')"
-             style="width:32px;height:32px;border-radius:50%;
-                    background:linear-gradient(135deg,var(--fd-indigo),#7b2ff7);
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:1rem;cursor:pointer;
-                    box-shadow:0 0 10px rgba(75,75,249,.4);
-                    border:2px solid rgba(75,75,249,.3)">
-          ${profil.avatar || '💪'}
+        ${valeur ? `
+          <div style="font-size:3rem;font-weight:900;color:white;margin:8px 0">
+            ${valeur}kg
+          </div>` : ''}
+        <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:4px">
+          1RM personnel battu ! 💪
         </div>
       </div>`;
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.remove(), 3500);
   },
 
-  update() { this.render(); }
-};
+  celebrerSeanceFin() {
+    this.jouer('seance_fin');
+    this.vibrer('levelup');
+    this.confetti(3000, 'normal');
+  },
 
-// ═══════════════════════════════════════════════════════════
-// 7. TIMER PLEIN ÉCRAN
-// ═══════════════════════════════════════════════════════════
-PM.timer = {
-  _iv: null, _restant: 0, _total: 0,
+  celebrerLevelUp() {
+    this.jouer('levelup');
+    this.vibrer('levelup');
+    this.confetti(5000, 'burst');
+  },
 
-  ouvrir(sec = 90, label = 'Repos') {
-    this.fermer();
-    this._total = this._restant = sec;
-    const div = document.createElement('div');
-    div.id = 'pm-timer-fs';
-    div.className = 'pm-timer-fullscreen';
-    div.innerHTML = `
-      <div style="text-align:center;padding:32px 24px;width:100%;max-width:340px">
-        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;
-                    letter-spacing:.15em;color:var(--fd-mint);margin-bottom:20px">
-          😴 ${label.toUpperCase()}
-        </div>
-        <div style="position:relative;width:200px;height:200px;margin:0 auto 24px">
-          <svg width="200" height="200" style="transform:rotate(-90deg)">
-            <circle cx="100" cy="100" r="88" fill="none"
-                    stroke="rgba(139,240,187,.08)" stroke-width="12"/>
-            <circle id="pm-fs-ring" cx="100" cy="100" r="88" fill="none"
-                    stroke="var(--fd-mint)" stroke-width="12"
-                    stroke-linecap="round" stroke-dasharray="553"
-                    stroke-dashoffset="0"
-                    style="filter:drop-shadow(0 0 10px var(--fd-mint));
-                           transition:stroke-dashoffset 1s linear,
-                                      stroke .3s,filter .3s"/>
-          </svg>
-          <div style="position:absolute;top:50%;left:50%;
-                      transform:translate(-50%,-50%);text-align:center">
-            <div id="pm-fs-count"
-                 style="font-size:4rem;font-weight:800;color:var(--fd-mint);
-                        font-variant-numeric:tabular-nums;line-height:1;
-                        transition:color .3s">
-              ${sec}
-            </div>
-            <div style="font-size:.7rem;color:rgba(255,255,255,.4)">sec</div>
+  celebrerStreak(jours = 0) {
+    this.jouer('success');
+    this.vibrer('success');
+    if (jours % 7 === 0) this.confetti(2000, 'fort');
+  },
+
+  pulser(element, couleur = '#4b4bf9', dureeMs = 600) {
+    if (!element) return;
+    element.style.transition = `box-shadow ${dureeMs/2}ms ease`;
+    element.style.boxShadow  = `0 0 0 8px ${couleur}44,0 0 0 16px ${couleur}22`;
+    setTimeout(() => element.style.boxShadow = '', dureeMs/2);
+  },
+
+  secouer(element) {
+    if (!element) return;
+    element.style.animation = 'pm-shake .4s ease';
+    setTimeout(() => element.style.animation = '', 400);
+  },
+
+  compteARebours(cb, dureeMs = 3000) {
+    const cfg    = this.getConfig();
+    const etapes = [3, 2, 1, '🚀'];
+    etapes.forEach((val, i) => {
+      setTimeout(() => {
+        if (cfg.actif) {
+          const map = {3:'countdown_3',2:'countdown_2',1:'countdown_1'};
+          this.jouer(map[val] || 'countdown_go', true);
+        }
+        if (val !== '🚀') this.vibrer('leger');
+        else this.vibrer('fort');
+        if (cfg.animations) {
+          const div = document.createElement('div');
+          div.style.cssText = `
+            position:fixed;inset:0;z-index:9999;
+            display:flex;align-items:center;justify-content:center;
+            pointer-events:none;background:rgba(9,9,45,.7)`;
+          div.innerHTML = `
+            <div style="font-size:8rem;font-weight:900;
+                        color:${val==='🚀'?'var(--fd-mint)':'white'};
+                        text-shadow:0 0 40px rgba(75,75,249,.8)">
+              ${val}
+            </div>`;
+          document.body.appendChild(div);
+          setTimeout(() => div.remove(), 900);
+        }
+        if (val === '🚀' && cb) setTimeout(cb, 300);
+      }, i * (dureeMs / etapes.length));
+    });
+  },
+
+  renderSettings(container) {
+    if (!container) return;
+    const cfg = this.getConfig();
+    container.innerHTML = `
+      <div class="card mb-md">
+        <div class="card-label mb-md">🔊 Sons & Animations</div>
+        <div style="display:flex;align-items:center;gap:12px;
+                    padding:12px 0;border-bottom:1px solid var(--border-color)">
+          <div style="flex:1">
+            <div style="font-size:.82rem;font-weight:700">Sons activés</div>
+            <div style="font-size:.65rem;color:var(--text-muted)">Feedback sonore</div>
           </div>
+          <input type="checkbox" id="son-actif" ${cfg.actif?'checked':''}
+                 onchange="Sounds.setConfig({actif:this.checked});Sounds.jouer('clic',true)"
+                 style="width:20px;height:20px;cursor:pointer"/>
         </div>
-        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">
-          ${[15,30,60].map(s=>`
-            <button onclick="PM.timer.ajouter(${s})"
-                    style="padding:9px 14px;background:rgba(255,255,255,.06);
-                           border:1px solid rgba(255,255,255,.1);border-radius:12px;
-                           font-size:.78rem;font-weight:700;
-                           color:rgba(255,255,255,.6);cursor:pointer">
-              +${s}s
+        <div style="padding:12px 0;border-bottom:1px solid var(--border-color)">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:.82rem;font-weight:700">Volume</div>
+            <span id="vol-label" style="font-size:.78rem;color:var(--fd-indigo);font-weight:700">
+              ${Math.round(cfg.volume*100)}%
+            </span>
+          </div>
+          <input type="range" id="son-volume" min="0" max="1" step="0.1" value="${cfg.volume}"
+                 oninput="document.getElementById('vol-label').textContent=
+                   Math.round(this.value*100)+'%';
+                   Sounds.setConfig({volume:parseFloat(this.value)});
+                   Sounds.jouer('clic',true)"
+                 style="width:100%;accent-color:var(--fd-indigo)"/>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;
+                    padding:12px 0;border-bottom:1px solid var(--border-color)">
+          <div style="flex:1">
+            <div style="font-size:.82rem;font-weight:700">Vibrations</div>
+            <div style="font-size:.65rem;color:var(--text-muted)">Retour haptique</div>
+          </div>
+          <input type="checkbox" id="haptic-actif" ${cfg.haptic?'checked':''}
+                 onchange="Sounds.setConfig({haptic:this.checked})"
+                 style="width:20px;height:20px;cursor:pointer"/>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0">
+          <div style="flex:1">
+            <div style="font-size:.82rem;font-weight:700">Animations</div>
+            <div style="font-size:.65rem;color:var(--text-muted)">Confetti, célébrations</div>
+          </div>
+          <input type="checkbox" id="anim-actif" ${cfg.animations?'checked':''}
+                 onchange="Sounds.setConfig({animations:this.checked})"
+                 style="width:20px;height:20px;cursor:pointer"/>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label mb-md">🎵 Tester les sons</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          ${[
+            {son:'serie',     label:'Série validée', emoji:'✅'},
+            {son:'pr',        label:'Nouveau PR',    emoji:'🏆'},
+            {son:'levelup',   label:'Level Up',      emoji:'⭐'},
+            {son:'trophee',   label:'Trophée',       emoji:'🎖️'},
+            {son:'repos_fin', label:'Repos terminé', emoji:'⏱️'},
+            {son:'seance_fin',label:'Séance finie',  emoji:'💪'}
+          ].map(t=>`
+            <button onclick="Sounds.jouer('${t.son}',true)"
+                    style="padding:10px;background:rgba(255,255,255,.04);
+                           border:1px solid rgba(255,255,255,.08);
+                           border-radius:12px;font-size:.75rem;font-weight:600;
+                           color:var(--text-primary,white);cursor:pointer">
+              ${t.emoji} ${t.label}
             </button>`).join('')}
         </div>
-        <div style="display:flex;gap:10px;justify-content:center">
-          <button onclick="PM.timer.passer()"
-                  style="padding:14px 28px;background:var(--fd-indigo);border:none;
-                         border-radius:99px;font-size:.9rem;font-weight:800;
-                         color:white;cursor:pointer;
-                         box-shadow:0 4px 20px rgba(75,75,249,.4)">
-            ⚡ Passer
-          </button>
-          <button onclick="PM.timer.fermer()"
-                  style="padding:14px 20px;background:rgba(255,255,255,.06);
-                         border:1px solid rgba(255,255,255,.1);
-                         border-radius:99px;font-size:.9rem;
-                         color:rgba(255,255,255,.5);cursor:pointer">
-            ✕
-          </button>
-        </div>
-        <div style="font-size:.6rem;color:rgba(255,255,255,.2);margin-top:14px">
-          📳 Son + vibration à la fin
-        </div>
       </div>`;
-    document.body.appendChild(div);
-    PM.sons.clic();
+  }
+};
 
-    const total = 553;
-    this._iv = setInterval(() => {
-      this._restant--;
-      const count = document.getElementById('pm-fs-count');
-      const ring  = document.getElementById('pm-fs-ring');
-      if (count) count.textContent = Math.max(0, this._restant);
-      if (ring) {
-        ring.style.strokeDashoffset =
-          total * (1 - this._restant / this._total);
+window.Sounds = Sounds;
+
+// Bridge PM.sons → Sounds
+PM.sons = {
+  clic()   { Sounds.jouer('clic');      },
+  succes() { Sounds.jouer('success');   },
+  erreur() { Sounds.jouer('error');     },
+  timer()  { Sounds.jouer('repos_fin'); },
+  pr()     { Sounds.celebrerPR();       },
+  niveau() { Sounds.jouer('levelup');   }
+};
+
+PM.confetti = (duree) => Sounds.confetti(duree || 3000, 'fort');
+
+// ═══════════════════════════════════════════════════════════
+// 7. TIMER MANAGER — Fusion timer-manager.js v2.0
+// ═══════════════════════════════════════════════════════════
+const TimerManager = {
+
+  _timerInterval:     null,
+  _secondesRestantes: 0,
+  _dureeInitiale:     0,
+  _phase:             null,
+  _enPause:           false,
+  _alarmeInterval:    null,
+  _poidsActuel:       null,
+  _repsActuel:        null,
+  _nomExo:            null,
+  CLE_ALARME:         'ft_alarme_rappel',
+
+  // ── Timer reps ──
+  lancerTimerReps(exoIdx, serieIdx, poids = null, reps = null, nomExo = null) {
+    this._poidsActuel = poids;
+    this._repsActuel  = reps;
+    this._nomExo      = nomExo;
+    this._afficherOverlay('reps', 40, exoIdx, serieIdx);
+    this._demarrer(40, 'reps');
+  },
+
+  // ── Timer repos ──
+  demarrerRepos(secondes = 75) {
+    this._fermerOverlay();
+    this._afficherOverlay('repos', secondes);
+    this._demarrer(secondes, 'repos');
+  },
+
+  // ── Core ──
+  _demarrer(secondes, phase) {
+    this._arreter();
+    this._secondesRestantes = secondes;
+    this._dureeInitiale     = secondes;
+    this._phase             = phase;
+    this._enPause           = false;
+    this._mettreAJourDisplay();
+    this._mettreAJourCercle();
+
+    this._timerInterval = setInterval(() => {
+      if (this._enPause) return;
+      this._secondesRestantes--;
+      this._mettreAJourDisplay();
+      this._mettreAJourCercle();
+
+      if (this._secondesRestantes <= 3 && this._secondesRestantes > 0) {
+        Sounds.jouer('tick');
+        Sounds.vibrer('leger');
       }
-      if (this._restant <= 10 && this._restant > 0) {
-        if (ring)  { ring.style.stroke='var(--fd-coral)'; ring.style.filter='drop-shadow(0 0 10px var(--fd-coral))'; }
-        if (count) count.style.color = 'var(--fd-coral)';
-      }
-      if (this._restant <= 0) {
-        clearInterval(this._iv);
-        PM.sons.timer();
-        try { navigator.vibrate?.([300,100,300]); } catch(e) {}
-        PM.toast('⚡ Repos terminé — À toi !', 'info');
-        setTimeout(() => this.fermer(), 600);
-      }
+      if (this._secondesRestantes <= 0) this._finTimer();
     }, 1000);
   },
 
-  ajouter(sec) { this._restant += sec; PM.sons.clic(); },
-  passer()     { clearInterval(this._iv); this.fermer(); PM.sons.clic(); },
-  fermer()     { clearInterval(this._iv); document.getElementById('pm-timer-fs')?.remove(); }
+  _arreter() {
+    if (this._timerInterval) {
+      clearInterval(this._timerInterval);
+      this._timerInterval = null;
+    }
+  },
+
+  _finTimer() {
+    this._arreter();
+    const phase = this._phase;
+    Sounds.jouer(phase === 'repos' ? 'repos_fin' : 'countdown_go');
+    Sounds.vibrer([200, 100, 200]);
+    if (phase === 'repos') {
+      PM.toast('✅ Repos terminé — Go !', 'success', 2000);
+    } else {
+      PM.toast('⏹ Timer terminé !', 'info', 1500);
+    }
+    setTimeout(() => this._fermerOverlay(), 1500);
+  },
+
+  // ── Overlay ──
+  _afficherOverlay(phase, duree, exoIdx = null, serieIdx = null) {
+    this._dureeInitiale = duree;
+    document.getElementById('timer-overlay-full')?.remove();
+
+    const couleur = phase === 'reps' ? 'var(--fd-indigo)' : 'var(--fd-mint)';
+    const label   = phase === 'reps' ? '⚡ EFFORT' : '😴 REPOS';
+    const circ    = 2 * Math.PI * 60;
+
+    const overlay = document.createElement('div');
+    overlay.id    = 'timer-overlay-full';
+    overlay.style.cssText = `
+      position:fixed;
+      bottom:calc(var(--nav-height,60px) + 8px);
+      left:50%;transform:translateX(-50%);
+      width:calc(100% - 32px);max-width:380px;
+      background:var(--bg-card,#12122a);
+      border:2px solid ${couleur};border-radius:20px;
+      padding:16px;z-index:800;
+      box-shadow:0 8px 32px rgba(0,0,0,.4);
+      animation:pm-slideUp .3s ease`;
+
+    overlay.innerHTML = `
+      <div style="display:flex;align-items:center;
+                  justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:.75rem;font-weight:800;
+                    text-transform:uppercase;letter-spacing:.08em;
+                    color:${couleur}">${label}</div>
+        <button onclick="TimerManager._fermerOverlay()"
+                style="background:none;border:none;
+                       color:rgba(255,255,255,.4);font-size:1rem;cursor:pointer">
+          ✕
+        </button>
+      </div>
+
+      ${(this._nomExo || this._poidsActuel !== null) ? `
+        <div style="text-align:center;margin-bottom:10px">
+          ${this._nomExo ? `
+            <div style="font-size:.82rem;font-weight:700;
+                        color:white;margin-bottom:4px">
+              ${this._nomExo}
+            </div>` : ''}
+          ${this._poidsActuel !== null ? `
+            <div style="display:inline-flex;align-items:center;gap:8px;
+                        padding:8px 20px;background:rgba(75,75,249,.15);
+                        border:1px solid rgba(75,75,249,.3);border-radius:99px">
+              <span style="font-size:1.3rem;font-weight:800;
+                           color:var(--fd-indigo)">${this._poidsActuel}kg</span>
+              <span style="color:rgba(255,255,255,.4)">×</span>
+              <span style="font-size:1.3rem;font-weight:800;
+                           color:var(--fd-lemon)">${this._repsActuel||'—'}</span>
+            </div>` : ''}
+        </div>` : ''}
+
+      <div style="position:relative;width:140px;height:140px;margin:0 auto 12px">
+        <svg width="140" height="140" style="transform:rotate(-90deg)">
+          <circle cx="70" cy="70" r="60" fill="none"
+                  stroke="rgba(255,255,255,.06)" stroke-width="8"/>
+          <circle cx="70" cy="70" r="60" fill="none"
+                  stroke="${couleur}" stroke-width="8"
+                  stroke-linecap="round"
+                  stroke-dasharray="${circ}" stroke-dashoffset="0"
+                  id="timer-circle-arc"
+                  style="transition:stroke-dashoffset .9s linear;
+                         filter:drop-shadow(0 0 6px ${couleur})"/>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;
+                    transform:translate(-50%,-50%);text-align:center">
+          <div id="timer-overlay-display"
+               style="font-size:2.2rem;font-weight:800;
+                      color:${couleur};
+                      font-variant-numeric:tabular-nums;line-height:1">
+            ${this._formaterTemps(duree)}
+          </div>
+          <div style="font-size:.6rem;color:rgba(255,255,255,.4)">sec</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;
+                  gap:8px;margin-bottom:10px">
+        <button onclick="TimerManager._togglePause()" id="timer-btn-pause"
+                style="padding:10px 4px;background:rgba(75,75,249,.15);
+                       border:1px solid var(--fd-indigo);border-radius:99px;
+                       color:var(--fd-indigo);font-size:.75rem;
+                       font-weight:700;cursor:pointer">
+          ⏸ Pause
+        </button>
+        <button onclick="TimerManager._ajouter(15)"
+                style="padding:10px 4px;background:rgba(255,255,255,.06);
+                       border:1px solid rgba(255,255,255,.12);border-radius:99px;
+                       color:rgba(255,255,255,.7);font-size:.75rem;
+                       font-weight:700;cursor:pointer">
+          +15s
+        </button>
+        <button onclick="TimerManager._arreterEtFermer()"
+                style="padding:10px 4px;background:rgba(255,141,150,.15);
+                       border:1px solid var(--fd-coral);border-radius:99px;
+                       color:var(--fd-coral);font-size:.75rem;
+                       font-weight:700;cursor:pointer">
+          ✕ Stop
+        </button>
+      </div>
+
+      ${phase === 'repos' ? `
+        <div style="display:flex;gap:6px">
+          ${[45,60,90,120].map(s=>`
+            <button onclick="TimerManager._resetAvec(${s})"
+                    data-preset="${s}"
+                    style="flex:1;padding:6px 2px;font-size:.68rem;font-weight:700;
+                           background:${s===duree?couleur:'rgba(255,255,255,.06)'};
+                           color:${s===duree?'#09092d':'rgba(255,255,255,.4)'};
+                           border:1px solid ${s===duree?couleur:'rgba(255,255,255,.1)'};
+                           border-radius:99px;cursor:pointer">
+              ${s}s
+            </button>`).join('')}
+        </div>` : ''}
+
+      ${phase === 'reps' ? `
+        <div style="margin-bottom:8px">
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.08em;color:rgba(255,255,255,.4);
+                      text-align:center;margin-bottom:6px">MODIFIER CHARGE</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:12px">
+            <button onclick="TimerManager._modifierPoids(-2.5)"
+                    style="width:60px;height:44px;background:rgba(255,141,150,.15);
+                           border:1px solid var(--fd-coral);border-radius:12px;
+                           color:var(--fd-coral);font-size:.85rem;font-weight:700;cursor:pointer">
+              −2.5
+            </button>
+            <div id="timer-poids-display"
+                 style="font-size:1.4rem;font-weight:800;
+                        color:var(--fd-indigo);min-width:80px;text-align:center">
+              ${this._poidsActuel !== null ? `${this._poidsActuel}kg` : '—kg'}
+            </div>
+            <button onclick="TimerManager._modifierPoids(2.5)"
+                    style="width:60px;height:44px;background:rgba(139,240,187,.1);
+                           border:1px solid var(--fd-mint);border-radius:12px;
+                           color:var(--fd-mint);font-size:.85rem;font-weight:700;cursor:pointer">
+              +2.5
+            </button>
+          </div>
+        </div>` : ''}
+    `;
+    document.body.appendChild(overlay);
+  },
+
+  _fermerOverlay() {
+    this._arreter();
+    const el = document.getElementById('timer-overlay-full');
+    if (el) {
+      el.style.animation = 'pm-toastOut .3s ease forwards';
+      setTimeout(() => el.remove(), 300);
+    }
+  },
+
+  _arreterEtFermer() { this._fermerOverlay(); },
+
+  _togglePause() {
+    this._enPause = !this._enPause;
+    const btn = document.getElementById('timer-btn-pause');
+    if (btn) {
+      btn.textContent       = this._enPause ? '▶ Go'         : '⏸ Pause';
+      btn.style.color       = this._enPause ? 'var(--fd-coral)' : 'var(--fd-indigo)';
+      btn.style.borderColor = this._enPause ? 'var(--fd-coral)' : 'var(--fd-indigo)';
+    }
+    Sounds.vibrer('leger');
+  },
+
+  _ajouter(secondes) {
+    this._secondesRestantes = Math.min(this._secondesRestantes + secondes, 600);
+    this._dureeInitiale     = Math.max(this._dureeInitiale, this._secondesRestantes);
+    this._mettreAJourDisplay();
+    this._mettreAJourCercle();
+    Sounds.vibrer('leger');
+  },
+
+  _modifierPoids(delta) {
+    if (this._poidsActuel === null) this._poidsActuel = 0;
+    this._poidsActuel = Math.max(0, Math.round((this._poidsActuel + delta) * 10) / 10);
+    const el = document.getElementById('timer-poids-display');
+    if (el) el.textContent = `${this._poidsActuel}kg`;
+    window._timerPoidsModifie = this._poidsActuel;
+    Sounds.vibrer('leger');
+    PM.toast(`Charge : ${this._poidsActuel}kg`, 'info', 800);
+  },
+
+  _resetAvec(secondes) {
+    this._arreter();
+    this._dureeInitiale = secondes;
+    document.querySelectorAll('[data-preset]').forEach(btn => {
+      const actif = parseInt(btn.dataset.preset) === secondes;
+      const c     = 'var(--fd-mint)';
+      btn.style.background  = actif ? c                      : 'rgba(255,255,255,.06)';
+      btn.style.color       = actif ? '#09092d'              : 'rgba(255,255,255,.4)';
+      btn.style.borderColor = actif ? c                      : 'rgba(255,255,255,.1)';
+    });
+    this._demarrer(secondes, this._phase || 'repos');
+  },
+
+  _mettreAJourDisplay() {
+    const el = document.getElementById('timer-overlay-display');
+    if (el) el.textContent = this._formaterTemps(Math.max(0, this._secondesRestantes));
+  },
+
+  _mettreAJourCercle() {
+    const arc = document.getElementById('timer-circle-arc');
+    if (!arc) return;
+    const pct  = Math.max(0, this._secondesRestantes / (this._dureeInitiale || 1));
+    const circ = 2 * Math.PI * 60;
+    arc.style.strokeDashoffset = circ * (1 - pct);
+  },
+
+  _formaterTemps(s) {
+    s = Math.max(0, Math.round(s));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return m > 0 ? `${m}:${String(r).padStart(2,'0')}` : String(s);
+  },
+
+  // ── Alarme ──
+  getAlarme() {
+    return PM.get(() => Utils.storage.get(this.CLE_ALARME, {
+      active:false, heure:'18:00',
+      message:"⚡ C'est l'heure de t'entraîner !",
+      repetitions:3
+    }), { active:false, heure:'18:00',
+          message:"⚡ C'est l'heure !",repetitions:3 });
+  },
+
+  sauvegarderAlarme(data) {
+    try { Utils.storage.set(this.CLE_ALARME, data); } catch(e) {}
+    try {
+      if (navigator.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage(
+          data.active
+            ? { type:'PLANIFIER_ALARME', payload:{ heure:data.heure, message:data.message, repetitions:data.repetitions||3 } }
+            : { type:'ANNULER_ALARME' }
+        );
+      }
+    } catch(e) {}
+    if (data.active) this._planifierAlarme(data.heure);
+    else this._annulerAlarme();
+  },
+
+  _planifierAlarme(heure) {
+    this._annulerAlarme();
+    this._alarmeInterval = setInterval(() => {
+      const now    = new Date();
+      const [h, m] = heure.split(':').map(Number);
+      const alarme = this.getAlarme();
+      if (!alarme.active) return;
+      if (now.getHours()===h && now.getMinutes()===m && now.getSeconds()<=10) {
+        const cle = `ft_alarme_done_${new Date().toISOString().split('T')[0]}`;
+        if (PM.get(()=>Utils.storage.get(cle), false)) return;
+        try { Utils.storage.set(cle, true); } catch(e) {}
+        this._declencherAlarme(alarme);
+      }
+    }, 5000);
+  },
+
+  _annulerAlarme() {
+    if (this._alarmeInterval) {
+      clearInterval(this._alarmeInterval);
+      this._alarmeInterval = null;
+    }
+  },
+
+  _declencherAlarme(alarme) {
+    const msg  = alarme.message || "⚡ C'est l'heure de t'entraîner !";
+    const reps = alarme.repetitions || 3;
+    Array.from({length:reps}, (_,i) => i * 120000).forEach(delai => {
+      setTimeout(() => {
+        const check = this.getAlarme();
+        if (!check.active) return;
+        try {
+          if (Notification.permission === 'granted') {
+            new Notification('⚡ PowerApp — Go !', {
+              body:msg, vibrate:[500,200,500,200,500],
+              requireInteraction:true, tag:'powerapp-alarme'
+            });
+          }
+        } catch(e) {}
+        PM.toast(`⏰ ${msg}`, 'success', 15000);
+        Sounds.vibrer([500,200,500,200,500]);
+        this._jouerSonAlarme();
+      }, delai);
+    });
+  },
+
+  _jouerSonAlarme() {
+    [0, 800, 1600].forEach(delai => {
+      setTimeout(() => {
+        try {
+          const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+          const osc  = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(880,  ctx.currentTime);
+          osc.frequency.setValueAtTime(1100, ctx.currentTime + .15);
+          osc.frequency.setValueAtTime(880,  ctx.currentTime + .30);
+          gain.gain.setValueAtTime(1.0, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .6);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + .6);
+        } catch(e) {}
+      }, delai);
+    });
+  },
+
+  async initAlarme() {
+    const alarme = this.getAlarme();
+    if (alarme.active) {
+      this._planifierAlarme(alarme.heure);
+      try {
+        const reg = await navigator.serviceWorker?.ready;
+        reg?.active?.postMessage({
+          type:'PLANIFIER_ALARME',
+          payload:{ heure:alarme.heure, message:alarme.message, repetitions:alarme.repetitions||3 }
+        });
+      } catch(e) {}
+    }
+    try {
+      if ('Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+    } catch(e) {}
+  },
+
+  renderAlarme(container) {
+    if (!container) return;
+    const alarme = this.getAlarme();
+    container.innerHTML = `
+      <div class="card mb-md"
+           style="border-color:${alarme.active?'var(--fd-lemon)':'var(--border-color)'}">
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;margin-bottom:16px">
+          <div>
+            <div class="card-label" style="margin:0">⏰ Rappel entraînement</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">
+              Notification quotidienne à heure fixe
+            </div>
+          </div>
+          <div onclick="TimerManager._toggleAlarme(${!alarme.active})"
+               style="position:relative;width:48px;height:26px;cursor:pointer">
+            <div style="position:absolute;inset:0;
+                        background:${alarme.active?'var(--fd-lemon)':'rgba(255,255,255,.1)'};
+                        border:2px solid ${alarme.active?'var(--fd-lemon)':'rgba(255,255,255,.2)'};
+                        border-radius:99px;transition:all .25s"></div>
+            <div style="position:absolute;top:50%;
+                        left:${alarme.active?'24px':'2px'};
+                        transform:translateY(-50%);
+                        width:18px;height:18px;border-radius:50%;
+                        background:${alarme.active?'#09092d':'rgba(255,255,255,.4)'};
+                        transition:left .25s;pointer-events:none"></div>
+          </div>
+        </div>
+        <div class="input-label">⏰ Heure</div>
+        <input type="time" id="alarme-heure" class="input mt-sm mb-md"
+               value="${alarme.heure}"
+               style="font-size:1.2rem;font-weight:700;text-align:center;
+                      color:var(--fd-lemon)"/>
+        <div class="input-label">💬 Message</div>
+        <input type="text" id="alarme-message" class="input mt-sm mb-md"
+               value="${alarme.message||''}"
+               placeholder="⚡ C'est l'heure de t'entraîner !"/>
+        <div class="input-label">🔁 Répétitions</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);
+                    gap:6px;margin:8px 0 16px">
+          ${[1,3,5].map(r=>`
+            <button onclick="TimerManager._setRepetitions(${r})"
+                    style="padding:8px 4px;font-size:.72rem;font-weight:700;
+                           background:${(alarme.repetitions||3)===r?'var(--fd-lemon)':'var(--bg-input,rgba(255,255,255,.06))'};
+                           color:${(alarme.repetitions||3)===r?'#09092d':'rgba(255,255,255,.5)'};
+                           border:1px solid ${(alarme.repetitions||3)===r?'var(--fd-lemon)':'rgba(255,255,255,.1)'};
+                           border-radius:99px;cursor:pointer">
+              ${r===1?'1× seulement':r===3?'3× (recommandé)':'5× (max)'}
+            </button>`).join('')}
+        </div>
+        <button onclick="TimerManager._sauvegarderAlarme()"
+                class="btn-primary" style="width:100%">
+          💾 Sauvegarder
+        </button>
+        ${alarme.active?`
+          <div style="margin-top:8px;text-align:center;
+                      font-size:.75rem;color:var(--fd-lemon)">
+            ⏰ Active à ${alarme.heure} · ${alarme.repetitions||3}× / 2min
+          </div>`:''}
+      </div>
+      <div class="card">
+        <button onclick="TimerManager._testerAlarme()"
+                class="btn-secondary" style="width:100%;font-size:.78rem">
+          🔔 Tester l'alarme maintenant
+        </button>
+      </div>`;
+  },
+
+  _toggleAlarme(active) {
+    const alarme  = this.getAlarme();
+    alarme.active = active;
+    this.sauvegarderAlarme(alarme);
+    const el = document.getElementById('alarme-section');
+    if (el) this.renderAlarme(el);
+    PM.toast(active ? '⏰ Alarme activée !' : '🔕 Alarme désactivée',
+             active ? 'success' : 'info', 2000);
+  },
+
+  _sauvegarderAlarme() {
+    const heure   = document.getElementById('alarme-heure')?.value;
+    const message = document.getElementById('alarme-message')?.value?.trim()
+      || "⚡ C'est l'heure de t'entraîner !";
+    if (!heure) { PM.toast('Choisis une heure !','error'); return; }
+    const existing = this.getAlarme();
+    this.sauvegarderAlarme({ ...existing, heure, message });
+    PM.toast(`✅ Alarme sauvegardée à ${heure} !`, 'success');
+    const el = document.getElementById('alarme-section');
+    if (el) this.renderAlarme(el);
+  },
+
+  _setRepetitions(n) {
+    const alarme       = this.getAlarme();
+    alarme.repetitions = n;
+    try { Utils.storage.set(this.CLE_ALARME, alarme); } catch(e) {}
+    const el = document.getElementById('alarme-section');
+    if (el) this.renderAlarme(el);
+    PM.toast(`🔁 ${n} répétition${n>1?'s':''}`, 'success', 2000);
+  },
+
+  async _testerAlarme() {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          PM.toast('⚠️ Active les notifications !', 'error', 5000);
+          return;
+        }
+      } catch(e) {}
+    }
+    const alarme = this.getAlarme();
+    this._declencherAlarme({ ...alarme, repetitions:1 });
+    PM.toast('🔔 Test alarme lancé !', 'info', 2000);
+  }
 };
 
-PM.demarrerRepos = sec => PM.timer.ouvrir(sec, 'Repos entre séries');
+window.TimerManager = TimerManager;
+
+// Bridge PM.timer → TimerManager
+PM.timer = {
+  ouvrir(sec, label) { TimerManager.demarrerRepos(sec); },
+  fermer()           { TimerManager._fermerOverlay();   },
+  ajouter(s)         { TimerManager._ajouter(s);        },
+  passer()           { TimerManager._arreterEtFermer(); }
+};
+
+PM.demarrerRepos = sec => TimerManager.demarrerRepos(sec);
 
 // ═══════════════════════════════════════════════════════════
 // 8. PAGE HOME v2
