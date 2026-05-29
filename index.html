@@ -166,35 +166,41 @@
   ══════════════════════════════════════════ -->
   <div id="app-wrapper" style="display:none">
 
-    <!-- HEADER -->
-    <header class="app-header">
-      <div class="header-left-bar"></div>
-      <div class="header-ambient"></div>
-      <div class="corner-tl"></div>
-      <div class="corner-tr"></div>
-      <div class="corner-bl"></div>
-      <div class="corner-br"></div>
-      <div class="header-left">
-        <span class="header-emoji" id="header-emoji">⚡</span>
-        <span class="header-title" id="header-title">PowerApp</span>
+    <!-- HEADER CYBER BLOCK BLUE -->
+<header class="app-header" id="app-header">
+
+  <!-- Cyber Block elements -->
+  <div class="header-left-bar"></div>
+  <div class="header-ambient"></div>
+  <div class="corner-tl"></div>
+  <div class="corner-tr"></div>
+  <div class="corner-bl"></div>
+  <div class="corner-br"></div>
+
+  <div class="header-left">
+    <div class="header-icon-bubble">
+      <span class="header-emoji" id="header-emoji">⚡</span>
+    </div>
+    <div class="header-text-block">
+      <div class="header-meta-row">
+        <span class="header-cat-label" id="header-cat">CORE</span>
+        <div class="header-dot" id="header-dot"
+             style="background:#00cfff;box-shadow:0 0 6px #00cfff;
+                    width:4px;height:4px;border-radius:50%;">
+        </div>
       </div>
-      <div class="header-right">
-  <div id="header-xp" class="header-xp"></div>
-  <button id="btn-menu-global"
-        onclick="MenuGlobal.toggle()"
-        style="width:36px;height:36px;
-               border-radius:50%;
-               border:1px solid var(--border-color);
-               background:var(--bg-input);
-               font-size:1rem;
-               display:flex;align-items:center;
-               justify-content:center;
-               cursor:pointer;
-               transition:all .2s">
-  ☰
-</button>
-</div>
-    </header>
+      <div class="header-title" id="header-title">PowerApp</div>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="header-xp" id="header-xp"></div>
+    <div class="header-badge" id="header-badge">HOME</div>
+    <button class="header-icon-btn" id="btn-menu-global"
+            onclick="MenuGlobal.toggle()" aria-label="Menu">☰</button>
+  </div>
+
+</header>
 
     <!-- MAIN CONTENT -->
     <main class="app-main" id="app-main">
