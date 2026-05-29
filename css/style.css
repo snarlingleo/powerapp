@@ -4107,6 +4107,90 @@ h1, h2, h3,
   position: relative !important;
   z-index: 1 !important;
 }
+/* ════════════════════════════════════════════════════════
+   ✅ FIX CRITIQUE — App Layout
+════════════════════════════════════════════════════════ */
+
+/* App wrapper */
+#app-wrapper {
+  display:        flex !important;
+  flex-direction: column !important;
+  min-height:     100vh !important;
+  min-height:     100dvh !important;
+  position:       relative !important;
+  z-index:        1 !important;
+  overflow:       hidden !important;
+}
+
+/* Main scrollable */
+.app-main {
+  flex:             1 !important;
+  overflow-y:       auto !important;
+  overflow-x:       hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  position:         relative !important;
+  z-index:          1 !important;
+  margin-top:       var(--header-height, 56px) !important;
+  margin-bottom:    var(--nav-height, 64px) !important;
+  padding-top:      12px !important;
+  padding-bottom:   12px !important;
+  padding-left:     16px !important;
+  padding-right:    16px !important;
+  min-height:       calc(100vh - var(--header-height,56px) - var(--nav-height,64px)) !important;
+}
+
+/* Pages */
+.page {
+  display:    none !important;
+  min-height: 200px !important;
+  width:      100% !important;
+  animation:  pageIn .25s ease forwards !important;
+}
+
+.page.active {
+  display: block !important;
+}
+
+/* Header fixed */
+.app-header {
+  position:   fixed !important;
+  top:        0 !important;
+  left:       50% !important;
+  transform:  translateX(-50%) !important;
+  width:      100% !important;
+  max-width:  480px !important;
+  height:     var(--header-height, 56px) !important;
+  z-index:    200 !important;
+}
+
+/* Nav fixed */
+.app-nav {
+  position:   fixed !important;
+  bottom:     0 !important;
+  left:       50% !important;
+  transform:  translateX(-50%) !important;
+  width:      100% !important;
+  max-width:  480px !important;
+  height:     var(--nav-height, 64px) !important;
+  z-index:    100 !important;
+}
+
+/* Scan lines au dessus de tout */
+body::after {
+  z-index: 9999 !important;
+  pointer-events: none !important;
+}
+
+/* Ambient glow derrière tout */
+body::before {
+  z-index: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Sparks derrière le contenu */
+.cyber-spark {
+  z-index: 0 !important;
+}
 
 /* ════════════════════════════════════════════════════════════
    FIN — CYBER BLOCK BLUE OVERRIDE
