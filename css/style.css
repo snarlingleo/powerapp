@@ -160,60 +160,54 @@ a {
 /* ════════════════════════════════════════════════════════════
    SPLASH SCREEN
 ════════════════════════════════════════════════════════════ */
+/* ════ SPLASH CYBER ════ */
 #splash-screen {
-  position:        fixed;
-  inset:           0;
-  z-index:         var(--z-overlay);
-  background:      var(--bg-app);
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  flex-direction:  column;
+  background: linear-gradient(180deg, #020610 0%, #030818 100%) !important;
+  position: relative;
+  overflow: hidden;
 }
 
-.splash-content {
-  text-align: center;
-  animation:  fadeIn .5s ease;
+#splash-screen::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(0,102,255,0.2) 0%, transparent 70%);
+  pointer-events: none;
+  animation: cb-ambient 4s ease-in-out infinite;
 }
 
 .splash-logo {
-  font-size:     4rem;
-  margin-bottom: var(--space-md);
-  animation:     bounceIn .6s ease .2s both;
+  filter: drop-shadow(0 0 20px #00cfff) !important;
+  animation: bounceIn .6s ease .2s both, cb-logo-glow 2s ease-in-out infinite !important;
+}
+
+@keyframes cb-logo-glow {
+  0%,100% { filter: drop-shadow(0 0 15px #00cfff); }
+  50%     { filter: drop-shadow(0 0 30px #00cfff) drop-shadow(0 0 60px #0066ff); }
 }
 
 .splash-title {
-  font-size:     1.8rem;
-  font-weight:   800;
-  color:         var(--text-primary);
-  margin-bottom: var(--space-sm);
+  font-family: 'Orbitron', monospace !important;
+  background: linear-gradient(90deg, #00cfff, #0066ff, #7b00ff) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  letter-spacing: 4px !important;
 }
 
 .splash-subtitle {
-  font-size:     .85rem;
-  color:         var(--text-muted);
-  margin-bottom: var(--space-xl);
-}
-
-.splash-loader {
-  width:         160px;
-  height:        4px;
-  background:    var(--border-color);
-  border-radius: 2px;
-  overflow:      hidden;
-  margin:        0 auto;
+  font-family: 'Rajdhani', sans-serif !important;
+  letter-spacing: 3px !important;
+  text-transform: uppercase !important;
 }
 
 .splash-bar {
-  height:        100%;
-  width:         0%;
-  background:    linear-gradient(
-    to right, var(--fd-indigo), var(--fd-mint)
-  );
-  border-radius: 2px;
-  animation:     splashLoad 1.2s ease forwards;
+  background: linear-gradient(to right, #0066ff, #00cfff, #7b00ff) !important;
+  box-shadow: 0 0 10px rgba(0,207,255,0.5) !important;
 }
-
 @keyframes splashLoad {
   0%   { width: 0%   }
   100% { width: 100% }
@@ -4098,4 +4092,89 @@ h1, h2, h3,
 .input-label {
   font-family: 'Rajdhani', sans-serif !important;
   letter-spacing: 0.04em !important;
+}
+/* ════ LIVE SÉANCE — Cyber Block ════ */
+
+/* Bouton SÉRIE FAITE */
+#live-content [id^="btn-serie-"] {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 4px 20px rgba(0,102,255,0.5) !important;
+  transition: all 0.2s !important;
+}
+
+#live-content [id^="btn-serie-"]:hover {
+  background: linear-gradient(135deg, #00cfff, #0066ff) !important;
+  box-shadow: 0 6px 30px rgba(0,207,255,0.6) !important;
+  transform: scale(1.02) !important;
+}
+
+/* Input poids/reps */
+#live-content [id^="lr-poids-"],
+#live-content [id^="lr-reps-"] {
+  background: rgba(0,20,60,0.5) !important;
+  border: 2px solid rgba(0,100,255,0.2) !important;
+  border-radius: 10px !important;
+  color: white !important;
+  font-weight: 800 !important;
+}
+
+#live-content [id^="lr-poids-"]:focus,
+#live-content [id^="lr-reps-"]:focus {
+  border-color: #00cfff !important;
+  box-shadow: 0 0 0 3px rgba(0,207,255,0.2), 0 0 20px rgba(0,150,255,0.1) !important;
+  background: rgba(0,50,150,0.2) !important;
+}
+
+/* Boutons +/- poids reps */
+#live-content button[onclick*="modifierPoids"],
+#live-content button[onclick*="modifierReps"] {
+  border-radius: 10px !important;
+  transition: all 0.2s !important;
+}
+
+/* Séries blocs */
+.lr-serie-bloc {
+  background: rgba(0,10,30,0.5) !important;
+  border: 1px solid rgba(0,80,200,0.12) !important;
+  border-radius: 14px !important;
+  transition: all 0.3s !important;
+}
+
+.lr-serie-bloc:hover {
+  border-color: rgba(0,207,255,0.2) !important;
+}
+
+/* Header live séance */
+#live-content .card[style*="linear-gradient"] {
+  background: linear-gradient(135deg,
+    rgba(0,100,255,0.2) 0%,
+    rgba(0,207,255,0.05) 100%) !important;
+  border-color: rgba(0,207,255,0.3) !important;
+}
+
+/* Checklist pre-seance */
+#live-content [id^="checklist-item-"] {
+  border-radius: 14px !important;
+}
+
+/* Bouton commencer */
+[id^="btn-commencer-"] {
+  background: linear-gradient(135deg, #00cfff, #0066ff) !important;
+  border-radius: 30px !important;
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 1px !important;
+  color: #020610 !important;
+  font-weight: 900 !important;
+}
+
+/* Chrono série */
+#serie-arc { stroke: #00cfff !important; }
+#serie-display {
+  color: #00cfff !important;
+  text-shadow: 0 0 20px rgba(0,207,255,0.6) !important;
 }
