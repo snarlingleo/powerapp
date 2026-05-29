@@ -3411,6 +3411,817 @@ PM.obTerminer = function() {
 })();
 
 // ═══════════════════════════════════════════════════════════
+// 20. LIVE ULTRA — Fusion live-ultra.js v1.0
+// ═══════════════════════════════════════════════════════════
+const LiveUltra = {
+
+  _actif:          false,
+  _seanceId:       null,
+  _exercices:      [],
+  _exoIdx:         0,
+  _serieIdx:       0,
+  _seriesValidees: {},
+  _reposActif:     false,
+  _reposInterval:  null,
+  _reposHeureFin:  null,
+  _voixActif:      false,
+  _swipeStartX:    0,
+  _swipeStartY:    0,
+  _swipeStartT:    0,
+
+  // ── Init ──
+  demarrer(seanceId, exercices) {
+    if (this._actif) this.quitter();
+    this._actif          = true;
+    this._seanceId       = seanceId;
+    this._exercices      = exercices || [];
+    this._exoIdx         = 0;
+    this._serieIdx       = 0;
+    this._seriesValidees = {};
+    this._reposActif     = false;
+    this._preRemplirCharges();
+    this._creerOverlay();
+    this._attacherGestes();
+    this._attacherClavier();
+    document.addEventListener('visibilitychange',
+      this._onVisibilityChange.bind(this));
+    console.log('[LiveUltra] Démarré ✅', seanceId);
+  },
+
+  quitter() {
+    this._actif = false;
+    clearInterval(this._reposInterval);
+    document.getElementById('live-ultra-overlay')?.remove();
+    document.removeEventListener('visibilitychange',
+      this._onVisibilityChange.bind(this));
+    document.removeEventListener('keydown',
+      this._onKeyDown?.bind(this));
+    try { window.speechSynthesis?.cancel(); } catch(e) {}
+    console.log('[LiveUltra] Quitté ✅');
+  },
+
+  // ── Pré-remplissage ──
+  _preRemplirCharges() {
+    this._exercices.forEach((ex, i) => {
+      try {
+        const pr = Tracker.getPR(ex.ref);
+        if (pr?.poids) {
+          this._seriesValidees[`prefill-${i}`] = {
+            poidsDefaut: pr.poids,
+            repsDefaut:  ex.reps?.split?.('-')?.[0] || ex.reps || 10
+          };
+        }
+      } catch(e) {}
+    });
+  },
+
+  _getPoidsDefaut(i) {
+    return this._seriesValidees[`prefill-${i}`]?.poidsDefaut || '';
+  },
+
+  _getRepsDefaut(i) {
+    const ex = this._exercices[i];
+    return this._seriesValidees[`prefill-${i}`]?.repsDefaut
+      || ex?.reps?.split?.('-')?.[0] || ex?.reps || '';
+  },
+
+  _getDernierePoids(i) {
+    for (let s = this._serieIdx - 1; s >= 0; s--) {
+      const v = this._seriesValidees[`${i}-${s}`]?.poids;
+      if (v) return v;
+    }
+    return this._getPoidsDefaut(i);
+  },
+
+  _getDerniereReps(i) {
+    for (let s = this._serieIdx - 1; s >= 0; s--) {
+      const v = this._seriesValidees[`${i}-${s}`]?.reps;
+      if (v) return v;
+    }
+    return this._getRepsDefaut(i);
+  },
+
+  // ── Overlay ──
+  _creerOverlay() {
+    document.getElementById('live-ultra-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id    = 'live-ultra-overlay';
+    overlay.style.cssText = `
+      position:fixed;inset:0;z-index:9999;
+      background:#09092d;
+      display:flex;flex-direction:column;
+      overflow:hidden;user-select:none;
+      -webkit-user-select:none;touch-action:pan-y;
+      animation:pm-fadeIn .3s ease`;
+    overlay.innerHTML = this._htmlOverlay();
+    document.body.appendChild(overlay);
+    this._attacherEventsOverlay();
+  },
+
+  _htmlOverlay() {
+    const ex       = this._exercices[this._exoIdx];
+    const exoData  = ex ? (window.EXERCICES||{})[ex.ref] || {} : {};
+    const total    = this._exercices.length;
+    const poids    = this._getDernierePoids(this._exoIdx);
+    const reps     = this._getDerniereReps(this._exoIdx);
+    const serie    = this._serieIdx + 1;
+    const totalS   = ex?.series || 3;
+    const pr       = PM.get(() => Tracker.getPR(ex?.ref), null);
+
+    const totalSeries  = this._exercices.reduce((a,e) => a+(e.series||3), 0);
+    const seriesFaites = Object.keys(this._seriesValidees)
+      .filter(k => !k.startsWith('prefill')).length;
+    const pct = Math.round((seriesFaites / Math.max(totalSeries,1)) * 100);
+
+    return `
+      <style>
+        @keyframes ultraPulse {
+          0%,100%{transform:scale(1);}
+          50%    {transform:scale(1.05);}
+        }
+        @keyframes ultraSuccess {
+          0%  {transform:scale(1);   background:rgba(139,240,187,.2);}
+          50% {transform:scale(1.03);background:rgba(139,240,187,.4);}
+          100%{transform:scale(1);   background:rgba(139,240,187,.2);}
+        }
+        @keyframes ultraShake {
+          0%,100%{transform:translateX(0);}
+          25%    {transform:translateX(-8px);}
+          75%    {transform:translateX(8px);}
+        }
+        .ultra-btn {
+          border-radius:14px;border:2px solid;
+          font-weight:900;cursor:pointer;
+          transition:transform .15s;
+          display:flex;align-items:center;justify-content:center;
+        }
+        .ultra-btn:active{transform:scale(.92);}
+        .ultra-input {
+          flex:1;padding:16px 8px;font-size:2rem;font-weight:900;
+          text-align:center;background:rgba(255,255,255,.06);
+          border:2px solid rgba(255,255,255,.15);
+          border-radius:16px;color:white;outline:none;
+          transition:border-color .2s;
+        }
+        .ultra-input:focus{
+          border-color:var(--fd-indigo);
+          background:rgba(75,75,249,.1);
+        }
+      </style>
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;
+                  padding:16px 20px 8px;flex-shrink:0">
+        <button onclick="LiveUltra.quitter()"
+                style="width:40px;height:40px;background:rgba(255,255,255,.08);
+                       border:1px solid rgba(255,255,255,.1);border-radius:50%;
+                       color:rgba(255,255,255,.6);font-size:.9rem;cursor:pointer">✕</button>
+        <div style="text-align:center;flex:1;padding:0 12px">
+          <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.15em;color:rgba(255,255,255,.4)">
+            ⚡ MODE ULTRA-RAPIDE
+          </div>
+          <div style="font-size:.78rem;font-weight:700;color:white;margin-top:2px;
+                      overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            ${exoData.nom || ex?.ref || 'Séance'}
+          </div>
+        </div>
+        <button id="ultra-btn-voix" onclick="LiveUltra._toggleVoix()"
+                style="width:40px;height:40px;border-radius:50%;cursor:pointer;
+                       background:${this._voixActif?'rgba(139,240,187,.2)':'rgba(255,255,255,.08)'};
+                       border:1px solid ${this._voixActif?'rgba(139,240,187,.4)':'rgba(255,255,255,.1)'};
+                       color:${this._voixActif?'#8bf0bb':'rgba(255,255,255,.6)'};font-size:.9rem">
+          🎙️
+        </button>
+      </div>
+
+      <!-- Progress global -->
+      <div style="padding:0 20px;flex-shrink:0">
+        <div style="height:4px;background:rgba(255,255,255,.06);
+                    border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;
+                      background:linear-gradient(90deg,var(--fd-indigo),var(--fd-mint));
+                      border-radius:99px;transition:width .5s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px">
+          <div style="font-size:.55rem;color:rgba(255,255,255,.3)">
+            Exo ${this._exoIdx+1}/${total}
+          </div>
+          <div style="font-size:.55rem;color:rgba(255,255,255,.3)">
+            ${seriesFaites}/${totalSeries} · ${pct}%
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone exercice -->
+      <div style="flex:1;display:flex;flex-direction:column;
+                  align-items:center;justify-content:center;
+                  padding:8px 20px;overflow:hidden"
+           id="ultra-zone-exercice">
+
+        <!-- Emoji -->
+        <div style="text-align:center;margin-bottom:12px">
+          <div style="font-size:3rem;margin-bottom:6px;
+                      animation:ultraPulse 3s ease infinite">
+            ${exoData.emoji||'💪'}
+          </div>
+          <div style="font-size:.72rem;color:rgba(75,75,249,.8);
+                      font-weight:700;text-transform:uppercase;letter-spacing:.08em">
+            ${exoData.muscle||''}
+          </div>
+        </div>
+
+        <!-- Dots séries -->
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:16px">
+          ${Array.from({length:totalS},(_,i)=>`
+            <div style="width:${i===this._serieIdx?24:8}px;height:8px;
+                        border-radius:99px;transition:all .3s;
+                        background:${
+                          this._seriesValidees[`${this._exoIdx}-${i}`]
+                            ? 'var(--fd-mint)'
+                            : i===this._serieIdx
+                              ? 'var(--fd-indigo)'
+                              : 'rgba(255,255,255,.15)'}">
+            </div>`).join('')}
+        </div>
+
+        <div style="font-size:.65rem;font-weight:700;color:rgba(255,255,255,.4);
+                    text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">
+          Série ${serie} / ${totalS}
+        </div>
+
+        ${pr?`
+          <div style="padding:4px 12px;margin-bottom:12px;
+                      background:rgba(249,239,119,.1);
+                      border:1px solid rgba(249,239,119,.3);
+                      border-radius:99px;font-size:.68rem;
+                      font-weight:700;color:var(--fd-lemon)">
+            🏆 PR ${pr.poids}kg × ${pr.reps}
+          </div>`:''}
+
+        <!-- Poids -->
+        <div style="width:100%;margin-bottom:12px">
+          <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.1em;color:rgba(255,255,255,.3);
+                      margin-bottom:8px;text-align:center">
+            🏋️ Charge (kg)
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="ultra-btn"
+                    style="width:52px;height:52px;flex-shrink:0;
+                           background:rgba(255,141,150,.12);
+                           border-color:rgba(255,141,150,.3);color:#ff8d96;font-size:1rem"
+                    onmousedown="LiveUltra._ajusterCharge(-5)"
+                    ontouchstart="LiveUltra._ajusterCharge(-5)">−5</button>
+            <button class="ultra-btn"
+                    style="width:40px;height:52px;flex-shrink:0;
+                           background:rgba(255,141,150,.08);
+                           border-color:rgba(255,141,150,.2);color:#ff8d96;font-size:.9rem"
+                    onmousedown="LiveUltra._ajusterCharge(-2.5)"
+                    ontouchstart="LiveUltra._ajusterCharge(-2.5)">−½</button>
+            <input id="ultra-poids" type="number" inputmode="decimal"
+                   class="ultra-input"
+                   placeholder="${poids||'kg'}" value="${poids||''}"
+                   step="2.5" min="0"
+                   style="font-size:${poids>99?'1.6rem':'2rem'}"
+                   oninput="LiveUltra._onPoidsChange(this.value)"
+                   onfocus="this.select()"/>
+            <button class="ultra-btn"
+                    style="width:40px;height:52px;flex-shrink:0;
+                           background:rgba(139,240,187,.08);
+                           border-color:rgba(139,240,187,.2);color:#8bf0bb;font-size:.9rem"
+                    onmousedown="LiveUltra._ajusterCharge(2.5)"
+                    ontouchstart="LiveUltra._ajusterCharge(2.5)">+½</button>
+            <button class="ultra-btn"
+                    style="width:52px;height:52px;flex-shrink:0;
+                           background:rgba(139,240,187,.12);
+                           border-color:rgba(139,240,187,.3);color:#8bf0bb;font-size:1rem"
+                    onmousedown="LiveUltra._ajusterCharge(5)"
+                    ontouchstart="LiveUltra._ajusterCharge(5)">+5</button>
+          </div>
+        </div>
+
+        <!-- Reps -->
+        <div style="width:100%;margin-bottom:20px">
+          <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;
+                      letter-spacing:.1em;color:rgba(255,255,255,.3);
+                      margin-bottom:8px;text-align:center">
+            🔁 Répétitions
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button class="ultra-btn"
+                    style="width:52px;height:52px;flex-shrink:0;
+                           background:rgba(255,141,150,.12);
+                           border-color:rgba(255,141,150,.3);color:#ff8d96;font-size:1rem"
+                    onmousedown="LiveUltra._ajusterReps(-2)"
+                    ontouchstart="LiveUltra._ajusterReps(-2)">−2</button>
+            <button class="ultra-btn"
+                    style="width:40px;height:52px;flex-shrink:0;
+                           background:rgba(255,141,150,.08);
+                           border-color:rgba(255,141,150,.2);color:#ff8d96;font-size:.9rem"
+                    onmousedown="LiveUltra._ajusterReps(-1)"
+                    ontouchstart="LiveUltra._ajusterReps(-1)">−1</button>
+            <input id="ultra-reps" type="number" inputmode="numeric"
+                   class="ultra-input"
+                   placeholder="${reps||'reps'}" value="${reps||''}"
+                   min="1"
+                   onfocus="this.select()"/>
+            <button class="ultra-btn"
+                    style="width:40px;height:52px;flex-shrink:0;
+                           background:rgba(139,240,187,.08);
+                           border-color:rgba(139,240,187,.2);color:#8bf0bb;font-size:.9rem"
+                    onmousedown="LiveUltra._ajusterReps(1)"
+                    ontouchstart="LiveUltra._ajusterReps(1)">+1</button>
+            <button class="ultra-btn"
+                    style="width:52px;height:52px;flex-shrink:0;
+                           background:rgba(139,240,187,.12);
+                           border-color:rgba(139,240,187,.3);color:#8bf0bb;font-size:1rem"
+                    onmousedown="LiveUltra._ajusterReps(2)"
+                    ontouchstart="LiveUltra._ajusterReps(2)">+2</button>
+          </div>
+        </div>
+
+        <!-- Valider -->
+        <button id="ultra-btn-valider"
+                onclick="LiveUltra._validerSerie()"
+                style="width:100%;padding:22px;background:var(--fd-indigo);
+                       border:none;border-radius:20px;font-size:1.1rem;
+                       font-weight:900;color:white;cursor:pointer;
+                       letter-spacing:.04em;
+                       box-shadow:0 6px 32px rgba(75,75,249,.5);
+                       transition:all .2s">
+          ✅ SÉRIE FAITE
+        </button>
+
+        <div style="margin-top:10px;font-size:.58rem;
+                    color:rgba(255,255,255,.2);text-align:center">
+          ↑ Swipe haut · ← → exercice · Double-tap · Enter
+        </div>
+      </div>
+
+      <!-- Nav bas -->
+      <div style="display:flex;align-items:center;justify-content:space-between;
+                  padding:12px 20px;flex-shrink:0;
+                  background:rgba(255,255,255,.03);
+                  border-top:1px solid rgba(255,255,255,.06)">
+        <button onclick="LiveUltra._exoPrecedent()"
+                style="padding:10px 16px;background:rgba(255,255,255,.06);
+                       border:1px solid rgba(255,255,255,.1);border-radius:12px;
+                       color:rgba(255,255,255,.5);font-size:.78rem;
+                       font-weight:700;cursor:pointer;
+                       opacity:${this._exoIdx>0?'1':'0.3'}"
+                ${this._exoIdx===0?'disabled':''}>
+          ← Préc
+        </button>
+
+        <div style="display:flex;gap:5px;align-items:center">
+          ${this._exercices.map((_,i)=>`
+            <div onclick="LiveUltra._allerExo(${i})"
+                 style="height:6px;border-radius:99px;cursor:pointer;
+                        transition:all .3s;
+                        width:${i===this._exoIdx?20:6}px;
+                        background:${i===this._exoIdx
+                          ? 'var(--fd-indigo)'
+                          : this._exoTermine(i)
+                            ? 'var(--fd-mint)'
+                            : 'rgba(255,255,255,.15)'}">
+            </div>`).join('')}
+        </div>
+
+        <button onclick="LiveUltra._exoSuivant()"
+                style="padding:10px 16px;background:rgba(75,75,249,.15);
+                       border:1px solid rgba(75,75,249,.3);border-radius:12px;
+                       color:var(--fd-indigo);font-size:.78rem;
+                       font-weight:700;cursor:pointer;
+                       opacity:${this._exoIdx<this._exercices.length-1?'1':'0.3'}"
+                ${this._exoIdx>=this._exercices.length-1?'disabled':''}>
+          Suiv →
+        </button>
+      </div>
+    `;
+  },
+
+  // ── Validation ──
+  _validerSerie() {
+    const poids = parseFloat(document.getElementById('ultra-poids')?.value);
+    const reps  = parseInt(document.getElementById('ultra-reps')?.value);
+
+    if (!poids || !reps) {
+      this._animer('shake');
+      Sounds.jouer('error');
+      PM.toast('Entre le poids et les reps !', 'error');
+      return;
+    }
+
+    const ex     = this._exercices[this._exoIdx];
+    const key    = `${this._exoIdx}-${this._serieIdx}`;
+    const totalS = ex?.series || 3;
+
+    this._seriesValidees[key] = { poids, reps,
+      exoIdx:this._exoIdx, serieIdx:this._serieIdx };
+
+    let isPR = false;
+    try {
+      const r = Tracker.sauvegarderSerie(
+        this._seanceId, ex.ref,
+        this._serieIdx + 1, reps, poids, null
+      );
+      isPR = r?.isPR || false;
+    } catch(e) {}
+
+    try { Gamification.recompenser('SERIE_COMPLETE'); } catch(e) {}
+
+    if (isPR) {
+      Sounds.celebrerPR(ex.ref, poids);
+      PM.toast(`🏆 NOUVEAU RECORD ! ${poids}kg × ${reps}`, 'pr', 4000);
+    } else {
+      Sounds.jouer('serie');
+      Sounds.vibrer('success');
+    }
+
+    this._animer('success');
+
+    if (this._voixActif) {
+      this._parler(isPR
+        ? `Record battu ! ${poids} kilos, ${reps} répétitions !`
+        : `Série ${this._serieIdx+1} validée.`);
+    }
+
+    const serieSuivante = this._serieIdx + 1;
+
+    if (serieSuivante < totalS) {
+      const reposDuree = ex.repos || 75;
+      setTimeout(() => {
+        this._serieIdx = serieSuivante;
+        this._lancerRepos(reposDuree, ex.ref);
+      }, 400);
+    } else {
+      const exoSuivant = this._exoIdx + 1;
+      if (exoSuivant < this._exercices.length) {
+        setTimeout(() => {
+          this._serieIdx = 0;
+          this._exoIdx   = exoSuivant;
+          this._animer('transition');
+          if (this._voixActif) {
+            const next = this._exercices[exoSuivant];
+            const nd   = (window.EXERCICES||{})[next?.ref]||{};
+            this._parler(`Exercice terminé ! Prochain : ${nd.nom||next?.ref}`);
+          }
+          this._rafraichir();
+        }, 400);
+      } else {
+        setTimeout(() => this._terminerSeance(), 500);
+      }
+    }
+  },
+
+  // ── Repos ──
+  _lancerRepos(secondes) {
+    this._reposActif    = true;
+    this._reposHeureFin = Date.now() + (secondes * 1000);
+    clearInterval(this._reposInterval);
+
+    const zone = document.getElementById('ultra-zone-exercice');
+    if (!zone) return;
+
+    const circ  = 2 * Math.PI * 70;
+    const serie = this._serieIdx + 1;
+    const ex    = this._exercices[this._exoIdx];
+    const totalS= ex?.series || 3;
+    const prev  = this._seriesValidees[`${this._exoIdx}-${this._serieIdx-1}`];
+
+    zone.innerHTML = `
+      <div style="display:flex;flex-direction:column;
+                  align-items:center;justify-content:center;
+                  height:100%;text-align:center;padding:20px">
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.15em;color:var(--fd-mint);margin-bottom:20px">
+          😴 REPOS
+        </div>
+        <div style="position:relative;width:160px;height:160px;margin-bottom:20px">
+          <svg width="160" height="160"
+               style="transform:rotate(-90deg)">
+            <circle cx="80" cy="80" r="70" fill="none"
+                    stroke="rgba(139,240,187,.1)" stroke-width="8"/>
+            <circle cx="80" cy="80" r="70" fill="none"
+                    stroke="var(--fd-mint)" stroke-width="8"
+                    stroke-linecap="round"
+                    stroke-dasharray="${circ}" stroke-dashoffset="0"
+                    id="ultra-repos-arc"
+                    style="transition:stroke-dashoffset 1s linear;
+                           filter:drop-shadow(0 0 6px var(--fd-mint))"/>
+          </svg>
+          <div style="position:absolute;top:50%;left:50%;
+                      transform:translate(-50%,-50%);text-align:center">
+            <div id="ultra-repos-display"
+                 style="font-size:2.8rem;font-weight:900;
+                        color:var(--fd-mint);
+                        font-variant-numeric:tabular-nums;line-height:1">
+              ${this._formatTemps(secondes)}
+            </div>
+            <div style="font-size:.6rem;color:rgba(255,255,255,.3);margin-top:4px">
+              secondes
+            </div>
+          </div>
+        </div>
+        <div style="font-size:.78rem;color:rgba(255,255,255,.5);margin-bottom:16px">
+          Série ${serie+1} / ${totalS} dans...
+        </div>
+        ${prev?`
+          <div style="padding:10px 20px;background:rgba(75,75,249,.1);
+                      border:1px solid rgba(75,75,249,.2);
+                      border-radius:12px;margin-bottom:16px">
+            <div style="font-size:.6rem;color:rgba(255,255,255,.4);margin-bottom:4px">
+              Dernière série
+            </div>
+            <div style="font-size:1.4rem;font-weight:900;color:var(--fd-indigo)">
+              ${prev.poids}kg × ${prev.reps}
+            </div>
+          </div>`:''}
+        <div style="display:flex;gap:10px;width:100%;max-width:280px">
+          <button onclick="LiveUltra._ajouterTempsRepos(15)"
+                  style="flex:1;padding:12px;background:rgba(255,255,255,.06);
+                         border:1px solid rgba(255,255,255,.1);border-radius:12px;
+                         color:rgba(255,255,255,.6);font-size:.82rem;
+                         font-weight:700;cursor:pointer">+15s</button>
+          <button onclick="LiveUltra._passerRepos()"
+                  style="flex:2;padding:12px;background:var(--fd-indigo);
+                         border:none;border-radius:12px;color:white;
+                         font-size:.88rem;font-weight:800;cursor:pointer">
+            ⚡ Passer
+          </button>
+        </div>
+      </div>`;
+
+    Sounds.jouer('repos_start');
+    if (this._voixActif) this._parler(`Repos de ${secondes} secondes.`);
+
+    this._reposInterval = setInterval(() => {
+      const resteMs  = this._reposHeureFin - Date.now();
+      const resteSec = Math.ceil(resteMs / 1000);
+      const reste    = Math.max(0, resteSec);
+
+      const disp = document.getElementById('ultra-repos-display');
+      const arc  = document.getElementById('ultra-repos-arc');
+
+      if (disp) disp.textContent = this._formatTemps(reste);
+      if (arc) {
+        const pct = Math.max(0, resteMs / (secondes * 1000));
+        arc.style.strokeDashoffset = circ * (1 - pct);
+        if (reste <= 5) {
+          arc.style.stroke = 'var(--fd-coral)';
+          arc.style.filter = 'drop-shadow(0 0 6px var(--fd-coral))';
+          if (disp) disp.style.color = 'var(--fd-coral)';
+        }
+      }
+      if (reste <= 3 && reste > 0) Sounds.vibrer('leger');
+      if (reste <= 0) {
+        clearInterval(this._reposInterval);
+        this._reposActif = false;
+        Sounds.jouer('repos_fin');
+        Sounds.vibrer([200,100,200]);
+        if (this._voixActif) this._parler('Repos terminé ! Allez, on y va !');
+        this._rafraichir();
+      }
+    }, 300);
+  },
+
+  _passerRepos() {
+    clearInterval(this._reposInterval);
+    this._reposActif = false;
+    Sounds.vibrer('leger');
+    this._rafraichir();
+  },
+
+  _ajouterTempsRepos(sec) {
+    this._reposHeureFin += sec * 1000;
+    Sounds.vibrer('leger');
+    PM.toast(`+${sec}s ✅`, 'success', 800);
+  },
+
+  // ── Navigation ──
+  _exoSuivant() {
+    if (this._exoIdx >= this._exercices.length-1) return;
+    this._exoIdx++; this._serieIdx = 0;
+    this._rafraichir(); Sounds.vibrer('leger');
+  },
+
+  _exoPrecedent() {
+    if (this._exoIdx <= 0) return;
+    this._exoIdx--; this._serieIdx = 0;
+    this._rafraichir(); Sounds.vibrer('leger');
+  },
+
+  _allerExo(idx) {
+    if (idx < 0 || idx >= this._exercices.length) return;
+    this._exoIdx = idx; this._serieIdx = 0;
+    this._rafraichir(); Sounds.vibrer('leger');
+  },
+
+  _exoTermine(i) {
+    const ex = this._exercices[i];
+    if (!ex) return false;
+    for (let s = 0; s < (ex.series||3); s++) {
+      if (!this._seriesValidees[`${i}-${s}`]) return false;
+    }
+    return true;
+  },
+
+  // ── Ajustements ──
+  _ajusterCharge(delta) {
+    const input = document.getElementById('ultra-poids');
+    if (!input) return;
+    const nouveau = Math.max(0, Math.round((parseFloat(input.value)||0 + delta)*4)/4);
+    input.value = nouveau;
+    input.style.fontSize = nouveau > 99 ? '1.6rem' : '2rem';
+    input.style.borderColor = delta > 0 ? 'var(--fd-mint)' : 'var(--fd-coral)';
+    input.style.background  = delta > 0 ? 'rgba(139,240,187,.1)' : 'rgba(255,141,150,.1)';
+    setTimeout(() => {
+      input.style.borderColor = '';
+      input.style.background  = '';
+    }, 200);
+    Sounds.vibrer('leger');
+  },
+
+  _ajusterReps(delta) {
+    const input = document.getElementById('ultra-reps');
+    if (!input) return;
+    input.value = Math.max(1, (parseInt(input.value)||0) + delta);
+    input.style.borderColor = delta > 0 ? 'var(--fd-mint)' : 'var(--fd-coral)';
+    setTimeout(() => input.style.borderColor = '', 200);
+    Sounds.vibrer('leger');
+  },
+
+  _onPoidsChange(val) {
+    const input = document.getElementById('ultra-poids');
+    if (input) input.style.fontSize = parseFloat(val) > 99 ? '1.6rem' : '2rem';
+  },
+
+  // ── Gestes ──
+  _attacherGestes() {
+    const overlay = document.getElementById('live-ultra-overlay');
+    if (!overlay) return;
+
+    overlay.addEventListener('touchstart', e => {
+      const t = e.touches[0];
+      this._swipeStartX = t.clientX;
+      this._swipeStartY = t.clientY;
+      this._swipeStartT = Date.now();
+    }, { passive:true });
+
+    overlay.addEventListener('touchend', e => {
+      if (this._reposActif) return;
+      const t    = e.changedTouches[0];
+      const dx   = t.clientX - this._swipeStartX;
+      const dy   = t.clientY - this._swipeStartY;
+      const dt   = Date.now() - this._swipeStartT;
+      const adx  = Math.abs(dx);
+      const ady  = Math.abs(dy);
+      if (dt > 400) return;
+      if (ady > 60  && dy < 0 && ady > adx) { this._validerSerie(); return; }
+      if (adx > 80  && dx > 0 && adx > ady) { this._exoPrecedent(); this._animer('swipe-right'); return; }
+      if (adx > 80  && dx < 0 && adx > ady) { this._exoSuivant();   this._animer('swipe-left');  return; }
+      if (ady > 120 && dy > 0 && ady > adx) { this._confirmerQuitter(); }
+    }, { passive:true });
+  },
+
+  _confirmerQuitter() {
+    if (confirm('⚡ Quitter le mode Ultra ?\nTa progression sera sauvegardée.')) {
+      this.quitter();
+    }
+  },
+
+  // ── Clavier ──
+  _attacherClavier() {
+    this._onKeyDown = e => {
+      if (!this._actif) return;
+      switch(e.key) {
+        case 'Enter': case ' ': e.preventDefault(); this._validerSerie();       break;
+        case 'ArrowRight':      e.preventDefault(); this._exoSuivant();         break;
+        case 'ArrowLeft':       e.preventDefault(); this._exoPrecedent();        break;
+        case 'ArrowUp':         e.preventDefault(); this._ajusterCharge(2.5);   break;
+        case 'ArrowDown':       e.preventDefault(); this._ajusterCharge(-2.5);  break;
+        case '+':                                   this._ajusterReps(1);        break;
+        case '-':                                   this._ajusterReps(-1);       break;
+        case 'Escape':                              this._confirmerQuitter();    break;
+      }
+    };
+    document.addEventListener('keydown', this._onKeyDown);
+  },
+
+  // ── Events overlay ──
+  _attacherEventsOverlay() {
+    let lastTap = 0;
+    const zone  = document.getElementById('ultra-zone-exercice');
+    if (!zone) return;
+    zone.addEventListener('touchend', e => {
+      const now = Date.now();
+      if (now - lastTap < 300) { e.preventDefault(); this._validerSerie(); }
+      lastTap = now;
+    }, { passive:false });
+  },
+
+  // ── Animations ──
+  _animer(type) {
+    const btn  = document.getElementById('ultra-btn-valider');
+    const zone = document.getElementById('ultra-zone-exercice');
+    switch(type) {
+      case 'success':
+        if (btn) { btn.style.animation='ultraSuccess .4s ease'; setTimeout(()=>btn.style.animation='',400); }
+        break;
+      case 'shake':
+        if (btn) { btn.style.animation='ultraShake .3s ease'; setTimeout(()=>btn.style.animation='',300); }
+        break;
+      case 'transition':
+      case 'swipe-left':
+      case 'swipe-right':
+        if (zone) {
+          const tx = type==='swipe-left'?'-20px':type==='swipe-right'?'20px':'20px';
+          zone.style.opacity='0'; zone.style.transform=`translateX(${tx})`;
+          setTimeout(()=>{
+            zone.style.transition='all .3s ease';
+            zone.style.opacity='1'; zone.style.transform='translateX(0)';
+          }, 50);
+        }
+        break;
+    }
+  },
+
+  // ── Voix ──
+  _toggleVoix() {
+    this._voixActif = !this._voixActif;
+    const btn = document.getElementById('ultra-btn-voix');
+    if (btn) {
+      btn.style.background  = this._voixActif?'rgba(139,240,187,.2)':'rgba(255,255,255,.08)';
+      btn.style.borderColor = this._voixActif?'rgba(139,240,187,.4)':'rgba(255,255,255,.1)';
+      btn.style.color       = this._voixActif?'#8bf0bb':'rgba(255,255,255,.6)';
+    }
+    PM.toast(this._voixActif?'🎙️ Voix activée':'🔇 Voix désactivée','success',1200);
+    if (this._voixActif) {
+      const ex = this._exercices[this._exoIdx];
+      const ed = (window.EXERCICES||{})[ex?.ref||'']||{};
+      this._parler(`Mode guidé activé. ${ed.nom||'Exercice'}, série ${this._serieIdx+1}.`);
+    }
+  },
+
+  _parler(texte) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const u  = new SpeechSynthesisUtterance(texte);
+    u.lang   = 'fr-FR'; u.rate = 0.95; u.pitch = 1.0; u.volume = 0.9;
+    const fr = window.speechSynthesis.getVoices().find(v=>v.lang.startsWith('fr'));
+    if (fr) u.voice = fr;
+    window.speechSynthesis.speak(u);
+  },
+
+  // ── Fin séance ──
+  _terminerSeance() {
+    if (this._voixActif) this._parler('Séance terminée ! Bravo, excellent travail !');
+    Sounds.celebrerSeanceFin();
+    try { App.terminerSeance(this._seanceId); } catch(e) {}
+    setTimeout(() => this.quitter(), 500);
+  },
+
+  // ── Rafraîchissement ──
+  _rafraichir() {
+    const overlay = document.getElementById('live-ultra-overlay');
+    if (!overlay || !this._actif) return;
+    const activeId = document.activeElement?.id;
+    overlay.innerHTML = this._htmlOverlay();
+    this._attacherGestes();
+    this._attacherEventsOverlay();
+    if (activeId) {
+      const el = document.getElementById(activeId);
+      if (el) { el.focus(); el.select?.(); }
+    }
+  },
+
+  // ── Visibility ──
+  _onVisibilityChange() {
+    if (!this._actif) return;
+    if (document.visibilityState === 'visible' && this._reposActif) {
+      const reste = Math.ceil((this._reposHeureFin - Date.now()) / 1000);
+      if (reste <= 0) {
+        clearInterval(this._reposInterval);
+        this._reposActif = false;
+        Sounds.vibrer([200,100,200]);
+        PM.toast('⏱ Repos terminé !', 'success', 3000);
+        this._rafraichir();
+      }
+    }
+  },
+
+  _formatTemps(sec) {
+    sec = Math.max(0, Math.round(sec));
+    const m = Math.floor(sec/60);
+    const s = sec % 60;
+    return m > 0 ? `${m}:${String(s).padStart(2,'0')}` : String(sec);
+  }
+};
+
+window.LiveUltra = LiveUltra;
+     
+// ═══════════════════════════════════════════════════════════
 // 19. EXPORT GLOBAL
 // ═══════════════════════════════════════════════════════════
 window.PM                  = PM;
