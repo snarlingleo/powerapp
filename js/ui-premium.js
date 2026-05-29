@@ -4778,7 +4778,6 @@ const Profil = {
 
   // ── renderPage (conservé pour compatibilité app.js) ──
   renderPage(container) {
-  // Ne rien faire — app.js appelle _rendreProfil() directement
   return;
 }
 };
