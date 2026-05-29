@@ -57,7 +57,14 @@ function naviguer(page, options = {}) {
       // ── Rendu contenu ──
       _rendreContenu(page, pageEl, options);
 
-    }, pagePrecedente ? 80 : 0);
+    setTimeout(() => {
+    if (pageEl.innerHTML.trim() === '') {
+      console.warn('[App] Container vide, re-render forcé:', page);
+      _rendreContenu(page, pageEl, options);
+    }
+  }, 300);
+
+}, pagePrecedente ? 80 : 0);
 
     _updateHeader(page);
 
@@ -453,7 +460,12 @@ case 'live': {
     );
   }
   break;
-      case 'mon_profil':       _rendreProfil(container);                      break;
+      case 'mon_profil':
+  // ✅ Double sécurité — forcer le rendu
+  requestAnimationFrame(() => {
+    _rendreProfil(container);
+  });
+  break;
       case 'coach':
   try {
     if (typeof Coach === 'undefined') {
