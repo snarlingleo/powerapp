@@ -1,4 +1,4 @@
-/* ============================================================
+   /* ============================================================
    PowerApp — App.js v3.0 CORRIGÉ
    Point d'entrée principal + Navigation + Init + UI
    ============================================================ */
@@ -342,7 +342,6 @@ function _updateHeader(page) {
     offline:      { emoji:'📵', titre:'Hors-ligne',         color:'#ff8d96' },
     settings:     { emoji:'⚙️', titre:'Paramètres',         color:'#bfa1ff' },
     nutrition:    { emoji:'🥗', titre:'Nutrition',          color:'#8bf0bb' },
-    mon_profil:   { emoji:'👤', titre:'Mon profil',         color:'#bfa1ff' },
     journal:      { emoji:'📔', titre:'Journal',            color:'#f9ef77' },
     objectifs:    { emoji:'🎯', titre:'Objectifs',          color:'#ff4d6d' },
     circuit:      { emoji:'⚡', titre:'HIIT & Cardio',      color:'#f9ef77' },
@@ -461,12 +460,6 @@ case 'live': {
       'Module stats non disponible.'
     );
   }
-  break;
-      case 'mon_profil':
-  // ✅ Double sécurité — forcer le rendu
-  requestAnimationFrame(() => {
-    _rendreProfil(container);
-  });
   break;
       case 'coach':
   try {
@@ -699,8 +692,8 @@ function rechercherDepuisHome(val) {
     { mots:['galerie','exercice','mouvement'],                     page:'galerie'       },
     { mots:['coach','ia','conseil'],                               page:'coach'         },
     { mots:['défis','defis','challenge'],                          page:'defis'         },
-    { mots:['profil','modifier','avatar'],                         page:'mon_profil'    },
-    { mots:['parametre','paramètres','settings','notif'],          page:'settings'      },
+   { mots:['profil','modifier','avatar'], page:'profil' },
+   { mots:['parametre','paramètres','settings','notif'],          page:'settings'      },
     { mots:['historique','history'],                               page:'history'       },
     { mots:['photos','photo','corps'],                             page:'photos'        },
     { mots:['objectif','objectifs','but'],                         page:'objectifs'     },
@@ -9833,7 +9826,7 @@ const MenuGlobal = {
       {
         titre: '👤 Profil',
         items: [
-          { page:'__modifier__',  emoji:'✏️', label:'Modifier profil',    color:'#bfa1ff' },
+          { page:'__edit__',  emoji:'✏️', label:'Modifier profil',    color:'#bfa1ff' },
           { page:'objectifs',   emoji:'🎯', label:'Objectifs',          color:'#ff4d6d' },
           { page:'journal',     emoji:'📔', label:'Journal',            color:'#f9ef77' },
           { page:'blessures',   emoji:'🩹', label:'Blessures',          color:'#ff8d96' },
@@ -9938,7 +9931,9 @@ const MenuGlobal = {
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             ${sec.items.map(item => `
-              <div onclick="MenuGlobal.naviguerEt('${item.page}')"
+              <div onclick="${item.page === '__edit__' 
+                    ? 'MenuGlobal.fermer();setTimeout(()=>Profil._ouvrirEdition(),200)' 
+                    : `MenuGlobal.naviguerEt('${item.page}')`}"
                    style="display:flex;align-items:center;gap:10px;
                           padding:11px 12px;
                           background:rgba(255,255,255,0.04);
