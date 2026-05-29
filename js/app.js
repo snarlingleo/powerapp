@@ -526,7 +526,6 @@ case 'live': {
         try { GalerieExercices.render(container); }
         catch(e) { _rendrePlaceholder(container,'💪','Galerie exercices','Tous les exercices disponibles.'); }
         break;
-      case 'mon_profil': _renderMonProfil(container); break;
       case 'journal':
         try { Stats.renderJournal(container); }
         catch(e) { _rendrePlaceholder(container,'📔','Journal','Ton journal d\'entraînement.'); }
@@ -5706,23 +5705,6 @@ function _rendreProfil(container) {
       </button>
     </div>
   `;
-}
-
-// ════════════════════════════════════════════════════════════
-// PAGE MON PROFIL — Délégué à Profil.js
-// ════════════════════════════════════════════════════════════
-function _renderMonProfil(container) {
-  try {
-    Profil.renderPage(container);
-  } catch(e) {
-    console.error('[App] Erreur renderMonProfil:', e);
-    container.innerHTML = `
-      <div class="card mt-md" style="text-align:center">
-        <p>Erreur chargement profil.</p>
-        <button onclick="retourArriere()"
-                class="btn-secondary mt-md">← Retour</button>
-      </div>`;
-  }
 }
 
 // ════════════════════════════════════════════════════════════
