@@ -9867,7 +9867,7 @@ const MenuGlobal = {
     panel.innerHTML = `
 
       <!-- ── Profil card ── -->
-      <div onclick="MenuGlobal.naviguerEt('mon_profil')"
+      <div onclick="MenuGlobal.naviguerEt('profil')"
            style="background:linear-gradient(135deg,
                   rgba(75,75,249,0.2),rgba(75,75,249,0.05));
                   border:1px solid rgba(75,75,249,0.3);
