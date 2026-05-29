@@ -8,281 +8,81 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <title>PowerApp ⚡</title>
 
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+
   <!-- ✅ CYBER BLOCK — Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet"/>
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="icon-192.png"/>
+  <!-- CSS Principal -->
+  <link rel="stylesheet" href="styles.css"/>
 
-  <!-- ✅ CYBER BLOCK — CSS Variables injectées globalement -->
+  <!-- ✅ CYBER BLOCK — Variables + Overrides inline -->
   <style>
-    /* ═══════════════════════════════════════════════════
-       CYBER BLOCK BLUE — Global CSS Override
-       Remplace le système Foundever par Cyber Neon Blue
-    ═══════════════════════════════════════════════════ */
-
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;700&display=swap');
+    /* ═══════════════════════════════════════════════
+       CYBER BLOCK BLUE — Injected Global Styles
+    ═══════════════════════════════════════════════ */
 
     :root {
-      /* ── Cyber Blue Palette ── */
       --fd-indigo:      #0066ff;
       --fd-midnight:    #020610;
-      --fd-white:       #ffffff;
-      --fd-light-grey:  #060d20;
       --fd-lemon:       #00cfff;
       --fd-coral:       #7b00ff;
       --fd-lavender:    #0099ff;
       --fd-mint:        #00cfff;
-
-      /* ── Cyber aliases ── */
       --cyber-blue1:    #00cfff;
       --cyber-blue2:    #0066ff;
-      --cyber-blue3:    #001aff;
       --cyber-purple:   #7b00ff;
       --cyber-dark:     #020610;
       --cyber-card:     #030a18;
-
-      /* ── App Structure ── */
-      --bg-body:        #020610;
-      --bg-card:        #030a18;
-      --bg-input:       #040d20;
+      --bg-app:         #020610;
+      --bg-card:        rgba(3,10,24,0.95);
+      --bg-input:       rgba(0,50,150,0.08);
+      --text-muted:     rgba(0,150,255,0.45);
       --border-color:   rgba(0,100,255,0.15);
-      --text-primary:   rgba(255,255,255,0.92);
-      --text-secondary: rgba(200,220,255,0.7);
-      --text-muted:     rgba(0,150,255,0.4);
-
-      /* ── Typography ── */
-      --font-display:   'Orbitron', monospace;
-      --font-body:      'Rajdhani', sans-serif;
-
-      /* ── Spacing (inchangé) ── */
-      --space-xs:  4px;
-      --space-sm:  8px;
-      --space-md:  16px;
-      --space-lg:  24px;
-      --space-xl:  32px;
-
-      /* ── Radius ── */
-      --radius-sm:   8px;
-      --radius-md:   12px;
-      --radius-lg:   16px;
-      --radius-xl:   20px;
-      --radius-full: 9999px;
-
-      /* ── Layout ── */
-      --header-height: 56px;
-      --nav-height:    70px;
     }
 
-    /* ── Reset + Base ── */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-
-    body {
-      font-family: var(--font-body);
-      background: var(--cyber-dark);
-      color: var(--text-primary);
-      -webkit-font-smoothing: antialiased;
-      position: relative;
-    }
-
-    /* ── Scanlines effect ── */
+    /* Scanlines */
     body::after {
       content: '';
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: repeating-linear-gradient(
         0deg,
         rgba(0,150,255,0.012) 0px,
         rgba(0,150,255,0.012) 1px,
-        transparent 1px,
-        transparent 3px
+        transparent 1px, transparent 3px
       );
-      pointer-events: none;
-      z-index: 9999;
+      pointer-events: none; z-index: 9999;
     }
 
-    /* ── Ambient glow ── */
+    /* Ambient glow */
     body::before {
       content: '';
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background:
         radial-gradient(ellipse at 10% 90%, rgba(0,102,255,0.1) 0%, transparent 55%),
         radial-gradient(ellipse at 90% 10%, rgba(123,0,255,0.1) 0%, transparent 55%),
         radial-gradient(ellipse at 50% 50%, rgba(0,207,255,0.03) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 0;
+      pointer-events: none; z-index: 0;
     }
 
-    /* ── Sparks particles ── */
+    /* Sparks */
     .cyber-spark {
       position: fixed;
-      width: 2px;
-      height: 8px;
+      width: 2px; height: 8px;
       border-radius: 1px;
       background: linear-gradient(180deg, #00cfff, transparent);
       box-shadow: 0 0 6px #00cfff;
-      pointer-events: none;
-      z-index: 1;
+      pointer-events: none; z-index: 1;
       animation: spark-fall linear infinite;
     }
 
     @keyframes spark-fall {
       0%   { transform: translateY(-20px) translateX(0); opacity: 0.8; }
-      100% { transform: translateY(100vh) translateX(var(--drift, 0px)); opacity: 0; }
-    }
-
-    /* ── Titres en Orbitron ── */
-    h1, h2, h3,
-    .card-label,
-    .section-title,
-    .nav-btn span,
-    .header-title {
-      font-family: var(--font-display) !important;
-      letter-spacing: 0.05em;
-    }
-
-    /* ── Cards Cyber style ── */
-    .card {
-      background: var(--cyber-card) !important;
-      border: 1px solid rgba(0,100,255,0.15) !important;
-      border-radius: var(--radius-lg) !important;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.35s cubic-bezier(0.175,0.885,0.32,1.275);
-    }
-
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #00cfff, #0066ff, transparent);
-      transition: left 0.5s ease;
-      z-index: 3;
-    }
-
-    .card:hover::before { left: 0; }
-
-    /* ── Buttons Cyber ── */
-    .btn-primary {
-      background: linear-gradient(135deg, #0066ff, #001aff) !important;
-      border: 1px solid rgba(0,207,255,0.3) !important;
-      color: white !important;
-      font-family: var(--font-display) !important;
-      font-size: 0.7rem !important;
-      letter-spacing: 0.1em !important;
-      text-transform: uppercase !important;
-      box-shadow: 0 0 20px rgba(0,102,255,0.4), 0 0 40px rgba(0,207,255,0.1) !important;
-      transition: all 0.3s !important;
-    }
-
-    .btn-primary:hover {
-      box-shadow: 0 0 30px rgba(0,207,255,0.6), 0 0 60px rgba(0,102,255,0.3) !important;
-      transform: translateY(-2px) !important;
-    }
-
-    .btn-secondary {
-      background: rgba(0,50,150,0.15) !important;
-      border: 1px solid rgba(0,207,255,0.2) !important;
-      color: var(--cyber-blue1) !important;
-      font-family: var(--font-display) !important;
-      font-size: 0.65rem !important;
-      letter-spacing: 0.08em !important;
-      text-transform: uppercase !important;
-    }
-
-    /* ── Inputs ── */
-    .input {
-      background: var(--bg-input) !important;
-      border: 1px solid rgba(0,100,255,0.2) !important;
-      color: var(--text-primary) !important;
-      font-family: var(--font-body) !important;
-    }
-
-    .input:focus {
-      border-color: var(--cyber-blue1) !important;
-      box-shadow: 0 0 0 2px rgba(0,207,255,0.15) !important;
-    }
-
-    /* ── Chips ── */
-    .chip {
-      font-family: var(--font-display) !important;
-      font-size: 0.55rem !important;
-      letter-spacing: 0.06em !important;
-      text-transform: uppercase !important;
-    }
-
-    .chip-indigo {
-      background: rgba(0,102,255,0.15) !important;
-      border: 1px solid rgba(0,207,255,0.25) !important;
-      color: var(--cyber-blue1) !important;
-    }
-
-    .chip-lavender {
-      background: rgba(0,153,255,0.12) !important;
-      border: 1px solid rgba(0,153,255,0.25) !important;
-      color: #0099ff !important;
-    }
-
-    /* ── Progress bars ── */
-    .progress-bar {
-      background: rgba(0,100,255,0.1) !important;
-      border-radius: 99px;
-      overflow: hidden;
-      height: 6px;
-    }
-
-    .progress-fill {
-      background: linear-gradient(90deg, #0066ff, #00cfff) !important;
-      box-shadow: 0 0 8px rgba(0,207,255,0.5) !important;
-      height: 100%;
-      border-radius: 99px;
-      transition: width 0.5s ease;
-    }
-
-    /* ── App Header Cyber ── */
-    .app-header {
-      background: rgba(2,6,16,0.97) !important;
-      backdrop-filter: blur(20px) !important;
-      border-bottom: 1px solid rgba(0,100,255,0.2) !important;
-      box-shadow: 0 0 20px rgba(0,102,255,0.1) !important;
-      font-family: var(--font-display) !important;
-    }
-
-    /* ── Nav Bar Cyber ── */
-    .app-nav {
-      background: rgba(2,6,16,0.97) !important;
-      border-top: 1px solid rgba(0,100,255,0.15) !important;
-    }
-
-    /* ── Scrollbar Cyber ── */
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0,150,255,0.3);
-      border-radius: 2px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(0,207,255,0.5);
-    }
-
-    /* ── Animations ── */
-    @keyframes cyber-pulse {
-      0%,100% { box-shadow: 0 0 10px rgba(0,207,255,0.3); }
-      50%      { box-shadow: 0 0 25px rgba(0,207,255,0.7), 0 0 50px rgba(0,102,255,0.3); }
+      100% { transform: translateY(100vh) translateX(var(--drift,0px)); opacity: 0; }
     }
 
     @keyframes cyber-glow {
@@ -290,193 +90,85 @@
       50%      { filter: drop-shadow(0 0 20px #00cfff) drop-shadow(0 0 40px #0066ff); }
     }
 
-    @keyframes pageIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes pageOut {
-      from { opacity: 1; transform: translateY(0); }
-      to   { opacity: 0; transform: translateY(-8px); }
-    }
-
-    @keyframes pulse {
-      0%,100% { opacity: 1; transform: scale(1); }
-      50%      { opacity: 0.5; transform: scale(1.3); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-
-    @keyframes fadeOut {
-      from { opacity: 1; }
-      to   { opacity: 0; }
-    }
-
-    @keyframes menuSlideDown {
-      from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-
-    @keyframes menuSlideUp {
-      from { opacity: 1; transform: translateX(-50%) translateY(0); }
-      to   { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-    }
-
-    @keyframes headerEmojiPop {
-      0%   { transform: scale(0.8) rotate(-10deg); }
-      60%  { transform: scale(1.15) rotate(5deg); }
-      100% { transform: scale(1) rotate(0deg); }
-    }
-
-    @keyframes neonScan {
-      0%   { background-position: 0% 0%; }
-      100% { background-position: 0% 100%; }
-    }
-
-    /* ── Splash Screen Cyber ── */
-    #splash-screen {
-      background: var(--cyber-dark) !important;
-    }
-
-    .splash-logo {
-      font-family: var(--font-display) !important;
-      color: var(--cyber-blue1) !important;
-      filter: drop-shadow(0 0 20px #00cfff) !important;
-      animation: cyber-glow 2s ease-in-out infinite !important;
-    }
-
-    /* ── Section titles ── */
-    .section-title {
-      font-family: var(--font-display) !important;
-      font-size: 0.6rem !important;
-      letter-spacing: 0.12em !important;
-      text-transform: uppercase !important;
-      color: rgba(0,150,255,0.5) !important;
-    }
-
-    /* ── Card label ── */
-    .card-label {
-      font-family: var(--font-display) !important;
-      font-size: 0.55rem !important;
-      letter-spacing: 0.1em !important;
-      text-transform: uppercase !important;
-      color: rgba(0,207,255,0.5) !important;
-    }
-
-    /* ── Toggle ── */
-    .toggle-slider {
-      background: rgba(0,100,255,0.2) !important;
-    }
-
-    input:checked + .toggle-slider {
-      background: linear-gradient(135deg, #0066ff, #00cfff) !important;
-      box-shadow: 0 0 10px rgba(0,207,255,0.4) !important;
-    }
-
-    /* ── Cyber corner brackets pour active elements ── */
-    .active-cyber {
-      position: relative;
-    }
-
-    .active-cyber::after,
-    .active-cyber::before {
-      content: '';
-      position: absolute;
-      width: 10px; height: 10px;
-      border-color: #00cfff;
-      border-style: solid;
-      opacity: 0.6;
-    }
-
-    .active-cyber::before {
-      top: 4px; left: 4px;
-      border-width: 2px 0 0 2px;
-    }
-
-    .active-cyber::after {
-      bottom: 4px; right: 4px;
-      border-width: 0 2px 2px 0;
+    @keyframes cyber-progress {
+      0%   { width: 0%; }
+      100% { width: 100%; }
     }
   </style>
-
-  <link rel="stylesheet" href="styles.css"/>
 </head>
 
 <body>
 
-<!-- ✅ CYBER SPARKS — Particules générées au load -->
+<!-- ✅ CYBER SPARKS -->
 <script>
-  (function() {
-    for (let i = 0; i < 20; i++) {
-      const s = document.createElement('div');
-      s.className = 'cyber-spark';
-      s.style.left = Math.random() * 100 + 'vw';
-      s.style.animationDuration = (4 + Math.random() * 10) + 's';
-      s.style.animationDelay = (Math.random() * 15) + 's';
-      s.style.setProperty('--drift', (Math.random() * 60 - 30) + 'px');
-      s.style.opacity = Math.random() * 0.3 + 0.05;
-      const size = Math.random() * 1.5 + 0.5;
-      s.style.width = size + 'px';
-      document.body.appendChild(s);
-    }
-  })();
+(function() {
+  for (let i = 0; i < 20; i++) {
+    const s = document.createElement('div');
+    s.className = 'cyber-spark';
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.animationDuration = (4 + Math.random() * 10) + 's';
+    s.style.animationDelay = (Math.random() * 15) + 's';
+    s.style.setProperty('--drift', (Math.random() * 60 - 30) + 'px');
+    s.style.opacity = Math.random() * 0.3 + 0.05;
+    const size = Math.random() * 1.5 + 0.5;
+    s.style.width = size + 'px';
+    document.body.appendChild(s);
+  }
+})();
 </script>
 
-<!-- SPLASH -->
+<!-- ✅ SPLASH SCREEN — Cyber -->
 <div id="splash-screen" style="
   position:fixed; inset:0; z-index:9000;
-  background:var(--cyber-dark);
+  background:#020610;
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
-  gap:20px;
+  gap:16px;
 ">
+  <!-- Logo -->
   <div style="
-    font-family:'Orbitron',monospace;
-    font-size:3rem;
-    background:linear-gradient(135deg, #00cfff, #0066ff, #7b00ff);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
+    font-size:3.5rem;
     animation:cyber-glow 2s ease-in-out infinite;
-    filter:drop-shadow(0 0 20px #00cfff);
   ">⚡</div>
+
+  <!-- Titre -->
   <div style="
     font-family:'Orbitron',monospace;
-    font-size:1.2rem;
+    font-size:1.4rem;
     font-weight:900;
     letter-spacing:0.3em;
     text-transform:uppercase;
-    background:linear-gradient(90deg, #00cfff, #0066ff);
+    background:linear-gradient(90deg, #00cfff, #0066ff, #7b00ff);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
-    filter:drop-shadow(0 0 10px #00cfff);
+    filter:drop-shadow(0 0 10px rgba(0,207,255,0.4));
   ">POWERAPP</div>
+
+  <!-- Sous-titre -->
   <div style="
     font-family:'Orbitron',monospace;
-    font-size:0.55rem;
+    font-size:0.5rem;
     letter-spacing:0.3em;
     color:rgba(0,150,255,0.4);
     text-transform:uppercase;
   ">TON COACH FITNESS PERSONNEL</div>
-  <div style="margin-top:20px">
+
+  <!-- Progress bar -->
+  <div style="margin-top:16px; width:220px;">
     <div style="
-      width:200px; height:2px;
+      width:220px; height:2px;
       background:rgba(0,100,255,0.1);
-      border-radius:99px;
-      overflow:hidden;
+      border-radius:99px; overflow:hidden;
     ">
-      <div id="splash-progress" style="
-        width:0%;
-        height:100%;
+      <div id="splash-bar" style="
+        width:0%; height:100%;
         background:linear-gradient(90deg, #0066ff, #00cfff);
         box-shadow:0 0 10px #00cfff;
         border-radius:99px;
-        transition:width 0.8s ease;
+        transition:width 0.4s ease;
       "></div>
     </div>
-    <div style="
+    <div id="splash-label" style="
       font-family:'Orbitron',monospace;
       font-size:0.45rem;
       letter-spacing:0.2em;
@@ -484,157 +176,149 @@
       text-align:center;
       margin-top:8px;
       text-transform:uppercase;
-    " id="splash-label">INITIALISATION...</div>
+      transition:opacity 0.2s;
+    ">INITIALISATION...</div>
   </div>
 </div>
 
-<!-- APP WRAPPER -->
-<div id="app-wrapper" style="display:none; flex-direction:column; height:100vh; position:relative; z-index:1;">
+<!-- ✅ APP WRAPPER -->
+<div id="app-wrapper" style="display:none">
 
-  <!-- HEADER -->
-  <header class="app-header" style="
-    position:fixed; top:0; left:50%; transform:translateX(-50%);
-    width:100%; max-width:480px;
-    height:var(--header-height);
-    background:rgba(2,6,16,0.97);
-    backdrop-filter:blur(20px);
-    border-bottom:1px solid rgba(0,100,255,0.2);
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0 16px;
-    z-index:200;
-    box-shadow:0 0 20px rgba(0,102,255,0.1);
-  ">
-    <!-- Left — Menu -->
-    <button id="btn-menu-global"
-            onclick="MenuGlobal.toggle()"
-            style="
-              width:36px; height:36px;
-              background:rgba(0,50,150,0.15);
-              border:1px solid rgba(0,207,255,0.15);
-              border-radius:8px;
-              color:rgba(0,207,255,0.7);
-              font-size:1rem;
-              cursor:pointer;
-              display:flex; align-items:center; justify-content:center;
-              font-family:'Orbitron',monospace;
-              transition:all 0.3s;
-            "
-            onmouseenter="this.style.borderColor='rgba(0,207,255,0.5)';this.style.boxShadow='0 0 10px rgba(0,207,255,0.3)'"
-            onmouseleave="this.style.borderColor='rgba(0,207,255,0.15)';this.style.boxShadow=''">
-      ☰
-    </button>
+  <!-- ✅ HEADER — Cyber -->
+  <header class="app-header">
+    <div class="header-left">
 
-    <!-- Center — Logo -->
-    <div style="display:flex; align-items:center; gap:8px;">
+      <!-- Bouton Menu -->
+      <button
+        id="btn-menu-global"
+        onclick="MenuGlobal.toggle()"
+        style="
+          width:36px; height:36px;
+          background:rgba(0,50,150,0.15);
+          border:1px solid rgba(0,207,255,0.15);
+          border-radius:8px;
+          color:rgba(0,207,255,0.7);
+          font-size:1rem; cursor:pointer;
+          display:flex; align-items:center;
+          justify-content:center;
+          font-family:'Orbitron',monospace;
+          transition:all 0.3s;
+        "
+        onmouseenter="this.style.borderColor='rgba(0,207,255,0.5)';this.style.boxShadow='0 0 10px rgba(0,207,255,0.2)'"
+        onmouseleave="this.style.borderColor='rgba(0,207,255,0.15)';this.style.boxShadow=''">
+        ☰
+      </button>
+
+      <!-- Logo -->
       <span id="header-emoji" style="
         font-size:1.3rem;
         filter:drop-shadow(0 0 8px #00cfff);
         animation:cyber-glow 3s ease-in-out infinite;
       ">⚡</span>
+
       <span id="header-title" style="
         font-family:'Orbitron',monospace;
-        font-size:0.85rem;
+        font-size:0.82rem;
         font-weight:900;
         letter-spacing:0.15em;
         text-transform:uppercase;
-        background:linear-gradient(135deg,#ffffff 0%,#00cfff 100%);
+        background:linear-gradient(135deg, #ffffff 0%, #00cfff 100%);
         -webkit-background-clip:text;
         -webkit-text-fill-color:transparent;
       ">POWERAPP</span>
     </div>
 
-    <!-- Right — XP + Close -->
-    <div class="header-right" style="display:flex; align-items:center; gap:8px;">
+    <!-- Right -->
+    <div class="header-right">
       <div id="header-xp" style="
         font-family:'Orbitron',monospace;
-        font-size:0.6rem;
+        font-size:0.58rem;
         color:rgba(0,207,255,0.7);
         letter-spacing:0.05em;
       "></div>
-      <button onclick="retourArriere()" style="
-        width:36px; height:36px;
-        background:rgba(0,50,150,0.15);
-        border:1px solid rgba(0,207,255,0.15);
-        border-radius:8px;
-        color:rgba(0,207,255,0.7);
-        font-size:1rem;
-        cursor:pointer;
-        display:flex; align-items:center; justify-content:center;
-        transition:all 0.3s;
-      "
-      onmouseenter="this.style.borderColor='rgba(0,207,255,0.5)'"
-      onmouseleave="this.style.borderColor='rgba(0,207,255,0.15)'">✕</button>
+
+      <button
+        onclick="retourArriere()"
+        style="
+          width:36px; height:36px;
+          background:rgba(0,50,150,0.15);
+          border:1px solid rgba(0,207,255,0.15);
+          border-radius:8px;
+          color:rgba(0,207,255,0.7);
+          font-size:1rem; cursor:pointer;
+          display:flex; align-items:center;
+          justify-content:center;
+          transition:all 0.3s;
+        "
+        onmouseenter="this.style.borderColor='rgba(0,207,255,0.4)'"
+        onmouseleave="this.style.borderColor='rgba(0,207,255,0.15)'">
+        ✕
+      </button>
     </div>
   </header>
 
-  <!-- MAIN CONTENT -->
-  <main class="app-main" style="
-    flex:1;
-    overflow-y:auto;
-    padding:calc(var(--header-height) + 12px) 16px calc(var(--nav-height) + 12px);
-    position:relative; z-index:1;
-    scrollbar-width:thin;
-    scrollbar-color:rgba(0,150,255,0.3) transparent;
-  ">
+  <!-- ✅ MAIN -->
+  <main class="app-main">
+
     <!-- Pages -->
-    <div id="page-home"        class="page" style="display:none"></div>
-    <div id="page-training"    class="page" style="display:none"></div>
-    <div id="page-live"        class="page" style="display:none"></div>
-    <div id="page-stats"       class="page" style="display:none"></div>
-    <div id="page-profil"      class="page" style="display:none"></div>
-    <div id="page-coach"       class="page" style="display:none"></div>
-    <div id="page-defis"       class="page" style="display:none"></div>
-    <div id="page-predict"     class="page" style="display:none"></div>
-    <div id="page-calculateur" class="page" style="display:none"></div>
-    <div id="page-share"       class="page" style="display:none"></div>
+    <div id="page-home"         class="page" style="display:none"></div>
+    <div id="page-training"     class="page" style="display:none"></div>
+    <div id="page-live"         class="page" style="display:none"></div>
+    <div id="page-stats"        class="page" style="display:none"></div>
+    <div id="page-profil"       class="page" style="display:none"></div>
+    <div id="page-coach"        class="page" style="display:none"></div>
+    <div id="page-defis"        class="page" style="display:none"></div>
+    <div id="page-predict"      class="page" style="display:none"></div>
+    <div id="page-calculateur"  class="page" style="display:none"></div>
+    <div id="page-share"        class="page" style="display:none"></div>
     <div id="page-gamification" class="page" style="display:none"></div>
-    <div id="page-history"     class="page" style="display:none"></div>
-    <div id="page-photos"      class="page" style="display:none"></div>
-    <div id="page-social"      class="page" style="display:none"></div>
-    <div id="page-supersets"   class="page" style="display:none"></div>
-    <div id="page-offline"     class="page" style="display:none"></div>
-    <div id="page-settings"    class="page" style="display:none"></div>
-    <div id="page-nutrition"   class="page" style="display:none"></div>
-    <div id="page-journal"     class="page" style="display:none"></div>
-    <div id="page-objectifs"   class="page" style="display:none"></div>
-    <div id="page-circuit"     class="page" style="display:none"></div>
-    <div id="page-adaptatif"   class="page" style="display:none"></div>
-    <div id="page-galerie"     class="page" style="display:none"></div>
-    <div id="page-blessures"   class="page" style="display:none"></div>
-    <div id="page-export"      class="page" style="display:none"></div>
-    <div id="page-themes"      class="page" style="display:none"></div>
-    <div id="page-sounds"      class="page" style="display:none"></div>
+    <div id="page-history"      class="page" style="display:none"></div>
+    <div id="page-photos"       class="page" style="display:none"></div>
+    <div id="page-social"       class="page" style="display:none"></div>
+    <div id="page-supersets"    class="page" style="display:none"></div>
+    <div id="page-offline"      class="page" style="display:none"></div>
+    <div id="page-settings"     class="page" style="display:none"></div>
+    <div id="page-nutrition"    class="page" style="display:none"></div>
+    <div id="page-journal"      class="page" style="display:none"></div>
+    <div id="page-objectifs"    class="page" style="display:none"></div>
+    <div id="page-circuit"      class="page" style="display:none"></div>
+    <div id="page-adaptatif"    class="page" style="display:none"></div>
+    <div id="page-galerie"      class="page" style="display:none"></div>
+    <div id="page-blessures"    class="page" style="display:none"></div>
+    <div id="page-export"       class="page" style="display:none"></div>
+    <div id="page-themes"       class="page" style="display:none"></div>
+    <div id="page-sounds"       class="page" style="display:none"></div>
+
   </main>
 
-  <!-- NAV BAR -->
+  <!-- ✅ NAV BAR -->
   <nav class="app-nav"></nav>
 
 </div>
 
-<!-- ONBOARDING -->
+<!-- ✅ ONBOARDING -->
 <div id="onboarding-screen" class="hidden" style="
   position:fixed; inset:0; z-index:8000;
-  background:var(--cyber-dark);
+  background:#020610;
   overflow-y:auto;
 "></div>
 
-<!-- MODAL INFO -->
+<!-- ✅ MODAL INFO -->
 <div id="modal-info" class="hidden" style="
   position:fixed; inset:0; z-index:500;
-  background:rgba(2,6,16,0.9);
+  background:rgba(2,6,16,0.92);
   backdrop-filter:blur(10px);
   display:flex; align-items:center; justify-content:center;
   padding:16px;
 ">
   <div style="
-    background:var(--cyber-card);
+    background:#030a18;
     border:1px solid rgba(0,207,255,0.2);
-    border-radius:var(--radius-xl);
+    border-radius:20px;
     width:100%; max-width:460px;
-    max-height:90vh;
-    overflow-y:auto;
+    max-height:90vh; overflow-y:auto;
     position:relative;
-    box-shadow:0 0 40px rgba(0,102,255,0.3), 0 0 80px rgba(0,207,255,0.1);
+    box-shadow:0 0 40px rgba(0,102,255,0.3), 0 0 80px rgba(0,207,255,0.08);
   ">
     <button id="modal-info-close" style="
       position:absolute; top:12px; right:12px;
@@ -643,29 +327,27 @@
       border:1px solid rgba(0,207,255,0.2);
       border-radius:6px;
       color:rgba(0,207,255,0.6);
-      font-size:0.9rem;
-      cursor:pointer;
+      font-size:0.9rem; cursor:pointer;
       display:flex; align-items:center; justify-content:center;
-      z-index:10;
-      font-family:'Orbitron',monospace;
+      z-index:10; font-family:'Orbitron',monospace;
       transition:all 0.3s;
     ">✕</button>
     <div id="modal-info-content"></div>
   </div>
 </div>
 
-<!-- MODAL CONFIRM -->
+<!-- ✅ MODAL CONFIRM -->
 <div id="modal-confirm" class="hidden" style="
   position:fixed; inset:0; z-index:600;
-  background:rgba(2,6,16,0.92);
+  background:rgba(2,6,16,0.94);
   backdrop-filter:blur(10px);
   display:flex; align-items:center; justify-content:center;
   padding:20px;
 ">
   <div style="
-    background:var(--cyber-card);
+    background:#030a18;
     border:1px solid rgba(0,207,255,0.2);
-    border-radius:var(--radius-xl);
+    border-radius:20px;
     width:100%; max-width:360px;
     padding:28px;
     box-shadow:0 0 40px rgba(0,102,255,0.3);
@@ -673,43 +355,38 @@
   ">
     <div id="confirm-titre" style="
       font-family:'Orbitron',monospace;
-      font-size:0.9rem;
-      font-weight:900;
+      font-size:0.85rem; font-weight:900;
       letter-spacing:0.1em;
-      color:var(--text-primary);
+      color:rgba(255,255,255,0.92);
       margin-bottom:10px;
     "></div>
     <div id="confirm-msg" style="
       font-size:0.82rem;
-      color:var(--text-muted);
+      color:rgba(0,150,255,0.5);
       margin-bottom:24px;
       line-height:1.5;
     "></div>
     <div style="display:flex; gap:10px;">
       <button id="confirm-cancel" style="
         flex:1; padding:12px;
-        background:rgba(0,50,150,0.15);
+        background:rgba(0,50,150,0.12);
         border:1px solid rgba(0,207,255,0.2);
-        border-radius:var(--radius-md);
+        border-radius:12px;
         color:rgba(0,207,255,0.6);
         font-family:'Orbitron',monospace;
-        font-size:0.65rem;
-        letter-spacing:0.08em;
-        text-transform:uppercase;
-        cursor:pointer;
+        font-size:0.6rem; letter-spacing:0.08em;
+        text-transform:uppercase; cursor:pointer;
         transition:all 0.3s;
       ">Annuler</button>
       <button id="confirm-ok" style="
         flex:1; padding:12px;
         background:linear-gradient(135deg, #0066ff, #001aff);
         border:1px solid rgba(0,207,255,0.3);
-        border-radius:var(--radius-md);
+        border-radius:12px;
         color:white;
         font-family:'Orbitron',monospace;
-        font-size:0.65rem;
-        letter-spacing:0.08em;
-        text-transform:uppercase;
-        cursor:pointer;
+        font-size:0.6rem; letter-spacing:0.08em;
+        text-transform:uppercase; cursor:pointer;
         box-shadow:0 0 20px rgba(0,102,255,0.4);
         transition:all 0.3s;
       ">Confirmer</button>
@@ -717,54 +394,47 @@
   </div>
 </div>
 
-<!-- TOAST -->
-<div id="toast-container" style="
-  position:fixed;
-  bottom:calc(var(--nav-height) + 16px);
-  left:50%; transform:translateX(-50%);
-  z-index:1000;
-  display:flex; flex-direction:column;
-  align-items:center; gap:8px;
-  pointer-events:none;
-"></div>
+<!-- ✅ TOAST CONTAINER -->
+<div id="toast-container"></div>
 
-<!-- OFFLINE BANNER -->
+<!-- ✅ OFFLINE BANNER -->
 <div id="offline-banner" style="display:none;
-  position:fixed; top:var(--header-height); left:0; right:0;
+  position:fixed;
+  top:var(--header-height, 56px);
+  left:0; right:0;
   background:rgba(123,0,255,0.15);
   border-bottom:1px solid rgba(123,0,255,0.3);
   text-align:center;
   font-family:'Orbitron',monospace;
-  font-size:0.55rem;
-  letter-spacing:0.1em;
+  font-size:0.5rem; letter-spacing:0.1em;
   color:rgba(123,0,255,0.8);
-  padding:6px;
-  text-transform:uppercase;
+  padding:6px; text-transform:uppercase;
   z-index:150;
 ">📵 MODE HORS-LIGNE</div>
 
-<!-- SYNC BANNER -->
+<!-- ✅ SYNC BANNER -->
 <div id="sync-banner" style="display:none;
-  position:fixed; top:var(--header-height); left:0; right:0;
+  position:fixed;
+  top:var(--header-height, 56px);
+  left:0; right:0;
   background:rgba(0,102,255,0.15);
   border-bottom:1px solid rgba(0,207,255,0.2);
   text-align:center;
   font-family:'Orbitron',monospace;
-  font-size:0.55rem;
-  letter-spacing:0.1em;
+  font-size:0.5rem; letter-spacing:0.1em;
   color:rgba(0,207,255,0.6);
-  padding:6px;
-  text-transform:uppercase;
+  padding:6px; text-transform:uppercase;
   z-index:150;
 ">🔄 SYNCHRONISATION...</div>
 
-<!-- UPDATE BANNER -->
+<!-- ✅ UPDATE BANNER -->
 <div id="update-banner" style="display:none;
-  position:fixed; bottom:calc(var(--nav-height) + 8px);
+  position:fixed;
+  bottom:calc(var(--nav-height, 64px) + 10px);
   left:50%; transform:translateX(-50%);
-  background:rgba(0,30,80,0.95);
+  background:rgba(2,6,16,0.97);
   border:1px solid rgba(0,207,255,0.3);
-  border-radius:var(--radius-full);
+  border-radius:99px;
   padding:10px 20px;
   display:flex; align-items:center; gap:12px;
   box-shadow:0 0 20px rgba(0,207,255,0.2);
@@ -772,35 +442,30 @@
 ">
   <span style="
     font-family:'Orbitron',monospace;
-    font-size:0.6rem;
-    letter-spacing:0.08em;
-    color:rgba(0,207,255,0.8);
-    text-transform:uppercase;
+    font-size:0.55rem; letter-spacing:0.08em;
+    color:rgba(0,207,255,0.8); text-transform:uppercase;
   ">🆕 NOUVELLE VERSION</span>
   <button onclick="window.location.reload()" style="
     padding:6px 14px;
-    background:linear-gradient(135deg,#0066ff,#00cfff);
-    border:none;
-    border-radius:var(--radius-full);
-    color:white;
+    background:linear-gradient(135deg, #0066ff, #00cfff);
+    border:none; border-radius:99px;
+    color:white; cursor:pointer;
     font-family:'Orbitron',monospace;
-    font-size:0.55rem;
-    letter-spacing:0.08em;
+    font-size:0.52rem; letter-spacing:0.08em;
     text-transform:uppercase;
-    cursor:pointer;
   ">METTRE À JOUR</button>
 </div>
 
-<!-- ✅ SPLASH PROGRESS ANIMATION -->
+<!-- ✅ SPLASH PROGRESS -->
 <script>
 (function() {
-  const bar = document.getElementById('splash-progress');
+  const bar = document.getElementById('splash-bar');
   const lbl = document.getElementById('splash-label');
   const steps = [
-    [20, 'MODULES...'],
-    [45, 'PROFIL...'],
-    [70, 'DONNÉES...'],
-    [90, 'INTERFACE...'],
+    [20,  'MODULES...'],
+    [45,  'PROFIL...'],
+    [70,  'DONNÉES...'],
+    [90,  'INTERFACE...'],
     [100, 'PRÊT ⚡']
   ];
   let i = 0;
@@ -815,18 +480,18 @@
         lbl.style.opacity = '1';
       }, 150);
     }
-    setTimeout(run, 300);
+    setTimeout(run, 350);
   };
-  setTimeout(run, 200);
+  setTimeout(run, 300);
 })();
 </script>
 
-<!-- LIBS -->
+<!-- ✅ LIBS -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="js/imageMapResizer.min.js"></script>
 <script src="js/jquery.maphilight.min.js"></script>
 
-<!-- APP SCRIPTS -->
+<!-- ✅ APP SCRIPTS -->
 <script src="js/i18n.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/tracker.js"></script>
@@ -852,8 +517,8 @@
 <script src="js/ui-premium.js"></script>
 <script src="js/app.js"></script>
 
+<!-- ✅ SERVICE WORKER -->
 <script>
-  // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
