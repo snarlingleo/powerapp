@@ -3415,3 +3415,668 @@ button:focus-visible,
 .chart-line-glow {
   filter:drop-shadow(0 0 6px var(--fd-indigo));
 }
+/* ════════════════════════════════════════════════════════════
+   CYBER BLOCK BLUE — Theme Override v1.0
+   Remplace le design Foundever par Cyber Neon Blue
+   À placer EN FIN de style.css
+════════════════════════════════════════════════════════════ */
+
+/* ── Import polices Cyber ── */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;700&display=swap');
+
+/* ── Variables Cyber ── */
+:root {
+  --fd-indigo:      #0066ff;
+  --fd-midnight:    #020610;
+  --fd-white:       #ffffff;
+  --fd-light-grey:  #060d20;
+  --fd-lemon:       #00cfff;
+  --fd-coral:       #7b00ff;
+  --fd-lavender:    #0099ff;
+  --fd-mint:        #00cfff;
+
+  --fd-indigo-dim:   rgba(0,102,255,0.15);
+  --fd-mint-dim:     rgba(0,207,255,0.15);
+  --fd-lemon-dim:    rgba(0,207,255,0.12);
+  --fd-coral-dim:    rgba(123,0,255,0.12);
+  --fd-lavender-dim: rgba(0,153,255,0.12);
+
+  --cyber-blue1:  #00cfff;
+  --cyber-blue2:  #0066ff;
+  --cyber-blue3:  #001aff;
+  --cyber-purple: #7b00ff;
+  --cyber-dark:   #020610;
+  --cyber-card:   #030a18;
+
+  --bg-app:        #020610;
+  --bg-card:       rgba(3,10,24,0.95);
+  --bg-card-hover: rgba(4,14,32,0.98);
+  --bg-input:      rgba(0,50,150,0.08);
+  --bg-input-focus:rgba(0,102,255,0.12);
+
+  --text-primary:   rgba(255,255,255,0.92);
+  --text-secondary: rgba(200,220,255,0.7);
+  --text-muted:     rgba(0,150,255,0.45);
+  --text-disabled:  rgba(0,150,255,0.2);
+
+  --border-color: rgba(0,100,255,0.15);
+  --border-focus: #00cfff;
+
+  --shadow-indigo: 0 4px 20px rgba(0,102,255,0.35);
+  --shadow-lemon:  0 4px 20px rgba(0,207,255,0.3);
+}
+
+/* ════════════════════
+   BODY + FOND
+════════════════════ */
+body {
+  font-family: 'Rajdhani', sans-serif !important;
+  background:  #020610 !important;
+  color:       rgba(255,255,255,0.92) !important;
+}
+
+/* Scanlines */
+body::after {
+  content:    '' !important;
+  position:   fixed !important;
+  inset:      0 !important;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0,150,255,0.012) 0px,
+    rgba(0,150,255,0.012) 1px,
+    transparent 1px,
+    transparent 3px
+  ) !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+}
+
+/* Ambient glow */
+body::before {
+  content:    '' !important;
+  position:   fixed !important;
+  inset:      0 !important;
+  background:
+    radial-gradient(ellipse at 10% 90%, rgba(0,102,255,0.1) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 10%, rgba(123,0,255,0.1) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(0,207,255,0.03) 0%, transparent 60%) !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+/* ════════════════════
+   TITRES → Orbitron
+════════════════════ */
+h1, h2, h3,
+.card-label,
+.section-title,
+.header-title,
+.stat-value,
+.stat-label,
+.nav-label {
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* ════════════════════
+   HEADER
+════════════════════ */
+.app-header {
+  background:    rgba(2,6,16,0.97) !important;
+  border-bottom: 1px solid rgba(0,100,255,0.2) !important;
+  box-shadow:    0 0 20px rgba(0,102,255,0.1) !important;
+}
+
+.header-title {
+  font-family:    'Orbitron', monospace !important;
+  font-weight:    900 !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  background:     linear-gradient(135deg, #ffffff 0%, #00cfff 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* ════════════════════
+   NAV BAR
+════════════════════ */
+.app-nav {
+  background:    rgba(2,6,16,0.97) !important;
+  border-top:    1px solid rgba(0,100,255,0.15) !important;
+  box-shadow:    0 -4px 20px rgba(0,102,255,0.08) !important;
+}
+
+/* ════════════════════
+   CARDS
+════════════════════ */
+.card {
+  background:    rgba(3,10,24,0.95) !important;
+  border:        1px solid rgba(0,100,255,0.15) !important;
+  border-radius: var(--radius-lg) !important;
+  position:      relative !important;
+  overflow:      hidden !important;
+  transition:    all 0.35s cubic-bezier(0.175,0.885,0.32,1.275) !important;
+}
+
+/* Stripe top animée au hover */
+.card::before {
+  content:    '' !important;
+  position:   absolute !important;
+  top:        0 !important;
+  left:       -100% !important;
+  right:      0 !important;
+  height:     2px !important;
+  background: linear-gradient(90deg, transparent, #00cfff, #0066ff, transparent) !important;
+  transition: left 0.5s ease !important;
+  z-index:    3 !important;
+}
+
+.card:hover::before { left: 0 !important; }
+
+.card:hover {
+  border-color: rgba(0,207,255,0.3) !important;
+  box-shadow:   0 8px 32px rgba(0,102,255,0.2) !important;
+  transform:    translateY(-2px) !important;
+}
+
+/* Left bar glow sur cards accent */
+.card[style*="border-color:var(--fd-indigo)"],
+.card[style*="rgba(0,102,255"] {
+  background:  rgba(0,20,80,0.2) !important;
+  border-color: rgba(0,207,255,0.3) !important;
+}
+
+/* Card label */
+.card-label {
+  font-size:      0.55rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color:          rgba(0,207,255,0.5) !important;
+}
+
+/* ════════════════════
+   BOUTONS
+════════════════════ */
+.btn-primary {
+  background:     linear-gradient(135deg, #0066ff, #001aff) !important;
+  border:         1px solid rgba(0,207,255,0.3) !important;
+  color:          white !important;
+  font-family:    'Orbitron', monospace !important;
+  font-size:      0.65rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  box-shadow:     0 0 20px rgba(0,102,255,0.4) !important;
+  border-radius:  var(--radius-md) !important;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 30px rgba(0,207,255,0.6), 0 0 60px rgba(0,102,255,0.3) !important;
+  transform:  translateY(-2px) !important;
+}
+
+.btn-secondary {
+  background:     rgba(0,50,150,0.12) !important;
+  border:         1px solid rgba(0,207,255,0.2) !important;
+  color:          #00cfff !important;
+  font-family:    'Orbitron', monospace !important;
+  font-size:      0.6rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  border-radius:  var(--radius-md) !important;
+}
+
+.btn-secondary:hover {
+  background:   rgba(0,100,255,0.2) !important;
+  border-color: #00cfff !important;
+  box-shadow:   0 0 14px rgba(0,207,255,0.3) !important;
+  color:        #00cfff !important;
+}
+
+/* ════════════════════
+   INPUTS
+════════════════════ */
+.input {
+  background:    rgba(0,50,150,0.08) !important;
+  border:        1px solid rgba(0,100,255,0.2) !important;
+  color:         rgba(255,255,255,0.92) !important;
+  border-radius: var(--radius-md) !important;
+  font-family:   'Rajdhani', sans-serif !important;
+}
+
+.input:focus {
+  border-color: #00cfff !important;
+  background:   rgba(0,100,255,0.12) !important;
+  box-shadow:   0 0 0 2px rgba(0,207,255,0.15) !important;
+}
+
+.input::placeholder {
+  color: rgba(0,150,255,0.35) !important;
+}
+
+.input-label {
+  color:       rgba(0,150,255,0.5) !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size:   0.55rem !important;
+}
+
+/* ════════════════════
+   PROGRESS BARS
+════════════════════ */
+.progress-bar {
+  background: rgba(0,100,255,0.1) !important;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #0066ff, #00cfff) !important;
+  box-shadow: 0 0 8px rgba(0,207,255,0.5) !important;
+}
+
+/* ════════════════════
+   CHIPS
+════════════════════ */
+.chip {
+  font-family:    'Orbitron', monospace !important;
+  font-size:      0.5rem !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+
+.chip-indigo {
+  background:   rgba(0,102,255,0.15) !important;
+  border:       1px solid rgba(0,207,255,0.25) !important;
+  color:        #00cfff !important;
+}
+
+.chip-lavender {
+  background:   rgba(0,153,255,0.12) !important;
+  border:       1px solid rgba(0,153,255,0.25) !important;
+  color:        #0099ff !important;
+}
+
+.chip-mint {
+  background:   rgba(0,207,255,0.1) !important;
+  border:       1px solid rgba(0,207,255,0.25) !important;
+  color:        #00cfff !important;
+}
+
+.chip-lemon {
+  background:   rgba(0,207,255,0.1) !important;
+  border:       1px solid rgba(0,207,255,0.2) !important;
+  color:        #00cfff !important;
+}
+
+.chip-coral {
+  background:   rgba(123,0,255,0.12) !important;
+  border:       1px solid rgba(123,0,255,0.25) !important;
+  color:        #7b00ff !important;
+}
+
+/* ════════════════════
+   TABS
+════════════════════ */
+.tab-btn {
+  background:    rgba(0,50,150,0.08) !important;
+  border:        1px solid rgba(0,100,255,0.15) !important;
+  color:         rgba(0,150,255,0.5) !important;
+  font-family:   'Orbitron', monospace !important;
+  font-size:     0.55rem !important;
+  letter-spacing:0.05em !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.tab-btn.active {
+  background:   rgba(0,102,255,0.2) !important;
+  border-color: rgba(0,207,255,0.4) !important;
+  color:        #00cfff !important;
+  box-shadow:   0 0 12px rgba(0,207,255,0.2) !important;
+}
+
+/* ════════════════════
+   SECTION TITLES
+════════════════════ */
+.section-title {
+  color:          rgba(0,150,255,0.45) !important;
+  font-family:    'Orbitron', monospace !important;
+  font-size:      0.55rem !important;
+  letter-spacing: 0.12em !important;
+}
+
+/* ════════════════════
+   STAT CARDS
+════════════════════ */
+.stat-card {
+  background:    rgba(0,50,150,0.08) !important;
+  border:        1px solid rgba(0,100,255,0.12) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.stat-value {
+  color:       #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+}
+
+.stat-label {
+  color:       rgba(0,150,255,0.4) !important;
+  font-family: 'Orbitron', monospace !important;
+}
+
+/* ════════════════════
+   TOGGLE SWITCH
+════════════════════ */
+.toggle-slider {
+  background:    rgba(0,100,255,0.15) !important;
+  border-color:  rgba(0,100,255,0.2) !important;
+}
+
+.toggle input:checked + .toggle-slider {
+  background:   linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border-color: #0066ff !important;
+  box-shadow:   0 0 10px rgba(0,207,255,0.4) !important;
+}
+
+/* ════════════════════
+   CHRONO STICKY
+════════════════════ */
+#chrono-sticky {
+  background:    rgba(2,6,16,0.97) !important;
+  border:        1px solid rgba(0,207,255,0.25) !important;
+  box-shadow:    0 4px 32px rgba(0,102,255,0.25) !important;
+}
+
+.chrono-sticky-display { color: #00cfff !important; }
+.chrono-sticky-display.paused { color: #7b00ff !important; }
+
+.chrono-sticky-btn.pause {
+  background:   rgba(0,207,255,0.1) !important;
+  color:        #00cfff !important;
+  border-color: rgba(0,207,255,0.3) !important;
+}
+
+.chrono-sticky-btn.resume {
+  background:   rgba(0,102,255,0.15) !important;
+  color:        #0066ff !important;
+  border-color: rgba(0,102,255,0.3) !important;
+}
+
+/* ════════════════════
+   GALERIE EXERCICES
+════════════════════ */
+.exercice-galerie-card {
+  background:    rgba(3,10,24,0.95) !important;
+  border:        1px solid rgba(0,100,255,0.12) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.exercice-galerie-card:hover {
+  background:   rgba(0,50,150,0.15) !important;
+  border-color: rgba(0,207,255,0.35) !important;
+  box-shadow:   0 0 20px rgba(0,102,255,0.2) !important;
+}
+
+.exercice-galerie-card::before {
+  background: #00cfff !important;
+}
+
+.exercice-galerie-muscle {
+  color: rgba(0,207,255,0.7) !important;
+}
+
+.difficulte-dot.active {
+  background: #00cfff !important;
+}
+
+.muscle-filter-btn {
+  background:    rgba(0,50,150,0.08) !important;
+  border:        1px solid rgba(0,100,255,0.15) !important;
+  color:         rgba(0,150,255,0.5) !important;
+  font-family:   'Orbitron', monospace !important;
+  font-size:     0.55rem !important;
+}
+
+.muscle-filter-btn.active {
+  background:   rgba(0,102,255,0.2) !important;
+  border-color: rgba(0,207,255,0.4) !important;
+  color:        #00cfff !important;
+}
+
+/* ════════════════════
+   MODALS
+════════════════════ */
+.modal-inner {
+  background:    rgba(2,6,16,0.98) !important;
+  border-top:    1px solid rgba(0,207,255,0.2) !important;
+  box-shadow:    0 0 40px rgba(0,102,255,0.3) !important;
+}
+
+.modal-close {
+  background:    rgba(0,50,150,0.15) !important;
+  border-color:  rgba(0,207,255,0.2) !important;
+  color:         rgba(0,207,255,0.6) !important;
+}
+
+.modal-close:hover {
+  background:   rgba(123,0,255,0.15) !important;
+  border-color: #7b00ff !important;
+  color:        #7b00ff !important;
+}
+
+/* ════════════════════
+   SPLASH SCREEN
+════════════════════ */
+#splash-screen {
+  background: #020610 !important;
+}
+
+/* ════════════════════
+   SCROLLBAR
+════════════════════ */
+::-webkit-scrollbar-thumb {
+  background: rgba(0,150,255,0.3) !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,207,255,0.5) !important;
+}
+
+/* ════════════════════
+   SKELETON
+════════════════════ */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0,50,150,0.08) 25%,
+    rgba(0,100,255,0.12) 50%,
+    rgba(0,50,150,0.08) 75%
+  ) !important;
+  background-size: 200% 100% !important;
+}
+
+/* ════════════════════
+   XP BAR
+════════════════════ */
+.xp-bar-container {
+  background:    rgba(3,10,24,0.95) !important;
+  border:        1px solid rgba(0,100,255,0.15) !important;
+}
+
+.xp-fill {
+  background: linear-gradient(90deg, #0066ff, #00cfff) !important;
+  box-shadow: 0 0 8px rgba(0,207,255,0.4) !important;
+}
+
+.xp-level { color: #00cfff !important; }
+
+/* ════════════════════
+   TROPHÉES
+════════════════════ */
+.trophy-card.unlocked {
+  background:    rgba(0,207,255,0.06) !important;
+  border:        1px solid rgba(0,207,255,0.2) !important;
+}
+
+.trophy-name { color: #00cfff !important; }
+
+/* ════════════════════
+   HEATMAP
+════════════════════ */
+.heatmap-cell.done {
+  background: rgba(0,102,255,0.3) !important;
+  border:     1px solid rgba(0,207,255,0.4) !important;
+  box-shadow: 0 0 8px rgba(0,207,255,0.2) !important;
+}
+
+.heatmap-cell.rest {
+  background: rgba(0,207,255,0.06) !important;
+  color:      #00cfff !important;
+}
+
+/* ════════════════════
+   FOCUS VISIBLE
+════════════════════ */
+:focus-visible {
+  outline:        2px solid #00cfff !important;
+  outline-offset: 2px !important;
+}
+
+/* ════════════════════
+   TOASTS CYBER
+════════════════════ */
+.toast-item.success {
+  background:   rgba(0,207,255,0.12) !important;
+  border:       1px solid rgba(0,207,255,0.3) !important;
+  color:        #00cfff !important;
+}
+
+.toast-item.error {
+  background:   rgba(123,0,255,0.12) !important;
+  border:       1px solid rgba(123,0,255,0.3) !important;
+  color:        #7b00ff !important;
+}
+
+.toast-item.pr {
+  background: linear-gradient(135deg,
+    rgba(0,207,255,0.15),
+    rgba(0,102,255,0.08)) !important;
+  border:  1px solid rgba(0,207,255,0.35) !important;
+  color:   #00cfff !important;
+}
+
+.toast-item.info {
+  background:   rgba(0,102,255,0.12) !important;
+  border:       1px solid rgba(0,102,255,0.3) !important;
+  color:        #0099ff !important;
+}
+
+/* ════════════════════
+   LIVE SÉANCE CARDS
+════════════════════ */
+.live-exo-card {
+  background:    rgba(3,10,24,0.95) !important;
+  border:        1px solid rgba(0,100,255,0.12) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.live-exo-card:hover {
+  border-color: rgba(0,207,255,0.3) !important;
+  box-shadow:   0 0 16px rgba(0,102,255,0.15) !important;
+}
+
+/* ════════════════════
+   NUTRITION CARDS
+════════════════════ */
+.glass-card {
+  background:    rgba(3,10,24,0.95) !important;
+  border:        1px solid rgba(0,100,255,0.12) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.glass-card:hover {
+  background:   rgba(0,50,150,0.1) !important;
+  border-color: rgba(0,207,255,0.3) !important;
+}
+
+.nutri-hero {
+  background: linear-gradient(135deg,
+    rgba(0,102,255,0.2) 0%,
+    rgba(0,102,255,0.06) 55%,
+    rgba(0,153,255,0.04) 100%) !important;
+  border:      1px solid rgba(0,207,255,0.3) !important;
+  box-shadow:  0 4px 24px rgba(0,102,255,0.2) !important;
+}
+
+/* ════════════════════
+   MENU GLOBAL
+════════════════════ */
+#menu-global-panel {
+  background:    rgba(2,6,16,0.97) !important;
+  border-bottom: 1px solid rgba(0,207,255,0.15) !important;
+  box-shadow:    0 20px 60px rgba(0,0,0,0.6) !important;
+}
+
+/* ════════════════════
+   ANIMATIONS CYBER
+════════════════════ */
+@keyframes cyber-glow {
+  0%,100% { filter: drop-shadow(0 0 5px #00cfff); }
+  50%      { filter: drop-shadow(0 0 20px #00cfff) drop-shadow(0 0 40px #0066ff); }
+}
+
+@keyframes cyber-pulse {
+  0%,100% { box-shadow: 0 0 10px rgba(0,207,255,0.3); }
+  50%      { box-shadow: 0 0 25px rgba(0,207,255,0.7), 0 0 50px rgba(0,102,255,0.3); }
+}
+
+@keyframes spark-fall {
+  0%   { transform: translateY(-20px) translateX(0); opacity: 0.8; }
+  100% { transform: translateY(100vh) translateX(var(--drift, 0px)); opacity: 0; }
+}
+
+.cyber-spark {
+  position:       fixed;
+  width:          2px;
+  height:         8px;
+  border-radius:  1px;
+  background:     linear-gradient(180deg, #00cfff, transparent);
+  box-shadow:     0 0 6px #00cfff;
+  pointer-events: none;
+  z-index:        1;
+  animation:      spark-fall linear infinite;
+}
+
+/* ════════════════════
+   LIGHT THEME DISABLED
+   (Cyber = toujours dark)
+════════════════════ */
+[data-theme="light"] body {
+  background:    #020610 !important;
+  color:         rgba(255,255,255,0.92) !important;
+}
+
+[data-theme="light"] .card {
+  background:    rgba(3,10,24,0.95) !important;
+  border-color:  rgba(0,100,255,0.15) !important;
+}
+
+[data-theme="light"] .app-header {
+  background:    rgba(2,6,16,0.97) !important;
+  border-bottom: 1px solid rgba(0,100,255,0.2) !important;
+}
+
+[data-theme="light"] .app-nav {
+  background:    rgba(2,6,16,0.97) !important;
+  border-top:    1px solid rgba(0,100,255,0.15) !important;
+}
+
+[data-theme="light"] .input {
+  background:    rgba(0,50,150,0.08) !important;
+  color:         rgba(255,255,255,0.92) !important;
+  border-color:  rgba(0,100,255,0.2) !important;
+}
+
+[data-theme="light"] .modal-inner {
+  background: rgba(2,6,16,0.98) !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   FIN — CYBER BLOCK BLUE OVERRIDE
+════════════════════════════════════════════════════════════ */
