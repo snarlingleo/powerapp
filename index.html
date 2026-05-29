@@ -1,537 +1,451 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-  <meta name="theme-color" content="#020610"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,
+                 viewport-fit=cover" />
+  <meta name="theme-color" content="#09092d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style"
+        content="black-translucent" />
+  <meta name="description"
+        content="PowerApp — Ton coach fitness personnel" />
+
   <title>PowerApp ⚡</title>
 
-  <!-- PWA -->
+  <!-- PWA Manifest -->
   <link rel="manifest" href="./manifest.json" />
-  <link rel="apple-touch-icon" href="icon-192.png"/>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>"/>
 
-  <!-- ✅ CYBER BLOCK — Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet"/>
-
-  <!-- CSS Principal -->
+  <!-- CSS -->
   <link rel="stylesheet" href="./css/style.css" />
 
-  <!-- ✅ CYBER BLOCK — Variables + Overrides inline -->
-  <style>
-    /* ═══════════════════════════════════════════════
-       CYBER BLOCK BLUE — Injected Global Styles
-    ═══════════════════════════════════════════════ */
-
-    :root {
-      --fd-indigo:      #0066ff;
-      --fd-midnight:    #020610;
-      --fd-lemon:       #00cfff;
-      --fd-coral:       #7b00ff;
-      --fd-lavender:    #0099ff;
-      --fd-mint:        #00cfff;
-      --cyber-blue1:    #00cfff;
-      --cyber-blue2:    #0066ff;
-      --cyber-purple:   #7b00ff;
-      --cyber-dark:     #020610;
-      --cyber-card:     #030a18;
-      --bg-app:         #020610;
-      --bg-card:        rgba(3,10,24,0.95);
-      --bg-input:       rgba(0,50,150,0.08);
-      --text-muted:     rgba(0,150,255,0.45);
-      --border-color:   rgba(0,100,255,0.15);
-    }
-
-    /* Scanlines */
-    body::after {
-      content: '';
-      position: fixed; inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0,150,255,0.012) 0px,
-        rgba(0,150,255,0.012) 1px,
-        transparent 1px, transparent 3px
-      );
-      pointer-events: none; z-index: 9999;
-    }
-
-    /* Ambient glow */
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background:
-        radial-gradient(ellipse at 10% 90%, rgba(0,102,255,0.1) 0%, transparent 55%),
-        radial-gradient(ellipse at 90% 10%, rgba(123,0,255,0.1) 0%, transparent 55%),
-        radial-gradient(ellipse at 50% 50%, rgba(0,207,255,0.03) 0%, transparent 60%);
-      pointer-events: none; z-index: 0;
-    }
-
-    /* Sparks */
-    .cyber-spark {
-      position: fixed;
-      width: 2px; height: 8px;
-      border-radius: 1px;
-      background: linear-gradient(180deg, #00cfff, transparent);
-      box-shadow: 0 0 6px #00cfff;
-      pointer-events: none; z-index: 1;
-      animation: spark-fall linear infinite;
-    }
-
-    @keyframes spark-fall {
-      0%   { transform: translateY(-20px) translateX(0); opacity: 0.8; }
-      100% { transform: translateY(100vh) translateX(var(--drift,0px)); opacity: 0; }
-    }
-
-    @keyframes cyber-glow {
-      0%,100% { filter: drop-shadow(0 0 5px #00cfff); }
-      50%      { filter: drop-shadow(0 0 20px #00cfff) drop-shadow(0 0 40px #0066ff); }
-    }
-
-    @keyframes cyber-progress {
-      0%   { width: 0%; }
-      100% { width: 100%; }
-    }
-  </style>
-</head>
-
-<body>
-
-<!-- ✅ CYBER SPARKS -->
-<script>
-(function() {
-  for (let i = 0; i < 20; i++) {
-    const s = document.createElement('div');
-    s.className = 'cyber-spark';
-    s.style.left = Math.random() * 100 + 'vw';
-    s.style.animationDuration = (4 + Math.random() * 10) + 's';
-    s.style.animationDelay = (Math.random() * 15) + 's';
-    s.style.setProperty('--drift', (Math.random() * 60 - 30) + 'px');
-    s.style.opacity = Math.random() * 0.3 + 0.05;
-    const size = Math.random() * 1.5 + 0.5;
-    s.style.width = size + 'px';
-    document.body.appendChild(s);
-  }
-})();
-</script>
-
-<!-- ✅ SPLASH SCREEN — Cyber -->
-<div id="splash-screen" style="
-  position:fixed; inset:0; z-index:9000;
-  background:#020610;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  gap:16px;
-">
-  <!-- Logo -->
-  <div style="
-    font-size:3.5rem;
-    animation:cyber-glow 2s ease-in-out infinite;
-  ">⚡</div>
-
-  <!-- Titre -->
-  <div style="
-    font-family:'Orbitron',monospace;
-    font-size:1.4rem;
-    font-weight:900;
-    letter-spacing:0.3em;
-    text-transform:uppercase;
-    background:linear-gradient(90deg, #00cfff, #0066ff, #7b00ff);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    filter:drop-shadow(0 0 10px rgba(0,207,255,0.4));
-  ">POWERAPP</div>
-
-  <!-- Sous-titre -->
-  <div style="
-    font-family:'Orbitron',monospace;
-    font-size:0.5rem;
-    letter-spacing:0.3em;
-    color:rgba(0,150,255,0.4);
-    text-transform:uppercase;
-  ">TON COACH FITNESS PERSONNEL</div>
-
-  <!-- Progress bar -->
-  <div style="margin-top:16px; width:220px;">
-    <div style="
-      width:220px; height:2px;
-      background:rgba(0,100,255,0.1);
-      border-radius:99px; overflow:hidden;
-    ">
-      <div id="splash-bar" style="
-        width:0%; height:100%;
-        background:linear-gradient(90deg, #0066ff, #00cfff);
-        box-shadow:0 0 10px #00cfff;
-        border-radius:99px;
-        transition:width 0.4s ease;
-      "></div>
-    </div>
-    <div id="splash-label" style="
-      font-family:'Orbitron',monospace;
-      font-size:0.45rem;
-      letter-spacing:0.2em;
-      color:rgba(0,150,255,0.3);
-      text-align:center;
-      margin-top:8px;
-      text-transform:uppercase;
-      transition:opacity 0.2s;
-    ">INITIALISATION...</div>
-  </div>
-</div>
-
-<!-- ✅ APP WRAPPER -->
-<div id="app-wrapper" style="
-  display:none;
-  flex-direction:column;
-  min-height:100vh;
-  position:relative;
-  z-index:1;
-">
-
-  <!-- ✅ HEADER — Cyber -->
-  <header class="app-header">
-    <div class="header-left">
-
-      <!-- Bouton Menu -->
-      <button
-        id="btn-menu-global"
-        onclick="MenuGlobal.toggle()"
-        style="
-          width:36px; height:36px;
-          background:rgba(0,50,150,0.15);
-          border:1px solid rgba(0,207,255,0.15);
-          border-radius:8px;
-          color:rgba(0,207,255,0.7);
-          font-size:1rem; cursor:pointer;
-          display:flex; align-items:center;
-          justify-content:center;
-          font-family:'Orbitron',monospace;
-          transition:all 0.3s;
-        "
-        onmouseenter="this.style.borderColor='rgba(0,207,255,0.5)';this.style.boxShadow='0 0 10px rgba(0,207,255,0.2)'"
-        onmouseleave="this.style.borderColor='rgba(0,207,255,0.15)';this.style.boxShadow=''">
-        ☰
-      </button>
-
-      <!-- Logo -->
-      <span id="header-emoji" style="
-        font-size:1.3rem;
-        filter:drop-shadow(0 0 8px #00cfff);
-        animation:cyber-glow 3s ease-in-out infinite;
-      ">⚡</span>
-
-      <span id="header-title" style="
-        font-family:'Orbitron',monospace;
-        font-size:0.82rem;
-        font-weight:900;
-        letter-spacing:0.15em;
-        text-transform:uppercase;
-        background:linear-gradient(135deg, #ffffff 0%, #00cfff 100%);
-        -webkit-background-clip:text;
-        -webkit-text-fill-color:transparent;
-      ">POWERAPP</span>
-    </div>
-
-    <!-- Right -->
-    <div class="header-right">
-      <div id="header-xp" style="
-        font-family:'Orbitron',monospace;
-        font-size:0.58rem;
-        color:rgba(0,207,255,0.7);
-        letter-spacing:0.05em;
-      "></div>
-
-      <button
-        onclick="retourArriere()"
-        style="
-          width:36px; height:36px;
-          background:rgba(0,50,150,0.15);
-          border:1px solid rgba(0,207,255,0.15);
-          border-radius:8px;
-          color:rgba(0,207,255,0.7);
-          font-size:1rem; cursor:pointer;
-          display:flex; align-items:center;
-          justify-content:center;
-          transition:all 0.3s;
-        "
-        onmouseenter="this.style.borderColor='rgba(0,207,255,0.4)'"
-        onmouseleave="this.style.borderColor='rgba(0,207,255,0.15)'">
-        ✕
-      </button>
-    </div>
-  </header>
-
-  <!-- ✅ MAIN -->
-  <main class="app-main">
-
-    <!-- Pages -->
-    <div id="page-home"         class="page" style="display:none"></div>
-    <div id="page-training"     class="page" style="display:none"></div>
-    <div id="page-live"         class="page" style="display:none"></div>
-    <div id="page-stats"        class="page" style="display:none"></div>
-    <div id="page-profil"       class="page" style="display:none"></div>
-    <div id="page-coach"        class="page" style="display:none"></div>
-    <div id="page-defis"        class="page" style="display:none"></div>
-    <div id="page-predict"      class="page" style="display:none"></div>
-    <div id="page-calculateur"  class="page" style="display:none"></div>
-    <div id="page-share"        class="page" style="display:none"></div>
-    <div id="page-gamification" class="page" style="display:none"></div>
-    <div id="page-history"      class="page" style="display:none"></div>
-    <div id="page-photos"       class="page" style="display:none"></div>
-    <div id="page-social"       class="page" style="display:none"></div>
-    <div id="page-supersets"    class="page" style="display:none"></div>
-    <div id="page-offline"      class="page" style="display:none"></div>
-    <div id="page-settings"     class="page" style="display:none"></div>
-    <div id="page-nutrition"    class="page" style="display:none"></div>
-    <div id="page-journal"      class="page" style="display:none"></div>
-    <div id="page-objectifs"    class="page" style="display:none"></div>
-    <div id="page-circuit"      class="page" style="display:none"></div>
-    <div id="page-adaptatif"    class="page" style="display:none"></div>
-    <div id="page-galerie"      class="page" style="display:none"></div>
-    <div id="page-blessures"    class="page" style="display:none"></div>
-    <div id="page-export"       class="page" style="display:none"></div>
-    <div id="page-themes"       class="page" style="display:none"></div>
-    <div id="page-sounds"       class="page" style="display:none"></div>
-
-  </main>
-
-  <!-- ✅ NAV BAR -->
-  <nav class="app-nav"></nav>
-
-</div>
-
-<!-- ✅ ONBOARDING -->
-<div id="onboarding-screen" class="hidden" style="
-  position:fixed; inset:0; z-index:8000;
-  background:#020610;
-  overflow-y:auto;
-"></div>
-
-<!-- ✅ MODAL INFO -->
-<div id="modal-info" class="hidden" style="
-  position:fixed; inset:0; z-index:500;
-  background:rgba(2,6,16,0.92);
-  backdrop-filter:blur(10px);
-  display:flex; align-items:center; justify-content:center;
-  padding:16px;
-">
-  <div style="
-    background:#030a18;
-    border:1px solid rgba(0,207,255,0.2);
-    border-radius:20px;
-    width:100%; max-width:460px;
-    max-height:90vh; overflow-y:auto;
-    position:relative;
-    box-shadow:0 0 40px rgba(0,102,255,0.3), 0 0 80px rgba(0,207,255,0.08);
-  ">
-    <button id="modal-info-close" style="
-      position:absolute; top:12px; right:12px;
-      width:32px; height:32px;
-      background:rgba(0,50,150,0.2);
-      border:1px solid rgba(0,207,255,0.2);
-      border-radius:6px;
-      color:rgba(0,207,255,0.6);
-      font-size:0.9rem; cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      z-index:10; font-family:'Orbitron',monospace;
-      transition:all 0.3s;
-    ">✕</button>
-    <div id="modal-info-content"></div>
-  </div>
-</div>
-
-<!-- ✅ MODAL CONFIRM -->
-<div id="modal-confirm" class="hidden" style="
-  position:fixed; inset:0; z-index:600;
-  background:rgba(2,6,16,0.94);
-  backdrop-filter:blur(10px);
-  display:flex; align-items:center; justify-content:center;
-  padding:20px;
-">
-  <div style="
-    background:#030a18;
-    border:1px solid rgba(0,207,255,0.2);
-    border-radius:20px;
-    width:100%; max-width:360px;
-    padding:28px;
-    box-shadow:0 0 40px rgba(0,102,255,0.3);
-    text-align:center;
-  ">
-    <div id="confirm-titre" style="
-      font-family:'Orbitron',monospace;
-      font-size:0.85rem; font-weight:900;
-      letter-spacing:0.1em;
-      color:rgba(255,255,255,0.92);
-      margin-bottom:10px;
-    "></div>
-    <div id="confirm-msg" style="
-      font-size:0.82rem;
-      color:rgba(0,150,255,0.5);
-      margin-bottom:24px;
-      line-height:1.5;
-    "></div>
-    <div style="display:flex; gap:10px;">
-      <button id="confirm-cancel" style="
-        flex:1; padding:12px;
-        background:rgba(0,50,150,0.12);
-        border:1px solid rgba(0,207,255,0.2);
-        border-radius:12px;
-        color:rgba(0,207,255,0.6);
-        font-family:'Orbitron',monospace;
-        font-size:0.6rem; letter-spacing:0.08em;
-        text-transform:uppercase; cursor:pointer;
-        transition:all 0.3s;
-      ">Annuler</button>
-      <button id="confirm-ok" style="
-        flex:1; padding:12px;
-        background:linear-gradient(135deg, #0066ff, #001aff);
-        border:1px solid rgba(0,207,255,0.3);
-        border-radius:12px;
-        color:white;
-        font-family:'Orbitron',monospace;
-        font-size:0.6rem; letter-spacing:0.08em;
-        text-transform:uppercase; cursor:pointer;
-        box-shadow:0 0 20px rgba(0,102,255,0.4);
-        transition:all 0.3s;
-      ">Confirmer</button>
-    </div>
-  </div>
-</div>
-
-<!-- ✅ TOAST CONTAINER -->
-<div id="toast-container"></div>
-
-<!-- ✅ OFFLINE BANNER -->
-<div id="offline-banner" style="display:none;
-  position:fixed;
-  top:var(--header-height, 56px);
-  left:0; right:0;
-  background:rgba(123,0,255,0.15);
-  border-bottom:1px solid rgba(123,0,255,0.3);
-  text-align:center;
-  font-family:'Orbitron',monospace;
-  font-size:0.5rem; letter-spacing:0.1em;
-  color:rgba(123,0,255,0.8);
-  padding:6px; text-transform:uppercase;
-  z-index:150;
-">📵 MODE HORS-LIGNE</div>
-
-<!-- ✅ SYNC BANNER -->
-<div id="sync-banner" style="display:none;
-  position:fixed;
-  top:var(--header-height, 56px);
-  left:0; right:0;
-  background:rgba(0,102,255,0.15);
-  border-bottom:1px solid rgba(0,207,255,0.2);
-  text-align:center;
-  font-family:'Orbitron',monospace;
-  font-size:0.5rem; letter-spacing:0.1em;
-  color:rgba(0,207,255,0.6);
-  padding:6px; text-transform:uppercase;
-  z-index:150;
-">🔄 SYNCHRONISATION...</div>
-
-<!-- ✅ UPDATE BANNER -->
-<div id="update-banner" style="display:none;
-  position:fixed;
-  bottom:calc(var(--nav-height, 64px) + 10px);
-  left:50%; transform:translateX(-50%);
-  background:rgba(2,6,16,0.97);
-  border:1px solid rgba(0,207,255,0.3);
-  border-radius:99px;
-  padding:10px 20px;
-  display:flex; align-items:center; gap:12px;
-  box-shadow:0 0 20px rgba(0,207,255,0.2);
-  z-index:400;
-">
-  <span style="
-    font-family:'Orbitron',monospace;
-    font-size:0.55rem; letter-spacing:0.08em;
-    color:rgba(0,207,255,0.8); text-transform:uppercase;
-  ">🆕 NOUVELLE VERSION</span>
-  <button onclick="window.location.reload()" style="
-    padding:6px 14px;
-    background:linear-gradient(135deg, #0066ff, #00cfff);
-    border:none; border-radius:99px;
-    color:white; cursor:pointer;
-    font-family:'Orbitron',monospace;
-    font-size:0.52rem; letter-spacing:0.08em;
-    text-transform:uppercase;
-  ">METTRE À JOUR</button>
-</div>
-
-<!-- ✅ SPLASH PROGRESS -->
-<script>
-(function() {
-  const bar = document.getElementById('splash-bar');
-  const lbl = document.getElementById('splash-label');
-  const steps = [
-    [20,  'MODULES...'],
-    [45,  'PROFIL...'],
-    [70,  'DONNÉES...'],
-    [90,  'INTERFACE...'],
-    [100, 'PRÊT ⚡']
-  ];
-  let i = 0;
-  const run = () => {
-    if (i >= steps.length) return;
-    const [w, t] = steps[i++];
-    if (bar) bar.style.width = w + '%';
-    if (lbl) {
-      lbl.style.opacity = '0';
-      setTimeout(() => {
-        lbl.textContent = t;
-        lbl.style.opacity = '1';
-      }, 150);
-    }
-    setTimeout(run, 350);
-  };
-  setTimeout(run, 300);
-})();
-</script>
-
-<!-- ✅ LIBS -->
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <!-- Chart.js — AVANT tous les scripts -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/maphilight@1.4.0/jquery.maphilight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/image-map-resizer@1.0.10/js/imageMapResizer.min.js"></script>
 
-<!-- ✅ APP SCRIPTS -->
-<script src="js/i18n.js"></script>
+</head>
+
+<body>
+
+  <!-- ══════════════════════════════════════════
+       SPLASH SCREEN
+  ══════════════════════════════════════════ -->
+  <div id="splash-screen">
+  <div style="
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    min-height:100vh;gap:20px;
+    background:var(--bg-app, #070714);
+  ">
+
+    <!-- Logo animé avec rings -->
+    <div style="position:relative;width:100px;height:100px;
+                display:flex;align-items:center;justify-content:center">
+
+      <!-- Ring 1 -->
+      <div style="
+        position:absolute;inset:0;border-radius:50%;
+        border:2px solid transparent;
+        border-top-color:#4b4bf9;
+        border-right-color:#8bf0bb;
+        animation:splashSpin 1.5s linear infinite;
+      "></div>
+
+      <!-- Ring 2 -->
+      <div style="
+        position:absolute;inset:8px;border-radius:50%;
+        border:2px solid transparent;
+        border-bottom-color:#f9ef77;
+        border-left-color:#ff8d96;
+        animation:splashSpin 2s linear infinite reverse;
+      "></div>
+
+      <!-- Icône centrale -->
+      <div style="
+        font-size:3rem;
+        filter:drop-shadow(0 0 20px #4b4bf9);
+        animation:splashIconPulse 2s ease-in-out infinite;
+        position:relative;z-index:1;
+      ">⚡</div>
+    </div>
+
+    <!-- Titre -->
+    <div style="text-align:center">
+      <div style="
+        font-size:2rem;font-weight:900;
+        background:linear-gradient(135deg,#fff 0%,#4b4bf9 100%);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        background-clip:text;
+        font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      ">PowerApp</div>
+      <div style="
+        font-size:.82rem;color:rgba(255,255,255,0.4);
+        margin-top:4px;
+        font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      ">Ton coach fitness personnel</div>
+    </div>
+
+    <!-- Barre de chargement -->
+    <div style="
+      width:200px;height:4px;
+      background:rgba(255,255,255,0.06);
+      border-radius:99px;overflow:hidden;
+    ">
+      <div style="
+        height:100%;width:0%;
+        background:linear-gradient(90deg,#4b4bf9,#8bf0bb);
+        border-radius:99px;
+        animation:splashLoad 2.5s ease forwards;
+        box-shadow:0 0 10px #4b4bf9;
+      "></div>
+    </div>
+
+    <!-- Dots animés -->
+    <div style="display:flex;gap:6px">
+      <div style="width:6px;height:6px;border-radius:50%;background:#4b4bf9;
+                  animation:splashDot 1.2s ease-in-out infinite;
+                  animation-delay:0s"></div>
+      <div style="width:6px;height:6px;border-radius:50%;background:#8bf0bb;
+                  animation:splashDot 1.2s ease-in-out infinite;
+                  animation-delay:.2s"></div>
+      <div style="width:6px;height:6px;border-radius:50%;background:#f9ef77;
+                  animation:splashDot 1.2s ease-in-out infinite;
+                  animation-delay:.4s"></div>
+      <div style="width:6px;height:6px;border-radius:50%;background:#ff8d96;
+                  animation:splashDot 1.2s ease-in-out infinite;
+                  animation-delay:.6s"></div>
+    </div>
+
+    <div style="
+      font-size:.65rem;color:rgba(255,255,255,0.2);
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    ">Chargement des modules...</div>
+
+  </div>
+
+  <!-- CSS animations splash -->
+  <style>
+    @keyframes splashSpin {
+      to { transform:rotate(360deg); }
+    }
+    @keyframes splashIconPulse {
+      0%,100% {
+        transform:scale(1);
+        filter:drop-shadow(0 0 20px #4b4bf9);
+      }
+      50% {
+        transform:scale(1.1);
+        filter:drop-shadow(0 0 35px #4b4bf9);
+      }
+    }
+    @keyframes splashLoad {
+      0%  { width:0%;   }
+      30% { width:40%;  }
+      70% { width:75%;  }
+      100%{ width:100%; }
+    }
+    @keyframes splashDot {
+      0%,100% { transform:translateY(0);   opacity:.4; }
+      50%     { transform:translateY(-8px);opacity:1;  }
+    }
+  </style>
+</div>
+
+  <!-- ══════════════════════════════════════════
+       ONBOARDING
+  ══════════════════════════════════════════ -->
+  <div id="onboarding-screen" class="onboarding hidden"></div>
+
+  <!-- ══════════════════════════════════════════
+       APP WRAPPER
+  ══════════════════════════════════════════ -->
+  <div id="app-wrapper" style="display:none">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="header-left">
+        <span class="header-emoji" id="header-emoji">⚡</span>
+        <span class="header-title" id="header-title">PowerApp</span>
+      </div>
+      <div class="header-right">
+  <div id="header-xp" class="header-xp"></div>
+  <button id="btn-menu-global"
+        onclick="MenuGlobal.toggle()"
+        style="width:36px;height:36px;
+               border-radius:50%;
+               border:1px solid var(--border-color);
+               background:var(--bg-input);
+               font-size:1rem;
+               display:flex;align-items:center;
+               justify-content:center;
+               cursor:pointer;
+               transition:all .2s">
+  ☰
+</button>
+</div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="app-main" id="app-main">
+
+      <!-- Pages principales -->
+      <div id="page-home"     class="page"></div>
+      <div id="page-training" class="page"></div>
+      <div id="page-live"     class="page"></div>
+      <div id="page-stats"    class="page"></div>
+      <div id="page-profil"   class="page"></div>
+
+      <!-- Pages secondaires -->
+      <div id="page-coach"        class="page"></div>
+      <div id="page-defis"        class="page"></div>
+      <div id="page-predict"      class="page"></div>
+      <div id="page-share"        class="page"></div>
+      <div id="page-gamification" class="page"></div>
+      <div id="page-history"      class="page"></div>
+      <div id="page-photos"       class="page"></div>
+      <div id="page-social"       class="page"></div>
+      <div id="page-supersets"    class="page"></div>
+      <div id="page-offline"      class="page"></div>
+      <div id="page-settings"     class="page"></div>
+      <div id="page-nutrition"    class="page"></div>
+      <div id="page-journal"      class="page"></div>
+      <div id="page-objectifs"    class="page"></div>
+      <div id="page-blessures"    class="page"></div>
+
+      <!-- ✅ NOUVELLES PAGES -->
+      <div id="page-circuit"      class="page"></div>
+      <div id="page-adaptatif"    class="page"></div>
+      <div id="page-galerie"      class="page"></div>
+
+    </main>
+
+    <!-- NAVIGATION BAS -->
+    <nav class="app-nav">
+      <button class="nav-btn active" id="nav-home"
+              onclick="naviguer('home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Accueil</span>
+      </button>
+      <button class="nav-btn" id="nav-training"
+              onclick="naviguer('training')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Programme</span>
+      </button>
+      <button class="nav-btn nav-btn-live" id="nav-live"
+              onclick="naviguer('live')">
+        <span class="nav-icon">⚡</span>
+        <span class="nav-label">Live</span>
+      </button>
+      <button class="nav-btn" id="nav-stats"
+              onclick="naviguer('stats')">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Stats</span>
+      </button>
+      <button class="nav-btn" id="nav-nutrition"
+              onclick="naviguer('nutrition')">
+        <span class="nav-icon">🥗</span>
+        <span class="nav-label">Nutrition</span>
+      </button>
+    </nav>
+
+  </div><!-- /app-wrapper -->
+
+  <!-- ══════════════════════════════════════════
+       CHRONO STICKY — Injecté par ChronoSticky.afficher()
+  ══════════════════════════════════════════ -->
+  <!-- Créé dynamiquement dans app.js -->
+
+  <!-- ══════════════════════════════════════════
+       MODAL INFO (résumé séance, détail exercice)
+  ══════════════════════════════════════════ -->
+  <div id="modal-info" class="modal hidden">
+    <div class="modal-overlay"
+         onclick="document.getElementById('modal-info')
+                    .classList.add('hidden')">
+    </div>
+    <div class="modal-inner">
+      <button class="modal-close" id="modal-info-close">✕</button>
+      <div class="modal-content" id="modal-info-content"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       MODAL CONFIRMATION
+  ══════════════════════════════════════════ -->
+  <div id="modal-confirm" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-inner modal-sm">
+      <div class="modal-content" id="modal-confirm-content">
+        <div style="text-align:center;padding:var(--space-md)">
+          <div style="font-size:1.1rem;font-weight:700;
+                      margin-bottom:var(--space-sm)"
+               id="modal-confirm-title">
+            Confirmer
+          </div>
+          <p style="font-size:.85rem;color:var(--text-muted);
+                    margin-bottom:var(--space-lg)"
+             id="modal-confirm-msg"></p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;
+                      gap:var(--space-sm)">
+            <button id="modal-confirm-cancel"
+                    class="btn-secondary">
+              Annuler
+            </button>
+            <button id="modal-confirm-ok"
+                    class="btn-primary">
+              Confirmer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TOAST CONTAINER
+  ══════════════════════════════════════════ -->
+  <div id="toast-container"></div>
+
+  <!-- ══════════════════════════════════════════
+       CONFETTI CANVAS
+  ══════════════════════════════════════════ -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- ══════════════════════════════════════════
+       TIMER REPOS OVERLAY
+  ══════════════════════════════════════════ -->
+  <div id="timer-repos-overlay"></div>
+
+  <!-- ══════════════════════════════════════════
+       BANNIÈRES SYSTÈME
+  ══════════════════════════════════════════ -->
+
+  <!-- Offline -->
+  <div id="offline-banner"
+       style="display:none;
+              position:fixed;top:0;left:50%;
+              transform:translateX(-50%);
+              width:100%;max-width:480px;
+              background:var(--fd-coral);
+              color:white;text-align:center;
+              padding:6px;font-size:.75rem;
+              font-weight:700;z-index:9999">
+    📵 Mode hors-ligne
+  </div>
+
+  <!-- Sync -->
+  <div id="sync-indicator"
+       style="display:none;
+              position:fixed;top:0;left:50%;
+              transform:translateX(-50%);
+              width:100%;max-width:480px;
+              background:var(--fd-indigo);
+              color:white;text-align:center;
+              padding:6px;font-size:.75rem;
+              font-weight:700;z-index:9999">
+    🔄 Synchronisation...
+  </div>
+
+  <!-- PWA Install -->
+  <div id="pwa-install-btn" style="display:none"></div>
+
+<!-- Update Banner -->
+<div id="update-banner"
+     style="display:none;
+            position:fixed;
+            bottom:calc(var(--nav-height) + 8px);
+            left:50%;
+            transform:translateX(-50%);
+            width:calc(100% - 32px);
+            max-width:448px;
+            background:var(--bg-card);
+            border:1px solid var(--fd-lemon);
+            border-radius:var(--radius-xl);
+            padding:var(--space-md);
+            align-items:center;
+            justify-content:space-between;
+            gap:var(--space-sm);
+            box-shadow:var(--shadow-lg);
+            z-index:200">
+  <span style="font-size:.82rem;font-weight:600">
+    🆕 Nouvelle version disponible !
+  </span>
+  <button onclick="window._swReg?.waiting
+                     ?.postMessage({type:'SKIP_WAITING'})"
+          class="btn-primary btn-sm">
+    Mettre à jour
+  </button>
+</div>
+
+  <!-- ══════════════════════════════════════════
+       SCRIPTS — Ordre critique respecté
+  ══════════════════════════════════════════ -->
+
+ <!-- Modules de base -->
 <script src="js/utils.js"></script>
 <script src="js/tracker.js"></script>
+<script src="js/themes.js"></script>   
 <script src="js/programme.js"></script>
 <script src="js/gamification.js"></script>
+<script src="js/export.js"></script>  
 <script src="js/notifications.js"></script>
-<script src="js/offline.js"></script>
-<script src="js/coach.js"></script>
 <script src="js/defis.js"></script>
 <script src="js/predict.js"></script>
-<script src="js/export.js"></script>
+<script src="js/share.js"></script>
 <script src="js/stats.js"></script>
-<script src="js/nutrition.js"></script>
-<script src="js/social.js"></script>
-<script src="js/superset.js"></script>
-<script src="js/photos.js"></script>
 <script src="js/history.js"></script>
+<script src="js/photos.js"></script>
+<script src="js/superset.js"></script>
+<script src="js/offline.js"></script>
+<script src="js/social.js"></script>
+<script src="js/i18n.js"></script>
+
+<!-- Modules v4 -->
 <script src="js/calculateur.js"></script>
 <script src="js/chrono.js"></script>
-<script src="js/themes.js"></script>
 <script src="js/video.js"></script>
-<script src="js/hiit.js"></script>
+<script src="js/nutrition.js"></script>
+<script src="js/circuit.js"></script>
+<script src="js/hiit.js"></script>  
+<script src="js/coach.js"></script>
 <script src="js/ui-premium.js"></script>
+<!-- App en dernier -->
 <script src="js/app.js"></script>
 
-<!-- ✅ SERVICE WORKER -->
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  }
-</script>
+  <!-- ══════════════════════════════════════════
+       SERVICE WORKER
+  ══════════════════════════════════════════ -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => {
+            window._swReg = reg;
+            reg.addEventListener('updatefound', () => {
+              const newSW = reg.installing;
+              newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'installed'
+                    && navigator.serviceWorker.controller) {
+                  const banner =
+                    document.getElementById('update-banner');
+                  if (banner) banner.style.display = 'flex';
+                }
+              });
+            });
+          })
+          .catch(err => console.warn('[SW]', err));
+
+        navigator.serviceWorker.addEventListener(
+          'controllerchange', () => window.location.reload()
+        );
+      });
+    }
+  </script>
 
 </body>
 </html>
