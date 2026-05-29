@@ -325,76 +325,105 @@ function _rendreNavBar() {
 // ════════════════════════════════════════════════════════════
 function _updateHeader(page) {
   const configs = {
-  home:         { emoji:'⚡', titre:'POWERAPP',            color:'#00cfff' },
-  training:     { emoji:'📅', titre:'PROGRAMME',           color:'#0066ff' },
-  live:         { emoji:'💪', titre:'SÉANCE LIVE',         color:'#00cfff' },
-  stats:        { emoji:'📊', titre:'STATISTIQUES',        color:'#0099ff' },
-  profil:       { emoji:'👤', titre:'PROFIL',              color:'#7b00ff' },
-  coach:        { emoji:'🤖', titre:'COACH IA',            color:'#7b00ff' },
-  defis:        { emoji:'🏆', titre:'DÉFIS',               color:'#0099ff' },
-  predict:      { emoji:'📈', titre:'PRÉDICTIONS',         color:'#00cfff' },
-  share:        { emoji:'📤', titre:'PARTAGE',             color:'#0066ff' },
-  gamification: { emoji:'⭐', titre:'NIVEAUX & XP',        color:'#0099ff' },
-  history:      { emoji:'📅', titre:'HISTORIQUE',          color:'#0066ff' },
-  photos:       { emoji:'📸', titre:'PHOTOS',              color:'#7b00ff' },
-  social:       { emoji:'📱', titre:'RÉSEAUX',             color:'#7b00ff' },
-  supersets:    { emoji:'⚡', titre:'SUPERSETS',           color:'#00cfff' },
-  offline:      { emoji:'📵', titre:'HORS-LIGNE',          color:'#7b00ff' },
-  settings:     { emoji:'⚙️', titre:'PARAMÈTRES',          color:'#7b00ff' },
-  nutrition:    { emoji:'🥗', titre:'NUTRITION',           color:'#00cfff' },
-  journal:      { emoji:'📔', titre:'JOURNAL',             color:'#0099ff' },
-  objectifs:    { emoji:'🎯', titre:'OBJECTIFS',           color:'#0066ff' },
-  circuit:      { emoji:'⚡', titre:'HIIT & CARDIO',       color:'#0099ff' },
-  adaptatif:    { emoji:'🧠', titre:'PROG. ADAPTATIF',     color:'#7b00ff' },
-  galerie:      { emoji:'💪', titre:'GALERIE EXERCICES',   color:'#00cfff' },
-  blessures:    { emoji:'🩹', titre:'BLESSURES',           color:'#7b00ff' },
-  calculateur:  { emoji:'🧮', titre:'CALCULATEUR',         color:'#00cfff' },
-  export:       { emoji:'📤', titre:'EXPORT',              color:'#0066ff' },
-  themes:       { emoji:'🎨', titre:'THÈMES',              color:'#7b00ff' },
-  sounds:       { emoji:'🔊', titre:'SONS',                color:'#00cfff' }
-};
+    home:         { emoji:'⚡', titre:'PowerApp',            color:'#00cfff', color2:'#0066ff', badge:'HOME',      cat:'CORE'     },
+    training:     { emoji:'📅', titre:'Programme',           color:'#00b8ff', color2:'#0055ee', badge:'PLAN',      cat:'CORE'     },
+    live:         { emoji:'💪', titre:'Séance Live',         color:'#00cfff', color2:'#0077ff', badge:'LIVE',      cat:'CORE'     },
+    stats:        { emoji:'📊', titre:'Statistiques',        color:'#00aaff', color2:'#0044cc', badge:'STATS',     cat:'CORE'     },
+    profil:       { emoji:'👤', titre:'Profil',              color:'#7b00ff', color2:'#0044ff', badge:'PROFILE',   cat:'CORE'     },
+    coach:        { emoji:'🤖', titre:'Coach IA',            color:'#8800ff', color2:'#0066ff', badge:'AI',        cat:'IA'       },
+    predict:      { emoji:'📈', titre:'Prédictions',         color:'#00cfff', color2:'#7b00ff', badge:'PREDICT',   cat:'IA'       },
+    adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif', color:'#7700ff', color2:'#0099ff', badge:'ADAPT',     cat:'IA'       },
+    defis:        { emoji:'🏆', titre:'Défis',               color:'#00cfff', color2:'#0066ff', badge:'CHALLENGE', cat:'GAME'     },
+    gamification: { emoji:'⭐', titre:'Niveaux & XP',        color:'#0099ff', color2:'#7b00ff', badge:'XP',        cat:'GAME'     },
+    share:        { emoji:'📤', titre:'Partage',             color:'#0066ff', color2:'#7700ff', badge:'SHARE',     cat:'SOCIAL'   },
+    social:       { emoji:'📱', titre:'Réseaux',             color:'#7b00ff', color2:'#0066ff', badge:'SOCIAL',    cat:'SOCIAL'   },
+    history:      { emoji:'📅', titre:'Historique',          color:'#00cfff', color2:'#0044cc', badge:'HISTORY',   cat:'TRACKING' },
+    photos:       { emoji:'📸', titre:'Photos',              color:'#0088ff', color2:'#7b00ff', badge:'PHOTOS',    cat:'TRACKING' },
+    journal:      { emoji:'📔', titre:'Journal',             color:'#00cfff', color2:'#0066ff', badge:'LOG',       cat:'TRACKING' },
+    objectifs:    { emoji:'🎯', titre:'Objectifs',           color:'#0099ff', color2:'#7700ff', badge:'GOALS',     cat:'TRACKING' },
+    supersets:    { emoji:'⚡', titre:'Supersets',           color:'#00cfff', color2:'#0066ff', badge:'SUPERSET',  cat:'TRAINING' },
+    circuit:      { emoji:'⚡', titre:'HIIT & Cardio',       color:'#0066ff', color2:'#7b00ff', badge:'HIIT',      cat:'TRAINING' },
+    galerie:      { emoji:'💪', titre:'Galerie Exercices',   color:'#00cfff', color2:'#0044dd', badge:'GALLERY',   cat:'TRAINING' },
+    blessures:    { emoji:'🩹', titre:'Blessures',           color:'#0088ff', color2:'#7b00ff', badge:'INJURY',    cat:'TRAINING' },
+    nutrition:    { emoji:'🥗', titre:'Nutrition',           color:'#00cfff', color2:'#0066ff', badge:'NUTRI',     cat:'TOOLS'    },
+    calculateur:  { emoji:'🧮', titre:'Calculateur',         color:'#7b00ff', color2:'#0066ff', badge:'CALC',      cat:'TOOLS'    },
+    export:       { emoji:'📤', titre:'Export',              color:'#0066ff', color2:'#7700ff', badge:'EXPORT',    cat:'TOOLS'    },
+    settings:     { emoji:'⚙️', titre:'Paramètres',          color:'#7b00ff', color2:'#0066ff', badge:'CONFIG',    cat:'SETTINGS' },
+    themes:       { emoji:'🎨', titre:'Thèmes',              color:'#00cfff', color2:'#7b00ff', badge:'THEME',     cat:'SETTINGS' },
+    sounds:       { emoji:'🔊', titre:'Sons',                color:'#0099ff', color2:'#0044cc', badge:'AUDIO',     cat:'SETTINGS' },
+    offline:      { emoji:'📵', titre:'Hors-ligne',          color:'#7700ff', color2:'#0033cc', badge:'OFFLINE',   cat:'SETTINGS' },
+    mon_profil:   { emoji:'👤', titre:'Mon Profil',          color:'#0066ff', color2:'#7b00ff', badge:'ME',        cat:'SETTINGS' },
+  };
 
   const cfg = configs[page] || configs.home;
 
-  // ── Emoji + animation ──
-  const emojiEl = document.getElementById('header-emoji');
-  if (emojiEl) {
-    emojiEl.textContent = cfg.emoji;
-    emojiEl.style.cssText = `
-      font-size:1.3rem;
-      filter:drop-shadow(0 0 8px ${cfg.color});
-      animation:headerEmojiPop .4s cubic-bezier(.34,1.56,.64,1);
-      display:inline-block;
-    `;
-  }
-
-  // ── Titre gradient ──
-  const titleEl = document.getElementById('header-title');
-  if (titleEl) {
-    titleEl.textContent = cfg.titre;
-    titleEl.style.cssText = `
-  font-size:0.72rem;
-  font-weight:900;
-  letter-spacing:0.15em;
-  text-transform:uppercase;
-  font-family:'Orbitron',monospace;
-  background:linear-gradient(135deg,#ffffff 0%,${cfg.color} 100%);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
-  transition:all .3s;
-`;
-  }
-
-  // ── Header container ──
+  /* ── Update DOM ── */
   const header = document.querySelector('.app-header');
-  if (header) {
-    header.style.borderBottomColor = cfg.color + '33';
-    header.style.boxShadow         = `0 1px 20px ${cfg.color}18`;
-    header.style.transition        = 'border-color .4s, box-shadow .4s';
+
+  // Icon bubble
+  const bubble = header.querySelector('.header-icon-bubble .header-emoji')
+               || header.querySelector('.header-emoji');
+  if(bubble) bubble.textContent = cfg.emoji;
+
+  // Title
+  const title = header.querySelector('.header-title');
+  if(title) {
+    title.textContent = cfg.titre;
+    title.style.textShadow = `0 0 20px ${cfg.color}66`;
   }
 
-  _updateHeaderXP();
+  // Category label
+  const cat = header.querySelector('.header-cat-label');
+  if(cat) {
+    cat.textContent = cfg.cat;
+    cat.style.color = cfg.color;
+  }
+
+  // Badge
+  const badge = header.querySelector('.header-badge');
+  if(badge) {
+    badge.textContent = cfg.badge;
+    badge.style.color        = cfg.color;
+    badge.style.borderColor  = cfg.color + '44';
+    badge.style.background   = cfg.color + '11';
+    badge.style.boxShadow    = `0 0 10px ${cfg.color}33`;
+  }
+
+  // Dot
+  const dot = header.querySelector('.header-dot');
+  if(dot) {
+    dot.style.background = cfg.color;
+    dot.style.boxShadow  = `0 0 6px ${cfg.color}`;
+  }
+
+  // Left bar
+  const bar = header.querySelector('.header-left-bar');
+  if(bar) {
+    bar.style.background = `linear-gradient(180deg, ${cfg.color}, ${cfg.color2})`;
+    bar.style.boxShadow  = `0 0 12px ${cfg.color}, 0 0 24px ${cfg.color}66`;
+  }
+
+  // Ambient
+  const ambient = header.querySelector('.header-ambient');
+  if(ambient) {
+    ambient.style.background = `radial-gradient(circle, ${cfg.color}, transparent 70%)`;
+  }
+
+  // Corners
+  header.querySelectorAll('.corner-tl,.corner-tr,.corner-bl,.corner-br')
+        .forEach(c => c.style.borderColor = cfg.color);
+
+  // Icon bubble border
+  const iconBubble = header.querySelector('.header-icon-bubble');
+  if(iconBubble) {
+    iconBubble.style.borderColor = cfg.color + '44';
+    iconBubble.style.boxShadow   = `0 0 12px ${cfg.color}22`;
+  }
+
+  // Store active page
+  document.body.setAttribute('data-page', page);
+
+   _updateHeaderXP();
 }
 
 function _updateHeaderXP() {
