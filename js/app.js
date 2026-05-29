@@ -5714,10 +5714,8 @@ function _rendreProfil(container) {
       { page:'galerie',      emoji:'💪', label:'Galerie exercices'   },
       { page:'settings',     emoji:'⚙️', label:'Paramètres'         }
     ].map(s => `
-  <div class="card mb-md" style="cursor:pointer"
-       onclick="${s.page === '__modifier__' 
-         ? 'Profil._ouvrirEdition()' 
-         : `naviguer('${s.page}')`}">
+  <div class="card mb-md" style="cursor:pointer" 
+       onclick="${s.page === '__edit__' ? 'Profil._ouvrirEdition()' : `naviguer('${s.page}')`}">
     <div class="flex justify-between items-center">
       <div style="display:flex;align-items:center;gap:var(--space-md)">
         <span style="font-size:1.3rem">${s.emoji}</span>
