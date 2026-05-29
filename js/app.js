@@ -7876,6 +7876,7 @@ if (app) {
 
     setTimeout(() => {
   naviguer('home');
+    try { CyberSparks.init(); } catch(e) {}    
   _updateHeaderXP();
 }, 100);
 
@@ -10128,5 +10129,115 @@ function _lancerModeUltra(seanceId) {
 }
 
 window._lancerModeUltra = _lancerModeUltra;
+
+// ════════════════════════════════════════════════════════════
+// CYBER SPARKS — Particules ambiantes
+// ════════════════════════════════════════════════════════════
+const CyberSparks = {
+  _sparks: [],
+  _actif: false,
+
+  init() {
+    if (this._actif) return;
+    this._actif = true;
+    this._injecterCSS();
+    this._creerSparks(20);
+  },
+
+  _injecterCSS() {
+    if (document.getElementById('cb-sparks-css')) return;
+    const s = document.createElement('style');
+    s.id = 'cb-sparks-css';
+    s.textContent = `
+      .cb-spark {
+        position: fixed;
+        width: 2px;
+        height: 8px;
+        border-radius: 1px;
+        background: linear-gradient(180deg, #00cfff, transparent);
+        box-shadow: 0 0 6px #00cfff;
+        pointer-events: none;
+        z-index: 0;
+        animation: cb-spark-fall linear infinite;
+      }
+
+      @keyframes cb-spark-fall {
+        0%   { transform: translateY(-20px) translateX(0) scale(1); opacity: 0.8; }
+        100% { transform: translateY(100vh) translateX(var(--drift)) scale(0); opacity: 0; }
+      }
+
+      .cb-spark-purple {
+        background: linear-gradient(180deg, #7b00ff, transparent);
+        box-shadow: 0 0 6px #7b00ff;
+      }
+
+      .cb-spark-blue {
+        background: linear-gradient(180deg, #0066ff, transparent);
+        box-shadow: 0 0 6px #0066ff;
+      }
+
+      /* ── Glow dots ── */
+      .cb-glow-dot {
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+        animation: cb-glow-float ease-in-out infinite;
+      }
+
+      @keyframes cb-glow-float {
+        0%,100% { transform: translateY(0) scale(1); opacity: 0.3; }
+        50%     { transform: translateY(-20px) scale(1.2); opacity: 0.6; }
+      }
+    `;
+    document.head.appendChild(s);
+  },
+
+  _creerSparks(count) {
+    const colors = ['', 'cb-spark-purple', 'cb-spark-blue'];
+
+    for (let i = 0; i < count; i++) {
+      const spark = document.createElement('div');
+      spark.className = `cb-spark ${colors[Math.floor(Math.random() * colors.length)]}`;
+      spark.style.left              = Math.random() * 100 + 'vw';
+      spark.style.animationDuration = (4 + Math.random() * 10) + 's';
+      spark.style.animationDelay    = (Math.random() * 12) + 's';
+      spark.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');
+      spark.style.opacity           = Math.random() * 0.4 + 0.1;
+      spark.style.width             = (Math.random() * 2 + 1) + 'px';
+      document.body.appendChild(spark);
+      this._sparks.push(spark);
+    }
+
+    // ── Glow dots ──
+    const dotColors = [
+      { c:'rgba(0,207,255,0.08)', size:'300px' },
+      { c:'rgba(0,102,255,0.08)', size:'200px' },
+      { c:'rgba(123,0,255,0.06)', size:'250px' }
+    ];
+
+    dotColors.forEach((d, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'cb-glow-dot';
+      dot.style.width            = d.size;
+      dot.style.height           = d.size;
+      dot.style.background       = `radial-gradient(circle, ${d.c}, transparent 70%)`;
+      dot.style.left             = [10, 80, 50][i] + 'vw';
+      dot.style.top              = [70, 10, 40][i] + 'vh';
+      dot.style.transform        = 'translate(-50%, -50%)';
+      dot.style.animationDuration= (6 + i * 3) + 's';
+      dot.style.animationDelay   = (i * 2) + 's';
+      document.body.appendChild(dot);
+    });
+  },
+
+  detruire() {
+    this._sparks.forEach(s => s.remove());
+    this._sparks = [];
+    this._actif  = false;
+  }
+};
+
+window.CyberSparks = CyberSparks;
 
 console.log('✅ App.js v3.0 chargé');
