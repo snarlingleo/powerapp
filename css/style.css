@@ -4080,3 +4080,22 @@ body::after {
   border-color: rgba(0,100,255,0.15) !important;
   color: #020610 !important;
 }
+/* ════ POLICE CYBER ════ */
+body {
+  font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+h1, h2, h3,
+.card-label,
+.section-title,
+.stat-value,
+.stat-label,
+.nav-label,
+.chip,
+.btn-primary,
+.btn-secondary,
+.tab-btn,
+.input-label {
+  font-family: 'Rajdhani', sans-serif !important;
+  letter-spacing: 0.04em !important;
+}
