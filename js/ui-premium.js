@@ -3379,20 +3379,8 @@ PM.obTerminer = function() {
 // ═══════════════════════════════════════════════════════════
 (function initPremium() {
   function boot() {
-    // ✅ Plus de PM.splash — géré par app.js
-    // ✅ Plus de PM.navbar — géré par app.js
-    // ✅ Plus de PM.header — géré par app.js
-
-    const _navOrig = window.naviguer;
-    if (typeof _navOrig === 'function') {
-      window.naviguer = function(page, opts) {
-        return _navOrig(page, opts);
-      };
-    }
-
-    console.log('✅ UI Premium Final — Tous systèmes opérationnels');
+   console.log('✅ UI Premium Final — Tous systèmes opérationnels');
   }
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
   } else {
