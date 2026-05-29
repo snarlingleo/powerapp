@@ -453,7 +453,7 @@ case 'live': {
     );
   }
   break;
-      case 'profil':       _rendreProfil(container);                      break;
+      case 'mon_profil':       _rendreProfil(container);                      break;
       case 'coach':
   try {
     if (typeof Coach === 'undefined') {
