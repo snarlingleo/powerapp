@@ -9312,8 +9312,12 @@ function _terminerOb() {
       window._obOuvrirIA = false;
       document.getElementById('onboarding-screen')
         ?.classList.add('hidden');
-      document.getElementById('app-wrapper')
-        ?.style.setProperty('display', 'flex');
+      const appWrapper = document.getElementById('app-wrapper');
+if (appWrapper) {
+  appWrapper.style.display       = 'flex';
+  appWrapper.style.flexDirection = 'column';
+  appWrapper.style.minHeight     = '100vh';
+}
       naviguer('home');
 
       // Vérifier Coach avant d'ouvrir
