@@ -3378,29 +3378,19 @@ PM.obTerminer = function() {
 // 18. INIT — Splash + Navbar + Header
 // ═══════════════════════════════════════════════════════════
 (function initPremium() {
-
   function boot() {
-    // Splash
-    PM.splash.show();
+    // ✅ Plus de PM.splash — géré par app.js
+    // ✅ Plus de PM.navbar — géré par app.js
+    // ✅ Plus de PM.header — géré par app.js
 
-    // Attendre que le DOM soit prêt
-    setTimeout(() => {
-      // PM.navbar.render();
-     //  PM.header.render();
-      PM.splash.hide();
+    const _navOrig = window.naviguer;
+    if (typeof _navOrig === 'function') {
+      window.naviguer = function(page, opts) {
+        return _navOrig(page, opts);
+      };
+    }
 
-      // Override naviguer pour sync navbar
-      const _navOrig = window.naviguer;
-      if (typeof _navOrig === 'function') {
-        window.naviguer = function(page, opts) {
-          //PM.navbar.setActive(page);
-          //PM.header.update();
-          return _navOrig(page, opts);
-        };
-      }
-
-      console.log('✅ UI Premium Final — Tous systèmes opérationnels');
-    }, 1800);
+    console.log('✅ UI Premium Final — Tous systèmes opérationnels');
   }
 
   if (document.readyState === 'loading') {
@@ -3408,7 +3398,6 @@ PM.obTerminer = function() {
   } else {
     boot();
   }
-
 })();
 
 // ═══════════════════════════════════════════════════════════
