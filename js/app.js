@@ -8305,7 +8305,15 @@ if (app) {
     try { ThemeManager.init?.();       } catch(e) {}
     try { SwipeNav.init?.();           } catch(e) {}
     try { SeanceGuidee.prechargerVoix?.(); } catch(e) {}
-    try { Themes.init(); } catch(e) {}  
+    // ✅ Init thème
+try {
+  Themes.init();
+} catch(e) {
+  // Fallback cyber-blue
+  document.documentElement.setAttribute(
+    'data-theme-style', 'cyber-blue'
+  );
+}  
     try { TimerManager.initAlarme?.(); } catch(e) {}
 
     setTimeout(() => {
@@ -10681,6 +10689,468 @@ const CyberAnimations = {
 };
 
 window.CyberAnimations = CyberAnimations;
+// ════════════════════════════════════════════════════════════
+// THEMES MANAGER — Sélecteur 5 thèmes Cyber
+// ════════════════════════════════════════════════════════════
+const Themes = {
+
+  CLE: 'ft_theme_style',
+
+  THEMES: [
+    {
+      id:       'cyber-blue',
+      nom:      'Cyber Blue',
+      emoji:    '🔵',
+      c1:       '#00cfff',
+      c2:       '#0066ff',
+      c3:       '#7b00ff',
+      bg:       '#020610',
+      preview:  ['#020610', '#00cfff', '#0066ff', '#7b00ff'],
+      defaut:   true
+    },
+    {
+      id:       'lava-neon',
+      nom:      'Lava Neon',
+      emoji:    '🔴',
+      c1:       '#ff6b35',
+      c2:       '#ff0066',
+      c3:       '#ff3300',
+      bg:       '#120606',
+      preview:  ['#120606', '#ff6b35', '#ff0066', '#ff3300']
+    },
+    {
+      id:       'deep-purple',
+      nom:      'Deep Purple',
+      emoji:    '🟣',
+      c1:       '#bf7fff',
+      c2:       '#8b00ff',
+      c3:       '#ff00aa',
+      bg:       '#080612',
+      preview:  ['#080612', '#bf7fff', '#8b00ff', '#ff00aa']
+    },
+    {
+      id:       'matrix-green',
+      nom:      'Matrix',
+      emoji:    '🟢',
+      c1:       '#00ff88',
+      c2:       '#00cc44',
+      c3:       '#00ffcc',
+      bg:       '#020c06',
+      preview:  ['#020c06', '#00ff88', '#00cc44', '#00ffcc']
+    },
+    {
+      id:       'arctic-white',
+      nom:      'Arctic',
+      emoji:    '⚪',
+      c1:       '#0066ff',
+      c2:       '#0044cc',
+      c3:       '#4b4bf9',
+      bg:       '#f0f4ff',
+      preview:  ['#e8eeff', '#0066ff', '#0044cc', '#4b4bf9']
+    }
+  ],
+
+  // ── Récupérer thème actuel ──
+  get() {
+    return Utils.storage.get(this.CLE, 'cyber-blue');
+  },
+
+  // ── Appliquer un thème ──
+  set(id) {
+    const theme = this.THEMES.find(t => t.id === id);
+    if (!theme) return;
+
+    // Retirer ancien thème
+    this.THEMES.forEach(t => {
+      document.documentElement.removeAttribute(`data-theme-style`);
+    });
+
+    // Appliquer nouveau
+    document.documentElement.setAttribute('data-theme-style', id);
+    Utils.storage.set(this.CLE, id);
+
+    // Mettre à jour les sparks
+    this._updateSparks(theme);
+
+    // Mettre à jour le header
+    try { _updateHeader(window._pageActive || 'home'); } catch(e) {}
+
+    // Mettre à jour la nav
+    try { _rendreNavBar(); } catch(e) {}
+
+    return theme;
+  },
+
+  // ── Initialiser au démarrage ──
+  init() {
+    const saved = this.get();
+    document.documentElement.setAttribute('data-theme-style', saved);
+    this._updateSparks(this.THEMES.find(t => t.id === saved));
+  },
+
+  // ── Mettre à jour les sparks selon le thème ──
+  _updateSparks(theme) {
+    if (!theme) return;
+
+    // Mettre à jour les variables CSS des sparks
+    const style = document.getElementById('cb-sparks-theme');
+    const s = style || document.createElement('style');
+    s.id = 'cb-sparks-theme';
+
+    if (theme.id === 'arctic-white') {
+      s.textContent = `.cb-spark, .cb-glow-dot { display:none!important; }`;
+    } else {
+      s.textContent = `
+        .cb-spark {
+          background: linear-gradient(180deg,
+            ${theme.c1}, transparent) !important;
+          box-shadow: 0 0 6px ${theme.c1} !important;
+        }
+        .cb-spark-purple {
+          background: linear-gradient(180deg,
+            ${theme.c3}, transparent) !important;
+          box-shadow: 0 0 6px ${theme.c3} !important;
+        }
+        .cb-spark-blue {
+          background: linear-gradient(180deg,
+            ${theme.c2}, transparent) !important;
+          box-shadow: 0 0 6px ${theme.c2} !important;
+        }
+      `;
+    }
+
+    if (!style) document.head.appendChild(s);
+  },
+
+  // ── Page sélecteur ──
+  render(container) {
+    if (!container) return;
+
+    const actuel = this.get();
+
+    container.innerHTML = `
+
+      <!-- Header -->
+      <div style="
+        background:linear-gradient(135deg,
+          rgba(0,100,255,0.15),
+          rgba(0,207,255,0.03));
+        border:1px solid rgba(0,207,255,0.2);
+        border-radius:18px;
+        padding:20px;
+        margin-bottom:20px;
+        position:relative;overflow:hidden">
+
+        <div style="position:absolute;top:-30px;right:-30px;
+                    width:150px;height:150px;
+                    background:radial-gradient(circle,
+                      rgba(0,207,255,0.15),transparent 70%);
+                    pointer-events:none"></div>
+
+        <div style="
+          font-size:8px;font-weight:700;
+          text-transform:uppercase;letter-spacing:4px;
+          color:rgba(0,207,255,0.5);
+          margin-bottom:8px;
+          font-family:'Orbitron',monospace">
+          🎨 Apparence
+        </div>
+        <div style="font-size:1.2rem;font-weight:800;
+                    margin-bottom:4px">
+          Choisir ton thème
+        </div>
+        <div style="font-size:.75rem;color:var(--text-muted)">
+          ${this.THEMES.length} thèmes disponibles
+          · Appliqué instantanément
+        </div>
+      </div>
+
+      <!-- Grille thèmes -->
+      <div style="display:grid;
+                  grid-template-columns:1fr 1fr;
+                  gap:12px;
+                  margin-bottom:20px">
+
+        ${this.THEMES.map(t => `
+          <div onclick="Themes._selectionner('${t.id}',this)"
+               id="theme-card-${t.id}"
+               style="
+                 border-radius:16px;
+                 overflow:hidden;
+                 cursor:pointer;
+                 border:2px solid ${t.id === actuel
+                   ? t.c1
+                   : 'rgba(255,255,255,0.08)'};
+                 background:${t.id === actuel
+                   ? `${t.c1}18`
+                   : 'rgba(255,255,255,0.03)'};
+                 transition:all .25s cubic-bezier(.34,1.2,.64,1);
+                 transform:${t.id === actuel ? 'scale(1.02)' : 'scale(1)'};
+                 box-shadow:${t.id === actuel
+                   ? `0 0 20px ${t.c1}44, 0 4px 16px rgba(0,0,0,0.3)`
+                   : '0 2px 8px rgba(0,0,0,0.2)'};
+                 position:relative">
+
+            <!-- Preview gradient -->
+            <div style="
+              height:80px;
+              background:linear-gradient(135deg,
+                ${t.bg} 0%,
+                ${t.c2}33 50%,
+                ${t.bg} 100%);
+              position:relative;overflow:hidden">
+
+              <!-- Scanlines -->
+              <div style="
+                position:absolute;inset:0;
+                background:repeating-linear-gradient(
+                  0deg,
+                  ${t.c1}08 0px,
+                  ${t.c1}08 1px,
+                  transparent 1px,
+                  transparent 3px
+                )"></div>
+
+              <!-- Mini header preview -->
+              <div style="
+                position:absolute;top:8px;left:8px;right:8px;
+                display:flex;align-items:center;gap:6px">
+
+                <!-- Mini icon bubble -->
+                <div style="
+                  width:24px;height:24px;
+                  border-radius:6px;
+                  background:${t.c1}22;
+                  border:1px solid ${t.c1}44;
+                  display:flex;align-items:center;
+                  justify-content:center;
+                  font-size:.7rem">
+                  ⚡
+                </div>
+
+                <!-- Mini title -->
+                <div style="flex:1">
+                  <div style="
+                    font-size:6px;
+                    font-weight:900;
+                    color:${t.id === 'arctic-white'
+                      ? '#09092d' : 'white'};
+                    font-family:'Orbitron',monospace;
+                    letter-spacing:1px">
+                    POWERAPP
+                  </div>
+                </div>
+
+                <!-- Mini badge -->
+                <div style="
+                  font-size:5px;
+                  padding:2px 6px;
+                  background:${t.c1}18;
+                  border:1px solid ${t.c1}44;
+                  border-radius:4px;
+                  color:${t.c1};
+                  font-family:'Orbitron',monospace;
+                  letter-spacing:1px">
+                  HOME
+                </div>
+              </div>
+
+              <!-- Mini nav preview -->
+              <div style="
+                position:absolute;bottom:6px;left:8px;right:8px;
+                display:flex;justify-content:space-around">
+                ${['⌂','📅','⚡','📊','🥗'].map((icon, i) => `
+                  <div style="
+                    width:20px;height:20px;
+                    border-radius:6px;
+                    background:${i === 0
+                      ? `${t.c1}25`
+                      : 'rgba(255,255,255,0.04)'};
+                    border:1px solid ${i === 0
+                      ? `${t.c1}55`
+                      : 'rgba(255,255,255,0.08)'};
+                    display:flex;align-items:center;
+                    justify-content:center;
+                    font-size:.55rem">
+                    ${icon}
+                  </div>`).join('')}
+              </div>
+
+              <!-- Glow coins -->
+              <div style="
+                position:absolute;
+                top:0;left:0;
+                width:40px;height:40px;
+                background:radial-gradient(circle,
+                  ${t.c1}30, transparent 70%);
+                pointer-events:none"></div>
+
+              <!-- Left bar -->
+              <div style="
+                position:absolute;
+                left:0;top:20%;bottom:20%;
+                width:3px;
+                background:linear-gradient(180deg, ${t.c1}, ${t.c2});
+                box-shadow:0 0 8px ${t.c1};
+                border-radius:0 2px 2px 0"></div>
+            </div>
+
+            <!-- Info -->
+            <div style="
+              padding:10px 12px;
+              background:${t.id === 'arctic-white'
+                ? 'rgba(240,244,255,0.8)'
+                : 'rgba(0,0,0,0.2)'}">
+
+              <div style="
+                display:flex;align-items:center;
+                justify-content:space-between;
+                margin-bottom:6px">
+
+                <div style="
+                  font-size:.82rem;font-weight:800;
+                  color:${t.id === 'arctic-white'
+                    ? '#09092d' : 'white'}">
+                  ${t.emoji} ${t.nom}
+                </div>
+
+                ${t.id === actuel ? `
+                  <div style="
+                    font-size:6px;font-weight:700;
+                    letter-spacing:2px;
+                    padding:2px 8px;
+                    background:${t.c1}22;
+                    border:1px solid ${t.c1}55;
+                    border-radius:99px;
+                    color:${t.c1};
+                    font-family:'Orbitron',monospace">
+                    ACTIF
+                  </div>` : ''}
+              </div>
+
+              <!-- Palette preview -->
+              <div style="display:flex;gap:4px">
+                ${t.preview.map(c => `
+                  <div style="
+                    flex:1;height:6px;
+                    border-radius:3px;
+                    background:${c}"></div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Section rapide -->
+      <div style="
+        background:rgba(0,10,30,0.4);
+        border:1px solid rgba(0,100,255,0.1);
+        border-radius:14px;
+        padding:14px 16px;
+        margin-bottom:16px">
+
+        <div style="
+          font-size:7px;font-weight:700;
+          text-transform:uppercase;letter-spacing:4px;
+          color:rgba(0,207,255,0.35);
+          margin-bottom:10px;
+          font-family:'Orbitron',monospace">
+          ⚡ Changement rapide
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${this.THEMES.map(t => `
+            <button onclick="Themes._selectionnerRapide('${t.id}')"
+                    style="
+                      display:flex;align-items:center;gap:6px;
+                      padding:8px 14px;
+                      background:${this.get() === t.id
+                        ? `${t.c1}22`
+                        : 'rgba(255,255,255,0.04)'};
+                      border:1px solid ${this.get() === t.id
+                        ? `${t.c1}55`
+                        : 'rgba(255,255,255,0.08)'};
+                      border-radius:30px;
+                      font-size:.72rem;font-weight:700;
+                      color:${this.get() === t.id
+                        ? t.c1 : 'var(--text-muted)'};
+                      cursor:pointer;
+                      transition:all .2s">
+              <div style="
+                width:10px;height:10px;
+                border-radius:50%;
+                background:${t.c1};
+                box-shadow:0 0 6px ${t.c1}"></div>
+              ${t.nom}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div style="
+        padding:10px 14px;
+        background:rgba(0,100,255,0.06);
+        border:1px solid rgba(0,207,255,0.15);
+        border-radius:10px;
+        font-size:.72rem;
+        color:var(--text-muted);
+        text-align:center;
+        line-height:1.5">
+        💡 Le thème est sauvegardé automatiquement
+        et appliqué au prochain démarrage
+      </div>
+    `;
+  },
+
+  // ── Sélectionner depuis la grille ──
+  _selectionner(id, cardEl) {
+    const theme = this.set(id);
+    if (!theme) return;
+
+    // Mettre à jour toutes les cards
+    this.THEMES.forEach(t => {
+      const card = document.getElementById(`theme-card-${t.id}`);
+      if (!card) return;
+
+      const estActif = t.id === id;
+      card.style.border      = `2px solid ${estActif ? t.c1 : 'rgba(255,255,255,0.08)'}`;
+      card.style.background  = estActif ? `${t.c1}18` : 'rgba(255,255,255,0.03)';
+      card.style.transform   = estActif ? 'scale(1.02)' : 'scale(1)';
+      card.style.boxShadow   = estActif
+        ? `0 0 20px ${t.c1}44, 0 4px 16px rgba(0,0,0,0.3)`
+        : '0 2px 8px rgba(0,0,0,0.2)';
+    });
+
+    Utils.vibrer([30]);
+    Utils.toast(
+      `${theme.emoji} Thème ${theme.nom} activé !`,
+      'success', 1500
+    );
+  },
+
+  // ── Sélectionner depuis les boutons rapides ──
+  _selectionnerRapide(id) {
+    const theme = this.set(id);
+    if (!theme) return;
+
+    // Re-render la page thèmes si ouverte
+    const container = document.getElementById('page-themes');
+    if (container && window._pageActive === 'themes') {
+      this.render(container);
+    }
+
+    Utils.vibrer([30]);
+    Utils.toast(
+      `${theme.emoji} ${theme.nom} !`,
+      'success', 1200
+    );
+  }
+};
+
+window.Themes = Themes;
+
 // ════════════════════════════════════════════════════════════
 // DÉMARRAGE
 // ════════════════════════════════════════════════════════════
