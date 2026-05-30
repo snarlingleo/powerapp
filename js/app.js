@@ -449,7 +449,47 @@ function _updateHeaderXP() {
       </span>`;
   } catch(e) {}
 }
+// ════ TOAST CYBER — Override couleurs ════
+function _showToastCyber(msg, type = 'success', duration = 3000) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
 
+  const colors = {
+    success:     { bg:'rgba(0,207,255,0.1)',  border:'rgba(0,207,255,0.3)',  color:'#00cfff' },
+    error:       { bg:'rgba(255,80,80,0.1)',   border:'rgba(255,80,80,0.3)',   color:'#ff5555' },
+    info:        { bg:'rgba(0,102,255,0.1)',   border:'rgba(0,102,255,0.3)',   color:'#0066ff' },
+    pr:          { bg:'rgba(0,207,255,0.15)',  border:'rgba(0,207,255,0.4)',   color:'#00cfff' },
+    celebration: { bg:'rgba(0,100,255,0.15)', border:'rgba(0,207,255,0.35)', color:'white'   }
+  };
+
+  const col   = colors[type] || colors.success;
+  const toast = document.createElement('div');
+
+  toast.style.cssText = `
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: ${col.bg};
+    border: 1px solid ${col.border};
+    color: ${col.color};
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    box-shadow: 0 0 20px ${col.border}, 0 8px 24px rgba(0,0,0,0.4);
+    backdrop-filter: blur(12px);
+    animation: toastSlideIn .35s cubic-bezier(.34,1.56,.64,1);
+    pointer-events: all;
+    position: relative;
+  `;
+
+  toast.textContent = msg;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.animation = 'toastSlideOut .3s ease forwards';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
 // ════════════════════════════════════════════════════════════
 // RENDU DES PAGES
 // ════════════════════════════════════════════════════════════
