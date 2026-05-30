@@ -11649,21 +11649,42 @@ if (typeof CyberSparks === 'undefined') {
       this._creerGlowDots();
     },
 
-    _creerSparks(count) {
-      const classes = ['', 'cb-spark-purple', 'cb-spark-blue'];
-      for (let i = 0; i < count; i++) {
-        const s = document.createElement('div');
-        s.className = `cb-spark ${classes[Math.floor(Math.random() * classes.length)]}`;
-        s.style.left              = Math.random() * 100 + 'vw';
-        s.style.animationDuration = (4 + Math.random() * 10) + 's';
-        s.style.animationDelay    = (Math.random() * 12) + 's';
-        s.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');
-        s.style.opacity           = Math.random() * 0.4 + 0.1;
-        s.style.width             = (Math.random() * 2 + 1) + 'px';
-        document.body.appendChild(s);
-        this._sparks.push(s);
-      }
-    },
+_creerSparks(count) {
+  // ✅ Récupérer couleurs du thème actuel
+  const theme = (() => {
+    try {
+      const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+      return window.Themes?.THEMES?.find(t => t.id === id)
+        || { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff' };
+    } catch(e) {
+      return { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff' };
+    }
+  })();
+
+  const colors = [theme.c1, theme.c2, theme.c3];
+
+  for (let i = 0; i < count; i++) {
+    const s   = document.createElement('div');
+    const col = colors[Math.floor(Math.random() * colors.length)];
+
+    s.className = 'cb-spark';
+    s.style.cssText = `
+      left: ${Math.random() * 100}vw;
+      bottom: 0;
+      height: ${4 + Math.random() * 8}px;
+      background: linear-gradient(180deg, ${col}, transparent);
+      box-shadow: 0 0 6px ${col};
+      animation-duration: ${5 + Math.random() * 10}s;
+      animation-delay: ${Math.random() * 15}s;
+      --drift: ${Math.random() * 80 - 40}px;
+      opacity: ${Math.random() * 0.5 + 0.2};
+      width: ${Math.random() * 1.5 + 0.5}px;
+    `;
+
+    document.body.appendChild(s);
+    this._sparks.push(s);
+  }
+},
 
     _creerGlowDots() {
       const dots = [
