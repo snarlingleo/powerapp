@@ -8260,10 +8260,26 @@ if (app) {
     } catch(e) {}
 
     setTimeout(() => {
-  naviguer('home');
-    try { CyberSparks.init(); } catch(e) {}    
-  _updateHeaderXP();
-}, 100);
+     naviguer('home');
+       try { CyberSparks.init(); } catch(e) {}    
+     _updateHeaderXP();
+   }, 100);
+    if (!document.getElementById('cb-fonts')) {
+  const link = document.createElement('link');
+  link.id   = 'cb-fonts';
+  link.rel  = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap';
+  document.head.appendChild(link);
+} 
+     } catch(e) {
+    console.error('[App] Erreur init:', e);
+    const splash = document.getElementById('splash-screen');
+    const app    = document.getElementById('app-wrapper');
+    if (splash) splash.style.display = 'none';
+    if (app)    app.style.display    = 'flex';
+    naviguer('home');
+
+  }
 
     // ✅ FIX BACKGROUND TIMER
     document.addEventListener('visibilitychange', () => {
@@ -8307,27 +8323,6 @@ if (app) {
     );
 
     console.log('✅ PowerApp v4.0 — Prêt !');
-
-  } catch(e) {
-    console.error('[App] Erreur init:', e);
-    const splash = document.getElementById('splash-screen');
-    const app    = document.getElementById('app-wrapper');
-    if (splash) splash.style.display = 'none';
-    if (app)    app.style.display    = 'flex';
-    naviguer('home');
-
-// ✅ Cyber sparks
-try { CyberSparks.init(); } catch(e) {}
-
-// ✅ Precharger police Orbitron
-if (!document.getElementById('cb-fonts')) {
-  const link = document.createElement('link');
-  link.id   = 'cb-fonts';
-  link.rel  = 'stylesheet';
-  link.href = 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap';
-  document.head.appendChild(link);
-}
-  }
 
   try { Sounds?.init?.(); } catch(e) {}
 }
