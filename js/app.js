@@ -323,9 +323,6 @@ function _rendreNavBar() {
 // ════════════════════════════════════════════════════════════
 // HEADER — Neon Premium avec couleur dynamique par page
 // ════════════════════════════════════════════════════════════
-// ════════════════════════════════════════════════════════════
-// HEADER — Cyber Block Blue
-// ════════════════════════════════════════════════════════════
 function _updateHeader(page) {
   const configs = {
     home:         { emoji:'⚡', titre:'PowerApp',            cat:'CORE',     badge:'HOME',      c1:'#00cfff', c2:'#0066ff' },
@@ -334,100 +331,104 @@ function _updateHeader(page) {
     stats:        { emoji:'📊', titre:'Statistiques',        cat:'CORE',     badge:'STATS',     c1:'#00aaff', c2:'#0044cc' },
     profil:       { emoji:'👤', titre:'Profil',              cat:'CORE',     badge:'PROFILE',   c1:'#7b00ff', c2:'#0044ff' },
     coach:        { emoji:'🤖', titre:'Coach IA',            cat:'IA',       badge:'AI',        c1:'#8800ff', c2:'#0066ff' },
-    defis:        { emoji:'🏆', titre:'Défis',               cat:'GAME',     badge:'CHALLENGE', c1:'#00cfff', c2:'#0066ff' },
     predict:      { emoji:'📈', titre:'Prédictions',         cat:'IA',       badge:'PREDICT',   c1:'#00cfff', c2:'#7b00ff' },
-    share:        { emoji:'📤', titre:'Partage',             cat:'SOCIAL',   badge:'SHARE',     c1:'#0066ff', c2:'#7700ff' },
+    adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif', cat:'IA',       badge:'ADAPT',     c1:'#7700ff', c2:'#0099ff' },
+    defis:        { emoji:'🏆', titre:'Défis',               cat:'GAME',     badge:'CHALLENGE', c1:'#00cfff', c2:'#0066ff' },
     gamification: { emoji:'⭐', titre:'Niveaux & XP',        cat:'GAME',     badge:'XP',        c1:'#0099ff', c2:'#7b00ff' },
+    share:        { emoji:'📤', titre:'Partage',             cat:'SOCIAL',   badge:'SHARE',     c1:'#0066ff', c2:'#7700ff' },
+    social:       { emoji:'📱', titre:'Réseaux',             cat:'SOCIAL',   badge:'SOCIAL',    c1:'#7b00ff', c2:'#0066ff' },
     history:      { emoji:'📅', titre:'Historique',          cat:'TRACKING', badge:'HISTORY',   c1:'#00cfff', c2:'#0044cc' },
     photos:       { emoji:'📸', titre:'Photos',              cat:'TRACKING', badge:'PHOTOS',    c1:'#0088ff', c2:'#7b00ff' },
-    social:       { emoji:'📱', titre:'Réseaux',             cat:'SOCIAL',   badge:'SOCIAL',    c1:'#7b00ff', c2:'#0066ff' },
-    supersets:    { emoji:'⚡', titre:'Supersets',           cat:'TRAINING', badge:'SUPERSET',  c1:'#00cfff', c2:'#0066ff' },
-    offline:      { emoji:'📵', titre:'Hors-ligne',          cat:'SETTINGS', badge:'OFFLINE',   c1:'#7700ff', c2:'#0033cc' },
-    settings:     { emoji:'⚙️', titre:'Paramètres',          cat:'SETTINGS', badge:'CONFIG',    c1:'#7b00ff', c2:'#0066ff' },
-    nutrition:    { emoji:'🥗', titre:'Nutrition',           cat:'TOOLS',    badge:'NUTRI',     c1:'#00cfff', c2:'#0066ff' },
-    mon_profil:   { emoji:'👤', titre:'Mon Profil',          cat:'SETTINGS', badge:'ME',        c1:'#0066ff', c2:'#7b00ff' },
     journal:      { emoji:'📔', titre:'Journal',             cat:'TRACKING', badge:'LOG',       c1:'#00cfff', c2:'#0066ff' },
     objectifs:    { emoji:'🎯', titre:'Objectifs',           cat:'TRACKING', badge:'GOALS',     c1:'#0099ff', c2:'#7700ff' },
+    supersets:    { emoji:'⚡', titre:'Supersets',           cat:'TRAINING', badge:'SUPERSET',  c1:'#00cfff', c2:'#0066ff' },
     circuit:      { emoji:'⚡', titre:'HIIT & Cardio',       cat:'TRAINING', badge:'HIIT',      c1:'#0066ff', c2:'#7b00ff' },
-    adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif', cat:'IA',       badge:'ADAPT',     c1:'#7700ff', c2:'#0099ff' },
     galerie:      { emoji:'💪', titre:'Galerie Exercices',   cat:'TRAINING', badge:'GALLERY',   c1:'#00cfff', c2:'#0044dd' },
     blessures:    { emoji:'🩹', titre:'Blessures',           cat:'TRAINING', badge:'INJURY',    c1:'#0088ff', c2:'#7b00ff' },
+    nutrition:    { emoji:'🥗', titre:'Nutrition',           cat:'TOOLS',    badge:'NUTRI',     c1:'#00cfff', c2:'#0066ff' },
     calculateur:  { emoji:'🧮', titre:'Calculateur',         cat:'TOOLS',    badge:'CALC',      c1:'#7b00ff', c2:'#0066ff' },
     export:       { emoji:'📤', titre:'Export',              cat:'TOOLS',    badge:'EXPORT',    c1:'#0066ff', c2:'#7700ff' },
+    settings:     { emoji:'⚙️', titre:'Paramètres',          cat:'SETTINGS', badge:'CONFIG',    c1:'#7b00ff', c2:'#0066ff' },
     themes:       { emoji:'🎨', titre:'Thèmes',              cat:'SETTINGS', badge:'THEME',     c1:'#00cfff', c2:'#7b00ff' },
-    sounds:       { emoji:'🔊', titre:'Sons',                cat:'SETTINGS', badge:'AUDIO',     c1:'#0099ff', c2:'#0044cc' }
+    sounds:       { emoji:'🔊', titre:'Sons',                cat:'SETTINGS', badge:'AUDIO',     c1:'#0099ff', c2:'#0044cc' },
+    offline:      { emoji:'📵', titre:'Hors-ligne',          cat:'SETTINGS', badge:'OFFLINE',   c1:'#7700ff', c2:'#0033cc' },
+    mon_profil:   { emoji:'👤', titre:'Mon Profil',          cat:'SETTINGS', badge:'ME',        c1:'#0066ff', c2:'#7b00ff' },
   };
 
   const cfg = configs[page] || configs.home;
   const header = document.querySelector('.app-header');
   if (!header) return;
 
-  // ── Emoji ──
+  // Emoji
   const emojiEl = document.getElementById('header-emoji');
   if (emojiEl) {
     emojiEl.textContent = cfg.emoji;
     emojiEl.style.filter = `drop-shadow(0 0 8px ${cfg.c1})`;
+    emojiEl.style.animation = 'headerEmojiPop .4s cubic-bezier(.34,1.56,.64,1)';
+    setTimeout(() => { if(emojiEl) emojiEl.style.animation = ''; }, 400);
   }
 
-  // ── Titre ──
+  // Titre
   const titleEl = document.getElementById('header-title');
   if (titleEl) {
     titleEl.textContent = cfg.titre;
     titleEl.style.textShadow = `0 0 20px ${cfg.c1}55`;
   }
 
-  // ── Category ──
+  // Category
   const catEl = document.getElementById('header-cat');
-  if (catEl) {
-    catEl.textContent = cfg.cat;
-    catEl.style.color = cfg.c1;
-  }
+  if (catEl) { catEl.textContent = cfg.cat; catEl.style.color = cfg.c1; }
 
-  // ── Badge ──
-  const badgeEl = document.getElementById('header-badge');
+  // Key
+  const keyEl = document.getElementById('cb-key');
+  if (keyEl) keyEl.textContent = page.replace('_',' ').toUpperCase();
+
+  // Badge
+  const badgeEl = document.getElementById('cb-badge');
   if (badgeEl) {
     badgeEl.textContent = cfg.badge;
-    badgeEl.style.color = cfg.c1;
+    badgeEl.style.color       = cfg.c1;
     badgeEl.style.borderColor = cfg.c1 + '44';
     badgeEl.style.background  = cfg.c1 + '11';
     badgeEl.style.boxShadow   = `0 0 8px ${cfg.c1}33`;
   }
 
-  // ── Dot ──
-  const dotEl = document.getElementById('header-dot');
+  // Dot
+  const dotEl = document.getElementById('cb-dot');
   if (dotEl) {
     dotEl.style.background = cfg.c1;
     dotEl.style.boxShadow  = `0 0 6px ${cfg.c1}`;
   }
 
-  // ── Left bar ──
-  const bar = header.querySelector('.header-left-bar');
+  // Left bar
+  const bar = header.querySelector('.cb-left-bar');
   if (bar) {
     bar.style.background = `linear-gradient(180deg, ${cfg.c1}, ${cfg.c2})`;
     bar.style.boxShadow  = `0 0 14px ${cfg.c1}, 0 0 28px ${cfg.c1}55`;
   }
 
-  // ── Ambient ──
-  const ambient = header.querySelector('.header-ambient');
+  // Ambient
+  const ambient = header.querySelector('.cb-ambient');
   if (ambient) {
     ambient.style.background = `radial-gradient(circle, ${cfg.c1}, transparent 70%)`;
   }
 
-  // ── Corners ──
-  header.querySelectorAll('.corner-tl,.corner-tr,.corner-bl,.corner-br')
-        .forEach(c => c.style.borderColor = cfg.c1);
+  // Corners
+  header.querySelectorAll('.cb-corner').forEach(c => {
+    c.style.borderColor = cfg.c1;
+  });
 
-  // ── Icon bubble ──
-  const bubble = header.querySelector('.header-icon-bubble');
+  // Icon bubble
+  const bubble = header.querySelector('.cb-icon-bubble');
   if (bubble) {
     bubble.style.borderColor = cfg.c1 + '44';
     bubble.style.boxShadow   = `0 0 14px ${cfg.c1}22`;
   }
 
-  // ── Header border ──
+  // Header border
   header.style.borderBottomColor = cfg.c1 + '33';
 
-  // ── Store page ──
+  // Store page
   document.body.setAttribute('data-page', page);
 
   _updateHeaderXP();
