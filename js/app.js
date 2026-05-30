@@ -4711,8 +4711,7 @@ _render() {
         <button onclick="ChronoSticky._togglePause();
                          LiveStickyBar._render()"
                 style="padding:4px 10px;
-                       // ✅ Couleur thème actuel
-const _liveStickyTheme = (() => {
+                      const _liveStickyTheme = (() => {
   try {
     const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
     return Themes.THEMES.find(t => t.id === id) || Themes.THEMES[0];
