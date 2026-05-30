@@ -8381,11 +8381,12 @@ if (app) {
       }
     } catch(e) {}
 
-    setTimeout(() => {
-     naviguer('home');
-       try { CyberSparks.init(); } catch(e) {}    
-     _updateHeaderXP();
-   }, 100);
+setTimeout(() => {
+  naviguer('home');
+  try { CyberSparks.init();     } catch(e) {}
+  try { LavaBackground.init();  } catch(e) {} // ✅ AJOUTE ça
+  _updateHeaderXP();
+}, 100);
     if (!document.getElementById('cb-fonts')) {
   const link = document.createElement('link');
   link.id   = 'cb-fonts';
@@ -8418,6 +8419,9 @@ if (app) {
               const sec = Chrono.getDureeSecondes?.() || 0;
               disp.textContent =
                 Chrono.formaterDuree?.(sec) || '00:00';
+            try { LavaBackground.reprendre(); } catch(e) {}
+           } else {
+             try { LavaBackground.pause(); } catch(e) {}  
             }
           }
         } catch(e) {}
