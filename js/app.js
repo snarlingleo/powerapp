@@ -10556,7 +10556,131 @@ function _animerSplash() {
     }
   }, 60);
 }
+// ════════════════════════════════════════════════════════════
+// ANIMATIONS TROPHÉES + XP — Cyber Block
+// ════════════════════════════════════════════════════════════
+const CyberAnimations = {
 
+  // ✅ XP gain popup
+  showXPGain(xp, x, y) {
+    const el = document.createElement('div');
+    el.className = 'xp-gain-popup';
+    el.textContent = `+${xp} XP`;
+    el.style.left = (x || window.innerWidth / 2) + 'px';
+    el.style.top  = (y || window.innerHeight / 2) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  },
+
+  // ✅ Trophy unlock animation
+  animerTropheeDéblocage(tropheeEl) {
+    if (!tropheeEl) return;
+    tropheeEl.classList.add('just-unlocked');
+
+    // Particules
+    for (let i = 0; i < 8; i++) {
+      const p   = document.createElement('div');
+      const ang = (i / 8) * 360;
+      const dist = 40 + Math.random() * 30;
+      const tx  = Math.cos(ang * Math.PI / 180) * dist;
+      const ty  = Math.sin(ang * Math.PI / 180) * dist;
+
+      p.style.cssText = `
+        position:absolute;
+        width:4px; height:4px;
+        border-radius:50%;
+        background:#00cfff;
+        box-shadow:0 0 6px #00cfff;
+        top:50%; left:50%;
+        transform:translate(-50%,-50%);
+        pointer-events:none;
+        z-index:10;
+        --tx:${tx}px; --ty:${ty}px;
+        animation:cb-trophy-particle .6s ease ${i*0.05}s forwards;
+      `;
+      tropheeEl.appendChild(p);
+      setTimeout(() => p.remove(), 700);
+    }
+
+    setTimeout(() => {
+      tropheeEl.classList.remove('just-unlocked');
+    }, 3000);
+  },
+
+  // ✅ Level up overlay
+  afficherLevelUp(niveau, nom) {
+    const el = document.createElement('div');
+    el.className = 'level-up-overlay';
+    el.innerHTML = `
+      <div class="level-up-content">
+        <div class="level-up-label">NIVEAU ATTEINT</div>
+        <div class="level-up-number">${niveau}</div>
+        <div class="level-up-name">${nom}</div>
+        <div style="
+          margin-top:20px;
+          font-size:8px;
+          letter-spacing:4px;
+          color:rgba(0,207,255,0.3)
+        ">APPUIE POUR CONTINUER</div>
+      </div>
+    `;
+
+    // Particles background
+    for (let i = 0; i < 20; i++) {
+      const p = document.createElement('div');
+      p.style.cssText = `
+        position:absolute;
+        width:${2 + Math.random() * 3}px;
+        height:${2 + Math.random() * 3}px;
+        border-radius:50%;
+        background:${Math.random() > 0.5 ? '#00cfff' : '#0066ff'};
+        box-shadow:0 0 6px currentColor;
+        left:${Math.random() * 100}vw;
+        top:${Math.random() * 100}vh;
+        opacity:${Math.random() * 0.6 + 0.2};
+        animation:pulseLive ${1 + Math.random() * 2}s ease-in-out infinite;
+      `;
+      el.appendChild(p);
+    }
+
+    document.body.appendChild(el);
+    el.addEventListener('click', () => el.remove());
+    setTimeout(() => el.remove(), 3500);
+
+    Utils.vibrer([100, 50, 100, 50, 200]);
+  },
+
+  // ✅ Série validée — flash sur la card
+  flashSerieValidee(exoIdx) {
+    const card = document.getElementById(`live-exo-${exoIdx}`);
+    if (!card) return;
+    card.style.transition = 'box-shadow 0.3s, border-color 0.3s';
+    card.style.boxShadow  = '0 0 30px rgba(0,207,255,0.4)';
+    card.style.borderColor = 'rgba(0,207,255,0.5)';
+    setTimeout(() => {
+      card.style.boxShadow  = '';
+      card.style.borderColor = '';
+    }, 600);
+  },
+
+  // ✅ PR — effet neon pulse sur la série
+  flashPR(exoIdx, serieIdx) {
+    const btn = document.getElementById(`btn-serie-${exoIdx}-${serieIdx}`);
+    if (!btn) return;
+
+    // Flash doré → cyan
+    btn.style.transition = 'all 0.2s';
+    btn.style.background  = 'linear-gradient(135deg, #00cfff, #7b00ff)';
+    btn.style.boxShadow   = '0 0 30px rgba(0,207,255,0.8)';
+
+    setTimeout(() => {
+      btn.style.background = 'rgba(0,100,255,0.15)';
+      btn.style.boxShadow  = 'none';
+    }, 1000);
+  }
+};
+
+window.CyberAnimations = CyberAnimations;
 // ════════════════════════════════════════════════════════════
 // DÉMARRAGE
 // ════════════════════════════════════════════════════════════
