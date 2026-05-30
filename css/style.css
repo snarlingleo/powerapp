@@ -1686,3 +1686,1056 @@ select.input { cursor: pointer; }
   .card { border: 1px solid #ccc; break-inside: avoid; }
   body { background: white; color: black; }
 }
+/* ════════════════════════════════════════════════════════════
+   G — LIVE SÉANCE CYBER BLOCK BLUE
+════════════════════════════════════════════════════════════ */
+
+/* ── Header live séance ── */
+#live-content .card[style*="linear-gradient"] {
+  background: linear-gradient(135deg,
+    rgba(0,100,255,0.2) 0%,
+    rgba(0,207,255,0.05) 100%) !important;
+  border: 1px solid rgba(0,207,255,0.3) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 24px rgba(0,102,255,0.2) !important;
+}
+
+/* ── Live sticky bar ── */
+#live-sticky-bar {
+  background: linear-gradient(135deg, #020a18, #030c20) !important;
+  border-bottom: 1px solid rgba(0,207,255,0.2) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* Chrono dans sticky bar */
+#live-sticky-bar [style*="font-size:1.1rem"] {
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 2px !important;
+}
+
+/* Barre progression sticky */
+#live-sticky-bar [style*="linear-gradient(90deg"] {
+  background: linear-gradient(90deg, #0066ff, #00cfff) !important;
+  box-shadow: 0 0 8px rgba(0,207,255,0.4) !important;
+}
+
+/* ── Bouton Démarrer chrono ── */
+#btn-demarrer-chrono {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border: none !important;
+  border-radius: 30px !important;
+  color: #020610 !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 2px !important;
+  box-shadow: 0 4px 16px rgba(0,102,255,0.5) !important;
+  transition: all 0.3s !important;
+}
+
+#btn-demarrer-chrono:hover {
+  background: linear-gradient(135deg, #00cfff, #0066ff) !important;
+  box-shadow: 0 6px 24px rgba(0,207,255,0.6) !important;
+  transform: scale(1.05) !important;
+}
+
+/* ── Bouton Mode Guidé ── */
+#btn-mode-guide {
+  background: rgba(0,100,255,0.12) !important;
+  border: 1px solid rgba(0,150,255,0.25) !important;
+  border-radius: 30px !important;
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 1px !important;
+  transition: all 0.3s !important;
+}
+
+#btn-mode-guide:hover {
+  background: rgba(0,150,255,0.2) !important;
+  border-color: #00cfff !important;
+  box-shadow: 0 0 12px rgba(0,207,255,0.3) !important;
+}
+
+/* ── Bouton Mode Ultra ── */
+button[onclick*="_lancerModeUltra"] {
+  background: rgba(0,100,255,0.12) !important;
+  border: 1px solid rgba(0,207,255,0.25) !important;
+  border-radius: 30px !important;
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 1px !important;
+  transition: all 0.3s !important;
+}
+
+/* ── Cards exercices live ── */
+.live-exo-card {
+  background: rgba(0,10,30,0.5) !important;
+  border: 1px solid rgba(0,100,255,0.12) !important;
+  border-radius: 16px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition: all 0.3s !important;
+}
+
+/* Top stripe sur chaque exo card */
+.live-exo-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    var(--cb2), var(--cb1));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.live-exo-card:hover {
+  border-color: rgba(0,207,255,0.25) !important;
+  box-shadow: 0 4px 20px rgba(0,102,255,0.15) !important;
+}
+
+.live-exo-card:hover::before { opacity: 1; }
+
+/* Header exo */
+.live-exo-card [style*="font-weight:700;font-size:1rem"] {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Muscle label */
+.live-exo-card [style*="color:var(--fd-mint)"] {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 7px !important;
+  letter-spacing: 3px !important;
+}
+
+/* ── Série blocs ── */
+.lr-serie-bloc {
+  background: rgba(0,10,30,0.4) !important;
+  border: 1px solid rgba(0,80,200,0.12) !important;
+  border-radius: 14px !important;
+  transition: all 0.3s !important;
+  position: relative !important;
+}
+
+.lr-serie-bloc:hover {
+  border-color: rgba(0,207,255,0.2) !important;
+}
+
+/* Label série numéro */
+.lr-serie-bloc [style*="color:var(--fd-indigo)"][style*=".78rem"] {
+  font-family: 'Orbitron', monospace !important;
+  color: #00cfff !important;
+  font-size: 10px !important;
+  letter-spacing: 3px !important;
+}
+
+/* ── Inputs poids/reps ── */
+.lr-serie-bloc input[type="number"] {
+  background: rgba(0,15,50,0.5) !important;
+  border: 2px solid rgba(0,100,255,0.15) !important;
+  border-radius: 10px !important;
+  color: white !important;
+  font-family: 'Orbitron', monospace !important;
+  font-weight: 900 !important;
+  transition: all 0.3s !important;
+}
+
+.lr-serie-bloc input[type="number"]:focus {
+  border-color: #00cfff !important;
+  background: rgba(0,50,150,0.2) !important;
+  box-shadow: 0 0 0 3px rgba(0,207,255,0.15),
+              0 0 20px rgba(0,150,255,0.1) !important;
+}
+
+/* Labels KG / REPS */
+.lr-serie-bloc [style*="font-size:.52rem"][style*="KG"],
+.lr-serie-bloc [style*="font-size:.52rem"][style*="REPS"] {
+  color: rgba(0,207,255,0.3) !important;
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 3px !important;
+}
+
+/* ── Boutons +/- ── */
+.lr-serie-bloc button[onclick*="modifierPoids"],
+.lr-serie-bloc button[onclick*="modifierReps"] {
+  border-radius: 10px !important;
+  font-family: 'Orbitron', monospace !important;
+  font-weight: 900 !important;
+  transition: all 0.2s !important;
+}
+
+/* Bouton − poids */
+.lr-serie-bloc button[onclick*="modifierPoids(-"],
+.lr-serie-bloc button[onclick*="modifierReps(-"] {
+  background: rgba(0,80,200,0.12) !important;
+  border: 2px solid rgba(0,80,200,0.2) !important;
+  color: rgba(0,150,255,0.8) !important;
+}
+
+.lr-serie-bloc button[onclick*="modifierPoids(-"]:active,
+.lr-serie-bloc button[onclick*="modifierReps(-"]:active {
+  background: rgba(0,80,200,0.25) !important;
+  transform: scale(0.95) !important;
+}
+
+/* Bouton + poids */
+.lr-serie-bloc button[onclick*="modifierPoids("] + div + button,
+.lr-serie-bloc button[onclick*="modifierReps("] + div + button {
+  background: rgba(0,150,255,0.12) !important;
+  border: 2px solid rgba(0,207,255,0.2) !important;
+  color: #00cfff !important;
+}
+
+/* ── RPE buttons ── */
+.lr-serie-bloc [style*="flex:1;padding:8px 4px"] {
+  background: rgba(0,15,50,0.4) !important;
+  border: 1px solid rgba(0,80,200,0.1) !important;
+  border-radius: 8px !important;
+  color: rgba(0,150,255,0.4) !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 10px !important;
+  transition: all 0.2s !important;
+}
+
+.lr-serie-bloc [style*="flex:1;padding:8px 4px"]:hover {
+  border-color: rgba(0,207,255,0.3) !important;
+  color: #00cfff !important;
+  background: rgba(0,100,255,0.15) !important;
+}
+
+/* ── BOUTON SÉRIE FAITE ── */
+[id^="btn-serie-"] {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 11px !important;
+  letter-spacing: 3px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 4px 20px rgba(0,102,255,0.5) !important;
+  transition: all 0.2s !important;
+  color: #020610 !important;
+}
+
+[id^="btn-serie-"]:hover {
+  background: linear-gradient(135deg, #00cfff, #0066ff) !important;
+  box-shadow: 0 6px 28px rgba(0,207,255,0.6) !important;
+  transform: scale(1.02) !important;
+}
+
+[id^="btn-serie-"]:active {
+  transform: scale(0.97) !important;
+}
+
+/* Série validée */
+[id^="btn-serie-"]:disabled {
+  background: rgba(0,100,255,0.15) !important;
+  border: 1px solid rgba(0,207,255,0.3) !important;
+  color: #00cfff !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+/* ── Bouton copier série ── */
+button[onclick*="copierSeriePrecedente"] {
+  border: 1px dashed rgba(0,100,255,0.2) !important;
+  border-radius: 10px !important;
+  color: rgba(0,150,255,0.4) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  transition: all 0.2s !important;
+}
+
+button[onclick*="copierSeriePrecedente"]:hover {
+  border-color: rgba(0,207,255,0.4) !important;
+  color: #00cfff !important;
+  background: rgba(0,100,255,0.08) !important;
+}
+
+/* ── Bouton Démo ── */
+button[onclick*="VideoDemo"] {
+  background: rgba(255,40,40,0.1) !important;
+  border: 1px solid rgba(255,40,40,0.2) !important;
+  border-radius: 30px !important;
+  color: #ff5555 !important;
+  transition: all 0.2s !important;
+}
+
+button[onclick*="VideoDemo"]:hover {
+  background: rgba(255,40,40,0.18) !important;
+  box-shadow: 0 0 12px rgba(255,40,40,0.2) !important;
+}
+
+/* ── Bouton 1RM ── */
+button[onclick*="Calculateur.renderCalculateur"] {
+  background: rgba(0,100,255,0.12) !important;
+  border: 1px solid rgba(0,207,255,0.2) !important;
+  border-radius: 30px !important;
+  color: #00cfff !important;
+  transition: all 0.2s !important;
+}
+
+button[onclick*="Calculateur.renderCalculateur"]:hover {
+  background: rgba(0,150,255,0.2) !important;
+  box-shadow: 0 0 12px rgba(0,207,255,0.2) !important;
+}
+
+/* ── Bouton Commencer ── */
+[id^="btn-commencer-"] {
+  background: linear-gradient(135deg, #00cfff, #0066ff) !important;
+  border: none !important;
+  border-radius: 30px !important;
+  color: #020610 !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 2px !important;
+  box-shadow: 0 2px 12px rgba(0,207,255,0.5) !important;
+  transition: all 0.2s !important;
+}
+
+[id^="btn-commencer-"]:hover {
+  box-shadow: 0 4px 20px rgba(0,207,255,0.7) !important;
+  transform: scale(1.05) !important;
+}
+
+/* ── Bouton Terminer séance ── */
+button[onclick*="App.terminerSeance"] {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border: 1px solid rgba(0,207,255,0.3) !important;
+  border-radius: 12px !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 11px !important;
+  letter-spacing: 2px !important;
+  box-shadow: 0 4px 20px rgba(0,102,255,0.5) !important;
+  color: #020610 !important;
+}
+
+button[onclick*="App.terminerSeance"]:hover {
+  box-shadow: 0 6px 28px rgba(0,207,255,0.6) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ── Bouton Arrêter ── */
+button[onclick*="App.arreterSeance"] {
+  background: rgba(0,15,50,0.3) !important;
+  border: 1px solid rgba(0,80,200,0.15) !important;
+  border-radius: 12px !important;
+  color: rgba(0,150,255,0.4) !important;
+  transition: all 0.3s !important;
+}
+
+button[onclick*="App.arreterSeance"]:hover {
+  border-color: rgba(255,80,80,0.3) !important;
+  color: rgba(255,100,100,0.7) !important;
+  background: rgba(255,50,50,0.06) !important;
+}
+
+/* ── Échauffement ── */
+#live-content .card[style*="Échauffement"],
+#live-content .card .card-label {
+  font-family: 'Orbitron', monospace !important;
+  color: rgba(0,207,255,0.4) !important;
+  letter-spacing: 3px !important;
+  font-size: 8px !important;
+}
+
+/* ── Chrono mini dans série ── */
+[id^="chrono-serie-"] svg circle[stroke="var(--fd-lemon)"] {
+  stroke: #00cfff !important;
+  filter: drop-shadow(0 0 4px #00cfff) !important;
+}
+
+[id^="chrono-val-"] {
+  color: #00cfff !important;
+}
+
+/* ── Overlay Repos CYBER ── */
+#repos-auto-overlay {
+  background: rgba(2,6,16,0.98) !important;
+}
+
+#repos-auto-overlay::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 400px; height: 400px; border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(0,100,255,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Label REPOS */
+#repos-auto-overlay [style*="color:var(--fd-mint)"][style*=".65rem"] {
+  font-family: 'Orbitron', monospace !important;
+  color: #00cfff !important;
+  letter-spacing: 6px !important;
+}
+
+/* Arc repos */
+#repos-arc {
+  stroke: #00cfff !important;
+  filter: drop-shadow(0 0 10px #00cfff) !important;
+}
+
+/* Chrono repos */
+#repos-display {
+  color: #00cfff !important;
+  text-shadow: 0 0 30px rgba(0,207,255,0.7) !important;
+  font-family: 'Orbitron', monospace !important;
+}
+
+/* Label "secondes" */
+#repos-auto-overlay [style*="margin-top:4px"][style*=".65rem"] {
+  font-family: 'Orbitron', monospace !important;
+  color: rgba(0,207,255,0.3) !important;
+  letter-spacing: 3px !important;
+}
+
+/* Info série suivante */
+#repos-auto-overlay [style*=".9rem;font-weight:700"] {
+  font-family: 'Orbitron', monospace !important;
+  color: rgba(0,207,255,0.7) !important;
+  letter-spacing: 1px !important;
+  font-size: 12px !important;
+}
+
+/* Bouton +15s */
+#repos-auto-overlay button[onclick*="_ajouterTemps"] {
+  background: rgba(0,20,60,0.4) !important;
+  border: 1px solid rgba(0,100,255,0.15) !important;
+  border-radius: 10px !important;
+  color: rgba(0,150,255,0.6) !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 2px !important;
+  transition: all 0.2s !important;
+}
+
+#repos-auto-overlay button[onclick*="_ajouterTemps"]:hover {
+  border-color: #00cfff !important;
+  color: #00cfff !important;
+  background: rgba(0,100,255,0.15) !important;
+}
+
+/* Bouton Passer */
+#repos-auto-overlay button[onclick*="_passerRepos"] {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border-radius: 10px !important;
+  border: none !important;
+  color: #020610 !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 2px !important;
+  box-shadow: 0 4px 16px rgba(0,102,255,0.5) !important;
+}
+
+/* Charge confirmation */
+#charge-confirmation {
+  background: rgba(0,10,30,0.5) !important;
+  border: 1px solid rgba(0,100,255,0.15) !important;
+  border-radius: 14px !important;
+}
+
+#charge-display {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  text-shadow: 0 0 20px rgba(0,207,255,0.5) !important;
+}
+
+/* Boutons charge */
+#charge-confirmation button[onclick*="_changerCharge"][onclick*="-2.5"] {
+  background: rgba(0,50,200,0.12) !important;
+  border: 1px solid rgba(0,80,200,0.25) !important;
+  color: rgba(0,150,255,0.8) !important;
+  border-radius: 10px !important;
+}
+
+#charge-confirmation button[onclick*="_garderCharge"] {
+  background: rgba(0,100,255,0.15) !important;
+  border: 1px solid rgba(0,207,255,0.3) !important;
+  color: #00cfff !important;
+  border-radius: 10px !important;
+}
+
+#charge-confirmation button[onclick*="_changerCharge"][onclick*="2.5)"] {
+  background: rgba(0,150,255,0.12) !important;
+  border: 1px solid rgba(0,207,255,0.25) !important;
+  color: #00cfff !important;
+  border-radius: 10px !important;
+}
+
+/* ── Overlay SÉRIE CYBER ── */
+#serie-overlay {
+  background: rgba(2,6,16,0.98) !important;
+}
+
+#serie-overlay::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 350px; height: 350px; border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(0,100,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Badge SÉRIE EN COURS */
+#serie-overlay [style*="color:var(--fd-lemon)"][style*=".65rem"] {
+  font-family: 'Orbitron', monospace !important;
+  color: #00cfff !important;
+  letter-spacing: 6px !important;
+}
+
+/* Arc série */
+#serie-arc {
+  stroke: #00cfff !important;
+  filter: drop-shadow(0 0 10px #00cfff) !important;
+}
+
+/* Chrono série */
+#serie-display {
+  color: #00cfff !important;
+  text-shadow: 0 0 30px rgba(0,207,255,0.7) !important;
+  font-family: 'Orbitron', monospace !important;
+}
+
+/* Charge display */
+#serie-charge-display {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  text-shadow: 0 0 20px rgba(0,207,255,0.5) !important;
+}
+
+/* Bouton Série terminée */
+#serie-overlay button[onclick*="_terminerManuellement"] {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border-radius: 12px !important;
+  border: none !important;
+  color: #020610 !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 11px !important;
+  letter-spacing: 2px !important;
+  box-shadow: 0 4px 20px rgba(0,102,255,0.5) !important;
+}
+
+#serie-overlay button[onclick*="_terminerManuellement"]:hover {
+  box-shadow: 0 6px 28px rgba(0,207,255,0.7) !important;
+  transform: scale(1.02) !important;
+}
+
+/* Boutons +/- charge dans overlay */
+#serie-overlay button[onclick*="_modifierCharge"][onclick*="-2.5"] {
+  background: rgba(0,50,200,0.12) !important;
+  border: 2px solid rgba(0,80,200,0.3) !important;
+  color: rgba(0,150,255,0.8) !important;
+  border-radius: 10px !important;
+}
+
+#serie-overlay button[onclick*="_modifierCharge"][onclick*="2.5"] {
+  background: rgba(0,150,255,0.12) !important;
+  border: 2px solid rgba(0,207,255,0.3) !important;
+  color: #00cfff !important;
+  border-radius: 10px !important;
+}
+
+/* ── Checklist pré-séance ── */
+#page-live [style*="rgba(75,75,249,0.2)"],
+#page-live [style*="rgba(75,75,249,0.35)"] {
+  background: rgba(0,100,255,0.15) !important;
+  border-color: rgba(0,207,255,0.25) !important;
+}
+
+/* Checklist items */
+[id^="checklist-item-"] {
+  border-radius: 14px !important;
+  transition: all 0.25s !important;
+}
+
+/* Checkbox validée */
+[id^="checklist-item-"] [onclick^="_checklistToggle"] {
+  transition: all 0.2s !important;
+}
+
+/* Bouton démarrer depuis checklist */
+#btn-demarrer-seance {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 2px !important;
+  color: #020610 !important;
+  box-shadow: 0 4px 20px rgba(0,102,255,0.4) !important;
+}
+
+/* PR badge sur exercice */
+.live-exo-card [style*="color:var(--fd-lemon)"][style*=".72rem"] {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 1px !important;
+}
+
+/* Reco charge */
+.live-exo-card [style*="color:var(--fd-indigo)"][style*=".65rem"] {
+  color: rgba(0,150,255,0.7) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
+/* ── Conseils techniques ── */
+.live-exo-card details summary {
+  color: rgba(0,150,255,0.4) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  letter-spacing: 0.5px !important;
+}
+
+.live-exo-card details div {
+  border-left: 2px solid rgba(0,150,255,0.3) !important;
+}
+
+/* ── Étirements ── */
+#live-content .card [style*="color:var(--fd-mint)"][style*=".78rem"] {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 2px !important;
+}
+
+/* ── Jour de repos (live vide) ── */
+#page-live [style*="rgba(139,240,187,0.06)"] {
+  background: rgba(0,50,150,0.1) !important;
+  border-color: rgba(0,207,255,0.2) !important;
+}
+
+/* Bouton Séance express */
+#page-live button[onclick*="full_body"] {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  color: #020610 !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 1px !important;
+}
+/* ════════════════════════════════════════════════════════════
+   J — STATS PAGE CYBER BLOCK BLUE
+════════════════════════════════════════════════════════════ */
+
+/* ── Header stats ── */
+#page-stats .card,
+#stats-content .card {
+  background: linear-gradient(135deg, #030a1a, #050d22) !important;
+  border: 1px solid rgba(0,100,255,0.12) !important;
+}
+
+/* ── Tabs stats ── */
+#page-stats .tabs-container,
+#stats-content .tabs-container {
+  gap: 6px !important;
+}
+
+/* ── Heatmap ── */
+.heatmap-cell {
+  border-radius: 6px !important;
+  transition: all 0.2s !important;
+}
+
+.heatmap-cell.done {
+  background: rgba(0,100,255,0.3) !important;
+  border: 1px solid rgba(0,207,255,0.4) !important;
+  color: #00cfff !important;
+  box-shadow: 0 0 8px rgba(0,207,255,0.2) !important;
+}
+
+.heatmap-cell.missed {
+  background: rgba(200,0,0,0.08) !important;
+  color: rgba(255,80,80,0.5) !important;
+}
+
+.heatmap-cell.rest {
+  background: rgba(0,100,255,0.06) !important;
+  color: rgba(0,207,255,0.4) !important;
+}
+
+.heatmap-cell.future {
+  background: rgba(0,30,100,0.2) !important;
+  color: rgba(0,100,255,0.2) !important;
+}
+
+/* ── Graphiques ── */
+.chart-container {
+  background: rgba(0,10,30,0.4) !important;
+  border: 1px solid rgba(0,100,255,0.12) !important;
+  border-radius: 14px !important;
+}
+
+.chart-title {
+  font-family: 'Orbitron', monospace !important;
+  color: rgba(0,207,255,0.35) !important;
+  letter-spacing: 3px !important;
+  font-size: 8px !important;
+}
+
+/* ── Score récupération ── */
+.recovery-score-circle { position: relative; }
+
+.recovery-fill.excellent,
+.recovery-fill.good { stroke: #00cfff !important; filter: drop-shadow(0 0 6px #00cfff); }
+.recovery-fill.moderate { stroke: rgba(0,100,255,0.6) !important; }
+.recovery-fill.poor { stroke: rgba(200,50,50,0.7) !important; }
+
+.recovery-number {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  text-shadow: 0 0 12px rgba(0,207,255,0.5) !important;
+}
+
+/* ── Prédiction PR ── */
+.pr-prediction-card {
+  background: rgba(0,100,255,0.06) !important;
+  border: 1px solid rgba(0,207,255,0.15) !important;
+}
+
+.pr-prediction-date {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  text-shadow: 0 0 12px rgba(0,207,255,0.4) !important;
+}
+
+/* ── Ratio push/pull ── */
+.ratio-bar-push { background: rgba(0,80,200,0.6) !important; }
+.ratio-bar-pull { background: #00cfff !important; }
+.ratio-ideal-marker { background: rgba(0,207,255,0.8) !important; }
+
+/* ── Journal ── */
+.score-row {
+  border-bottom: 1px solid rgba(0,80,200,0.1) !important;
+  transition: background 0.2s !important;
+}
+
+.score-row:hover {
+  background: rgba(0,100,255,0.05) !important;
+}
+
+.score-row-label {
+  font-family: 'Rajdhani', sans-serif !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* ── Objectifs ── */
+#page-stats [style*="var(--fd-indigo)"],
+#stats-content [style*="var(--fd-indigo)"] {
+  color: #00cfff !important;
+}
+
+/* ── Blessures ── */
+#page-stats [style*="var(--fd-coral)"],
+#stats-content [style*="var(--fd-coral)"] {
+  color: rgba(200,80,80,0.8) !important;
+}
+
+/* ── IMC Widget ── */
+.imc-widget {
+  background: rgba(0,10,30,0.4) !important;
+  border: 1px solid rgba(0,100,255,0.12) !important;
+}
+
+.imc-marker {
+  border-color: #00cfff !important;
+  box-shadow: 0 0 8px rgba(0,207,255,0.4) !important;
+}
+
+.tdee-value {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  text-shadow: 0 0 10px rgba(0,207,255,0.4) !important;
+}
+/* ════════════════════════════════════════════════════════════
+   L — GAMIFICATION / XP & NIVEAUX CYBER
+════════════════════════════════════════════════════════════ */
+
+/* ── XP Bar ── */
+.xp-bar-container {
+  background: rgba(0,10,30,0.4) !important;
+  border: 1px solid rgba(0,100,255,0.12) !important;
+  border-radius: 16px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Top stripe sur xp bar */
+.xp-bar-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #00cfff, transparent);
+  opacity: 0.4;
+}
+
+.xp-level {
+  font-family: 'Orbitron', monospace !important;
+  color: #00cfff !important;
+  letter-spacing: 2px !important;
+  font-size: 11px !important;
+  text-shadow: 0 0 10px rgba(0,207,255,0.5) !important;
+}
+
+.xp-count {
+  font-family: 'Orbitron', monospace !important;
+  color: rgba(0,150,255,0.4) !important;
+  letter-spacing: 1px !important;
+  font-size: 9px !important;
+}
+
+.xp-bar {
+  background: rgba(0,50,150,0.15) !important;
+  border-radius: 5px !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.xp-fill {
+  background: linear-gradient(90deg, #0066ff, #00cfff) !important;
+  box-shadow: 0 0 12px rgba(0,207,255,0.5) !important;
+  position: relative !important;
+}
+
+/* Shine sur xp fill */
+.xp-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg,
+    transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s ease infinite;
+}
+
+/* ── Trophées ── */
+.trophy-grid {
+  gap: 10px !important;
+}
+
+.trophy-card {
+  border-radius: 14px !important;
+  transition: all 0.3s !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.trophy-card.unlocked {
+  background: rgba(0,80,255,0.1) !important;
+  border: 1px solid rgba(0,207,255,0.2) !important;
+  box-shadow: 0 0 16px rgba(0,100,255,0.1) !important;
+}
+
+.trophy-card.unlocked:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 6px 24px rgba(0,100,255,0.2) !important;
+  border-color: rgba(0,207,255,0.4) !important;
+}
+
+/* Glow sur trophée débloqué */
+.trophy-card.unlocked::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #0066ff, #00cfff);
+  opacity: 0.6;
+}
+
+.trophy-card.locked {
+  background: rgba(0,10,30,0.3) !important;
+  border: 1px solid rgba(0,50,150,0.1) !important;
+}
+
+.trophy-icon {
+  filter: drop-shadow(0 0 8px rgba(0,207,255,0.3)) !important;
+}
+
+.trophy-card.unlocked .trophy-icon {
+  animation: cb-logo-glow 3s ease-in-out infinite !important;
+}
+
+.trophy-name {
+  font-family: 'Orbitron', monospace !important;
+  color: #00cfff !important;
+  font-size: 9px !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 0 8px rgba(0,207,255,0.4) !important;
+}
+
+/* ── Niveaux ── */
+#page-gamification [style*="font-size:1.1rem"],
+#page-gamification [style*="font-size:1rem"] {
+  font-family: 'Rajdhani', sans-serif !important;
+}
+
+/* Badge niveau actuel */
+#page-gamification [style*="var(--fd-lemon)"] {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 1px !important;
+}
+
+/* Streak card */
+#page-gamification [style*="var(--fd-lemon)"][style*="1.3rem"] {
+  color: #00cfff !important;
+  text-shadow: 0 0 16px rgba(0,207,255,0.6) !important;
+  font-family: 'Orbitron', monospace !important;
+}
+/* ════════════════════════════════════════════════════════════
+   M — ANIMATIONS TROPHÉES CYBER
+════════════════════════════════════════════════════════════ */
+
+/* ── Animation déblocage trophée ── */
+@keyframes cb-trophy-unlock {
+  0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+  50%  { transform: scale(1.3) rotate(5deg);  opacity: 1; }
+  70%  { transform: scale(0.9) rotate(-3deg); }
+  100% { transform: scale(1)   rotate(0deg);  opacity: 1; }
+}
+
+@keyframes cb-trophy-glow {
+  0%,100% {
+    box-shadow: 0 0 10px rgba(0,207,255,0.3),
+                0 0 20px rgba(0,100,255,0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0,207,255,0.6),
+                0 0 40px rgba(0,100,255,0.4),
+                0 0 60px rgba(0,207,255,0.2);
+  }
+}
+
+@keyframes cb-trophy-shine {
+  0%   { left: -100%; opacity: 0; }
+  50%  { opacity: 0.6; }
+  100% { left: 200%; opacity: 0; }
+}
+
+@keyframes cb-trophy-particle {
+  0% {
+    transform: translate(0,0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* ── Classe trophy unlock animé ── */
+.trophy-card.just-unlocked {
+  animation: cb-trophy-unlock 0.6s cubic-bezier(.34,1.56,.64,1) forwards,
+             cb-trophy-glow 2s ease-in-out 0.6s infinite !important;
+}
+
+.trophy-card.just-unlocked::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(0,207,255,0.4),
+    transparent);
+  animation: cb-trophy-shine 1s ease 0.6s forwards;
+  pointer-events: none;
+}
+
+/* ── Toast PR Cyber ── */
+.toast-item.pr {
+  background: linear-gradient(135deg,
+    rgba(0,150,255,0.2),
+    rgba(0,207,255,0.05)) !important;
+  border: 1px solid rgba(0,207,255,0.4) !important;
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 1px !important;
+  box-shadow:
+    0 0 20px rgba(0,207,255,0.3),
+    0 8px 24px rgba(0,0,0,0.4) !important;
+}
+
+/* ── Confetti Cyber ── */
+#confetti-canvas {
+  filter: hue-rotate(200deg) saturate(2) !important;
+}
+
+/* ── XP Pop animation ── */
+@keyframes xp-pop {
+  0%   { transform: translateY(0) scale(1); opacity: 1; }
+  50%  { transform: translateY(-20px) scale(1.3); opacity: 1; }
+  100% { transform: translateY(-40px) scale(0); opacity: 0; }
+}
+
+.xp-gain-popup {
+  position: fixed;
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  font-weight: 900;
+  color: #00cfff;
+  text-shadow: 0 0 12px rgba(0,207,255,0.8);
+  pointer-events: none;
+  z-index: 9999;
+  animation: xp-pop 1.2s ease forwards;
+  letter-spacing: 2px;
+}
+
+/* ── Niveau up overlay ── */
+@keyframes cb-level-up {
+  0%   { opacity: 0; transform: scale(0.8); }
+  20%  { opacity: 1; transform: scale(1.05); }
+  80%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+
+.level-up-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,10,30,0.9);
+  animation: cb-level-up 3s ease forwards;
+}
+
+.level-up-content {
+  text-align: center;
+  font-family: 'Orbitron', monospace;
+}
+
+.level-up-label {
+  font-size: 10px;
+  letter-spacing: 8px;
+  color: rgba(0,207,255,0.5);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.level-up-number {
+  font-size: 5rem;
+  font-weight: 900;
+  background: linear-gradient(90deg, #0066ff, #00cfff, #7b00ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 30px rgba(0,150,255,0.5));
+  line-height: 1;
+}
+
+.level-up-name {
+  font-size: 1.2rem;
+  color: #00cfff;
+  margin-top: 8px;
+  letter-spacing: 4px;
+  text-shadow: 0 0 16px rgba(0,207,255,0.6);
+}
