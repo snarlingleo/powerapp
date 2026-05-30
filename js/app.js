@@ -11,74 +11,220 @@ window._seanceActive  = null;
 window._timerInterval = null;
 
 // ════════════════════════════════════════════════════════════
+// TRANSITIONS CYBER — Page in/out
+// ════════════════════════════════════════════════════════════
+
+// Injecte le CSS des transitions (une seule fois)
+function _injecterTransitionsCSS() {
+  if (document.getElementById('cb-transitions-css')) return;
+
+  const s = document.createElement('style');
+  s.id = 'cb-transitions-css';
+  s.textContent = `
+
+    /* ── PAGE OUT ── */
+    .cb-page-exit {
+      animation: cbPageExit .18s cubic-bezier(.4,0,1,1) forwards !important;
+    }
+
+    @keyframes cbPageExit {
+      0%   { opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+      100% { opacity:0; transform:translateY(-12px) scale(.98); filter:blur(2px); }
+    }
+
+    /* ── PAGE IN ── */
+    .cb-page-enter {
+      animation: cbPageEnter .28s cubic-bezier(.34,1.2,.64,1) forwards !important;
+    }
+
+    @keyframes cbPageEnter {
+      0%   { opacity:0; transform:translateY(14px) scale(.97); filter:blur(3px); }
+      60%  { filter:blur(0); }
+      100% { opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+    }
+
+    /* ── SWIPE LEFT ── */
+    .cb-page-exit-left {
+      animation: cbExitLeft .2s ease forwards !important;
+    }
+    @keyframes cbExitLeft {
+      to { opacity:0; transform:translateX(-24px) scale(.97); }
+    }
+
+    .cb-page-enter-right {
+      animation: cbEnterRight .25s cubic-bezier(.34,1.2,.64,1) forwards !important;
+    }
+    @keyframes cbEnterRight {
+      from { opacity:0; transform:translateX(24px) scale(.97); }
+      to   { opacity:1; transform:translateX(0) scale(1); }
+    }
+
+    /* ── SWIPE RIGHT ── */
+    .cb-page-exit-right {
+      animation: cbExitRight .2s ease forwards !important;
+    }
+    @keyframes cbExitRight {
+      to { opacity:0; transform:translateX(24px) scale(.97); }
+    }
+
+    .cb-page-enter-left {
+      animation: cbEnterLeft .25s cubic-bezier(.34,1.2,.64,1) forwards !important;
+    }
+    @keyframes cbEnterLeft {
+      from { opacity:0; transform:translateX(-24px) scale(.97); }
+      to   { opacity:1; transform:translateX(0) scale(1); }
+    }
+
+    /* ── FLASH EFFECT à la navigation ── */
+    .cb-nav-flash {
+      animation: cbNavFlash .3s ease forwards !important;
+    }
+
+    @keyframes cbNavFlash {
+      0%   { box-shadow: none; }
+      50%  { box-shadow: 0 0 30px rgba(0,207,255,0.4) inset; }
+      100% { box-shadow: none; }
+    }
+
+    /* ── RIPPLE sur les boutons nav ── */
+    .cb-ripple {
+      position: relative; overflow: hidden;
+    }
+
+    .cb-ripple::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 0; height: 0;
+      background: rgba(0,207,255,0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: cbRipple .5s ease forwards;
+    }
+
+    @keyframes cbRipple {
+      to { width: 100px; height: 100px; opacity: 0; }
+    }
+  `;
+  document.head.appendChild(s);
+}
+
+// ── Helper transition ──
+function _transitionnerPage(pagePrecedente, nouvellePageEl, direction = 'up') {
+  return new Promise(resolve => {
+
+    // Flash sur le main
+    const main = document.querySelector('.app-main');
+    if (main) {
+      main.classList.add('cb-nav-flash');
+      setTimeout(() => main.classList.remove('cb-nav-flash'), 300);
+    }
+
+    if (!pagePrecedente) {
+      // Première page — juste entrer
+      nouvellePageEl.style.display = 'block';
+      nouvellePageEl.classList.add('active', 'cb-page-enter');
+      setTimeout(() => {
+        nouvellePageEl.classList.remove('cb-page-enter');
+        resolve();
+      }, 280);
+      return;
+    }
+
+    // Déterminer la direction
+    const exitClass  = direction === 'left'  ? 'cb-page-exit-left'
+                     : direction === 'right' ? 'cb-page-exit-right'
+                     : 'cb-page-exit';
+    const enterClass = direction === 'left'  ? 'cb-page-enter-right'
+                     : direction === 'right' ? 'cb-page-enter-left'
+                     : 'cb-page-enter';
+
+    // Exit
+    pagePrecedente.classList.add(exitClass);
+
+    setTimeout(() => {
+      // Cacher ancienne page
+      pagePrecedente.classList.remove('active', exitClass);
+      pagePrecedente.style.display = 'none';
+      pagePrecedente.style.animation = '';
+
+      // Afficher nouvelle page
+      nouvellePageEl.style.display = 'block';
+      nouvellePageEl.classList.add('active', enterClass);
+
+      setTimeout(() => {
+        nouvellePageEl.classList.remove(enterClass);
+        resolve();
+      }, 280);
+
+    }, 160);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
 // NAVIGATION — Avec transitions premium
 // ════════════════════════════════════════════════════════════
 function naviguer(page, options = {}) {
   try {
+    // ✅ Injecter CSS transitions
+    _injecterTransitionsCSS();
 
-    // ── Animation sortie page précédente ──
     const pagePrecedente = document.querySelector('.page.active');
-    if (pagePrecedente && pagePrecedente.id !== `page-${page}`) {
-      pagePrecedente.style.animation = 'pageOut .18s ease forwards';
-      setTimeout(() => {
-        pagePrecedente.classList.remove('active');
-        pagePrecedente.style.display   = 'none';
-        pagePrecedente.style.animation = '';
-      }, 160);
-    } else if (!pagePrecedente) {
-      document.querySelectorAll('.page').forEach(p => {
-  if (p.id !== `page-${page}`) {
-    p.style.display = 'none';
-    p.classList.remove('active');
-  }
-});
+    const PAGES_ORDER    = ['home','training','live','stats','nutrition'];
+    const prevIdx        = PAGES_ORDER.indexOf(window._pageActive);
+    const nextIdx        = PAGES_ORDER.indexOf(page);
+
+    // Déterminer direction swipe
+    let direction = 'up';
+    if (prevIdx !== -1 && nextIdx !== -1) {
+      direction = nextIdx > prevIdx ? 'left' : 'right';
     }
 
-    // ── Nav Glassmorphism Neon ──
+    // Cacher page précédente (avec transition)
+    if (pagePrecedente && pagePrecedente.id !== `page-${page}`) {
+      // La transition est gérée par _transitionnerPage
+    } else if (!pagePrecedente) {
+      document.querySelectorAll('.page').forEach(p => {
+        if (p.id !== `page-${page}`) {
+          p.style.display = 'none';
+          p.classList.remove('active');
+        }
+      });
+    }
+
     window._pageActive = page;
     _rendreNavBar();
 
     const pageEl = document.getElementById(`page-${page}`)
-      || document.getElementById('page-home');
+                || document.getElementById('page-home');
 
     if (!pageEl) {
       console.warn(`[App] Page introuvable: ${page}`);
       return;
     }
 
-    // ── Animation entrée nouvelle page ──
-    setTimeout(() => {
-      pageEl.style.display   = 'block';
-      pageEl.style.animation = 'pageIn .25s ease forwards';
-      pageEl.classList.add('active');
+    // ✅ Transition premium
+    _transitionnerPage(
+      pagePrecedente !== pageEl ? pagePrecedente : null,
+      pageEl,
+      direction
+    ).then(() => {
+      _rendreContenu(page, pageEl, options);
 
       setTimeout(() => {
-        pageEl.style.animation = '';
-      }, 260);
-
-      // ── Rendu contenu ──
-      _rendreContenu(page, pageEl, options);
-
-    setTimeout(() => {
-    if (pageEl.innerHTML.trim() === '') {
-      console.warn('[App] Container vide, re-render forcé:', page);
-      _rendreContenu(page, pageEl, options);
-    }
-  }, 300);
-
-}, pagePrecedente ? 80 : 0);
+        if (pageEl.innerHTML.trim() === '') {
+          _rendreContenu(page, pageEl, options);
+        }
+      }, 300);
+    });
 
     _updateHeader(page);
-
     pageEl.scrollTop = 0;
     window.scrollTo(0, 0);
 
-    // ── Historique ──
     if (window._pageActive !== page) {
       window._pageHistory.push(window._pageActive);
-      if (window._pageHistory.length > 10) {
-        window._pageHistory.shift();
-      }
+      if (window._pageHistory.length > 10) window._pageHistory.shift();
     }
     window._pageActive = page;
 
@@ -88,7 +234,6 @@ function naviguer(page, options = {}) {
     console.error('[App] Erreur navigation:', e);
   }
 }
-
 function retourArriere() {
   const prev = window._pageHistory.pop();
   if (prev) naviguer(prev);
@@ -1511,6 +1656,186 @@ window.PlanningEditor = PlanningEditor;
 window.WidgetsHome = WidgetsHome;
 
 // ════════════════════════════════════════════════════════════
+// HOME CYBER — Style override pour les widgets
+// ════════════════════════════════════════════════════════════
+function _applyCyberHomeStyles() {
+  const style = document.getElementById('cb-home-style');
+  if (style) return;
+
+  const s = document.createElement('style');
+  s.id = 'cb-home-style';
+  s.textContent = `
+
+    /* ── Greeting ── */
+    #page-home [style*="padding:8px 0 16px"] {
+      padding: 16px 0 20px !important;
+    }
+
+    /* Dot greeting */
+    #page-home [style*="background:var(--fd-mint)"] {
+      background: #00cfff !important;
+      box-shadow: 0 0 8px #00cfff !important;
+    }
+
+    /* Nom gradient */
+    #page-home [style*="color:#ffffff"] span {
+      background: linear-gradient(135deg, #ffffff 0%, #00cfff 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+
+    /* ── Search bar ── */
+    #home-search-wrap {
+      background: rgba(0,20,60,0.4) !important;
+      border: 1px solid rgba(0,100,255,0.15) !important;
+      border-radius: 10px !important;
+      transition: border-color .3s !important;
+    }
+
+    #home-search-wrap:focus-within {
+      border-color: #00cfff !important;
+      box-shadow: 0 0 0 3px rgba(0,207,255,0.1),
+                  0 0 20px rgba(0,150,255,0.1) !important;
+    }
+
+    #home-search-input::placeholder {
+      color: rgba(0,150,255,0.3) !important;
+    }
+
+    /* Suggestions */
+    #home-search-suggestions {
+      background: linear-gradient(135deg, #020a18, #030d22) !important;
+      border: 1px solid rgba(0,100,255,0.2) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+    }
+
+    /* ── Streak & XP rings ── */
+    #page-home [style*="background:rgba(255,255,255,0.04)"] {
+      background: rgba(0,15,50,0.4) !important;
+      border: 1px solid rgba(0,100,255,0.12) !important;
+    }
+
+    /* ── Séance Hero card ── */
+    #page-home [style*="border-radius:var(--radius-xl)"] {
+      border-radius: 18px !important;
+    }
+
+    /* Bouton Démarrer */
+    #page-home button[onclick*="naviguer('live')"] {
+      background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+      border: none !important;
+      border-radius: 30px !important;
+      font-family: 'Orbitron', monospace !important;
+      letter-spacing: 1px !important;
+      box-shadow: 0 4px 20px rgba(0,102,255,0.5) !important;
+    }
+
+    /* Bouton Mode Ultra */
+    #page-home button[onclick*="Ultra"] {
+      background: rgba(0,207,255,0.1) !important;
+      border: 1px solid rgba(0,207,255,0.3) !important;
+      border-radius: 30px !important;
+      color: #00cfff !important;
+    }
+
+    /* ── Timers repos ── */
+    #page-home [onclick*="TimerManager"] {
+      background: rgba(0,15,50,0.4) !important;
+      border: 1px solid rgba(0,100,255,0.12) !important;
+      border-radius: 12px !important;
+      transition: all .2s !important;
+    }
+
+    #page-home [onclick*="TimerManager"]:active {
+      transform: scale(.94) !important;
+      border-color: #00cfff !important;
+      background: rgba(0,100,255,0.15) !important;
+    }
+
+    /* ── Stats semaine ── */
+    #page-home [onclick*="naviguer('stats')"] {
+      background: rgba(0,15,50,0.4) !important;
+      border: 1px solid rgba(0,100,255,0.1) !important;
+      border-radius: 12px !important;
+      transition: all .3s !important;
+    }
+
+    #page-home [onclick*="naviguer('stats')"]:hover {
+      border-color: rgba(0,207,255,0.3) !important;
+      transform: translateY(-2px) !important;
+    }
+
+    /* ── Coach du jour ── */
+    #page-home [onclick*="naviguer('coach')"] {
+      border-left: 3px solid #00cfff !important;
+      background: rgba(0,15,50,0.4) !important;
+      border-top: 1px solid rgba(0,100,255,0.1) !important;
+      border-right: 1px solid rgba(0,100,255,0.1) !important;
+      border-bottom: 1px solid rgba(0,100,255,0.1) !important;
+    }
+
+    /* ── Bouton personnaliser ── */
+    button[onclick*="_ouvrirConfigWidgets"] {
+      background: rgba(0,50,150,0.15) !important;
+      border: 1px solid rgba(0,100,255,0.2) !important;
+      border-radius: 30px !important;
+      color: #00cfff !important;
+      font-family: 'Orbitron', monospace !important;
+      font-size: 9px !important;
+      letter-spacing: 2px !important;
+    }
+
+    /* ── Planning semaine ── */
+    #page-home [style*="grid-template-columns:repeat(7"] {
+      gap: 5px !important;
+    }
+
+    /* Jour actif */
+    #page-home [style*="background:var(--fd-indigo)"] {
+      background: #0066ff !important;
+      box-shadow: 0 0 12px rgba(0,102,255,0.5) !important;
+    }
+
+    /* ── Défis ── */
+    #page-home [onclick*="naviguer('defis')"] {
+      background: rgba(0,15,50,0.4) !important;
+      border: 1px solid rgba(0,100,255,0.1) !important;
+      border-radius: 14px !important;
+    }
+
+    /* ── Section separator ── */
+    #page-home [style*="text-transform:uppercase"][style*="letter-spacing"] {
+      font-family: 'Orbitron', monospace !important;
+      color: rgba(0,207,255,0.35) !important;
+      font-size: 7px !important;
+      letter-spacing: 4px !important;
+    }
+
+    /* ── Humeur buttons ── */
+    #page-home [data-humeur] {
+      background: rgba(0,20,60,0.4) !important;
+      border: 1px solid rgba(0,100,255,0.15) !important;
+      border-radius: 10px !important;
+      transition: all .2s !important;
+    }
+
+    #page-home [data-humeur]:hover {
+      border-color: #00cfff !important;
+      background: rgba(0,100,255,0.15) !important;
+      transform: scale(1.2) !important;
+    }
+
+    /* ── Card humeur ── */
+    #card-humeur-fatigue {
+      background: rgba(0,15,50,0.4) !important;
+      border: 1px solid rgba(0,100,255,0.12) !important;
+    }
+  `;
+  document.head.appendChild(s);
+}
+
+// ════════════════════════════════════════════════════════════
 // PAGE HOME — Avec widgets personnalisables
 // ════════════════════════════════════════════════════════════
 function _rendreHome(container) {
@@ -2576,8 +2901,9 @@ function _rendreHome(container) {
   container.innerHTML = btnPerso + htmlWidgets
     + '<div style="height:8px"></div>';
 
-  // ✅ Events post-render
+  // ✅ Events post-render + Cyber styles
   requestAnimationFrame(() => {
+    _applyCyberHomeStyles();
     _attacherHumeurFatigueEvents();
     _attacherSearchEvents();
   });
@@ -7892,21 +8218,15 @@ async function init() {
     }
 
    // ✅ FIX — Cacher splash + afficher app
-const splash = document.getElementById('splash-screen');
-const app    = document.getElementById('app-wrapper');
+// ✅ Splash Premium
+_animerSplash();
 
-if (splash) {
-  splash.style.opacity    = '0';
-  splash.style.transition = 'opacity 0.3s ease';
-  setTimeout(() => {
-    splash.style.display = 'none';
-  }, 300);
-}
-
+// ✅ App wrapper visible
+const app = document.getElementById('app-wrapper');
 if (app) {
-  app.style.display    = 'flex';
+  app.style.display       = 'flex';
   app.style.flexDirection = 'column';
-  app.style.minHeight  = '100vh';
+  app.style.minHeight     = '100vh';
 }
 
     try { Tracker.init?.();                          } catch(e) {}
@@ -9884,6 +10204,362 @@ function _getRecettesAdaptees(genre, objectif) {
 
   const recettesObjectif = RECETTES[objectif] || RECETTES.forme;
   return recettesObjectif[genre] || recettesObjectif.homme;
+}
+
+// ════════════════════════════════════════════════════════════
+// SPLASH SCREEN ULTRA PREMIUM — Cyber Block Blue
+// ════════════════════════════════════════════════════════════
+function _animerSplash() {
+  const splash = document.getElementById('splash-screen');
+  if (!splash) return;
+
+  splash.innerHTML = `
+    <div id="cb-splash-wrap" style="
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+    ">
+
+      <!-- Ambient glows -->
+      <div style="
+        position:absolute;
+        top:-100px; left:50%;
+        transform:translateX(-50%);
+        width:500px; height:500px;
+        background:radial-gradient(circle,
+          rgba(0,102,255,0.2) 0%,
+          transparent 70%);
+        pointer-events:none;
+        animation:cb-ambient 4s ease-in-out infinite;
+      "></div>
+
+      <div style="
+        position:absolute;
+        bottom:-100px; left:20%;
+        width:300px; height:300px;
+        background:radial-gradient(circle,
+          rgba(123,0,255,0.15) 0%,
+          transparent 70%);
+        pointer-events:none;
+        animation:cb-ambient 6s ease-in-out infinite reverse;
+      "></div>
+
+      <div style="
+        position:absolute;
+        top:30%; right:-50px;
+        width:250px; height:250px;
+        background:radial-gradient(circle,
+          rgba(0,207,255,0.1) 0%,
+          transparent 70%);
+        pointer-events:none;
+        animation:cb-ambient 5s ease-in-out infinite 1s;
+      "></div>
+
+      <!-- Scanlines -->
+      <div style="
+        position:absolute; inset:0;
+        background:repeating-linear-gradient(
+          0deg,
+          rgba(0,150,255,0.015) 0px,
+          rgba(0,150,255,0.015) 1px,
+          transparent 1px,
+          transparent 3px
+        );
+        pointer-events:none;
+      "></div>
+
+      <!-- Corner decorations -->
+      <div style="position:absolute;top:20px;left:20px;width:40px;height:40px;border-top:2px solid rgba(0,207,255,0.5);border-left:2px solid rgba(0,207,255,0.5);border-radius:4px 0 0 0;animation:fadeIn .5s ease .3s both"></div>
+      <div style="position:absolute;top:20px;right:20px;width:40px;height:40px;border-top:2px solid rgba(0,207,255,0.5);border-right:2px solid rgba(0,207,255,0.5);border-radius:0 4px 0 0;animation:fadeIn .5s ease .4s both"></div>
+      <div style="position:absolute;bottom:20px;left:20px;width:40px;height:40px;border-bottom:2px solid rgba(0,207,255,0.5);border-left:2px solid rgba(0,207,255,0.5);border-radius:0 0 0 4px;animation:fadeIn .5s ease .5s both"></div>
+      <div style="position:absolute;bottom:20px;right:20px;width:40px;height:40px;border-bottom:2px solid rgba(0,207,255,0.5);border-right:2px solid rgba(0,207,255,0.5);border-radius:0 0 4px 0;animation:fadeIn .5s ease .6s both"></div>
+
+      <!-- Logo SVG animé -->
+      <div id="splash-logo-wrap" style="
+        position:relative;
+        margin-bottom:32px;
+        animation:bounceIn .7s cubic-bezier(.34,1.56,.64,1) .2s both;
+      ">
+        <!-- Outer ring -->
+        <svg width="120" height="120" viewBox="0 0 120 120"
+             style="position:absolute;top:50%;left:50%;
+                    transform:translate(-50%,-50%);
+                    animation:spin 8s linear infinite">
+          <circle cx="60" cy="60" r="55"
+                  fill="none"
+                  stroke="rgba(0,207,255,0.15)"
+                  stroke-width="1"
+                  stroke-dasharray="4 8"/>
+        </svg>
+
+        <!-- Middle ring -->
+        <svg width="100" height="100" viewBox="0 0 100 100"
+             style="position:absolute;top:50%;left:50%;
+                    transform:translate(-50%,-50%);
+                    animation:spin 5s linear infinite reverse">
+          <circle cx="50" cy="50" r="44"
+                  fill="none"
+                  stroke="rgba(0,102,255,0.2)"
+                  stroke-width="2"
+                  stroke-dasharray="8 12"
+                  stroke-linecap="round"/>
+        </svg>
+
+        <!-- Progress ring -->
+        <svg width="90" height="90" viewBox="0 0 90 90"
+             style="position:absolute;top:50%;left:50%;
+                    transform:translate(-50%,-50%) rotate(-90deg)">
+          <circle cx="45" cy="45" r="38"
+                  fill="none"
+                  stroke="rgba(0,80,200,0.15)"
+                  stroke-width="3"/>
+          <circle cx="45" cy="45" r="38"
+                  fill="none"
+                  stroke="url(#splashGrad)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-dasharray="239"
+                  stroke-dashoffset="239"
+                  id="splash-ring"/>
+          <defs>
+            <linearGradient id="splashGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%"   stop-color="#0066ff"/>
+              <stop offset="50%"  stop-color="#00cfff"/>
+              <stop offset="100%" stop-color="#7b00ff"/>
+            </linearGradient>
+          </defs>
+        </svg>
+
+        <!-- Icon -->
+        <div style="
+          width:80px; height:80px;
+          border-radius:20px;
+          background:linear-gradient(135deg,
+            rgba(0,50,180,0.3),
+            rgba(0,20,80,0.4));
+          border:1px solid rgba(0,150,255,0.3);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:2.5rem;
+          box-shadow:
+            0 0 30px rgba(0,150,255,0.3),
+            0 0 60px rgba(0,100,255,0.15),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+          animation:cb-logo-glow 2s ease-in-out infinite;
+          position:relative; z-index:1;
+        ">⚡</div>
+
+        <!-- Particles autour du logo -->
+        ${Array.from({length:6}, (_,i) => {
+          const angle = (i/6)*360;
+          const r = 55;
+          const x = 60 + r * Math.cos(angle * Math.PI/180);
+          const y = 60 + r * Math.sin(angle * Math.PI/180);
+          return `
+            <div style="
+              position:absolute;
+              width:4px; height:4px;
+              border-radius:50%;
+              background:#00cfff;
+              box-shadow:0 0 8px #00cfff;
+              top:${y-2}px; left:${x-2}px;
+              animation:pulseLive ${1.5 + i*0.2}s ease-in-out infinite ${i*0.15}s;
+            "></div>`;
+        }).join('')}
+      </div>
+
+      <!-- Titre -->
+      <div style="
+        font-family:'Orbitron', monospace;
+        font-size:2rem; font-weight:900;
+        letter-spacing:6px;
+        text-transform:uppercase;
+        background:linear-gradient(90deg, #00cfff, #0066ff, #7b00ff);
+        -webkit-background-clip:text;
+        -webkit-text-fill-color:transparent;
+        margin-bottom:8px;
+        animation:fadeIn .5s ease .6s both;
+        filter:drop-shadow(0 0 20px rgba(0,150,255,0.4));
+      ">PowerApp</div>
+
+      <!-- Sous-titre -->
+      <div style="
+        font-family:'Rajdhani', sans-serif;
+        font-size:.75rem;
+        letter-spacing:5px;
+        text-transform:uppercase;
+        color:rgba(0,207,255,0.35);
+        margin-bottom:48px;
+        animation:fadeIn .5s ease .7s both;
+      ">TON COACH FITNESS PERSONNEL</div>
+
+      <!-- Barre de chargement Cyber -->
+      <div style="
+        width:220px;
+        animation:fadeIn .5s ease .8s both;
+      ">
+        <!-- Labels -->
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          margin-bottom:8px;
+          font-family:'Orbitron', monospace;
+          font-size:8px;
+          letter-spacing:2px;
+          color:rgba(0,207,255,0.35);
+        ">
+          <span>INIT SYSTEM</span>
+          <span id="splash-pct">0%</span>
+        </div>
+
+        <!-- Track -->
+        <div style="
+          width:100%; height:4px;
+          background:rgba(0,80,200,0.15);
+          border-radius:2px; overflow:hidden;
+          position:relative;
+        ">
+          <!-- Fill -->
+          <div id="splash-fill" style="
+            height:100%; width:0%;
+            background:linear-gradient(90deg, #0066ff, #00cfff, #7b00ff);
+            border-radius:2px;
+            transition:width .1s linear;
+            box-shadow:0 0 10px rgba(0,207,255,0.5);
+          "></div>
+          <!-- Shine -->
+          <div style="
+            position:absolute; top:0; left:-100%;
+            width:60%; height:100%;
+            background:linear-gradient(90deg,
+              transparent,
+              rgba(255,255,255,0.4),
+              transparent);
+            animation:shimmer 1.5s ease infinite;
+          "></div>
+        </div>
+
+        <!-- Module loading -->
+        <div id="splash-module" style="
+          margin-top:8px;
+          font-family:'Orbitron', monospace;
+          font-size:7px;
+          letter-spacing:2px;
+          color:rgba(0,207,255,0.25);
+          text-align:center;
+          text-transform:uppercase;
+          min-height:14px;
+        ">LOADING...</div>
+      </div>
+
+      <!-- Dots indicator -->
+      <div style="
+        display:flex; gap:8px;
+        margin-top:24px;
+        animation:fadeIn .5s ease .9s both;
+      ">
+        ${[0,1,2].map(i => `
+          <div class="splash-dot-${i}" style="
+            width:6px; height:6px; border-radius:50%;
+            background:rgba(0,150,255,0.2);
+            transition:all .3s;
+          "></div>`).join('')}
+      </div>
+
+    </div>
+  `;
+
+  // ── Animer la barre + modules ──
+  const modules = [
+    'INIT CORE ENGINE',
+    'LOAD USER PROFILE',
+    'SYNC PROGRAMME',
+    'BOOT COACH IA',
+    'LOAD EXERCICES DB',
+    'INIT GAMIFICATION',
+    'CONNECT TRACKER',
+    'SYSTEM READY'
+  ];
+
+  const fill    = document.getElementById('splash-fill');
+  const pct     = document.getElementById('splash-pct');
+  const modEl   = document.getElementById('splash-module');
+  const ring    = document.getElementById('splash-ring');
+  const CIRC    = 239;
+
+  let progress = 0;
+  let modIdx   = 0;
+
+  const interval = setInterval(() => {
+    progress += Math.random() * 8 + 4;
+    if (progress > 100) progress = 100;
+
+    const p = Math.round(progress);
+
+    // Fill bar
+    if (fill) fill.style.width = p + '%';
+    if (pct)  pct.textContent  = p + '%';
+
+    // Ring
+    if (ring) {
+      ring.style.strokeDashoffset = CIRC - (CIRC * p / 100);
+    }
+
+    // Module text
+    const mIdx = Math.floor((p/100) * modules.length);
+    if (mIdx !== modIdx && mIdx < modules.length) {
+      modIdx = mIdx;
+      if (modEl) {
+        modEl.style.opacity = '0';
+        setTimeout(() => {
+          if (modEl) {
+            modEl.textContent = modules[mIdx];
+            modEl.style.opacity = '1';
+            modEl.style.transition = 'opacity .3s';
+          }
+        }, 150);
+      }
+    }
+
+    // Dots animation
+    const dotIdx = Math.floor(p/34) % 3;
+    [0,1,2].forEach(i => {
+      const d = splash.querySelector(`.splash-dot-${i}`);
+      if (d) {
+        d.style.background = i === dotIdx
+          ? '#00cfff'
+          : 'rgba(0,150,255,0.2)';
+        d.style.boxShadow = i === dotIdx
+          ? '0 0 8px #00cfff'
+          : 'none';
+        d.style.transform = i === dotIdx
+          ? 'scale(1.4)'
+          : 'scale(1)';
+      }
+    });
+
+    if (progress >= 100) {
+      clearInterval(interval);
+      if (modEl) modEl.textContent = '✓ SYSTEM READY';
+
+      // Fade out
+      setTimeout(() => {
+        splash.style.transition = 'opacity .5s ease, transform .5s ease';
+        splash.style.opacity    = '0';
+        splash.style.transform  = 'scale(1.05)';
+        setTimeout(() => {
+          splash.style.display = 'none';
+          document.getElementById('app-wrapper').style.display = 'flex';
+        }, 500);
+      }, 400);
+    }
+  }, 60);
 }
 
 // ════════════════════════════════════════════════════════════
