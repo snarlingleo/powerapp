@@ -474,49 +474,47 @@ function _rendreNavBar() {
   if (!document.getElementById('cb-nav-css')) {
     const s = document.createElement('style');
     s.id = 'cb-nav-css';
-    s.textContent = `
-      @keyframes pulseLive {
-        0%,100% { opacity:1; transform:scale(1);   }
-        50%      { opacity:.5; transform:scale(1.3); }
-      }
+s.textContent = `
+  @keyframes pulseLive {
+    0%,100% { opacity:1; transform:scale(1);   }
+    50%      { opacity:.5; transform:scale(1.3); }
+  }
 
-      @keyframes cb-nav-glow-home {
-        0%,100% { box-shadow:0 0 16px rgba(0,207,255,.4),0 0 32px rgba(0,207,255,.2),inset 0 1px 0 rgba(255,255,255,.1); }
-        50%     { box-shadow:0 0 24px rgba(0,207,255,.7),0 0 48px rgba(0,207,255,.3),inset 0 1px 0 rgba(255,255,255,.18); }
-      }
-      @keyframes cb-nav-glow-training {
-        0%,100% { box-shadow:0 0 16px rgba(0,153,255,.4),0 0 32px rgba(0,153,255,.2),inset 0 1px 0 rgba(255,255,255,.1); }
-        50%     { box-shadow:0 0 24px rgba(0,153,255,.7),0 0 48px rgba(0,153,255,.3),inset 0 1px 0 rgba(255,255,255,.18); }
-      }
-      @keyframes cb-nav-glow-live {
-        0%,100% { box-shadow:0 0 16px rgba(0,207,255,.4),0 0 32px rgba(0,207,255,.2),inset 0 1px 0 rgba(255,255,255,.1); }
-        50%     { box-shadow:0 0 24px rgba(0,207,255,.7),0 0 48px rgba(0,207,255,.3),inset 0 1px 0 rgba(255,255,255,.18); }
-      }
-      @keyframes cb-nav-glow-stats {
-        0%,100% { box-shadow:0 0 16px rgba(0,102,255,.4),0 0 32px rgba(0,102,255,.2),inset 0 1px 0 rgba(255,255,255,.1); }
-        50%     { box-shadow:0 0 24px rgba(0,102,255,.7),0 0 48px rgba(0,102,255,.3),inset 0 1px 0 rgba(255,255,255,.18); }
-      }
-      @keyframes cb-nav-glow-nutrition {
-        0%,100% { box-shadow:0 0 16px rgba(123,0,255,.4),0 0 32px rgba(123,0,255,.2),inset 0 1px 0 rgba(255,255,255,.1); }
-        50%     { box-shadow:0 0 24px rgba(123,0,255,.7),0 0 48px rgba(123,0,255,.3),inset 0 1px 0 rgba(255,255,255,.18); }
-      }
+  @keyframes cb-nav-glow-home {
+    0%,100% { box-shadow:0 0 16px ${_themeNav.c1}66,0 0 32px ${_themeNav.c1}33,inset 0 1px 0 rgba(255,255,255,.1); }
+    50%     { box-shadow:0 0 24px ${_themeNav.c1}99,0 0 48px ${_themeNav.c1}55,inset 0 1px 0 rgba(255,255,255,.18); }
+  }
+  @keyframes cb-nav-glow-training {
+    0%,100% { box-shadow:0 0 16px ${_themeNav.c2}66,0 0 32px ${_themeNav.c2}33,inset 0 1px 0 rgba(255,255,255,.1); }
+    50%     { box-shadow:0 0 24px ${_themeNav.c2}99,0 0 48px ${_themeNav.c2}55,inset 0 1px 0 rgba(255,255,255,.18); }
+  }
+  @keyframes cb-nav-glow-live {
+    0%,100% { box-shadow:0 0 16px ${_themeNav.c1}66,0 0 32px ${_themeNav.c1}33,inset 0 1px 0 rgba(255,255,255,.1); }
+    50%     { box-shadow:0 0 24px ${_themeNav.c1}99,0 0 48px ${_themeNav.c1}55,inset 0 1px 0 rgba(255,255,255,.18); }
+  }
+  @keyframes cb-nav-glow-stats {
+    0%,100% { box-shadow:0 0 16px ${_themeNav.c2}66,0 0 32px ${_themeNav.c2}33,inset 0 1px 0 rgba(255,255,255,.1); }
+    50%     { box-shadow:0 0 24px ${_themeNav.c2}99,0 0 48px ${_themeNav.c2}55,inset 0 1px 0 rgba(255,255,255,.18); }
+  }
+  @keyframes cb-nav-glow-nutrition {
+    0%,100% { box-shadow:0 0 16px ${_themeNav.c3}66,0 0 32px ${_themeNav.c3}33,inset 0 1px 0 rgba(255,255,255,.1); }
+    50%     { box-shadow:0 0 24px ${_themeNav.c3}99,0 0 48px ${_themeNav.c3}55,inset 0 1px 0 rgba(255,255,255,.18); }
+  }
 
-      @keyframes headerEmojiPop {
-        0%   { transform:scale(.6) rotate(-10deg); opacity:.5; }
-        60%  { transform:scale(1.2) rotate(5deg);  opacity:1;  }
-        100% { transform:scale(1)   rotate(0deg);  opacity:1;  }
-      }
-
-      @keyframes menuSlideDown {
-        from { opacity:0; transform:translateX(-50%) translateY(-20px); }
-        to   { opacity:1; transform:translateX(-50%) translateY(0); }
-      }
-
-      @keyframes menuSlideUp {
-        from { opacity:1; transform:translateX(-50%) translateY(0); }
-        to   { opacity:0; transform:translateX(-50%) translateY(-20px); }
-      }
-    `;
+  @keyframes headerEmojiPop {
+    0%   { transform:scale(.6) rotate(-10deg); opacity:.5; }
+    60%  { transform:scale(1.2) rotate(5deg);  opacity:1;  }
+    100% { transform:scale(1)   rotate(0deg);  opacity:1;  }
+  }
+  @keyframes menuSlideDown {
+    from { opacity:0; transform:translateX(-50%) translateY(-20px); }
+    to   { opacity:1; transform:translateX(-50%) translateY(0); }
+  }
+  @keyframes menuSlideUp {
+    from { opacity:1; transform:translateX(-50%) translateY(0); }
+    to   { opacity:0; transform:translateX(-50%) translateY(-20px); }
+  }
+`;
     document.head.appendChild(s);
   }
 }
@@ -4706,9 +4704,13 @@ const LiveStickyBar = {
         <button onclick="ChronoSticky._togglePause();
                          LiveStickyBar._render()"
                 style="padding:4px 10px;
-                       background:${enPause
-                         ? 'rgba(139,240,187,0.15)'
-                         : 'rgba(255,255,255,0.06)'};
+                       // ✅ Couleur thème actuel
+const _liveStickyTheme = (() => {
+  try {
+    const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+    return Themes.THEMES.find(t => t.id === id) || Themes.THEMES[0];
+  } catch(e) { return { c1:'#00cfff', c2:'#0066ff' }; }
+})();
                        border:1px solid ${enPause
                          ? 'rgba(139,240,187,0.3)'
                          : 'rgba(255,255,255,0.1)'};
@@ -4729,8 +4731,7 @@ const LiveStickyBar = {
                     border-radius:99px;overflow:hidden;
                     margin-bottom:4px">
           <div style="height:100%;width:${pct}%;
-                      background:linear-gradient(90deg,
-                        var(--fd-indigo),var(--fd-mint));
+                      background:linear-gradient(90deg, ${_liveStickyTheme.c2}, ${_liveStickyTheme.c1});
                       border-radius:99px;
                       transition:width .5s ease">
           </div>
@@ -7889,7 +7890,7 @@ _render() {
                 background:${enPause
                   ? theme.c1 + '18'
                   : 'rgba(255,255,255,0.06)'};
-                color:${enPause ? theme.c1 : 'rgba(255,255,255,0.5)'};
+                color: ${enPause ? 'rgba(255,100,100,0.8)' : _liveStickyTheme.c1};
                 border-color:${enPause
                   ? theme.c1 + '44'
                   : 'rgba(255,255,255,0.1)'}">
@@ -7902,31 +7903,43 @@ _render() {
 _allerAuLive() {
   naviguer('live');
 
-  // Scroll vers la première série non validée
   setTimeout(() => {
+    // ✅ Chercher la première série NON validée (btn pas disabled)
     const btns = document.querySelectorAll('[id^="btn-serie-"]');
-    for (const btn of btns) {
-      if (!btn.disabled && btn.textContent.includes('SÉRIE FAITE')) {
-        const bloc = btn.closest('.lr-serie-bloc')
-                  || btn.closest('.live-exo-card');
-        if (bloc) {
-          bloc.scrollIntoView({ behavior:'smooth', block:'center' });
+    let cible = null;
 
-          // Highlight flash
-          bloc.style.transition   = 'all .3s';
-          bloc.style.borderColor  = Themes?.THEMES?.find(
-            t => t.id === Utils.storage.get('ft_theme_style','cyber-blue')
-          )?.c1 || '#00cfff';
-          bloc.style.boxShadow    = '0 0 20px rgba(0,207,255,0.4)';
-          setTimeout(() => {
-            bloc.style.borderColor = '';
-            bloc.style.boxShadow   = '';
-          }, 2000);
-        }
+    for (const btn of btns) {
+      if (!btn.disabled) {
+        cible = btn;
         break;
       }
     }
-  }, 400);
+
+    if (cible) {
+      const bloc = cible.closest('.lr-serie-bloc')
+                || cible.closest('.live-exo-card');
+      if (bloc) {
+        bloc.scrollIntoView({ behavior:'smooth', block:'center' });
+
+        // Récupérer couleur du thème
+        const themeColor = (() => {
+          try {
+            const id = Utils.storage.get('ft_theme_style','cyber-blue');
+            return Themes?.THEMES?.find(t => t.id === id)?.c1 || '#00cfff';
+          } catch(e) { return '#00cfff'; }
+        })();
+
+        // Flash highlight
+        bloc.style.transition   = 'all .3s';
+        bloc.style.borderColor  = themeColor;
+        bloc.style.boxShadow    = `0 0 20px ${themeColor}66`;
+        setTimeout(() => {
+          bloc.style.borderColor = '';
+          bloc.style.boxShadow   = '';
+        }, 2000);
+      }
+    }
+  }, 500);
 },
 
   _getTemps() {
@@ -10902,7 +10915,12 @@ const Themes = {
     try { _updateHeader(window._pageActive || 'home'); } catch(e) {}
 
     // Mettre à jour la nav
-    try { _rendreNavBar(); } catch(e) {}
+    try {
+  // ✅ Supprimer l'ancien CSS nav pour forcer re-génération
+  const oldNavCss = document.getElementById('cb-nav-css');
+  if (oldNavCss) oldNavCss.remove();
+  _rendreNavBar();
+} catch(e) {}
 
     return theme;
   },
