@@ -4074,6 +4074,167 @@ body::after {
   border-color: rgba(0,100,255,0.15) !important;
   color: #020610 !important;
 }
+/* ════ MENU GLOBAL CYBER ════ */
+#menu-global-panel {
+  background: rgba(2,10,24,0.98) !important;
+  border-bottom: 1px solid rgba(0,207,255,0.15) !important;
+}
+
+#menu-global-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #00cfff, #0066ff, transparent);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Profil card dans le menu */
+#menu-global-panel [style*="linear-gradient(135deg,rgba(75,75,249"] {
+  background: linear-gradient(135deg,
+    rgba(0,100,255,0.2),
+    rgba(0,207,255,0.05)) !important;
+  border-color: rgba(0,207,255,0.3) !important;
+}
+
+/* Section titres */
+#menu-global-panel [style*="rgba(255,255,255,0.25)"] {
+  color: rgba(0,207,255,0.35) !important;
+  letter-spacing: 0.15em !important;
+}
+
+/* Items menu */
+#menu-global-panel [style*="rgba(255,255,255,0.04)"] {
+  background: rgba(0,15,50,0.4) !important;
+  border: 1px solid rgba(0,80,200,0.1) !important;
+  border-radius: 12px !important;
+}
+/* ════ RÉSUMÉ SÉANCE CYBER ════ */
+
+/* Stats cards résumé */
+#modal-info-content [style*="grid-template-columns:repeat(3"] > div {
+  background: rgba(0,15,50,0.4) !important;
+  border: 1px solid rgba(0,80,200,0.12) !important;
+  border-radius: 12px !important;
+}
+
+/* Score arc */
+#modal-info-content circle[stroke="#4b4bf9"],
+#modal-info-content circle[stroke="#8bf0bb"] {
+  filter: drop-shadow(0 0 4px #00cfff) !important;
+}
+
+/* PR cards */
+#modal-info-content [style*="rgba(249,239,119"] {
+  background: rgba(0,100,255,0.08) !important;
+  border-color: rgba(0,207,255,0.25) !important;
+}
+
+#modal-info-content [style*="var(--fd-lemon)"] {
+  color: #00cfff !important;
+}
+
+/* Coach message */
+#modal-info-content [style*="rgba(191,161,255,0.08)"] {
+  background: rgba(0,50,150,0.1) !important;
+  border-color: rgba(0,207,255,0.2) !important;
+  border-left-color: #00cfff !important;
+}
+/* ════ ONBOARDING CYBER ════ */
+
+/* Barre de progression */
+#onboarding-screen [style*="var(--fd-indigo)"][style*="border-radius:4px"] {
+  background: #00cfff !important;
+  box-shadow: 0 0 10px rgba(0,207,255,0.5) !important;
+}
+
+/* Boutons sélection genre/objectif/niveau */
+#onboarding-screen .ob-genre-btn,
+#onboarding-screen .ob-obj,
+#onboarding-screen .ob-niv,
+#onboarding-screen .ob-lieu {
+  transition: all 0.25s !important;
+}
+
+#onboarding-screen .ob-genre-btn:hover,
+#onboarding-screen .ob-obj:hover,
+#onboarding-screen .ob-niv:hover,
+#onboarding-screen .ob-lieu:hover {
+  border-color: rgba(0,207,255,0.4) !important;
+  background: rgba(0,100,255,0.08) !important;
+}
+
+/* Bouton suivant */
+#onboarding-screen .btn-primary {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+}
+
+/* Corps SVG image */
+#ob-body-img {
+  border: 1px solid rgba(0,100,255,0.2) !important;
+  box-shadow: 0 0 30px rgba(0,100,255,0.15) !important;
+}
+/* ════ OVERLAY REPOS CYBER ════ */
+#repos-auto-overlay {
+  background: rgba(2,6,16,0.98) !important;
+}
+
+#repos-auto-overlay::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 350px; height: 350px;
+  background: radial-gradient(circle,
+    rgba(0,100,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+#repos-arc {
+  stroke: #00cfff !important;
+  filter: drop-shadow(0 0 8px #00cfff) !important;
+}
+
+#repos-display {
+  color: #00cfff !important;
+  text-shadow: 0 0 20px rgba(0,207,255,0.6) !important;
+  font-family: 'Orbitron', monospace !important;
+}
+
+/* Bouton passer repos */
+#repos-auto-overlay button[onclick*="_passerRepos"] {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 1px !important;
+}
+
+/* ════ OVERLAY SÉRIE CYBER ════ */
+#serie-overlay {
+  background: rgba(2,6,16,0.98) !important;
+}
+
+#serie-arc {
+  stroke: #00cfff !important;
+  filter: drop-shadow(0 0 8px #00cfff) !important;
+}
+
+#serie-display {
+  color: #00cfff !important;
+  text-shadow: 0 0 20px rgba(0,207,255,0.6) !important;
+  font-family: 'Orbitron', monospace !important;
+}
+
+#serie-overlay button[onclick*="_terminerManuellement"] {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border-radius: 10px !important;
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 1px !important;
+  box-shadow: 0 4px 20px rgba(0,102,255,0.5) !important;
+}
 /* ════ POLICE CYBER ════ */
 body {
   font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif !important;
