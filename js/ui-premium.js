@@ -135,7 +135,7 @@
     }
     .pm-progress-fill {
       height:100%; border-radius:99px;
-      background:linear-gradient(90deg,var(--fd-indigo),var(--fd-mint));
+      background:linear-gradient(90deg,${theme.c2},${theme.c1});
       animation:pm-progressFill .8s ease forwards;
     }
     .pm-btn {
@@ -3639,12 +3639,12 @@ const LiveUltra = {
           ${Array.from({length:totalS},(_,i)=>`
             <div style="width:${i===this._serieIdx?24:8}px;height:8px;
                         border-radius:99px;transition:all .3s;
-                        background:${
-                          this._seriesValidees[`${this._exoIdx}-${i}`]
-                            ? 'var(--fd-mint)'
-                            : i===this._serieIdx
-                              ? 'var(--fd-indigo)'
-                              : 'rgba(255,255,255,.15)'}">
+background:${
+  this._seriesValidees[`${this._exoIdx}-${i}`]
+    ? theme.c1
+    : i===this._serieIdx
+      ? theme.c2
+      : 'rgba(255,255,255,.15)'}">
             </div>`).join('')}
         </div>
 
@@ -3747,11 +3747,12 @@ const LiveUltra = {
         <!-- Valider -->
         <button id="ultra-btn-valider"
                 onclick="LiveUltra._validerSerie()"
-                style="width:100%;padding:22px;background:var(--fd-indigo);
-                       border:none;border-radius:20px;font-size:1.1rem;
-                       font-weight:900;color:white;cursor:pointer;
-                       letter-spacing:.04em;
-                       box-shadow:0 6px 32px rgba(75,75,249,.5);
+style="width:100%;padding:22px;
+       background:linear-gradient(135deg,${theme.c2},${theme.c1});
+       border:none;border-radius:20px;font-size:1.1rem;
+       font-weight:900;color:#020610;cursor:pointer;
+       letter-spacing:.04em;
+       box-shadow:0 6px 32px ${theme.c1}55;
                        transition:all .2s">
           ✅ SÉRIE FAITE
         </button>
@@ -3783,18 +3784,18 @@ const LiveUltra = {
                  style="height:6px;border-radius:99px;cursor:pointer;
                         transition:all .3s;
                         width:${i===this._exoIdx?20:6}px;
-                        background:${i===this._exoIdx
-                          ? 'var(--fd-indigo)'
-                          : this._exoTermine(i)
-                            ? 'var(--fd-mint)'
-                            : 'rgba(255,255,255,.15)'}">
+background:${i===this._exoIdx
+  ? theme.c2
+  : this._exoTermine(i)
+    ? theme.c1
+    : 'rgba(255,255,255,.15)'}">
             </div>`).join('')}
         </div>
 
         <button onclick="LiveUltra._exoSuivant()"
-                style="padding:10px 16px;background:rgba(75,75,249,.15);
-                       border:1px solid rgba(75,75,249,.3);border-radius:12px;
-                       color:var(--fd-indigo);font-size:.78rem;
+                style="padding:10px 16px;background:${theme.c2}25;
+                border:1px solid ${theme.c2}55;
+                color:${theme.c1};border-radius:12px;font-size:.78rem;
                        font-weight:700;cursor:pointer;
                        opacity:${this._exoIdx<this._exercices.length-1?'1':'0.3'}"
                 ${this._exoIdx>=this._exercices.length-1?'disabled':''}>
@@ -3907,7 +3908,7 @@ const LiveUltra = {
             <circle cx="80" cy="80" r="70" fill="none"
                     stroke="rgba(139,240,187,.1)" stroke-width="8"/>
             <circle cx="80" cy="80" r="70" fill="none"
-                    stroke="var(--fd-mint)" stroke-width="8"
+                    stroke="${this._getTheme().c1}" stroke-width="8"
                     stroke-linecap="round"
                     stroke-dasharray="${circ}" stroke-dashoffset="0"
                     id="ultra-repos-arc"
@@ -3918,7 +3919,7 @@ const LiveUltra = {
                       transform:translate(-50%,-50%);text-align:center">
             <div id="ultra-repos-display"
                  style="font-size:2.8rem;font-weight:900;
-                        color:var(--fd-mint);
+                        color:${this._getTheme().c1};
                         font-variant-numeric:tabular-nums;line-height:1">
               ${this._formatTemps(secondes)}
             </div>
