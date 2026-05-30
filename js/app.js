@@ -2446,8 +2446,9 @@ function _rendreHome(container) {
                           border-radius:99px;overflow:hidden;
                           margin-bottom:10px">
                 <div style="height:100%;width:${pct}%;
-                            background:linear-gradient(90deg,
-                              var(--fd-indigo),var(--fd-mint));
+                            `background:linear-gradient(90deg,
+  ${_liveStickyTheme.c2},
+  ${_liveStickyTheme.c1});`;
                             border-radius:99px;transition:width .5s">
                 </div>
               </div>
@@ -4650,13 +4651,19 @@ const LiveStickyBar = {
     this._render();
   },
 
-  _render() {
-    const bar = document.getElementById('live-sticky-bar');
-    if (!bar) return;
+_render() {
+  const bar = document.getElementById('live-sticky-bar');
+  if (!bar) return;
+  const _liveStickyTheme = (() => {
+    try {
+      const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+      return Themes.THEMES.find(t => t.id === id) || Themes.THEMES[0];
+    } catch(e) { return { c1:'#00cfff', c2:'#0066ff' }; }
+  })();
 
-    const pct   = this._totalSeries > 0
-      ? Math.round((this._seriesFaites / this._totalSeries) * 100)
-      : 0;
+  const pct   = this._totalSeries > 0
+    ? Math.round((this._seriesFaites / this._totalSeries) * 100)
+    : 0;
 
     const exoActuel  = (this._exoActuel  || 0) + 1;
     const totalExos  = this._totalExos   || 0;
@@ -4680,9 +4687,9 @@ const LiveStickyBar = {
         <!-- Chrono -->
         <div style="display:flex;align-items:center;gap:8px">
           <div style="font-size:1.1rem;font-weight:800;
-                      color:${enPause
-                        ? 'var(--fd-coral)'
-                        : 'var(--fd-mint)'};
+                      `color:${enPause
+  ? 'rgba(255,100,100,0.8)'
+  : _liveStickyTheme.c1};`
                       font-variant-numeric:tabular-nums;
                       letter-spacing:.02em">
             ${enPause ? '⏸' : '⏱️'} ${temps}
@@ -5156,8 +5163,9 @@ function _rendreChecklistPreSeance(container, options, seanceId) {
         <div id="checklist-progress-bar"
              style="height:100%;
                     width:${Math.round((exosVus.length/Math.max(exos.length,1))*100)}%;
-                    background:linear-gradient(90deg,
-                      var(--fd-indigo),var(--fd-mint));
+                    `background:linear-gradient(90deg,
+  ${_liveStickyTheme.c2},
+  ${_liveStickyTheme.c1});`
                     border-radius:99px;
                     transition:width .5s ease">
         </div>
