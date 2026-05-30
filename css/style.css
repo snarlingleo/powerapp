@@ -4341,3 +4341,118 @@ button[onclick*="App.arreterSeance"]:hover {
 [data-theme-style="arctic-white"] .cb-glow-dot {
   display: none !important;
 }
+/* ════════════════════════════════════════════════════════════
+   MODE ULTRA-RAPIDE — Fix dimensions + Thème sync
+════════════════════════════════════════════════════════════ */
+
+/* Container principal — plein écran correct */
+#live-ultra-overlay,
+.live-ultra-container,
+[id*="ultra"],
+[class*="ultra"] {
+  max-width: 480px !important;
+  width: 100% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  margin: 0 auto !important;
+}
+
+/* Forcer les couleurs du thème via CSS variables */
+#live-ultra-overlay {
+  background: var(--t-dark, #020610) !important;
+}
+
+/* Bouton SÉRIE FAITE ultra */
+#live-ultra-overlay [style*="SÉRIE FAITE"],
+.ultra-serie-btn {
+  background: linear-gradient(135deg,
+    var(--t2, #0066ff),
+    var(--t1, #00cfff)) !important;
+  box-shadow: 0 4px 20px var(--t-glow, rgba(0,207,255,0.4)) !important;
+}
+
+/* Charge display */
+#live-ultra-overlay [style*="font-size:3rem"],
+#live-ultra-overlay [style*="font-size:2.5rem"],
+.ultra-charge-val {
+  color: var(--t1, #00cfff) !important;
+  text-shadow: 0 0 20px var(--t-glow, rgba(0,207,255,0.5)) !important;
+}
+
+/* Reps display */
+#live-ultra-overlay [style*="font-size:2rem"],
+.ultra-reps-val {
+  color: white !important;
+}
+
+/* Boutons -/+ */
+#live-ultra-overlay button[onclick*="-5"],
+#live-ultra-overlay button[onclick*="-½"],
+#live-ultra-overlay button[onclick*="-2"],
+#live-ultra-overlay button[onclick*="-1"] {
+  background: var(--t2, #0066ff)18 !important;
+  border-color: var(--t2, #0066ff)44 !important;
+  color: var(--t1, #00cfff) !important;
+  border-radius: 12px !important;
+}
+
+/* Barre progression ultra */
+#live-ultra-overlay .progress-fill,
+#live-ultra-overlay [style*="background:linear-gradient"] {
+  background: linear-gradient(90deg,
+    var(--t2, #0066ff),
+    var(--t1, #00cfff)) !important;
+}
+
+/* Dots pagination */
+#live-ultra-overlay [style*="border-radius:50%"] {
+  transition: all .3s !important;
+}
+
+/* Bouton Suiv/Préc */
+#live-ultra-overlay button[onclick*="Suiv"],
+#live-ultra-overlay button[onclick*="Prec"],
+#live-ultra-overlay button[onclick*="suivant"],
+#live-ultra-overlay button[onclick*="precedent"] {
+  background: var(--t1, #00cfff)18 !important;
+  border-color: var(--t1, #00cfff)44 !important;
+  color: var(--t1, #00cfff) !important;
+  border-radius: 10px !important;
+}
+
+/* Muscle label */
+#live-ultra-overlay [style*="PECTORAUX"],
+#live-ultra-overlay [style*="text-transform:uppercase"][style*="letter-spacing"] {
+  font-family: 'Orbitron', monospace !important;
+  color: var(--t1, #00cfff) !important;
+  letter-spacing: 4px !important;
+  font-size: 10px !important;
+}
+
+/* Header ultra */
+#live-ultra-overlay [style*="MODE ULTRA-RAPIDE"],
+#live-ultra-overlay .ultra-header-label {
+  font-family: 'Orbitron', monospace !important;
+  color: var(--t1, #00cfff) !important;
+  letter-spacing: 4px !important;
+  font-size: 9px !important;
+}
+
+/* Nom exercice */
+#live-ultra-overlay [style*="font-weight:700"][style*="font-size:.95rem"],
+.ultra-exo-name {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+}
+
+/* Fix hauteur plein écran */
+#live-ultra-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
