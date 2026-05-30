@@ -4529,3 +4529,27 @@ body {
 #cb-badge {
   display: none !important;
 }
+/* ════ MODE ULTRA — Fix dimensions ════ */
+#live-ultra-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  height: 100dvh !important;
+  overflow-y: auto !important;
+  z-index: 9999 !important;
+}
+
+/* Centrer sur desktop */
+@media (min-width: 480px) {
+  #live-ultra-overlay {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    border-radius: 0 !important;
+    box-shadow: -10px 0 40px rgba(0,0,0,0.5),
+                 10px 0 40px rgba(0,0,0,0.5) !important;
+  }
+}
