@@ -3391,6 +3391,17 @@ PM.obTerminer = function() {
 // ═══════════════════════════════════════════════════════════
 // 20. LIVE ULTRA — Fusion live-ultra.js v1.0
 // ═══════════════════════════════════════════════════════════
+const _themeUltra = (() => {
+  try {
+    const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+    return window.Themes?.THEMES?.find(t => t.id === id)
+      || { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff',
+           bg:'#020610', id:'cyber-blue' };
+  } catch(e) {
+    return { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff',
+             bg:'#020610', id:'cyber-blue' };
+  }
+})();
 const LiveUltra = {
 
   _actif:          false,
