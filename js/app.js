@@ -552,15 +552,15 @@ function _updateHeader(page) {
   const keyEl = document.getElementById('cb-key');
   if (keyEl) keyEl.textContent = page.replace('_',' ').toUpperCase();
 
-  // Badge
-  const badgeEl = document.getElementById('cb-badge');
-  if (badgeEl) {
-    badgeEl.textContent = cfg.badge;
-    badgeEl.style.color       = cfg.c1;
-    badgeEl.style.borderColor = cfg.c1 + '44';
-    badgeEl.style.background  = cfg.c1 + '11';
-    badgeEl.style.boxShadow   = `0 0 8px ${cfg.c1}33`;
-  }
+     // Badge
+  // const badgeEl = document.getElementById('cb-badge');
+  // if (badgeEl) {
+    //badgeEl.textContent = cfg.badge;
+    //badgeEl.style.color       = cfg.c1;
+    //badgeEl.style.borderColor = cfg.c1 + '44';
+    //badgeEl.style.background  = cfg.c1 + '11';
+    //badgeEl.style.boxShadow   = `0 0 8px ${cfg.c1}33`;
+  //}
 
   // Dot
   const dotEl = document.getElementById('cb-dot');
