@@ -2739,3 +2739,951 @@ button[onclick*="App.arreterSeance"]:hover {
   letter-spacing: 4px;
   text-shadow: 0 0 16px rgba(0,207,255,0.6);
 }
+/* ════════════════════════════════════════════════════════════
+   B — COACH IA CYBER BLOCK BLUE
+════════════════════════════════════════════════════════════ */
+
+/* ── Header Coach ── */
+#page-coach .card:first-child,
+#page-adaptatif .card:first-child {
+  background: linear-gradient(135deg,
+    rgba(0,80,255,0.15) 0%,
+    rgba(123,0,255,0.05) 100%) !important;
+  border: 1px solid rgba(0,150,255,0.2) !important;
+  border-radius: 16px !important;
+}
+
+/* ── Message Coach ── */
+#page-coach [style*="border-left"],
+#page-adaptatif [style*="border-left"] {
+  border-left-color: #00cfff !important;
+  background: rgba(0,15,50,0.4) !important;
+  border-top: 1px solid rgba(0,100,255,0.1) !important;
+  border-right: 1px solid rgba(0,100,255,0.1) !important;
+  border-bottom: 1px solid rgba(0,100,255,0.1) !important;
+}
+
+/* Label Coach IA */
+#page-coach [style*="color:var(--fd-lavender)"],
+#page-adaptatif [style*="color:var(--fd-lavender)"] {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 3px !important;
+}
+
+/* ── Analyse semaine ── */
+#page-coach [style*="grid-template-columns:repeat(3"],
+#page-adaptatif [style*="grid-template-columns:repeat(3"] {
+  gap: 8px !important;
+}
+
+#page-coach [style*="grid-template-columns:repeat(3"] > div,
+#page-adaptatif [style*="grid-template-columns:repeat(3"] > div {
+  background: rgba(0,15,50,0.4) !important;
+  border: 1px solid rgba(0,100,255,0.1) !important;
+  border-radius: 12px !important;
+  transition: all 0.3s !important;
+}
+
+#page-coach [style*="grid-template-columns:repeat(3"] > div:hover,
+#page-adaptatif [style*="grid-template-columns:repeat(3"] > div:hover {
+  border-color: rgba(0,207,255,0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ── Tabs Coach ── */
+#page-coach .tabs-container button,
+#page-adaptatif .tabs-container button {
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 2px !important;
+}
+
+/* ── Programme IA ── */
+#page-adaptatif [style*="linear-gradient"] {
+  background: linear-gradient(135deg,
+    rgba(0,100,255,0.15),
+    rgba(0,207,255,0.03)) !important;
+  border-color: rgba(0,207,255,0.2) !important;
+}
+
+/* Boutons programme adaptatif */
+#page-adaptatif .btn-primary {
+  font-family: 'Orbitron', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 2px !important;
+}
+
+/* ── Score coach ── */
+#page-coach [style*="font-size:2rem;font-weight:800"],
+#page-adaptatif [style*="font-size:2rem;font-weight:800"] {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  text-shadow: 0 0 20px rgba(0,207,255,0.5) !important;
+}
+
+/* ── Recommandations ── */
+#page-coach [style*="rgba(191,161,255"] {
+  background: rgba(0,50,150,0.1) !important;
+  border-color: rgba(0,207,255,0.2) !important;
+}
+
+/* ── Questionnaire IA (adaptatif) ── */
+#page-adaptatif button[style*="padding:12px"] {
+  border-radius: 10px !important;
+  transition: all 0.2s !important;
+}
+
+#page-adaptatif button[style*="padding:12px"]:hover {
+  border-color: rgba(0,207,255,0.4) !important;
+  background: rgba(0,100,255,0.12) !important;
+}
+
+/* ── Chat Coach ── */
+.coach-message {
+  background: rgba(0,15,50,0.4) !important;
+  border: 1px solid rgba(0,100,255,0.12) !important;
+  border-radius: 14px !important;
+  border-bottom-left-radius: 4px !important;
+}
+
+.coach-message-user {
+  background: rgba(0,80,200,0.2) !important;
+  border: 1px solid rgba(0,150,255,0.2) !important;
+  border-radius: 14px !important;
+  border-bottom-right-radius: 4px !important;
+}
+
+/* Input chat */
+.coach-input-wrap {
+  background: rgba(0,15,50,0.4) !important;
+  border: 1px solid rgba(0,100,255,0.15) !important;
+  border-radius: 12px !important;
+}
+
+.coach-input-wrap:focus-within {
+  border-color: #00cfff !important;
+  box-shadow: 0 0 0 3px rgba(0,207,255,0.1) !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   B — NUTRITION CYBER BLOCK BLUE
+════════════════════════════════════════════════════════════ */
+
+/* ── Hero nutrition ── */
+.nutri-hero {
+  background: linear-gradient(135deg,
+    rgba(0,100,255,0.15) 0%,
+    rgba(0,207,255,0.03) 100%) !important;
+  border: 1px solid rgba(0,207,255,0.2) !important;
+  box-shadow: 0 4px 24px rgba(0,102,255,0.15) !important;
+}
+
+/* ── Macros grid ── */
+.macro-item {
+  background: rgba(0,15,50,0.35) !important;
+  border: 1px solid rgba(0,80,200,0.1) !important;
+  border-radius: 12px !important;
+  transition: all 0.3s !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.macro-item:hover {
+  border-color: rgba(0,207,255,0.25) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 16px rgba(0,100,255,0.15) !important;
+}
+
+/* Shine sur macro */
+.macro-item::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent, rgba(0,207,255,0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.macro-item:hover::before { opacity: 1; }
+
+.macro-val {
+  font-family: 'Orbitron', monospace !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 10px currentColor !important;
+}
+
+.macro-label {
+  font-family: 'Orbitron', monospace !important;
+  font-size: 6px !important;
+  letter-spacing: 2px !important;
+  color: rgba(0,150,255,0.35) !important;
+}
+
+.macro-progress {
+  background: rgba(0,50,150,0.15) !important;
+}
+
+.macro-progress-fill {
+  border-radius: 99px !important;
+  box-shadow: 0 0 6px currentColor !important;
+}
+
+/* ── Repas items ── */
+.repas-item {
+  background: rgba(0,10,30,0.4) !important;
+  border: 1px solid rgba(0,80,200,0.1) !important;
+  border-radius: 10px !important;
+  transition: all 0.2s !important;
+}
+
+.repas-item:hover {
+  border-color: rgba(0,207,255,0.25) !important;
+  background: rgba(0,50,150,0.15) !important;
+  transform: translateX(4px) !important;
+}
+
+/* ── Eau tracker ── */
+#page-nutrition [style*="background:var(--fd-indigo)"],
+#page-nutrition [style*="background:rgba(75,75,249"] {
+  background: rgba(0,100,255,0.2) !important;
+  border-color: rgba(0,207,255,0.3) !important;
+}
+
+/* Boutons eau rapide */
+#page-nutrition button[onclick*="Eau"],
+#page-nutrition button[onclick*="eau"] {
+  background: rgba(0,80,200,0.15) !important;
+  border: 1px solid rgba(0,150,255,0.2) !important;
+  border-radius: 30px !important;
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 1px !important;
+  transition: all 0.2s !important;
+}
+
+#page-nutrition button[onclick*="Eau"]:hover,
+#page-nutrition button[onclick*="eau"]:hover {
+  background: rgba(0,150,255,0.25) !important;
+  border-color: #00cfff !important;
+  box-shadow: 0 0 12px rgba(0,207,255,0.3) !important;
+}
+
+/* ── Glass cards nutrition ── */
+.glass-card {
+  background: rgba(0,10,30,0.35) !important;
+  border: 1px solid rgba(0,80,200,0.1) !important;
+  transition: all 0.3s !important;
+}
+
+.glass-card:hover {
+  border-color: rgba(0,150,255,0.2) !important;
+  background: rgba(0,30,80,0.35) !important;
+}
+
+.glass-card-indigo {
+  border-color: rgba(0,150,255,0.2) !important;
+  background: rgba(0,80,200,0.06) !important;
+}
+
+/* ── Tabs nutrition ── */
+#page-nutrition .tab-btn {
+  font-family: 'Orbitron', monospace !important;
+  font-size: 7px !important;
+  letter-spacing: 2px !important;
+}
+
+/* ── Planning repas ── */
+#page-nutrition [style*="linear-gradient"] {
+  background: linear-gradient(135deg,
+    rgba(0,100,255,0.12),
+    rgba(0,207,255,0.03)) !important;
+  border-color: rgba(0,150,255,0.15) !important;
+}
+
+/* ── Recettes ── */
+#page-nutrition [style*="border-radius:var(--radius-lg)"] {
+  background: rgba(0,10,30,0.4) !important;
+  border-color: rgba(0,80,200,0.1) !important;
+}
+
+/* Favoris */
+#page-nutrition button[onclick*="Favoris"],
+#page-nutrition button[onclick*="favoris"] {
+  transition: all 0.2s !important;
+}
+
+/* ── IMC / TDEE ── */
+#page-nutrition .imc-widget {
+  background: rgba(0,10,30,0.4) !important;
+  border: 1px solid rgba(0,100,255,0.12) !important;
+}
+
+#page-nutrition .tdee-value {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  text-shadow: 0 0 12px rgba(0,207,255,0.4) !important;
+}
+
+/* ── Courses list ── */
+#page-nutrition [style*="check"],
+#page-nutrition [onclick*="course"] {
+  transition: all 0.2s !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   B — PROFIL CYBER BLOCK BLUE
+════════════════════════════════════════════════════════════ */
+
+/* ── Hero profil ── */
+#page-profil .card:first-child,
+[id^="page-"][id$="profil"] .card:first-child {
+  background: linear-gradient(135deg,
+    rgba(0,80,255,0.3) 0%,
+    rgba(123,0,255,0.15) 100%) !important;
+  border: none !important;
+  border-radius: 20px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Scanlines sur hero */
+#page-profil .card:first-child::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0,150,255,0.02) 0px,
+    rgba(0,150,255,0.02) 1px,
+    transparent 1px, transparent 3px
+  );
+  pointer-events: none;
+}
+
+/* Avatar */
+#page-profil [style*="font-size:3rem"] {
+  filter: drop-shadow(0 0 20px rgba(0,207,255,0.5)) !important;
+  animation: cb-logo-glow 3s ease-in-out infinite !important;
+}
+
+/* Nom profil */
+#page-profil [style*="font-size:1.3rem;font-weight:800"] {
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 2px !important;
+  text-shadow: 0 0 20px rgba(0,207,255,0.3) !important;
+}
+
+/* XP/Niveau sous le nom */
+#page-profil [style*=".82rem;opacity:.8"] {
+  font-family: 'Rajdhani', sans-serif !important;
+  color: rgba(0,207,255,0.7) !important;
+  opacity: 1 !important;
+  letter-spacing: 1px !important;
+}
+
+/* Stats (Séances/Streak/Trophées) */
+#page-profil .stats-grid > div {
+  background: rgba(0,0,0,0.2) !important;
+  border-radius: 10px !important;
+  padding: 10px 6px !important;
+}
+
+#page-profil .stats-grid [style*="font-size:1.2rem"] {
+  font-family: 'Orbitron', monospace !important;
+  color: #00cfff !important;
+  text-shadow: 0 0 12px rgba(0,207,255,0.5) !important;
+}
+
+#page-profil .stats-grid [style*="font-size:.65rem"] {
+  font-family: 'Orbitron', monospace !important;
+  font-size: 7px !important;
+  letter-spacing: 2px !important;
+  color: rgba(0,207,255,0.4) !important;
+  opacity: 1 !important;
+}
+
+/* ── Bouton Modifier profil ── */
+#page-profil [onclick*="Profil._ouvrirEdition"] {
+  background: rgba(0,80,200,0.12) !important;
+  border: 1px solid rgba(0,150,255,0.2) !important;
+  border-radius: 14px !important;
+  transition: all 0.3s !important;
+}
+
+#page-profil [onclick*="Profil._ouvrirEdition"]:hover {
+  background: rgba(0,100,255,0.2) !important;
+  border-color: rgba(0,207,255,0.4) !important;
+  transform: translateY(-2px) !important;
+}
+
+#page-profil [onclick*="Profil._ouvrirEdition"]
+  [style*="font-size:1.3rem"] {
+  filter: drop-shadow(0 0 6px rgba(0,207,255,0.4)) !important;
+}
+
+/* ── Cards navigation profil ── */
+#page-profil .card[onclick*="naviguer"] {
+  background: rgba(0,10,30,0.4) !important;
+  border: 1px solid rgba(0,80,200,0.1) !important;
+  border-radius: 14px !important;
+  transition: all 0.2s !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+#page-profil .card[onclick*="naviguer"]::before {
+  content: '';
+  position: absolute; top: 0; left: -100%; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #00cfff, transparent);
+  transition: left 0.4s ease;
+}
+
+#page-profil .card[onclick*="naviguer"]:hover {
+  background: rgba(0,50,150,0.15) !important;
+  border-color: rgba(0,207,255,0.25) !important;
+  transform: translateX(4px) !important;
+}
+
+#page-profil .card[onclick*="naviguer"]:hover::before {
+  left: 0;
+}
+
+/* Emojis navigation */
+#page-profil .card[onclick*="naviguer"] [style*="font-size:1.3rem"] {
+  filter: drop-shadow(0 0 6px rgba(0,207,255,0.3)) !important;
+  transition: filter 0.3s !important;
+}
+
+#page-profil .card[onclick*="naviguer"]:hover
+  [style*="font-size:1.3rem"] {
+  filter: drop-shadow(0 0 10px rgba(0,207,255,0.6)) !important;
+}
+
+/* Labels navigation */
+#page-profil .card[onclick*="naviguer"] [style*="font-weight:600"] {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+
+/* Chevron */
+#page-profil .card[onclick*="naviguer"] [style*="color:var(--text-muted)"] {
+  color: rgba(0,150,255,0.3) !important;
+  font-size: 1rem !important;
+}
+
+/* ── Bouton Reset ── */
+#page-profil [onclick*="confirmerReset"] {
+  background: none !important;
+  border: 1px solid rgba(200,50,50,0.15) !important;
+  border-radius: 10px !important;
+  color: rgba(200,80,80,0.7) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  letter-spacing: 0.5px !important;
+  transition: all 0.3s !important;
+}
+
+#page-profil [onclick*="confirmerReset"]:hover {
+  background: rgba(200,50,50,0.08) !important;
+  border-color: rgba(200,50,50,0.3) !important;
+  color: rgba(255,80,80,0.8) !important;
+}
+
+/* ── Edition profil (modal) ── */
+#modal-info-content [id*="profil-edit"] {
+  background: rgba(0,15,50,0.5) !important;
+  border: 2px solid rgba(0,100,255,0.15) !important;
+  border-radius: 10px !important;
+  color: white !important;
+}
+
+#modal-info-content [id*="profil-edit"]:focus {
+  border-color: #00cfff !important;
+  box-shadow: 0 0 0 3px rgba(0,207,255,0.15) !important;
+}
+
+/* Avatar buttons */
+.profil-avatar-btn {
+  background: rgba(0,15,50,0.3) !important;
+  border: 2px solid rgba(0,80,200,0.15) !important;
+  border-radius: 12px !important;
+  transition: all 0.2s !important;
+}
+
+.profil-avatar-btn:hover {
+  border-color: rgba(0,207,255,0.3) !important;
+  background: rgba(0,80,200,0.15) !important;
+}
+
+/* Objectif buttons */
+.profil-obj-btn {
+  border-radius: 10px !important;
+  transition: all 0.2s !important;
+}
+
+/* ── Settings page ── */
+#page-settings .card {
+  background: rgba(0,10,30,0.4) !important;
+  border: 1px solid rgba(0,80,200,0.1) !important;
+}
+
+#page-settings .score-row {
+  border-bottom: 1px solid rgba(0,80,200,0.08) !important;
+}
+
+#page-settings .score-row-label {
+  font-family: 'Rajdhani', sans-serif !important;
+  color: rgba(255,255,255,0.7) !important;
+}
+
+/* Objectif buttons */
+#page-settings button[onclick*="objectif_seances"] {
+  transition: all 0.2s !important;
+}
+
+#page-settings button[onclick*="objectif_seances"]:hover {
+  border-color: #00cfff !important;
+  background: rgba(0,100,255,0.2) !important;
+  color: #00cfff !important;
+}
+
+/* Bouton tester notifications */
+#page-settings .btn-secondary {
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 2px !important;
+}
+
+/* Version app */
+#page-settings [style*="text-align:center"][style*="font-size:.65rem"] {
+  font-family: 'Orbitron', monospace !important;
+  color: rgba(0,207,255,0.2) !important;
+  letter-spacing: 2px !important;
+  font-size: 8px !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   B — TRAINING PAGE CYBER
+════════════════════════════════════════════════════════════ */
+
+/* ── Hero programme ── */
+#page-training .card[style*="linear-gradient"] {
+  background: linear-gradient(135deg,
+    rgba(0,80,255,0.3) 0%,
+    rgba(123,0,255,0.1) 100%) !important;
+  border: none !important;
+  border-radius: 18px !important;
+}
+
+/* Phase emoji */
+#page-training [style*="font-size:2rem"] {
+  filter: drop-shadow(0 0 16px rgba(0,207,255,0.5)) !important;
+}
+
+/* Nom phase */
+#page-training [style*="font-size:1.1rem;font-weight:800"] {
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 2px !important;
+  text-shadow: 0 0 16px rgba(0,207,255,0.3) !important;
+}
+
+/* Barre intensité */
+#page-training [style*="background:var(--fd-lemon)"] {
+  background: linear-gradient(90deg, #0066ff, #00cfff) !important;
+  box-shadow: 0 0 8px rgba(0,207,255,0.5) !important;
+}
+
+/* ── Planning semaine training ── */
+#page-training [style*="grid-template-columns:repeat(7"] > div {
+  transition: all 0.2s !important;
+  cursor: pointer !important;
+}
+
+#page-training [style*="grid-template-columns:repeat(7"] > div:hover {
+  border-color: rgba(0,207,255,0.4) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ── Cartes séances ── */
+#page-training .card.mb-md {
+  transition: all 0.3s !important;
+}
+
+#page-training .card.mb-md:hover {
+  border-color: rgba(0,207,255,0.25) !important;
+}
+
+/* Bouton Start séance */
+#page-training .btn-primary {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border-radius: 30px !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 2px !important;
+  color: #020610 !important;
+  border: none !important;
+}
+
+/* Chips muscles */
+#page-training .chip-indigo {
+  background: rgba(0,100,255,0.15) !important;
+  border-color: rgba(0,207,255,0.25) !important;
+  color: #00cfff !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Section title */
+#page-training .section-title {
+  font-family: 'Orbitron', monospace !important;
+  color: rgba(0,207,255,0.35) !important;
+  letter-spacing: 4px !important;
+  font-size: 7px !important;
+}
+
+/* ── Supersets card ── */
+#page-training [onclick*="naviguer('supersets')"].btn-secondary {
+  background: rgba(0,80,200,0.12) !important;
+  border-color: rgba(0,150,255,0.2) !important;
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 2px !important;
+  border-radius: 30px !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   B — MENU GLOBAL CYBER
+════════════════════════════════════════════════════════════ */
+
+/* Panel menu */
+#menu-global-panel {
+  background: rgba(2,8,20,0.98) !important;
+  border-bottom: 1px solid rgba(0,150,255,0.15) !important;
+}
+
+/* Stripe top menu */
+#menu-global-panel::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #00cfff, #0066ff, transparent);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Profil card menu */
+#menu-global-panel [style*="linear-gradient(135deg"] {
+  background: linear-gradient(135deg,
+    rgba(0,100,255,0.2),
+    rgba(0,207,255,0.03)) !important;
+  border: 1px solid rgba(0,207,255,0.2) !important;
+  border-radius: 18px !important;
+}
+
+/* Nom dans menu */
+#menu-global-panel [style*="font-size:1rem;font-weight:800"] {
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 0 12px rgba(0,207,255,0.2) !important;
+}
+
+/* Stats mini menu */
+#menu-global-panel [style*="font-size:.95rem;font-weight:800"] {
+  font-family: 'Orbitron', monospace !important;
+  text-shadow: 0 0 8px currentColor !important;
+}
+
+/* Section titles menu */
+#menu-global-panel [style*="rgba(255,255,255,0.25)"] {
+  color: rgba(0,207,255,0.3) !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 7px !important;
+  letter-spacing: 4px !important;
+}
+
+/* Items menu */
+#menu-global-panel [style*="rgba(255,255,255,0.04)"] {
+  background: rgba(0,10,30,0.4) !important;
+  border: 1px solid rgba(0,60,150,0.1) !important;
+  border-radius: 12px !important;
+  transition: all 0.2s !important;
+}
+
+/* Icon bubble dans menu */
+#menu-global-panel [style*="border-radius:10px"] {
+  transition: all 0.2s !important;
+}
+
+/* Label item menu */
+#menu-global-panel [style*="font-size:.78rem;font-weight:600"] {
+  font-family: 'Rajdhani', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  color: rgba(255,255,255,0.75) !important;
+}
+
+/* Reset bouton */
+#menu-global-panel button[onclick*="confirmerReset"] {
+  background: rgba(200,50,50,0.04) !important;
+  border: 1px solid rgba(200,50,50,0.1) !important;
+  border-radius: 12px !important;
+  color: rgba(200,80,80,0.6) !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  letter-spacing: 0.5px !important;
+}
+
+#menu-global-panel button[onclick*="confirmerReset"]:hover {
+  background: rgba(200,50,50,0.1) !important;
+  border-color: rgba(200,50,50,0.25) !important;
+  color: rgba(255,80,80,0.8) !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   B — MODALS CYBER BLOCK BLUE
+════════════════════════════════════════════════════════════ */
+
+/* ── Modal inner ── */
+.modal-inner {
+  background: linear-gradient(135deg,
+    #020a18 0%,
+    #030c20 100%) !important;
+  border-top: 2px solid rgba(0,207,255,0.2) !important;
+  border-left: 1px solid rgba(0,100,255,0.1) !important;
+  border-right: 1px solid rgba(0,100,255,0.1) !important;
+}
+
+/* Stripe top modal */
+.modal-inner::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #00cfff, #0066ff, transparent);
+  opacity: 0.4;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Bouton fermer modal */
+.modal-close {
+  background: rgba(0,20,60,0.4) !important;
+  border: 1px solid rgba(0,100,255,0.15) !important;
+  color: rgba(0,207,255,0.6) !important;
+  transition: all 0.2s !important;
+}
+
+.modal-close:hover {
+  background: rgba(0,100,255,0.2) !important;
+  border-color: #00cfff !important;
+  color: #00cfff !important;
+  box-shadow: 0 0 12px rgba(0,207,255,0.3) !important;
+}
+
+/* ── Résumé séance (modal) ── */
+#modal-info-content [style*="linear-gradient(135deg,rgba(75,75,249"] {
+  background: linear-gradient(135deg,
+    rgba(0,100,255,0.25) 0%,
+    rgba(0,207,255,0.05) 100%) !important;
+}
+
+/* Stats résumé */
+#modal-info-content [style*="grid-template-columns:repeat(3"] > div {
+  background: rgba(0,15,50,0.4) !important;
+  border: 1px solid rgba(0,80,200,0.12) !important;
+  border-radius: 12px !important;
+}
+
+/* Stats values résumé */
+#modal-info-content [style*="color:var(--fd-mint)"][style*=".95rem"] {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  text-shadow: 0 0 12px rgba(0,207,255,0.5) !important;
+}
+
+/* Score forme */
+#modal-info-content [style*="font-size:2rem;font-weight:800"] {
+  font-family: 'Orbitron', monospace !important;
+  text-shadow: 0 0 20px currentColor !important;
+}
+
+/* Bouton Story Instagram */
+#modal-info-content button[onclick*="genererImagePNG"] {
+  background: rgba(0,80,200,0.15) !important;
+  border: 1px solid rgba(0,150,255,0.25) !important;
+  border-radius: 10px !important;
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 2px !important;
+  transition: all 0.2s !important;
+}
+
+#modal-info-content button[onclick*="genererImagePNG"]:hover {
+  background: rgba(0,150,255,0.25) !important;
+  box-shadow: 0 0 16px rgba(0,207,255,0.3) !important;
+}
+
+/* Bouton Accueil résumé */
+#modal-info-content button[onclick*="naviguer('home')"] {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  color: #020610 !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 9px !important;
+  letter-spacing: 2px !important;
+}
+
+/* Coach message modal */
+#modal-info-content [style*="rgba(191,161,255"] {
+  background: rgba(0,50,150,0.1) !important;
+  border-left-color: #00cfff !important;
+  border-top: 1px solid rgba(0,100,255,0.1) !important;
+  border-right: 1px solid rgba(0,100,255,0.1) !important;
+  border-bottom: 1px solid rgba(0,100,255,0.1) !important;
+}
+
+#modal-info-content [style*="color:var(--fd-lavender)"] {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 3px !important;
+}
+
+/* ── Planning editor modal ── */
+#modal-info-content [style*="📅 Changer la séance"] {
+  background: rgba(0,80,200,0.12) !important;
+  border-color: rgba(0,150,255,0.2) !important;
+}
+
+/* Séances liste modal */
+#modal-info-content [onclick*="changerSeance"] {
+  transition: all 0.2s !important;
+}
+
+#modal-info-content [onclick*="changerSeance"]:hover {
+  border-color: rgba(0,207,255,0.35) !important;
+  background: rgba(0,80,200,0.1) !important;
+}
+
+/* ── Widget config modal ── */
+#widgets-config-container .card {
+  background: rgba(0,80,200,0.1) !important;
+  border-color: rgba(0,150,255,0.2) !important;
+}
+
+/* Toggle switch config */
+#widgets-config-container [onclick*="_toggleEtRefresh"] > div:first-child {
+  transition: all 0.25s !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   B — SEARCH SUGGESTIONS CYBER
+════════════════════════════════════════════════════════════ */
+
+#home-search-suggestions > div:hover {
+  background: rgba(0,80,200,0.12) !important;
+}
+
+#home-search-suggestions [style*="color:var(--fd-mint)"] {
+  color: #00cfff !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 1px !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   B — ONBOARDING CYBER
+════════════════════════════════════════════════════════════ */
+
+/* Barre progression étapes */
+#onboarding-screen [style*="background:var(--fd-indigo)"] {
+  background: #00cfff !important;
+  box-shadow: 0 0 12px rgba(0,207,255,0.5) !important;
+}
+
+/* Label étape */
+#onboarding-screen [style*="color:var(--fd-indigo)"][style*=".62rem"] {
+  color: rgba(0,207,255,0.6) !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 8px !important;
+  letter-spacing: 4px !important;
+}
+
+/* Titre étape */
+#onboarding-screen [style*="font-size:1.3rem;font-weight:800"] {
+  font-family: 'Orbitron', monospace !important;
+  letter-spacing: 1px !important;
+}
+
+/* Bouton suivant */
+#onboarding-screen .btn-primary {
+  background: linear-gradient(135deg, #0066ff, #00cfff) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  color: #020610 !important;
+  font-family: 'Orbitron', monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 3px !important;
+}
+
+/* Inputs onboarding */
+#onboarding-screen .input {
+  background: rgba(0,15,50,0.5) !important;
+  border: 2px solid rgba(0,100,255,0.15) !important;
+}
+
+#onboarding-screen .input:focus {
+  border-color: #00cfff !important;
+  box-shadow: 0 0 0 3px rgba(0,207,255,0.15) !important;
+}
+
+/* Input label onboarding */
+#onboarding-screen .input-label {
+  font-family: 'Orbitron', monospace !important;
+  color: rgba(0,207,255,0.35) !important;
+  font-size: 8px !important;
+  letter-spacing: 3px !important;
+}
+
+/* Boutons genre/objectif/niveau */
+#onboarding-screen .ob-genre-btn,
+#onboarding-screen .ob-obj,
+#onboarding-screen .ob-niv,
+#onboarding-screen .ob-lieu {
+  transition: all 0.25s !important;
+}
+
+#onboarding-screen .ob-genre-btn:hover,
+#onboarding-screen .ob-obj:hover,
+#onboarding-screen .ob-niv:hover,
+#onboarding-screen .ob-lieu:hover {
+  border-color: rgba(0,207,255,0.4) !important;
+  background: rgba(0,100,255,0.1) !important;
+}
+
+/* Image corps SVG */
+#ob-body-img {
+  border: 1px solid rgba(0,100,255,0.2) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 30px rgba(0,100,255,0.15) !important;
+}
+
+/* Message Coach IA onboarding */
+#onboarding-screen [style*="border-left:3px solid var(--fd-indigo)"] {
+  border-left-color: #00cfff !important;
+  background: rgba(0,50,150,0.1) !important;
+}
+
+/* Badges programme */
+#onboarding-screen [style*="border-radius:99px"] {
+  transition: all 0.2s !important;
+}
