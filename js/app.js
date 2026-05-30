@@ -276,14 +276,46 @@ function _rendreNavBar() {
              <path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z"/>`
     }
   ];
-
+  const _themeNav = (() => {
+  try {
+    const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+    return Themes.THEMES.find(t => t.id === id) || Themes.THEMES[0];
+  } catch(e) {
+    return { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff' };
+  }
+})(); 
   const COLORS = {
-    home:      { c:'#00cfff', bg:'rgba(0,207,255,0.15)', border:'rgba(0,207,255,0.5)', glow:'rgba(0,207,255,0.3)' },
-    training:  { c:'#0099ff', bg:'rgba(0,153,255,0.15)', border:'rgba(0,153,255,0.5)', glow:'rgba(0,153,255,0.3)' },
-    live:      { c:'#00cfff', bg:'rgba(0,207,255,0.15)', border:'rgba(0,207,255,0.5)', glow:'rgba(0,207,255,0.3)' },
-    stats:     { c:'#0066ff', bg:'rgba(0,102,255,0.15)', border:'rgba(0,102,255,0.5)', glow:'rgba(0,102,255,0.3)' },
-    nutrition: { c:'#7b00ff', bg:'rgba(123,0,255,0.15)', border:'rgba(123,0,255,0.5)', glow:'rgba(123,0,255,0.3)' }
-  };
+  home:      {
+    c:      _themeNav.c1,
+    bg:     _themeNav.c1 + '25',
+    border: _themeNav.c1 + '80',
+    glow:   _themeNav.c1 + '50'
+  },
+  training:  {
+    c:      _themeNav.c2,
+    bg:     _themeNav.c2 + '25',
+    border: _themeNav.c2 + '80',
+    glow:   _themeNav.c2 + '50'
+  },
+  live:      {
+    c:      _themeNav.c1,
+    bg:     _themeNav.c1 + '25',
+    border: _themeNav.c1 + '80',
+    glow:   _themeNav.c1 + '50'
+  },
+  stats:     {
+    c:      _themeNav.c2,
+    bg:     _themeNav.c2 + '25',
+    border: _themeNav.c2 + '80',
+    glow:   _themeNav.c2 + '50'
+  },
+  nutrition: {
+    c:      _themeNav.c3,
+    bg:     _themeNav.c3 + '25',
+    border: _themeNav.c3 + '80',
+    glow:   _themeNav.c3 + '50'
+  }
+};
 
   nav.innerHTML = PAGES.map(p => {
     const actif  = window._pageActive === p.id;
@@ -7784,28 +7816,118 @@ const ChronoSticky = {
     if (el) el.classList.add('hidden');
   },
 
-  _render() {
-    const el = document.getElementById('chrono-sticky');
-    if (!el) return;
-    const temps   = this._getTemps();
-    const enPause = Chrono?._enPause || false;
-    el.innerHTML = `
-      <div class="chrono-sticky-time">
-        <span class="chrono-sticky-icon ${enPause ? 'paused' : ''}">
-          ${enPause ? '⏸' : '⏱️'}
-        </span>
-        <div>
-          <div class="chrono-sticky-display ${enPause ? 'paused' : ''}">${temps}</div>
-          ${this._seanceNom ? `<div class="chrono-sticky-label">${this._seanceNom}</div>` : ''}
+_render() {
+  const el = document.getElementById('chrono-sticky');
+  if (!el) return;
+
+  // ✅ Couleurs thème actuel
+  const theme = (() => {
+    try {
+      const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+      return Themes.THEMES.find(t => t.id === id) || Themes.THEMES[0];
+    } catch(e) { return { c1:'#00cfff', c2:'#0066ff' }; }
+  })();
+
+  const temps   = this._getTemps();
+  const enPause = Chrono?._enPause || false;
+
+  el.innerHTML = `
+    <!-- ✅ Zone cliquable → renvoie au Live -->
+    <div class="chrono-sticky-time"
+         onclick="ChronoSticky._allerAuLive()"
+         style="cursor:pointer;flex:1;
+                display:flex;align-items:center;gap:8px">
+
+      <span class="chrono-sticky-icon ${enPause ? 'paused' : ''}"
+            style="font-size:1.3rem">
+        ${enPause ? '⏸' : '⏱️'}
+      </span>
+
+      <div style="flex:1">
+        <div class="chrono-sticky-display ${enPause ? 'paused' : ''}"
+             style="color:${enPause
+               ? 'rgba(255,100,100,0.8)'
+               : theme.c1};
+                    text-shadow:0 0 16px ${theme.c1}88;
+                    font-family:'Orbitron',monospace;
+                    font-size:1.8rem;font-weight:800;
+                    letter-spacing:2px">
+          ${temps}
         </div>
+
+        ${this._seanceNom ? `
+          <div class="chrono-sticky-label"
+               style="font-size:.6rem;
+                      color:${theme.c1}66;
+                      font-family:'Orbitron',monospace;
+                      letter-spacing:2px;
+                      text-transform:uppercase">
+            ${this._seanceNom}
+          </div>` : ''}
       </div>
-      <div class="chrono-sticky-controls">
-        <button class="chrono-sticky-btn ${enPause ? 'resume' : 'pause'}"
-                onclick="ChronoSticky._togglePause()">
-          ${enPause ? '▶ Reprendre' : '⏸ Pause'}
-        </button>
-      </div>`;
-  },
+
+      <!-- Flèche → indique que c'est cliquable -->
+      <div style="font-size:.7rem;
+                  color:${theme.c1}66;
+                  font-family:'Orbitron',monospace;
+                  padding:0 4px">
+        ▶
+      </div>
+    </div>
+
+    <!-- Bouton pause -->
+    <div class="chrono-sticky-controls">
+      <button class="chrono-sticky-btn ${enPause ? 'resume' : 'pause'}"
+              onclick="ChronoSticky._togglePause();
+                       ChronoSticky._render()"
+              style="
+                padding:6px 14px;
+                border-radius:99px;
+                font-size:.72rem;font-weight:700;
+                cursor:pointer;border:1px solid;
+                white-space:nowrap;
+                background:${enPause
+                  ? theme.c1 + '18'
+                  : 'rgba(255,255,255,0.06)'};
+                color:${enPause ? theme.c1 : 'rgba(255,255,255,0.5)'};
+                border-color:${enPause
+                  ? theme.c1 + '44'
+                  : 'rgba(255,255,255,0.1)'}">
+        ${enPause ? '▶ Reprendre' : '⏸ Pause'}
+      </button>
+    </div>
+  `;
+},
+   // ✅ Aller à la page Live + scroll vers exercice en cours
+_allerAuLive() {
+  naviguer('live');
+
+  // Scroll vers la première série non validée
+  setTimeout(() => {
+    const btns = document.querySelectorAll('[id^="btn-serie-"]');
+    for (const btn of btns) {
+      if (!btn.disabled && btn.textContent.includes('SÉRIE FAITE')) {
+        const bloc = btn.closest('.lr-serie-bloc')
+                  || btn.closest('.live-exo-card');
+        if (bloc) {
+          bloc.scrollIntoView({ behavior:'smooth', block:'center' });
+
+          // Highlight flash
+          bloc.style.transition   = 'all .3s';
+          bloc.style.borderColor  = Themes?.THEMES?.find(
+            t => t.id === Utils.storage.get('ft_theme_style','cyber-blue')
+          )?.c1 || '#00cfff';
+          bloc.style.boxShadow    = '0 0 20px rgba(0,207,255,0.4)';
+          setTimeout(() => {
+            bloc.style.borderColor = '';
+            bloc.style.boxShadow   = '';
+          }, 2000);
+        }
+        break;
+      }
+    }
+  }, 400);
+},
 
   _getTemps() {
     try {
@@ -11171,39 +11293,52 @@ const MenuGlobal = {
 
   toggle() { this._ouvert ? this.fermer() : this.ouvrir(); },
 
-  ouvrir() {
-    this._ouvert = true;
-    const old = document.getElementById('menu-global-panel');
-    if (old) old.remove();
+ ouvrir() {
+  this._ouvert = true;
+  const old = document.getElementById('menu-global-panel');
+  if (old) old.remove();
 
-    // ── Bouton ──
-    const btn = document.getElementById('btn-menu-global');
-    if (btn) {
-      btn.textContent      = '✕';
-      btn.style.background  = 'rgba(75,75,249,0.2)';
-      btn.style.borderColor = 'rgba(75,75,249,0.4)';
-      btn.style.color       = 'white';
+  // ✅ Récupérer thème actuel
+  const theme = (() => {
+    try {
+      const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+      return Themes.THEMES.find(t => t.id === id) || Themes.THEMES[0];
+    } catch(e) {
+      return { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff',
+               bg:'#020610', id:'cyber-blue' };
     }
+  })();
 
-    const panel = document.createElement('div');
-    panel.id    = 'menu-global-panel';
-    panel.style.cssText = `
-      position:fixed;
-      top:var(--header-height, 56px);
-      left:50%;
-      transform:translateX(-50%);
-      width:100%;max-width:480px;
-      max-height:calc(100vh - var(--header-height,56px) - var(--nav-height,72px));
-      overflow-y:auto;z-index:300;
-      background:rgba(9,9,45,0.97);
-      backdrop-filter:blur(32px);
-      -webkit-backdrop-filter:blur(32px);
-      border-bottom:1px solid rgba(75,75,249,0.2);
-      box-shadow:0 20px 60px rgba(0,0,0,0.5);
-      padding:16px 12px;
-      scrollbar-width:none;
-      animation:menuSlideDown .3s cubic-bezier(.34,1.2,.64,1);
-    `;
+  // ✅ Bouton
+  const btn = document.getElementById('btn-menu-global');
+  if (btn) {
+    btn.textContent      = '✕';
+    btn.style.background  = theme.c1 + '22';
+    btn.style.borderColor = theme.c1 + '55';
+    btn.style.color       = theme.c1;
+  }
+
+  const panel = document.createElement('div');
+  panel.id    = 'menu-global-panel';
+  panel.style.cssText = `
+    position:fixed;
+    top:var(--header-height, 56px);
+    left:50%; transform:translateX(-50%);
+    width:100%; max-width:480px;
+    max-height:calc(100vh - var(--header-height,56px)
+                    - var(--nav-height,72px));
+    overflow-y:auto; z-index:300;
+    background:${theme.id === 'arctic-white'
+      ? 'rgba(240,244,255,0.98)'
+      : `rgba(2,6,16,0.98)`};
+    backdrop-filter:blur(32px);
+    -webkit-backdrop-filter:blur(32px);
+    border-bottom:1px solid ${theme.c1}22;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    padding:16px 12px;
+    scrollbar-width:none;
+    animation:menuSlideDown .3s cubic-bezier(.34,1.2,.64,1);
+  `;
 
     // ── Données ──
     let profil   = { nom:'Athlète', avatar:'💪' };
@@ -11264,124 +11399,151 @@ const MenuGlobal = {
       }
     ];
 
-    panel.innerHTML = `
+panel.innerHTML = `
 
-      <!-- ── Profil card ── -->
-      <div onclick="MenuGlobal.naviguerEt('profil')"
-           style="background:linear-gradient(135deg,
-                  rgba(75,75,249,0.2),rgba(75,75,249,0.05));
-                  border:1px solid rgba(75,75,249,0.3);
-                  border-radius:20px;padding:16px;
-                  margin-bottom:20px;
-                  display:flex;align-items:center;gap:14px;
-                  cursor:pointer;transition:all .2s"
-           onmouseenter="this.style.borderColor='rgba(75,75,249,0.5)';
-                         this.style.transform='scale(1.01)'"
-           onmouseleave="this.style.borderColor='rgba(75,75,249,0.3)';
-                         this.style.transform='scale(1)'">
+  <!-- ✅ Stripe top thème -->
+  <div style="position:absolute;top:0;left:0;right:0;height:2px;
+              background:linear-gradient(90deg,
+                transparent,${theme.c1},${theme.c2},transparent);
+              opacity:.5;pointer-events:none"></div>
 
-        <!-- Avatar -->
-        <div style="width:52px;height:52px;
-                    background:rgba(75,75,249,0.2);
-                    border:2px solid rgba(75,75,249,0.4);
-                    border-radius:50%;flex-shrink:0;
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:1.8rem;
-                    box-shadow:0 0 16px rgba(75,75,249,0.3);
-                    animation:avatarPulse 3s ease-in-out infinite">
-          ${profil.avatar || '💪'}
-        </div>
-
-        <!-- Infos -->
-        <div style="flex:1;min-width:0">
-          <div style="font-size:1rem;font-weight:800;color:white;
-                      overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-            ${profil.nom}
-          </div>
-          <div style="font-size:.72rem;color:rgba(191,161,255,0.8);margin-top:2px">
-            ${xp.niveau.emoji} ${xp.niveau.nom} · ${xp.total} XP
-          </div>
-        </div>
-
-        <!-- Stats mini -->
-        <div style="display:flex;gap:12px;text-align:center;flex-shrink:0">
-          ${[
-            [total,        'Séances', '#4b4bf9'],
-            [streak.count, 'Streak',  '#f9ef77'],
-            [trophees,     '🏆',      '#ff8d96']
-          ].map(([v, l, c]) => `
-            <div>
-              <div style="font-size:.95rem;font-weight:800;color:${c}">${v}</div>
-              <div style="font-size:.52rem;color:rgba(255,255,255,0.4);
-                          text-transform:uppercase;letter-spacing:.04em">${l}</div>
-            </div>`).join('')}
-        </div>
-      </div>
-
-      <!-- ── Sections grid ── -->
-      ${sections.map(sec => `
-        <div style="margin-bottom:20px">
-          <div style="font-size:.58rem;font-weight:800;
-                      text-transform:uppercase;letter-spacing:.12em;
-                      color:rgba(255,255,255,0.25);
-                      padding:0 4px;margin-bottom:8px">
-            ${sec.titre}
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            ${sec.items.map(item => `
-              <div onclick="${item.page === '__edit__' 
-                    ? 'MenuGlobal.fermer();setTimeout(()=>Profil._ouvrirEdition(),200)' 
-                    : `MenuGlobal.naviguerEt('${item.page}')`}"
-                   style="display:flex;align-items:center;gap:10px;
-                          padding:11px 12px;
-                          background:rgba(255,255,255,0.04);
-                          border:1px solid rgba(255,255,255,0.07);
-                          border-radius:14px;cursor:pointer;
-                          transition:all .18s"
-                   onmouseenter="
-                     this.style.background='${item.color}15';
-                     this.style.borderColor='${item.color}44';
-                     this.style.transform='scale(1.02)'"
-                   onmouseleave="
-                     this.style.background='rgba(255,255,255,0.04)';
-                     this.style.borderColor='rgba(255,255,255,0.07)';
+  <!-- ✅ Profil card thème -->
+  <div onclick="MenuGlobal.naviguerEt('profil')"
+       style="background:linear-gradient(135deg,
+              ${theme.c1}22,${theme.c1}05);
+              border:1px solid ${theme.c1}33;
+              border-radius:20px;padding:16px;
+              margin-bottom:20px;
+              display:flex;align-items:center;gap:14px;
+              cursor:pointer;transition:all .2s"
+       onmouseenter="this.style.borderColor='${theme.c1}55';
+                     this.style.transform='scale(1.01)'"
+       onmouseleave="this.style.borderColor='${theme.c1}33';
                      this.style.transform='scale(1)'">
-                <div style="width:32px;height:32px;border-radius:10px;
-                            flex-shrink:0;
-                            background:${item.color}18;
-                            border:1px solid ${item.color}33;
-                            display:flex;align-items:center;
-                            justify-content:center;font-size:1rem">
-                  ${item.emoji}
-                </div>
-                <span style="font-size:.78rem;font-weight:600;
-                             color:rgba(255,255,255,0.8);
-                             overflow:hidden;text-overflow:ellipsis;
-                             white-space:nowrap;flex:1">
-                  ${item.label}
-                </span>
-              </div>`).join('')}
+
+    <!-- Avatar -->
+    <div style="width:52px;height:52px;
+                background:${theme.c1}22;
+                border:2px solid ${theme.c1}55;
+                border-radius:50%;flex-shrink:0;
+                display:flex;align-items:center;
+                justify-content:center;font-size:1.8rem;
+                box-shadow:0 0 16px ${theme.c1}44">
+      ${profil.avatar || '💪'}
+    </div>
+
+    <!-- Infos -->
+    <div style="flex:1;min-width:0">
+      <div style="font-size:1rem;font-weight:800;
+                  color:${theme.id==='arctic-white'
+                    ? '#09092d' : 'white'};
+                  overflow:hidden;text-overflow:ellipsis;
+                  white-space:nowrap">
+        ${profil.nom}
+      </div>
+      <div style="font-size:.72rem;color:${theme.c1}99;
+                  margin-top:2px">
+        ${xp.niveau.emoji} ${xp.niveau.nom} · ${xp.total} XP
+      </div>
+    </div>
+
+    <!-- Stats mini -->
+    <div style="display:flex;gap:12px;text-align:center;flex-shrink:0">
+      ${[
+        [total,        'Séances', theme.c1],
+        [streak.count, 'Streak',  theme.c2],
+        [trophees,     '🏆',      theme.c3]
+      ].map(([v, l, c]) => `
+        <div>
+          <div style="font-size:.95rem;font-weight:800;
+                      color:${c};text-shadow:0 0 8px ${c}66">
+            ${v}
+          </div>
+          <div style="font-size:.52rem;
+                      color:rgba(255,255,255,0.35);
+                      text-transform:uppercase;
+                      letter-spacing:.04em">
+            ${l}
           </div>
         </div>`).join('')}
+    </div>
+  </div>
 
-      <!-- ── Reset ── -->
-      <div style="padding:4px;margin-top:4px">
-        <button onclick="UI.confirmerReset()"
-                style="width:100%;padding:12px;
-                       background:rgba(255,141,150,0.06);
-                       border:1px solid rgba(255,141,150,0.15);
-                       border-radius:14px;
-                       color:var(--fd-coral);
-                       font-size:.8rem;font-weight:600;
-                       cursor:pointer;transition:all .2s"
-                onmouseenter="this.style.background='rgba(255,141,150,0.12)'"
-                onmouseleave="this.style.background='rgba(255,141,150,0.06)'">
-          🗑️ Réinitialiser les données
-        </button>
+  <!-- ✅ Sections grid — items thème -->
+  ${sections.map(sec => `
+    <div style="margin-bottom:20px">
+      <div style="font-size:.58rem;font-weight:800;
+                  text-transform:uppercase;letter-spacing:.12em;
+                  color:${theme.c1}44;
+                  padding:0 4px;margin-bottom:8px;
+                  font-family:'Orbitron',monospace">
+        ${sec.titre}
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${sec.items.map(item => `
+          <div onclick="${item.page === '__edit__'
+                ? 'MenuGlobal.fermer();setTimeout(()=>Profil._ouvrirEdition(),200)'
+                : `MenuGlobal.naviguerEt('${item.page}')`}"
+               style="display:flex;align-items:center;gap:10px;
+                      padding:11px 12px;
+                      background:${theme.id==='arctic-white'
+                        ? 'rgba(0,80,200,0.06)'
+                        : 'rgba(255,255,255,0.04)'};
+                      border:1px solid ${theme.id==='arctic-white'
+                        ? 'rgba(0,80,200,0.1)'
+                        : 'rgba(255,255,255,0.07)'};
+                      border-radius:14px;cursor:pointer;
+                      transition:all .18s"
+               onmouseenter="
+                 this.style.background='${item.color}18';
+                 this.style.borderColor='${item.color}44';
+                 this.style.transform='scale(1.02)'"
+               onmouseleave="
+                 this.style.background='${theme.id==='arctic-white'
+                   ? 'rgba(0,80,200,0.06)'
+                   : 'rgba(255,255,255,0.04)'}';
+                 this.style.borderColor='${theme.id==='arctic-white'
+                   ? 'rgba(0,80,200,0.1)'
+                   : 'rgba(255,255,255,0.07)'}';
+                 this.style.transform='scale(1)'">
+            <div style="width:32px;height:32px;border-radius:10px;
+                        flex-shrink:0;
+                        background:${item.color}18;
+                        border:1px solid ${item.color}33;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:1rem">
+              ${item.emoji}
+            </div>
+            <span style="font-size:.78rem;font-weight:600;
+                         color:${theme.id==='arctic-white'
+                           ? 'rgba(9,9,45,0.8)'
+                           : 'rgba(255,255,255,0.8)'};
+                         overflow:hidden;text-overflow:ellipsis;
+                         white-space:nowrap;flex:1">
+              ${item.label}
+            </span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('')}
 
-      <div style="height:16px"></div>
-    `;
+  <!-- Reset -->
+  <div style="padding:4px;margin-top:4px">
+    <button onclick="UI.confirmerReset()"
+            style="width:100%;padding:12px;
+                   background:rgba(200,50,50,0.06);
+                   border:1px solid rgba(200,50,50,0.15);
+                   border-radius:14px;
+                   color:rgba(200,80,80,0.7);
+                   font-size:.8rem;font-weight:600;
+                   cursor:pointer;transition:all .2s"
+            onmouseenter="this.style.background='rgba(200,50,50,0.12)'"
+            onmouseleave="this.style.background='rgba(200,50,50,0.06)'">
+      🗑️ Réinitialiser les données
+    </button>
+  </div>
+
+  <div style="height:16px"></div>
+`;
 
     document.body.appendChild(panel);
     setTimeout(() => {
