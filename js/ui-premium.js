@@ -3391,7 +3391,19 @@ PM.obTerminer = function() {
 // ═══════════════════════════════════════════════════════════
 // 20. LIVE ULTRA — Fusion live-ultra.js v1.0
 // ═══════════════════════════════════════════════════════════
-const _themeUltra = (() => {
+//const _themeUltra = (() => {
+  //try {
+    //const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+    //return window.Themes?.THEMES?.find(t => t.id === id)
+      //|| { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff',
+        //   bg:'#020610', id:'cyber-blue' };
+  //} catch(e) {
+   // return { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff',
+             //bg:'#020610', id:'cyber-blue' };
+  //}
+//})();
+
+_getTheme() {
   try {
     const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
     return window.Themes?.THEMES?.find(t => t.id === id)
@@ -3401,7 +3413,8 @@ const _themeUltra = (() => {
     return { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff',
              bg:'#020610', id:'cyber-blue' };
   }
-})();
+},
+
 const LiveUltra = {
 
   _actif:          false,
@@ -3497,7 +3510,7 @@ const LiveUltra = {
     overlay.id    = 'live-ultra-overlay';
     overlay.style.cssText = `
       position:fixed;inset:0;z-index:9999;
-      background:#09092d;
+      background:${theme.bg || '#020610'};
       display:flex;flex-direction:column;
       overflow:hidden;user-select:none;
       -webkit-user-select:none;touch-action:pan-y;
@@ -3508,6 +3521,7 @@ const LiveUltra = {
   },
 
   _htmlOverlay() {
+    const theme = this._getTheme();
     const ex       = this._exercices[this._exoIdx];
     const exoData  = ex ? (window.EXERCICES||{})[ex.ref] || {} : {};
     const total    = this._exercices.length;
