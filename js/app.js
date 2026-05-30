@@ -96,166 +96,166 @@ function retourArriere() {
 }
 
 // ════════════════════════════════════════════════════════════
-// NAV BAR — Glassmorphism Neon (adapté à .app-nav)
+// NAV BAR — CYBER BLOCK BLUE
 // ════════════════════════════════════════════════════════════
 function _rendreNavBar() {
   const nav = document.querySelector('.app-nav');
   if (!nav) return;
 
-  const NEON = {
-  home:      { c:'#00cfff', bg:'rgba(0,207,255,0.18)',
-               b:'rgba(0,207,255,0.55)',  g:'rgba(0,207,255,0.4)'    },
-  training:  { c:'#0066ff', bg:'rgba(0,102,255,0.18)',
-               b:'rgba(0,102,255,0.55)',  g:'rgba(0,102,255,0.4)'    },
-  live:      { c:'#00cfff', bg:'rgba(0,207,255,0.15)',
-               b:'rgba(0,207,255,0.5)',   g:'rgba(0,207,255,0.35)'   },
-  stats:     { c:'#0099ff', bg:'rgba(0,153,255,0.15)',
-               b:'rgba(0,153,255,0.5)',   g:'rgba(0,153,255,0.35)'   },
-  nutrition: { c:'#7b00ff', bg:'rgba(123,0,255,0.18)',
-               b:'rgba(123,0,255,0.55)',  g:'rgba(123,0,255,0.4)'    }
-};
-
-  const ICONS = {
-    home: `<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-           <polyline points="9 22 9 12 15 12 15 22"/>`,
-    training: `<rect x="3" y="4" width="18" height="18" rx="2"/>
-               <line x1="16" y1="2" x2="16" y2="6"/>
-               <line x1="8" y1="2" x2="8" y2="6"/>
-               <line x1="3" y1="10" x2="21" y2="10"/>`,
-    live: `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`,
-    stats: `<line x1="18" y1="20" x2="18" y2="10"/>
-            <line x1="12" y1="20" x2="12" y2="4"/>
-            <line x1="6"  y1="20" x2="6"  y2="14"/>`,
-    nutrition: `<path d="M7 21h10"/>
-                <path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z"/>
-                <path d="M11.38 12a2.4 2.4 0 0 1-.4-4.77 2.4 2.4 0 0 1 3.2-2.77 2.4 2.4 0 0 1 3.47-.63 2.4 2.4 0 0 1 3.37 3.37 2.4 2.4 0 0 1-1.1 3.7 2.51 2.51 0 0 1 .03.5"/>
-                <path d="M13 12a4 4 0 0 1-4 4"/>`
-  };
-
-  const pages = [
-    { id:'home',      label:'Home'  },
-    { id:'training',  label:'Prog.' },
-    { id:'live',      label:'Live'  },
-    { id:'stats',     label:'Stats' },
-    { id:'nutrition', label:'Nutri.'}
+  const PAGES = [
+    {
+      id: 'home', label: 'Home',
+      icon: `<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+             <polyline points="9 22 9 12 15 12 15 22"/>`
+    },
+    {
+      id: 'training', label: 'Prog.',
+      icon: `<rect x="3" y="4" width="18" height="18" rx="2"/>
+             <line x1="16" y1="2" x2="16" y2="6"/>
+             <line x1="8" y1="2" x2="8" y2="6"/>
+             <line x1="3" y1="10" x2="21" y2="10"/>`
+    },
+    {
+      id: 'live', label: 'Live',
+      icon: `<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>`
+    },
+    {
+      id: 'stats', label: 'Stats',
+      icon: `<line x1="18" y1="20" x2="18" y2="10"/>
+             <line x1="12" y1="20" x2="12" y2="4"/>
+             <line x1="6"  y1="20" x2="6"  y2="14"/>`
+    },
+    {
+      id: 'nutrition', label: 'Nutri.',
+      icon: `<path d="M7 21h10"/>
+             <path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z"/>`
+    }
   ];
 
-  // ✅ Style du conteneur — garde .app-nav mais override le look
-  nav.style.cssText = `
-    position:fixed;
-    bottom:0;
-    left:50%;
-    transform:translateX(-50%);
-    width:100%;
-    max-width:480px;
-    background:rgba(9,9,45,0.95) !important;
-    backdrop-filter:blur(24px) !important;
-    -webkit-backdrop-filter:blur(24px) !important;
-    border-top:1px solid rgba(255,255,255,0.08) !important;
-    display:flex !important;
-    justify-content:space-around !important;
-    align-items:center !important;
-    padding:8px 8px env(safe-area-inset-bottom, 8px) !important;
-    z-index:100;
-    height:var(--nav-height, 70px);
-  `;
+  const COLORS = {
+    home:      { c:'#00cfff', bg:'rgba(0,207,255,0.15)', border:'rgba(0,207,255,0.5)', glow:'rgba(0,207,255,0.3)' },
+    training:  { c:'#0099ff', bg:'rgba(0,153,255,0.15)', border:'rgba(0,153,255,0.5)', glow:'rgba(0,153,255,0.3)' },
+    live:      { c:'#00cfff', bg:'rgba(0,207,255,0.15)', border:'rgba(0,207,255,0.5)', glow:'rgba(0,207,255,0.3)' },
+    stats:     { c:'#0066ff', bg:'rgba(0,102,255,0.15)', border:'rgba(0,102,255,0.5)', glow:'rgba(0,102,255,0.3)' },
+    nutrition: { c:'#7b00ff', bg:'rgba(123,0,255,0.15)', border:'rgba(123,0,255,0.5)', glow:'rgba(123,0,255,0.3)' }
+  };
 
-  nav.innerHTML = pages.map(p => {
-    const actif = window._pageActive === p.id;
-    const n     = NEON[p.id] || NEON.home;
-
-    // ✅ Bouton live spécial (plus grand)
+  nav.innerHTML = PAGES.map(p => {
+    const actif  = window._pageActive === p.id;
+    const col    = COLORS[p.id] || COLORS.home;
     const isLive = p.id === 'live';
 
     return `
-      <button class="nav-btn ${actif ? 'active' : ''}"
-              id="nav-${p.id}"
-              onclick="naviguer('${p.id}')"
-              style="
-                display:flex;
-                flex-direction:column;
-                align-items:center;
-                gap:4px;
-                background:none;
-                border:none;
-                cursor:pointer;
-                position:relative;
-                padding:4px ${isLive ? '12px' : '8px'};
-                transition:transform .2s;
-                flex:1;
-              "
-              onmouseenter="this.style.transform='translateY(-2px)'"
-              onmouseleave="this.style.transform='translateY(0)'">
+      <button
+        onclick="naviguer('${p.id}')"
+        style="
+          flex:1;
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          gap:4px;
+          background:none;
+          border:none;
+          cursor:pointer;
+          padding:4px ${isLive ? '12px' : '8px'};
+          position:relative;
+          transition:transform .2s;
+        "
+        onmouseenter="this.style.transform='translateY(-2px)'"
+        onmouseleave="this.style.transform='translateY(0)'">
 
-        <!-- Icône glass -->
+        <!-- ── Icon Container ── -->
         <div style="
-          width:${isLive ? '52px' : '44px'};
-          height:${isLive ? '52px' : '44px'};
-          border-radius:${isLive ? '16px' : '13px'};
+          width:${isLive ? '50px' : '44px'};
+          height:${isLive ? '50px' : '44px'};
+          border-radius:${isLive ? '14px' : '12px'};
           display:flex;
           align-items:center;
           justify-content:center;
           position:relative;
           overflow:hidden;
-          background:${actif ? n.bg : isLive ? 'rgba(139,240,187,0.08)' : 'rgba(255,255,255,0.05)'};
+          background:${actif
+            ? col.bg
+            : isLive
+              ? 'rgba(0,100,255,0.12)'
+              : 'rgba(0,20,60,0.3)'};
           border:${actif
-            ? `1.5px solid ${n.b}`
+            ? `1.5px solid ${col.border}`
             : isLive
-              ? '1.5px solid rgba(139,240,187,0.25)'
-              : '1px solid rgba(255,255,255,0.08)'};
-          transition:all .3s cubic-bezier(.34,1.56,.64,1);
-          transform:${actif ? 'scale(1.1)' : 'scale(1)'};
+              ? '1.5px solid rgba(0,207,255,0.2)'
+              : '1px solid rgba(0,100,255,0.12)'};
+          transform:${actif
+            ? isLive ? 'scale(1.1) translateY(-8px)' : 'scale(1.1)'
+            : isLive ? 'translateY(-8px)' : 'scale(1)'};
           box-shadow:${actif
-            ? `0 0 16px ${n.g}, 0 0 32px ${n.g}55, inset 0 1px 0 rgba(255,255,255,.18)`
+            ? `0 0 16px ${col.glow},
+               0 0 32px ${col.glow}55,
+               inset 0 1px 0 rgba(255,255,255,.1)`
             : isLive
-              ? '0 0 10px rgba(139,240,187,0.15)'
+              ? '0 0 12px rgba(0,207,255,0.2), 0 4px 16px rgba(0,102,255,0.15)'
               : 'none'};
-          ${actif ? 'animation:neonPulse 2.5s ease-in-out infinite;' : ''}
+          transition:all .3s cubic-bezier(.34,1.56,.64,1);
+          ${actif ? `animation:cb-nav-glow-${p.id} 2.5s ease-in-out infinite;` : ''}
         ">
 
-          <!-- Shine -->
+          <!-- Shine overlay -->
           <div style="
-            position:absolute;top:0;left:0;right:0;
+            position:absolute; top:0; left:0; right:0;
             height:45%;
             background:linear-gradient(180deg,
-              rgba(255,255,255,0.14) 0%,
+              rgba(255,255,255,0.12) 0%,
               transparent 100%);
+            pointer-events:none; z-index:2;
             border-radius:inherit;
-            pointer-events:none;
-            z-index:2;
           "></div>
 
           <!-- SVG Icon -->
           <svg viewBox="0 0 24 24" style="
-            width:${isLive ? '24px' : '20px'};
-            height:${isLive ? '24px' : '20px'};
+            width:${isLive ? '22px' : '19px'};
+            height:${isLive ? '22px' : '19px'};
             stroke:${actif
-              ? n.c
+              ? col.c
               : isLive
-                ? 'rgba(139,240,187,0.8)'
-                : 'rgba(255,255,255,0.45)'};
+                ? 'rgba(0,207,255,0.6)'
+                : 'rgba(0,150,255,0.35)'};
             stroke-width:${actif ? '2.2' : '1.8'};
             fill:none;
             stroke-linecap:round;
             stroke-linejoin:round;
-            position:relative;
-            z-index:1;
+            position:relative; z-index:1;
             transition:all .3s;
-            filter:${actif ? `drop-shadow(0 0 5px ${n.c})` : 'none'};
+            filter:${actif
+              ? `drop-shadow(0 0 5px ${col.c})`
+              : 'none'};
           ">
-            ${ICONS[p.id] || ICONS.home}
+            ${p.icon}
           </svg>
 
-          <!-- Badge Live animé -->
+          <!-- Live dot badge -->
           ${isLive && !actif ? `
             <div style="
-              position:absolute;top:4px;right:4px;
-              width:7px;height:7px;
-              border-radius:50%;
-              background:var(--fd-mint);
-              box-shadow:0 0 6px var(--fd-mint);
+              position:absolute; top:4px; right:4px;
+              width:7px; height:7px; border-radius:50%;
+              background:#00cfff;
+              box-shadow:0 0 6px #00cfff;
               animation:pulseLive 1.5s ease-in-out infinite;
-            "></div>` : ''}
+            "></div>
+          ` : ''}
+
+          <!-- Active scan line -->
+          ${actif ? `
+            <div style="
+              position:absolute; inset:0;
+              background:repeating-linear-gradient(
+                0deg,
+                rgba(0,207,255,0.03) 0px,
+                rgba(0,207,255,0.03) 1px,
+                transparent 1px,
+                transparent 3px
+              );
+              pointer-events:none; z-index:1;
+            "></div>
+          ` : ''}
         </div>
 
         <!-- Label -->
@@ -263,29 +263,28 @@ function _rendreNavBar() {
           font-size:${isLive ? '.56rem' : '.52rem'};
           font-weight:${actif ? '800' : '600'};
           text-transform:uppercase;
-          letter-spacing:.05em;
+          letter-spacing:.06em;
           color:${actif
-            ? 'white'
+            ? col.c
             : isLive
-              ? 'rgba(139,240,187,0.6)'
-              : 'rgba(255,255,255,0.3)'};
+              ? 'rgba(0,207,255,0.45)'
+              : 'rgba(0,150,255,0.3)'};
           transition:color .3s;
           white-space:nowrap;
-        ">
-          ${p.label}
-        </span>
+          text-shadow:${actif ? `0 0 8px ${col.c}` : 'none'};
+          font-family:'Orbitron', monospace;
+        ">${p.label}</span>
 
-        <!-- Point actif -->
+        <!-- Active indicator bar -->
         <div style="
           position:absolute;
-          bottom:0px;
-          left:50%;
+          bottom:0; left:50%;
           transform:translateX(-50%);
-          width:${actif ? '20px' : '4px'};
+          width:${actif ? '22px' : '4px'};
           height:2px;
           border-radius:99px;
-          background:${n.c};
-          box-shadow:0 0 8px ${n.c};
+          background:${col.c};
+          box-shadow:0 0 8px ${col.c};
           opacity:${actif ? '1' : '0'};
           transition:all .35s cubic-bezier(.34,1.56,.64,1);
         "></div>
@@ -294,29 +293,54 @@ function _rendreNavBar() {
     `;
   }).join('');
 
-  // ✅ Injecter le CSS des animations (une seule fois)
-  if (!document.getElementById('css-neon-nav')) {
-    const style = document.createElement('style');
-    style.id = 'css-neon-nav';
-    style.textContent = `
-      @keyframes neonPulse {
-        0%,100% {
-          box-shadow:0 0 16px var(--ng,rgba(75,75,249,.4)),
-                     0 0 32px var(--ng,rgba(75,75,249,.2)),
-                     inset 0 1px 0 rgba(255,255,255,.18);
-        }
-        50% {
-          box-shadow:0 0 24px var(--ng,rgba(75,75,249,.6)),
-                     0 0 48px var(--ng,rgba(75,75,249,.3)),
-                     inset 0 1px 0 rgba(255,255,255,.25);
-        }
-      }
+  // ── Inject CSS une seule fois ──
+  if (!document.getElementById('cb-nav-css')) {
+    const s = document.createElement('style');
+    s.id = 'cb-nav-css';
+    s.textContent = `
       @keyframes pulseLive {
-        0%,100% { opacity:1; transform:scale(1); }
+        0%,100% { opacity:1; transform:scale(1);   }
         50%      { opacity:.5; transform:scale(1.3); }
       }
+
+      @keyframes cb-nav-glow-home {
+        0%,100% { box-shadow:0 0 16px rgba(0,207,255,.4),0 0 32px rgba(0,207,255,.2),inset 0 1px 0 rgba(255,255,255,.1); }
+        50%     { box-shadow:0 0 24px rgba(0,207,255,.7),0 0 48px rgba(0,207,255,.3),inset 0 1px 0 rgba(255,255,255,.18); }
+      }
+      @keyframes cb-nav-glow-training {
+        0%,100% { box-shadow:0 0 16px rgba(0,153,255,.4),0 0 32px rgba(0,153,255,.2),inset 0 1px 0 rgba(255,255,255,.1); }
+        50%     { box-shadow:0 0 24px rgba(0,153,255,.7),0 0 48px rgba(0,153,255,.3),inset 0 1px 0 rgba(255,255,255,.18); }
+      }
+      @keyframes cb-nav-glow-live {
+        0%,100% { box-shadow:0 0 16px rgba(0,207,255,.4),0 0 32px rgba(0,207,255,.2),inset 0 1px 0 rgba(255,255,255,.1); }
+        50%     { box-shadow:0 0 24px rgba(0,207,255,.7),0 0 48px rgba(0,207,255,.3),inset 0 1px 0 rgba(255,255,255,.18); }
+      }
+      @keyframes cb-nav-glow-stats {
+        0%,100% { box-shadow:0 0 16px rgba(0,102,255,.4),0 0 32px rgba(0,102,255,.2),inset 0 1px 0 rgba(255,255,255,.1); }
+        50%     { box-shadow:0 0 24px rgba(0,102,255,.7),0 0 48px rgba(0,102,255,.3),inset 0 1px 0 rgba(255,255,255,.18); }
+      }
+      @keyframes cb-nav-glow-nutrition {
+        0%,100% { box-shadow:0 0 16px rgba(123,0,255,.4),0 0 32px rgba(123,0,255,.2),inset 0 1px 0 rgba(255,255,255,.1); }
+        50%     { box-shadow:0 0 24px rgba(123,0,255,.7),0 0 48px rgba(123,0,255,.3),inset 0 1px 0 rgba(255,255,255,.18); }
+      }
+
+      @keyframes headerEmojiPop {
+        0%   { transform:scale(.6) rotate(-10deg); opacity:.5; }
+        60%  { transform:scale(1.2) rotate(5deg);  opacity:1;  }
+        100% { transform:scale(1)   rotate(0deg);  opacity:1;  }
+      }
+
+      @keyframes menuSlideDown {
+        from { opacity:0; transform:translateX(-50%) translateY(-20px); }
+        to   { opacity:1; transform:translateX(-50%) translateY(0); }
+      }
+
+      @keyframes menuSlideUp {
+        from { opacity:1; transform:translateX(-50%) translateY(0); }
+        to   { opacity:0; transform:translateX(-50%) translateY(-20px); }
+      }
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(s);
   }
 }
 
@@ -7971,6 +7995,18 @@ if (app) {
     if (splash) splash.style.display = 'none';
     if (app)    app.style.display    = 'flex';
     naviguer('home');
+
+// ✅ Cyber sparks
+try { CyberSparks.init(); } catch(e) {}
+
+// ✅ Precharger police Orbitron
+if (!document.getElementById('cb-fonts')) {
+  const link = document.createElement('link');
+  link.id   = 'cb-fonts';
+  link.rel  = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap';
+  document.head.appendChild(link);
+}
   }
 
   try { Sounds?.init?.(); } catch(e) {}
@@ -10269,6 +10305,66 @@ const CyberSparks = {
       dot.style.animationDuration= (6 + i * 3) + 's';
       dot.style.animationDelay   = (i * 2) + 's';
       document.body.appendChild(dot);
+    });
+  },
+
+  detruire() {
+    this._sparks.forEach(s => s.remove());
+    this._sparks = [];
+    this._actif  = false;
+  }
+};
+
+window.CyberSparks = CyberSparks;
+// ════════════════════════════════════════════════════════════
+// CYBER SPARKS — Particules ambiantes
+// ════════════════════════════════════════════════════════════
+const CyberSparks = {
+  _sparks: [],
+  _actif:  false,
+
+  init() {
+    if (this._actif) return;
+    this._actif = true;
+    this._creerSparks(18);
+    this._creerGlowDots();
+  },
+
+  _creerSparks(count) {
+    const classes = ['', 'cb-spark-purple', 'cb-spark-blue'];
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement('div');
+      s.className = `cb-spark ${classes[Math.floor(Math.random() * classes.length)]}`;
+      s.style.left              = Math.random() * 100 + 'vw';
+      s.style.animationDuration = (4 + Math.random() * 10) + 's';
+      s.style.animationDelay    = (Math.random() * 12) + 's';
+      s.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');
+      s.style.opacity           = Math.random() * 0.4 + 0.1;
+      s.style.width             = (Math.random() * 2 + 1) + 'px';
+      document.body.appendChild(s);
+      this._sparks.push(s);
+    }
+  },
+
+  _creerGlowDots() {
+    const dots = [
+      { c:'rgba(0,207,255,0.07)', size:'300px', x:10,  y:80, dur:8  },
+      { c:'rgba(0,102,255,0.07)', size:'200px', x:85,  y:15, dur:11 },
+      { c:'rgba(123,0,255,0.05)', size:'250px', x:50,  y:45, dur:14 }
+    ];
+
+    dots.forEach((d, i) => {
+      const el = document.createElement('div');
+      el.className = 'cb-glow-dot';
+      el.style.cssText = `
+        width:${d.size}; height:${d.size};
+        background:radial-gradient(circle, ${d.c}, transparent 70%);
+        left:${d.x}vw; top:${d.y}vh;
+        transform:translate(-50%,-50%);
+        animation-duration:${d.dur}s;
+        animation-delay:${i * 2}s;
+      `;
+      document.body.appendChild(el);
     });
   },
 
