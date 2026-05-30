@@ -170,35 +170,36 @@
     <!-- HEADER CYBER BLOCK BLUE -->
 <header class="app-header" id="app-header">
 
-  <!-- Cyber Block elements -->
-  <div class="header-left-bar"></div>
-  <div class="header-ambient"></div>
-  <div class="corner-tl"></div>
-  <div class="corner-tr"></div>
-  <div class="corner-bl"></div>
-  <div class="corner-br"></div>
+  <!-- Cyber Block Elements -->
+  <div class="cb-left-bar" id="cb-left-bar"></div>
+  <div class="cb-ambient" id="cb-ambient"></div>
+  <div class="cb-top-stripe" id="cb-top-stripe"></div>
+  <div class="cb-corner cb-corner-tl"></div>
+  <div class="cb-corner cb-corner-tr"></div>
+  <div class="cb-corner cb-corner-bl"></div>
+  <div class="cb-corner cb-corner-br"></div>
 
-  <div class="header-left">
-    <div class="header-icon-bubble">
-      <span class="header-emoji" id="header-emoji">⚡</span>
+  <!-- Left -->
+  <div class="cb-header-left">
+    <div class="cb-icon-bubble" id="cb-icon-bubble">
+      <span id="header-emoji">⚡</span>
     </div>
-    <div class="header-text-block">
-      <div class="header-meta-row">
-        <span class="header-cat-label" id="header-cat">CORE</span>
-        <div class="header-dot" id="header-dot"
-             style="background:#00cfff;box-shadow:0 0 6px #00cfff;
-                    width:4px;height:4px;border-radius:50%;">
-        </div>
+    <div class="cb-header-text">
+      <div class="cb-header-meta">
+        <span class="cb-cat-label" id="header-cat">CORE</span>
+        <div class="cb-dot" id="cb-dot"></div>
+        <span class="cb-key-label" id="cb-key">HOME</span>
       </div>
-      <div class="header-title" id="header-title">PowerApp</div>
+      <div class="cb-header-title" id="header-title">PowerApp</div>
     </div>
   </div>
 
-  <div class="header-right">
-    <div class="header-xp" id="header-xp"></div>
-    <div class="header-badge" id="header-badge">HOME</div>
-    <button class="header-icon-btn" id="btn-menu-global"
-            onclick="MenuGlobal.toggle()" aria-label="Menu">☰</button>
+  <!-- Right -->
+  <div class="cb-header-right">
+    <div class="cb-xp-badge" id="header-xp"></div>
+    <div class="cb-badge" id="cb-badge">HOME</div>
+    <button class="cb-menu-btn" id="btn-menu-global"
+            onclick="MenuGlobal.toggle()">☰</button>
   </div>
 
 </header>
