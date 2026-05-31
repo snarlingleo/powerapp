@@ -52,7 +52,8 @@ const STATIC_ASSETS = [
   './js/ui-premium.js',
   './js/lava.js',
   './js/themes.js',
-  './js/voice.js', 
+  './js/voice.js',
+  './js/charts.js', 
   './js/app.js',
 
   // Icons
