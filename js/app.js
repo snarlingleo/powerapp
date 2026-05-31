@@ -861,10 +861,6 @@ function _rendreContenu(page, container, options = {}) {
     switch(page) {
       case 'home':         _rendreHome(container);                        break;
       case 'training':     _rendreTraining(container);                    break;
-      // ════════════════════════════════════════════════════════════
-// _rendreContenu() — case 'live' ✅ v4.0
-// Remplace le case 'live' complet dans le switch
-// ════════════════════════════════════════════════════════════
 case 'live': {
   // ✅ FIX v4.0 — Bloc scoped pour éviter
   // le break orphelin
@@ -9064,6 +9060,12 @@ navigator.serviceWorker?.addEventListener('message',
 try {
   if (Voice.estSupporte()) Voice.init();
 } catch(e) {}
+ // ✅ Charts init thème
+try {
+  window.addEventListener('theme-changed', () => {
+    Charts.detruireTous();
+  });
+} catch(e) {}  
 }
 
 // ════════════════════════════════════════════════════════════
