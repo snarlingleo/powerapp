@@ -539,6 +539,13 @@ const Gamification = {
       const apres    = avant + montantFinal;
       Utils.storage.set('ft_xp_total', apres);
 
+// ✅ Déclencher event pour mettre à jour le header
+try {
+  window.dispatchEvent(new CustomEvent('xp-gained', {
+    detail: { avant, apres, montantFinal }
+  }));
+} catch(e) {}
+
       const nivAvant = this.getNiveau(avant);
       const nivApres = this.getNiveau(apres);
 
