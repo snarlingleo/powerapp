@@ -316,33 +316,46 @@ const Stats = {
     ]);
   },
 
-  _chartOptions(overrides = {}) {
-    return {
-      responsive:          true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { display:false },
-        tooltip: {
-          backgroundColor: '#09092d',
-          titleColor:      '#ffffff',
-          bodyColor:       '#bfa1ff',
-          borderColor:     '#4b4bf9',
-          borderWidth:     1
-        }
+_chartOptions(overrides = {}) {
+  // ✅ Fix — couleurs adaptées au thème actif
+  const theme = (() => {
+    try {
+      const id = Utils.storage.get('ft_theme_style','cyber-blue');
+      return window.Themes?.THEMES?.find(t => t.id === id)
+        || { c1:'#4b4bf9', c2:'#8bf0bb' };
+    } catch(e) {
+      return { c1:'#4b4bf9', c2:'#8bf0bb' };
+    }
+  })();
+
+  return {
+    responsive:          true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { display:false },
+      tooltip: {
+        backgroundColor: 'rgba(9,9,45,0.95)',
+        titleColor:      '#ffffff',
+        bodyColor:       theme.c1,
+        borderColor:     theme.c1,
+        borderWidth:     1,
+        cornerRadius:    8,
+        padding:         10
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color:'rgba(255,255,255,0.4)', font:{ size:10 } },
+        grid:  { color:'rgba(255,255,255,0.04)' }
       },
-      scales: {
-        x: {
-          ticks: { color:'#888', font:{ size:10 } },
-          grid:  { color:'rgba(255,255,255,0.05)' }
-        },
-        y: {
-          ticks: { color:'#888', font:{ size:10 } },
-          grid:  { color:'rgba(255,255,255,0.05)' }
-        }
-      },
-      ...overrides
-    };
-  },
+      y: {
+        ticks: { color:'rgba(255,255,255,0.4)', font:{ size:10 } },
+        grid:  { color:'rgba(255,255,255,0.04)' }
+      }
+    },
+    ...overrides
+  };
+},
 
   _getChartColor(index) {
     const colors = [
@@ -2634,11 +2647,18 @@ Généré par PowerApp v6.0 — ${auj}
   // ════════════════════════════════════════════════════════
   // CALENDRIER TAB — ✅ v6.0 navigation fixée
   // ════════════════════════════════════════════════════════
-  _renderCalendrier(el, annee = null, mois = null) {
-    if (!el) {
+_renderCalendrier(el, annee = null, mois = null) {
+  if (!el || typeof el === 'number') {
+    // ✅ Fix — parfois el est un number (annee passé en 1er)
+    if (typeof el === 'number' && typeof annee === 'number') {
+      mois   = annee;
+      annee  = el;
+      el     = document.getElementById('stats-content');
+    } else {
       el = document.getElementById('stats-content');
-      if (!el) return;
     }
+    if (!el) return;
+  }
     const today = new Date();
     const an    = annee !== null ? annee : today.getFullYear();
     const mo    = mois  !== null ? mois  : today.getMonth();
