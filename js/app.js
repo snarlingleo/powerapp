@@ -9103,10 +9103,16 @@ function _renderPropositionProgramme(data) {
   const genre     = data.genre     || 'homme';
   const lieu      = data.lieu      || 'salle';
   
-  const nbJoursParNiveau = {
-    debutant: 3, intermediaire: 4, avance: 5
-  };
-  const nbJours = nbJoursParNiveau[niveau] || 4;
+const nbJoursParNiveau = {
+  debutant: 3, intermediaire: 4, avance: 5
+};
+let nbJours = nbJoursParNiveau[niveau] || 4;
+
+// ✅ Adapter selon l'âge
+const age = data.age || 25;
+if (age < 18) nbJours = Math.min(nbJours, 3);
+if (age >= 50) nbJours = Math.min(nbJours, 3);
+if (age >= 40 && age < 50) nbJours = Math.min(nbJours, 4);
 
   // ✅ Style selon muscles ciblés
   const styleChoix = (() => {
@@ -9277,6 +9283,45 @@ function _renderPropositionProgramme(data) {
         </span>`}
     </div>
 
+   <!-- ✅ Badge âge -->
+${age ? `
+  <div style="background:rgba(139,240,187,0.08);
+              border:1px solid rgba(139,240,187,0.2);
+              border-radius:var(--radius-lg);
+              padding:12px 14px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;
+                margin-bottom:6px">
+      <span style="font-size:1rem">
+        ${age < 18 ? '🌱' : age < 30 ? '🔥' : age < 40 ? '💪' : age < 50 ? '🧠' : age < 60 ? '🏃' : '🌟'}
+      </span>
+      <div style="font-size:.75rem;font-weight:700;
+                  color:var(--fd-mint)">
+        Programme adapté ${age} ans
+      </div>
+    </div>
+    <div style="font-size:.7rem;color:var(--text-muted);
+                line-height:1.5">
+      ${age < 18 ? '🌱 Charges légères · Technique prioritaire · 3 séances max'
+      : age < 30 ? '🔥 Pleine capacité · Intensité maximale possible'
+      : age < 40 ? '💪 Récupération importante · Repos suffisant entre séances'
+      : age < 50 ? '🧠 Échauffement obligatoire · 80% charge max · Récup 48h'
+      : age < 60 ? '🏃 Full body recommandé · Cardio 2×/sem · Amplitude complète'
+      : '🌟 Exercices fonctionnels · Mobilité · Équilibre · Charges modérées'}
+    </div>
+    ${age >= 40 ? `
+      <div style="margin-top:8px;padding:6px 10px;
+                  background:rgba(249,239,119,0.08);
+                  border:1px solid rgba(249,239,119,0.15);
+                  border-radius:var(--radius-sm);
+                  font-size:.65rem;color:var(--fd-lemon)">
+        ⚠️ ${age >= 60
+          ? 'Consultation médicale recommandée avant de commencer'
+          : age >= 50
+            ? 'Échauffement 10min · Étirements 10min · Récup 48-72h'
+            : 'Échauffement 10min obligatoire · Étirements post-séance'}
+      </div>` : ''}
+  </div>` : ''}
+   
     <!-- Planning -->
     <div style="background:rgba(255,255,255,0.03);
                 border:1px solid rgba(255,255,255,0.08);
@@ -9440,6 +9485,90 @@ function _renderPropositionProgramme(data) {
       </button>
     </div>
   `;
+}
+
+// ════════════════════════════════════════════════════════════
+// ✅ ADAPTATION PROGRAMME SELON ÂGE
+// ════════════════════════════════════════════════════════════
+function _adapterProgrammeAge(config) {
+  const age = window._obData?.age || 25;
+
+  // ✅ Moins de 18 ans
+  if (age < 18) {
+    return {
+      ...config,
+      nbJours:    Math.min(config.nbJours, 3),
+      repos:      90,
+      intensite:  0.6,
+      note:       '🌱 Programme adapté ado — charges légères, technique prioritaire',
+      restrictions: ['Pas de soulevé de terre lourd', 'Pas de squat lourd', 'Focus technique']
+    };
+  }
+
+  // ✅ 18-29 ans — Pleine capacité
+  if (age < 30) {
+    return {
+      ...config,
+      repos:      60,
+      intensite:  1.0,
+      note:       '🔥 Pleine capacité — pousse fort !'
+    };
+  }
+
+  // ✅ 30-39 ans — Légère adaptation
+  if (age < 40) {
+    return {
+      ...config,
+      repos:      75,
+      intensite:  0.9,
+      note:       '💪 Récupération importante — repos suffisant',
+      conseil:    'Ajoute 1 jour de repos supplémentaire si besoin'
+    };
+  }
+
+  // ✅ 40-49 ans — Adaptation modérée
+  if (age < 50) {
+    return {
+      ...config,
+      nbJours:    Math.min(config.nbJours, 4),
+      repos:      90,
+      intensite:  0.8,
+      note:       '🧠 40+ ans — récupération prioritaire',
+      conseil:    'Échauffement 10min obligatoire · Étirements post-séance',
+      restrictions: ['Charge max 80% 1RM', 'Récup 48h entre séances identiques']
+    };
+  }
+
+  // ✅ 50-59 ans
+  if (age < 60) {
+    return {
+      ...config,
+      nbJours:    Math.min(config.nbJours, 3),
+      repos:      90,
+      intensite:  0.7,
+      style:      config.style === 'ppl' ? 'full_body' : config.style,
+      note:       '🏃 50+ ans — full body recommandé',
+      conseil:    'Privilégie les exercices polyarticulaires · Cardio 2×/semaine',
+      restrictions: ['Charges modérées', 'Amplitude complète', 'Pas de rebond']
+    };
+  }
+
+  // ✅ 60+ ans
+  return {
+    ...config,
+    nbJours:    Math.min(config.nbJours, 3),
+    repos:      120,
+    intensite:  0.6,
+    style:      'full_body',
+    note:       '🌟 60+ ans — santé et mobilité avant tout',
+    conseil:    'Exercices fonctionnels · Équilibre · Mobilité',
+    restrictions: [
+      'Pas d\'exercices à impact élevé',
+      'Charges légères à modérées',
+      'Récupération 48-72h',
+      'Consultation médicale recommandée'
+    ]
+  };
 }
 
 // ✅ Générer le planning qui commence aujourd'hui
@@ -10547,8 +10676,20 @@ if (appWrapper) {
 }
 function _genererMessageCoach(nom, genre, objectif, muscles,
                                corpsComplet, styleLabel, nbJours, lieu) {
-  const prenom = nom || 'Athlète';
-  const g = genre === 'femme';
+const prenom = nom || 'Athlète';
+const g    = genre === 'femme';
+const age  = window._obData?.age || 25;
+
+// ✅ Intro selon âge
+const introAge = age < 18
+  ? `À ${age} ans, je vais te préparer un programme sécurisé et progressif. `
+  : age >= 60
+    ? `À ${age} ans, on va privilégier la santé, la mobilité et le plaisir du mouvement. `
+    : age >= 50
+      ? `À ${age} ans, la récupération est aussi importante que l'entraînement. `
+      : age >= 40
+        ? `À ${age} ans, on va optimiser chaque séance avec une récupération adaptée. `
+        : '';
 
   const lieuMsg = {
     salle:  'en salle',
@@ -10559,12 +10700,12 @@ function _genererMessageCoach(nom, genre, objectif, muscles,
   // ✅ Corps complet
   if (corpsComplet) {
     const msgs = {
-      prise_masse: `Salut ${prenom} ! Pour ta prise de masse ${lieuMsg}, je t'ai concocté un programme ${styleLabel} sur ${nbJours} jours. On va maximiser le volume et les charges progressives. Let's go ! 💪`,
-      perte_poids: `Salut ${prenom} ! Pour perdre du gras ${lieuMsg} tout en gardant le muscle, le ${styleLabel} sur ${nbJours} jours est parfait. Cardio + force = combo gagnant ! 🔥`,
-      seche:       `Salut ${prenom} ! Pour ta sèche ${lieuMsg}, le ${styleLabel} sur ${nbJours} jours va maximiser ta dépense calorique. On garde les charges hautes ! ⚡`,
-      force:       `Salut ${prenom} ! Pour développer ta force ${lieuMsg}, l'${styleLabel} sur ${nbJours} jours avec charges lourdes est optimal. Concentre-toi sur les grands mouvements ! 🏋️`,
-      endurance:   `Salut ${prenom} ! Pour ton endurance ${lieuMsg}, le ${styleLabel} sur ${nbJours} jours avec hautes reps est parfait. On va dépasser tes limites ! 🏃`,
-      forme:       `Salut ${prenom} ! Pour ta forme générale ${lieuMsg}, le ${styleLabel} sur ${nbJours} jours est l'approche la plus équilibrée. Corps sain, esprit sain ! ✨`
+      prise_masse: `${introAge}Salut ${prenom} ! Pour ta prise de masse ${lieuMsg}, je t'ai concocté un programme ${styleLabel} sur ${nbJours} jours. On va maximiser le volume et les charges progressives. Let's go ! 💪`,
+      perte_poids: `${introAge}Salut ${prenom} ! Pour perdre du gras ${lieuMsg} tout en gardant le muscle, le ${styleLabel} sur ${nbJours} jours est parfait. Cardio + force = combo gagnant ! 🔥`,
+      seche:       `${introAge}Salut ${prenom} ! Pour ta sèche ${lieuMsg}, le ${styleLabel} sur ${nbJours} jours va maximiser ta dépense calorique. On garde les charges hautes ! ⚡`,
+      force:       `${introAge}Salut ${prenom} ! Pour développer ta force ${lieuMsg}, l'${styleLabel} sur ${nbJours} jours avec charges lourdes est optimal. Concentre-toi sur les grands mouvements ! 🏋️`,
+      endurance:   `${introAge}Salut ${prenom} ! Pour ton endurance ${lieuMsg}, le ${styleLabel} sur ${nbJours} jours avec hautes reps est parfait. On va dépasser tes limites ! 🏃`,
+      forme:       `${introAge}Salut ${prenom} ! Pour ta forme générale ${lieuMsg}, le ${styleLabel} sur ${nbJours} jours est l'approche la plus équilibrée. Corps sain, esprit sain ! ✨`
     };
     return msgs[objectif] || msgs.forme;
   }
