@@ -523,36 +523,46 @@ s.textContent = `
 // HEADER — Neon Premium avec couleur dynamique par page
 // ════════════════════════════════════════════════════════════
 function _updateHeader(page) {
+  const _themeHeader = (() => {
+  try {
+    const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+    return Themes?.THEMES?.find(t => t.id === id)
+      || { c1:'#00cfff', c2:'#0066ff' };
+  } catch(e) {
+    return { c1:'#00cfff', c2:'#0066ff' };
+  }
+})(); 
   const configs = {
-    home:         { emoji:'⚡', titre:'PowerApp',            cat:'CORE',     badge:'HOME',      c1:'#00cfff', c2:'#0066ff' },
-    training:     { emoji:'📅', titre:'Programme',           cat:'CORE',     badge:'PLAN',      c1:'#00b8ff', c2:'#0055ee' },
-    live:         { emoji:'💪', titre:'Séance Live',         cat:'CORE',     badge:'LIVE',      c1:'#00cfff', c2:'#0077ff' },
-    stats:        { emoji:'📊', titre:'Statistiques',        cat:'CORE',     badge:'STATS',     c1:'#00aaff', c2:'#0044cc' },
-    profil:       { emoji:'👤', titre:'Profil',              cat:'CORE',     badge:'PROFILE',   c1:'#7b00ff', c2:'#0044ff' },
-    coach:        { emoji:'🤖', titre:'Coach IA',            cat:'IA',       badge:'AI',        c1:'#8800ff', c2:'#0066ff' },
-    predict:      { emoji:'📈', titre:'Prédictions',         cat:'IA',       badge:'PREDICT',   c1:'#00cfff', c2:'#7b00ff' },
-    adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif', cat:'IA',       badge:'ADAPT',     c1:'#7700ff', c2:'#0099ff' },
-    defis:        { emoji:'🏆', titre:'Défis',               cat:'GAME',     badge:'CHALLENGE', c1:'#00cfff', c2:'#0066ff' },
-    gamification: { emoji:'⭐', titre:'Niveaux & XP',        cat:'GAME',     badge:'XP',        c1:'#0099ff', c2:'#7b00ff' },
-    share:        { emoji:'📤', titre:'Partage',             cat:'SOCIAL',   badge:'SHARE',     c1:'#0066ff', c2:'#7700ff' },
-    social:       { emoji:'📱', titre:'Réseaux',             cat:'SOCIAL',   badge:'SOCIAL',    c1:'#7b00ff', c2:'#0066ff' },
-    history:      { emoji:'📅', titre:'Historique',          cat:'TRACKING', badge:'HISTORY',   c1:'#00cfff', c2:'#0044cc' },
-    photos:       { emoji:'📸', titre:'Photos',              cat:'TRACKING', badge:'PHOTOS',    c1:'#0088ff', c2:'#7b00ff' },
-    journal:      { emoji:'📔', titre:'Journal',             cat:'TRACKING', badge:'LOG',       c1:'#00cfff', c2:'#0066ff' },
-    objectifs:    { emoji:'🎯', titre:'Objectifs',           cat:'TRACKING', badge:'GOALS',     c1:'#0099ff', c2:'#7700ff' },
-    supersets:    { emoji:'⚡', titre:'Supersets',           cat:'TRAINING', badge:'SUPERSET',  c1:'#00cfff', c2:'#0066ff' },
-    circuit:      { emoji:'⚡', titre:'HIIT & Cardio',       cat:'TRAINING', badge:'HIIT',      c1:'#0066ff', c2:'#7b00ff' },
-    galerie:      { emoji:'💪', titre:'Galerie Exercices',   cat:'TRAINING', badge:'GALLERY',   c1:'#00cfff', c2:'#0044dd' },
-    blessures:    { emoji:'🩹', titre:'Blessures',           cat:'TRAINING', badge:'INJURY',    c1:'#0088ff', c2:'#7b00ff' },
-    nutrition:    { emoji:'🥗', titre:'Nutrition',           cat:'TOOLS',    badge:'NUTRI',     c1:'#00cfff', c2:'#0066ff' },
-    calculateur:  { emoji:'🧮', titre:'Calculateur',         cat:'TOOLS',    badge:'CALC',      c1:'#7b00ff', c2:'#0066ff' },
-    export:       { emoji:'📤', titre:'Export',              cat:'TOOLS',    badge:'EXPORT',    c1:'#0066ff', c2:'#7700ff' },
-    settings:     { emoji:'⚙️', titre:'Paramètres',          cat:'SETTINGS', badge:'CONFIG',    c1:'#7b00ff', c2:'#0066ff' },
-    themes:       { emoji:'🎨', titre:'Thèmes',              cat:'SETTINGS', badge:'THEME',     c1:'#00cfff', c2:'#7b00ff' },
-    sounds:       { emoji:'🔊', titre:'Sons',                cat:'SETTINGS', badge:'AUDIO',     c1:'#0099ff', c2:'#0044cc' },
-    offline:      { emoji:'📵', titre:'Hors-ligne',          cat:'SETTINGS', badge:'OFFLINE',   c1:'#7700ff', c2:'#0033cc' },
-    mon_profil:   { emoji:'👤', titre:'Mon Profil',          cat:'SETTINGS', badge:'ME',        c1:'#0066ff', c2:'#7b00ff' },
-  };
+  home:         { emoji:'⚡', titre:'PowerApp',    cat:'CORE',  c1:_themeHeader.c1, c2:_themeHeader.c2 },
+  training:     { emoji:'📅', titre:'Programme',   cat:'CORE',  c1:_themeHeader.c1, c2:_themeHeader.c2 },
+  live:         { emoji:'💪', titre:'Séance Live', cat:'CORE',  c1:_themeHeader.c1, c2:_themeHeader.c2 },
+  stats:        { emoji:'📊', titre:'Stats',       cat:'CORE',  c1:_themeHeader.c1, c2:_themeHeader.c2 },
+  nutrition:    { emoji:'🥗', titre:'Nutrition',   cat:'TOOLS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
+  // ── Pages secondaires gardent leurs couleurs ──
+  coach:        { emoji:'🤖', titre:'Coach IA',            cat:'IA',       c1:'#8800ff', c2:'#0066ff' },
+  predict:      { emoji:'📈', titre:'Prédictions',         cat:'IA',       c1:'#00cfff', c2:'#7b00ff' },
+  adaptatif:    { emoji:'🧠', titre:'Programme Adaptatif', cat:'IA',       c1:'#7700ff', c2:'#0099ff' },
+  defis:        { emoji:'🏆', titre:'Défis',               cat:'GAME',     c1:'#f9ef77', c2:'#ff8d96' },
+  gamification: { emoji:'⭐', titre:'Niveaux & XP',        cat:'GAME',     c1:'#0099ff', c2:'#7b00ff' },
+  share:        { emoji:'📤', titre:'Partage',             cat:'SOCIAL',   c1:'#0066ff', c2:'#7700ff' },
+  social:       { emoji:'📱', titre:'Réseaux',             cat:'SOCIAL',   c1:'#7b00ff', c2:'#0066ff' },
+  history:      { emoji:'📅', titre:'Historique',          cat:'TRACKING', c1:'#00cfff', c2:'#0044cc' },
+  photos:       { emoji:'📸', titre:'Photos',              cat:'TRACKING', c1:'#0088ff', c2:'#7b00ff' },
+  journal:      { emoji:'📔', titre:'Journal',             cat:'TRACKING', c1:'#00cfff', c2:'#0066ff' },
+  objectifs:    { emoji:'🎯', titre:'Objectifs',           cat:'TRACKING', c1:'#0099ff', c2:'#7700ff' },
+  supersets:    { emoji:'⚡', titre:'Supersets',           cat:'TRAINING', c1:'#00cfff', c2:'#0066ff' },
+  circuit:      { emoji:'⚡', titre:'HIIT & Cardio',       cat:'TRAINING', c1:'#0066ff', c2:'#7b00ff' },
+  galerie:      { emoji:'💪', titre:'Galerie Exercices',   cat:'TRAINING', c1:'#00cfff', c2:'#0044dd' },
+  blessures:    { emoji:'🩹', titre:'Blessures',           cat:'TRAINING', c1:'#0088ff', c2:'#7b00ff' },
+  calculateur:  { emoji:'🧮', titre:'Calculateur',         cat:'TOOLS',    c1:'#7b00ff', c2:'#0066ff' },
+  export:       { emoji:'📤', titre:'Export',              cat:'TOOLS',    c1:'#0066ff', c2:'#7700ff' },
+  settings:     { emoji:'⚙️', titre:'Paramètres',          cat:'SETTINGS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
+  themes:       { emoji:'🎨', titre:'Thèmes',              cat:'SETTINGS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
+  sounds:       { emoji:'🔊', titre:'Sons',                cat:'SETTINGS', c1:'#0099ff', c2:'#0044cc' },
+  offline:      { emoji:'📵', titre:'Hors-ligne',          cat:'SETTINGS', c1:'#7700ff', c2:'#0033cc' },
+  profil:       { emoji:'👤', titre:'Profil',              cat:'CORE',     c1:_themeHeader.c1, c2:_themeHeader.c2 },
+  mon_profil:   { emoji:'👤', titre:'Mon Profil',          cat:'SETTINGS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
+};
 
   const cfg = configs[page] || configs.home;
   const header = document.querySelector('.app-header');
@@ -638,15 +648,34 @@ function _updateHeaderXP() {
   if (!el) return;
   try {
     const xp = Gamification.getXP();
+
+    // ✅ Vérifier Double XP actif
+    const doubleXP    = Utils.storage.get('ft_double_xp_fin', 0);
+    const hasDoubleXP = Date.now() < doubleXP;
+    const resteH      = hasDoubleXP
+      ? Math.ceil((doubleXP - Date.now()) / (1000 * 60 * 60))
+      : 0;
+
     el.innerHTML = `
-      <span style="font-size:.72rem;font-weight:700;
-                   color:var(--fd-lemon)">
-        ${xp.niveau.emoji} Niv.${xp.niveau.numero}
-      </span>
-      <span style="font-size:.65rem;color:var(--text-muted);
-                   margin-left:4px">
-        ${xp.total}XP
-      </span>`;
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:.72rem;font-weight:700;
+                     color:var(--fd-lemon)">
+          ${xp.niveau.emoji} Niv.${xp.niveau.numero}
+        </span>
+        <span style="font-size:.65rem;color:var(--text-muted)">
+          ${xp.total}XP
+        </span>
+        ${hasDoubleXP ? `
+          <span style="font-size:.58rem;font-weight:800;
+                       padding:2px 6px;
+                       background:rgba(249,239,119,0.2);
+                       border:1px solid rgba(249,239,119,0.5);
+                       border-radius:99px;
+                       color:var(--fd-lemon);
+                       animation:pulse 1.5s infinite">
+            ⚡×2 ${resteH}h
+          </span>` : ''}
+      </div>`;
   } catch(e) {}
 }
 // ════ TOAST CYBER — Override couleurs ════
@@ -6296,6 +6325,7 @@ function _rendreSettings(container) {
 
     <div id="alarme-section"></div>
     <div id="offline-content"></div>
+    <div id="backup-auto-section"></div>
 
     <div style="text-align:center;font-size:.65rem;color:var(--text-muted);
                 margin-top:var(--space-md)">
@@ -6305,6 +6335,7 @@ function _rendreSettings(container) {
 
   try { TimerManager.renderAlarme(document.getElementById('alarme-section')); } catch(e) {}
   try { Offline.render(document.getElementById('offline-content')); } catch(e) {}
+  try { BackupAuto.renderWidget(document.getElementById('backup-auto-section')); } catch(e) {} 
 }
 
 // ════════════════════════════════════════════════════════════
@@ -6694,7 +6725,7 @@ validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
       }
     } catch(e) {}
 
-    Utils.confetti(3000);
+    _confettiTheme(3000);
     try { timerRepos?.jouerSon('pr'); } catch(e) {}
     Utils.vibrer([200,100,200,100,400]);
 
@@ -7435,6 +7466,308 @@ const ResumSeance = {
 
     // ✅ FOND — gradient bleu profond
     const gradFond = ctx.createLinearGradient(0, 0, 0, 1920);
+    // ✅ AJOUTER — Confetti selon thème actif
+function _confettiTheme(duree = 3000) {
+  try {
+    const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+    const theme = Themes?.THEMES?.find(t => t.id === id) || null;
+
+    if (!theme) {
+      try { Utils.confetti(duree); } catch(e) {}
+      return;
+    }
+
+    // ✅ Canvas confetti avec couleurs du thème
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = `
+      position:fixed;inset:0;z-index:9998;
+      pointer-events:none;width:100%;height:100%`;
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+
+    const ctx      = canvas.getContext('2d');
+    const couleurs = [theme.c1, theme.c2, theme.c3, '#ffffff'];
+
+    const particules = Array.from({ length: 120 }, () => ({
+      x:     Math.random() * canvas.width,
+      y:     Math.random() * canvas.height * -1,
+      w:     Math.random() * 12 + 4,
+      h:     Math.random() * 6  + 2,
+      color: couleurs[Math.floor(Math.random() * couleurs.length)],
+      vx:    (Math.random() - .5) * 4,
+      vy:    Math.random() * 4 + 2,
+      vr:    (Math.random() - .5) * .3,
+      r:     Math.random() * Math.PI * 2,
+      op:    1,
+      forme: Math.random() > .5 ? 'rect' : 'cercle'
+    }));
+
+    let t0 = null;
+    const animer = ts => {
+      if (!t0) t0 = ts;
+      const el = ts - t0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particules.forEach(p => {
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.r  += p.vr;
+        p.vy += .08;
+        if (el > duree * .7)
+          p.op = Math.max(0, 1 - (el - duree * .7) / (duree * .3));
+        ctx.save();
+        ctx.globalAlpha = p.op;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.r);
+        ctx.fillStyle = p.color;
+        // ✅ Glow effet
+        ctx.shadowBlur  = 6;
+        ctx.shadowColor = p.color;
+        if (p.forme === 'cercle') {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        }
+        ctx.restore();
+      });
+      if (el < duree) requestAnimationFrame(animer);
+      else canvas.remove();
+    };
+    requestAnimationFrame(animer);
+
+  } catch(e) {
+    try { Utils.confetti(duree); } catch(e2) {}
+  }
+}
+window._confettiTheme = _confettiTheme;
+
+// ════════════════════════════════════════════════════════════
+// ✅ BACKUP AUTOMATIQUE HEBDOMADAIRE
+// ════════════════════════════════════════════════════════════
+const BackupAuto = {
+
+  CLE_DERNIER: 'ft_backup_dernier',
+  CLE_LISTE:   'ft_backup_liste',
+
+  // ✅ Vérifier si backup nécessaire (lundi ou 7 jours)
+  verifier() {
+    try {
+      const dernier    = Utils.storage.get(this.CLE_DERNIER, null);
+      const aujourd    = Utils.aujourd_hui();
+
+      if (!dernier) {
+        this._planifier();
+        return;
+      }
+
+      const diffJours = Utils.diffJours(dernier, aujourd);
+      if (diffJours >= 7) {
+        this._effectuer();
+      }
+    } catch(e) {}
+  },
+
+  // ✅ Planifier le prochain backup (prochain lundi)
+  _planifier() {
+    const maintenant = new Date();
+    const jourSemaine = maintenant.getDay(); // 0=dim, 1=lun...
+    const joursAvantLundi = jourSemaine === 0
+      ? 1 : 8 - jourSemaine;
+
+    setTimeout(() => {
+      this._effectuer();
+    }, joursAvantLundi * 24 * 60 * 60 * 1000);
+  },
+
+  // ✅ Effectuer le backup
+  _effectuer() {
+    try {
+      const aujourd = Utils.aujourd_hui();
+      const data    = {};
+
+      // ✅ Collecter toutes les données ft_
+      for (let i = 0; i < localStorage.length; i++) {
+        const cle = localStorage.key(i);
+        if (cle?.startsWith('ft_')) {
+          try {
+            data[cle] = JSON.parse(localStorage.getItem(cle));
+          } catch(e) {
+            data[cle] = localStorage.getItem(cle);
+          }
+        }
+      }
+
+      // ✅ Créer le backup
+      const backup = {
+        version:   '1.0',
+        date:      aujourd,
+        timestamp: Date.now(),
+        taille:    Object.keys(data).length,
+        data
+      };
+
+      // ✅ Sauvegarder en localStorage (max 3 backups)
+      const liste = Utils.storage.get(this.CLE_LISTE, []);
+      liste.unshift({
+        date:      aujourd,
+        timestamp: Date.now(),
+        cle:       `ft_backup_${aujourd}`
+      });
+
+      // ✅ Garder seulement les 3 derniers
+      if (liste.length > 3) {
+        const aSupprimer = liste.splice(3);
+        aSupprimer.forEach(b => {
+          try { localStorage.removeItem(b.cle); } catch(e) {}
+        });
+      }
+
+      // ✅ Sauvegarder
+      try {
+        localStorage.setItem(
+          `ft_backup_${aujourd}`,
+          JSON.stringify(backup)
+        );
+        Utils.storage.set(this.CLE_LISTE, liste);
+        Utils.storage.set(this.CLE_DERNIER, aujourd);
+
+        console.log(`[BackupAuto] ✅ Backup effectué — ${backup.taille} clés`);
+
+        // ✅ Toast discret
+        Utils.toast(
+          `💾 Backup auto effectué — ${backup.taille} données sauvegardées`,
+          'success', 4000
+        );
+
+      } catch(e) {
+        // ✅ Si localStorage plein → proposer export
+        console.warn('[BackupAuto] localStorage plein — export JSON');
+        this._exporterJSON(backup);
+      }
+
+    } catch(e) {
+      console.warn('[BackupAuto] Erreur:', e);
+    }
+  },
+
+  // ✅ Exporter en JSON si localStorage plein
+  _exporterJSON(backup) {
+    try {
+      const blob = new Blob(
+        [JSON.stringify(backup, null, 2)],
+        { type: 'application/json' }
+      );
+      const url  = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href     = url;
+      link.download = `powerapp-backup-${backup.date}.json`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      Utils.toast('💾 Backup exporté en JSON !', 'success', 3000);
+    } catch(e) {}
+  },
+
+  // ✅ Restaurer depuis un backup
+  restaurer(backupDate) {
+    try {
+      const cle    = `ft_backup_${backupDate}`;
+      const backup = JSON.parse(localStorage.getItem(cle) || 'null');
+      if (!backup?.data) {
+        Utils.toast('❌ Backup introuvable', 'error');
+        return false;
+      }
+
+      // ✅ Restaurer les données
+      Object.entries(backup.data).forEach(([k, v]) => {
+        try {
+          localStorage.setItem(k, JSON.stringify(v));
+        } catch(e) {}
+      });
+
+      Utils.toast(
+        `✅ Backup du ${backupDate} restauré !`,
+        'success', 4000
+      );
+      setTimeout(() => window.location.reload(), 2000);
+      return true;
+
+    } catch(e) {
+      Utils.toast('❌ Erreur restauration', 'error');
+      return false;
+    }
+  },
+
+  // ✅ Liste des backups disponibles
+  getListe() {
+    return Utils.storage.get(this.CLE_LISTE, []);
+  },
+
+  // ✅ Render widget dans Settings
+  renderWidget(container) {
+    if (!container) return;
+    const liste  = this.getListe();
+    const dernier = Utils.storage.get(this.CLE_DERNIER, null);
+
+    container.innerHTML = `
+      <div class="card mb-md">
+        <div class="card-label">💾 Backup automatique</div>
+
+        <div style="display:flex;align-items:center;
+                    justify-content:space-between;
+                    padding:10px 0;margin-top:8px">
+          <div>
+            <div style="font-size:.82rem;font-weight:600">
+              Dernier backup
+            </div>
+            <div style="font-size:.65rem;color:var(--text-muted)">
+              ${dernier
+                ? `✅ ${Utils.formatDateLong(dernier)}`
+                : '⚠️ Aucun backup effectué'}
+            </div>
+          </div>
+          <button onclick="BackupAuto._effectuer()"
+                  style="padding:8px 14px;
+                         background:rgba(75,75,249,0.12);
+                         border:1px solid rgba(75,75,249,0.25);
+                         border-radius:var(--radius-full);
+                         font-size:.72rem;font-weight:700;
+                         color:var(--fd-indigo);cursor:pointer">
+            💾 Backup maintenant
+          </button>
+        </div>
+
+        ${liste.length > 0 ? `
+          <div style="font-size:.6rem;font-weight:700;
+                      text-transform:uppercase;letter-spacing:.08em;
+                      color:var(--text-muted);
+                      margin:10px 0 6px">
+            📋 Backups disponibles
+          </div>
+          ${liste.map(b => `
+            <div style="display:flex;align-items:center;
+                        justify-content:space-between;
+                        padding:8px 0;
+                        border-bottom:1px solid var(--border-color)">
+              <div style="font-size:.78rem;color:var(--text-secondary)">
+                📅 ${b.date}
+              </div>
+              <button onclick="BackupAuto.restaurer('${b.date}')"
+                      style="padding:5px 10px;font-size:.65rem;
+                             font-weight:700;
+                             background:rgba(139,240,187,0.1);
+                             border:1px solid rgba(139,240,187,0.2);
+                             border-radius:99px;
+                             color:var(--fd-mint);cursor:pointer">
+                ↩️ Restaurer
+              </button>
+            </div>`).join('')}` : ''}
+      </div>`;
+  }
+};
+
+window.BackupAuto = BackupAuto;
     gradFond.addColorStop(0,   '#06063d');
     gradFond.addColorStop(0.5, '#08082e');
     gradFond.addColorStop(1,   '#050520');
@@ -7992,8 +8325,8 @@ const SwipeNav = {
     if (!main) return;
 
     main.addEventListener('touchstart', e => {
-      this._startX  = e.touches.clientX;
-      this._startY  = e.touches.clientY;
+      this._startX  = e.touches[0].clientX;
+      this._startY  = e.touches[0].clientY;
       this._active  = true;
       this._blocked = false;
 
@@ -8018,8 +8351,8 @@ const SwipeNav = {
 
     main.addEventListener('touchmove', e => {
       if (!this._active) return;
-      const dx = e.touches.clientX - this._startX;
-      const dy = e.touches.clientY - this._startY;
+      const dx = e.touches[0].clientX - this._startX;
+      const dy = e.touches[0].clientY - this._startY;
 
       const target     = e.target;
       const scrollable = target.closest(
@@ -8444,6 +8777,9 @@ try {
     'data-theme-style', 'cyber-blue'
   );
 }  
+      try {
+  setTimeout(() => BackupAuto.verifier(), 10000);
+} catch(e) {}
     try { TimerManager.initAlarme?.(); } catch(e) {}
 
     setTimeout(() => {
@@ -9919,7 +10255,7 @@ if (appWrapper) {
       'success', 4000
     );
 
-    try { Utils.confetti(2000); } catch(e) {}
+    try { _confettiTheme(2000); } catch(e) {}
 
     window._obProgrammePropose = null;
     window._obProgrammeValide  = null;
@@ -10821,7 +11157,106 @@ const CyberAnimations = {
 window.CyberAnimations = CyberAnimations;
 // ✅ Themes est défini dans themes.js — pas de redéclaration ici
 // window.Themes = Themes; ← géré par themes.js
+// ════════════════════════════════════════════════════════════
+// ✅ RACCOURCIS CLAVIER GLOBAUX
+// ════════════════════════════════════════════════════════════
+(function _initRaccourcisClavier() {
+  document.addEventListener('keydown', e => {
 
+    // ✅ Ignorer si dans un input/textarea
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    // ✅ Ignorer si LiveUltra actif (a ses propres raccourcis)
+    if (typeof LiveUltra !== 'undefined' && LiveUltra._actif) return;
+
+    switch(e.key) {
+      // Navigation principale
+      case '1': e.preventDefault(); naviguer('home');         break;
+      case '2': e.preventDefault(); naviguer('training');     break;
+      case '3': e.preventDefault(); naviguer('live');         break;
+      case '4': e.preventDefault(); naviguer('stats');        break;
+      case '5': e.preventDefault(); naviguer('nutrition');    break;
+
+      // Retour arrière
+      case 'Escape':
+        e.preventDefault();
+        // ✅ Fermer modal si ouverte
+        const modal = document.getElementById('modal-info');
+        if (modal && !modal.classList.contains('hidden')) {
+          modal.classList.add('hidden');
+          return;
+        }
+        // ✅ Fermer menu global si ouvert
+        if (MenuGlobal._ouvert) {
+          MenuGlobal.fermer();
+          return;
+        }
+        // ✅ Sinon retour arrière
+        retourArriere();
+        break;
+
+      // Raccourcis pages secondaires
+      case 'c': case 'C':
+        if (e.ctrlKey || e.metaKey) return; // Éviter conflit Ctrl+C
+        e.preventDefault();
+        naviguer('coach');
+        break;
+
+      case 's': case 'S':
+        if (e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        naviguer('stats');
+        break;
+
+      case 'h': case 'H':
+        if (e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        naviguer('history');
+        break;
+
+      case 'p': case 'P':
+        if (e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        naviguer('profil');
+        break;
+
+      case 't': case 'T':
+        if (e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        naviguer('themes');
+        break;
+
+      case 'm': case 'M':
+        if (e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        MenuGlobal.toggle();
+        break;
+
+      // Timer repos rapide pendant séance Live
+      case 'r': case 'R':
+        if (e.ctrlKey || e.metaKey) return;
+        if (window._pageActive === 'live') {
+          e.preventDefault();
+          try { TimerManager.demarrerRepos(75); } catch(e2) {}
+          Utils.toast('⏱ Timer 75s démarré !', 'info', 1500);
+        }
+        break;
+
+      // Search focus depuis home
+      case '/':
+        if (window._pageActive === 'home') {
+          e.preventDefault();
+          const searchInput = document.getElementById('home-search-input');
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+          }
+        }
+        break;
+    }
+  });
+})();
 // ════════════════════════════════════════════════════════════
 // DÉMARRAGE
 // ════════════════════════════════════════════════════════════
