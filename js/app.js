@@ -316,7 +316,12 @@ function _rendreNavBar() {
     glow:   _themeNav.c3 + '50'
   }
 };
-
+// ✅ PC — Injecter structure sidebar
+const isPC = window.innerWidth >= 1024;
+if (isPC) {
+  _rendreNavBarPC(nav);
+  return;
+}
   nav.innerHTML = PAGES.map(p => {
     const actif  = window._pageActive === p.id;
     const col    = COLORS[p.id] || COLORS.home;
@@ -518,7 +523,122 @@ s.textContent = `
     document.head.appendChild(s);
   }
 }
+// ════════════════════════════════════════════════════════════
+// NAV BAR PC — Sidebar verticale
+// ════════════════════════════════════════════════════════════
+function _rendreNavBarPC(nav) {
+  const theme = (() => {
+    try {
+      const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+      return Themes.THEMES.find(t => t.id === id) || Themes.THEMES[0];
+    } catch(e) {
+      return { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff' };
+    }
+  })();
 
+  const PAGES_PC = [
+    // Section principale
+    { section: 'PRINCIPAL' },
+    { id:'home',      label:'Accueil',      icon:'🏠', color: theme.c1 },
+    { id:'training',  label:'Programme',    icon:'📅', color: theme.c2 },
+    { id:'live',      label:'Séance Live',  icon:'⚡', color: theme.c1, special: true },
+    { id:'stats',     label:'Statistiques', icon:'📊', color: theme.c2 },
+    { id:'nutrition', label:'Nutrition',    icon:'🥗', color: theme.c3 },
+
+    // Section IA
+    { section: 'COACH & IA' },
+    { id:'coach',     label:'Coach IA',     icon:'🤖', color: '#bfa1ff' },
+    { id:'adaptatif', label:'Programme IA', icon:'🧠', color: '#bfa1ff' },
+    { id:'predict',   label:'Prédictions',  icon:'📈', color: '#8bf0bb' },
+    { id:'defis',     label:'Défis',        icon:'🏆', color: '#f9ef77' },
+
+    // Section tracking
+    { section: 'SUIVI' },
+    { id:'history',   label:'Historique',   icon:'📅', color: theme.c1 },
+    { id:'objectifs', label:'Objectifs',    icon:'🎯', color: '#ff8d96' },
+    { id:'photos',    label:'Photos',       icon:'📸', color: '#bfa1ff' },
+    { id:'journal',   label:'Journal',      icon:'📔', color: '#f9ef77' },
+
+    // Section outils
+    { section: 'OUTILS' },
+    { id:'galerie',     label:'Exercices',   icon:'💪', color: theme.c1 },
+    { id:'calculateur', label:'Calculateur', icon:'🧮', color: theme.c2 },
+    { id:'gamification',label:'XP & Niveaux',icon:'⭐', color: '#f9ef77' },
+    { id:'themes',      label:'Thèmes',      icon:'🎨', color: '#bfa1ff' },
+    { id:'settings',    label:'Paramètres',  icon:'⚙️', color: theme.c2 }
+  ];
+
+  nav.innerHTML = `
+    <!-- Logo -->
+    <div class="pc-nav-logo">
+      <div class="pc-nav-logo-icon">⚡</div>
+      <div class="pc-nav-logo-text">POWERAPP</div>
+    </div>
+
+    <!-- Items -->
+    ${PAGES_PC.map(p => {
+
+      // Section header
+      if (p.section) return `
+        <div class="pc-nav-section">${p.section}</div>`;
+
+      const actif = window._pageActive === p.id;
+      const col   = p.color || theme.c1;
+
+      return `
+        <button
+          onclick="naviguer('${p.id}')"
+          class="nav-btn ${actif ? 'active' : ''} ${p.special ? 'nav-btn-live' : ''}"
+          style="${actif ? `
+            background: ${col}18;
+            border: 1px solid ${col}44;
+            color: ${col};
+          ` : ''}">
+
+          <!-- Icon -->
+          <span class="nav-icon"
+                style="${actif
+                  ? `filter:drop-shadow(0 0 6px ${col})`
+                  : ''}">
+            ${p.icon}
+          </span>
+
+          <!-- Label -->
+          <span class="nav-label"
+                style="${actif
+                  ? `color:${col};text-shadow:0 0 8px ${col}66`
+                  : ''}">
+            ${p.label}
+          </span>
+
+          ${actif ? `
+            <!-- Indicateur actif -->
+            <div style="
+              margin-left:auto;
+              width:6px;height:6px;
+              border-radius:50%;
+              background:${col};
+              box-shadow:0 0 6px ${col};
+              flex-shrink:0">
+            </div>` : ''}
+        </button>`;
+    }).join('')}
+
+    <!-- Version -->
+    <div style="
+      margin-top:auto;
+      padding:12px 16px;
+      font-family:'Orbitron',monospace;
+      font-size:.52rem;
+      letter-spacing:2px;
+      color:rgba(0,207,255,0.15);
+      text-align:center;
+      border-top:1px solid rgba(0,100,255,0.08);
+      margin-top:16px">
+      v4.0 · 2026
+    </div>
+  `;
+}
 // ════════════════════════════════════════════════════════════
 // HEADER — Neon Premium avec couleur dynamique par page
 // ════════════════════════════════════════════════════════════
@@ -8788,9 +8908,15 @@ try {
 
 setTimeout(() => {
   naviguer('home');
-  try { CyberSparks.init();     } catch(e) {}
-  try { LavaBackground.init();  } catch(e) {} // ✅ AJOUTE ça
+  try { CyberSparks.init();    } catch(e) {}
+  try { LavaBackground.init(); } catch(e) {}
   _updateHeaderXP();
+
+  // ✅ Injecter le panel aside PC
+  _initAsidePC();
+
+  // ✅ Écouter redimensionnement
+  window.addEventListener('resize', _onResize);
 }, 100);
     if (!document.getElementById('cb-fonts')) {
   const link = document.createElement('link');
@@ -11378,6 +11504,266 @@ window.CyberAnimations = CyberAnimations;
     }
   });
 })();
+// ════════════════════════════════════════════════════════════
+// ✅ ASIDE PC — Panel droit informatif
+// ════════════════════════════════════════════════════════════
+function _initAsidePC() {
+  if (window.innerWidth < 1024) return;
+
+  // Créer le panel aside s'il n'existe pas
+  let aside = document.getElementById('pc-aside');
+  if (!aside) {
+    aside    = document.createElement('div');
+    aside.id = 'pc-aside';
+    document.getElementById('app-wrapper')?.appendChild(aside);
+  }
+
+  _rendreAsidePC(aside);
+
+  // Rafraîchir toutes les 30s
+  clearInterval(window._asideInterval);
+  window._asideInterval = setInterval(() => {
+    const el = document.getElementById('pc-aside');
+    if (el) _rendreAsidePC(el);
+  }, 30000);
+}
+
+function _rendreAsidePC(aside) {
+  if (!aside) return;
+
+  // Données
+  let streak   = { count:0, max:0 };
+  let xp       = { total:0, niveau:{ emoji:'💪', numero:1, nom:'Débutant' } };
+  let msg      = { emoji:'💡', message:'Bonne séance !' };
+  let prs      = {};
+  let heatmap  = {};
+  let scoreForme = { score: 0 };
+
+  try { streak     = Tracker.getStreak();           } catch(e) {}
+  try { xp         = Gamification.getXP();           } catch(e) {}
+  try { msg        = Coach.getMessageDuJour();        } catch(e) {}
+  try { prs        = Tracker.getAllPRs();             } catch(e) {}
+  try { heatmap    = Tracker.getHeatmapData(14);     } catch(e) {}
+  try { scoreForme = Tracker.calculerScoreForme();   } catch(e) {}
+
+  // Top PR
+  const topPR = Object.entries(prs)
+    .filter(([,v]) => v.rm1 > 0)
+    .sort(([,a],[,b]) => (b.rm1||0) - (a.rm1||0))[0];
+
+  // Mini heatmap 14 jours
+  const heatmapHTML = (() => {
+    const jours = [];
+    for (let i = 13; i >= 0; i--) {
+      const date  = Utils.ajouterJours(Utils.aujourd_hui(), -i);
+      const etat  = heatmap[date] || 'none';
+      jours.push(etat);
+    }
+    return jours.map(e => `
+      <div class="pc-aside-heatmap-cell ${e === 'done' ? 'done' : ''}">
+      </div>`).join('');
+  })();
+
+  // Prochain PR potentiel
+  let prochainPR = null;
+  try { prochainPR = Predict?.recommanderCharge?.(
+    Object.keys(prs)[0]
+  ); } catch(e) {}
+
+  aside.innerHTML = `
+
+    <!-- Score de forme -->
+    <div class="pc-aside-widget">
+      <div class="pc-aside-label">💪 Score de forme</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="26"
+                  fill="none"
+                  stroke="rgba(0,80,200,0.15)"
+                  stroke-width="6"/>
+          <circle cx="32" cy="32" r="26"
+                  fill="none"
+                  stroke="var(--cb1)"
+                  stroke-width="6"
+                  stroke-linecap="round"
+                  stroke-dasharray="${Math.round(163*(scoreForme.score/100))} 163"
+                  transform="rotate(-90 32 32)"
+                  style="filter:drop-shadow(0 0 4px var(--cb1))"/>
+          <text x="32" y="36"
+                text-anchor="middle"
+                fill="var(--cb1)"
+                font-size="13"
+                font-weight="800">
+            ${scoreForme.score}
+          </text>
+        </svg>
+        <div>
+          <div style="font-size:1.1rem;font-weight:800;
+                      color:var(--cb1)">${scoreForme.score}/100</div>
+          <div style="font-size:.65rem;color:var(--text-muted);margin-top:2px">
+            ${scoreForme.niveau || '—'}</div>
+          <div style="font-size:.6rem;color:var(--text-muted);margin-top:4px">
+            ${xp.niveau.emoji} ${xp.niveau.nom}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Streak -->
+    <div class="pc-aside-widget">
+      <div class="pc-aside-label">🔥 Streak actuel</div>
+      <div class="pc-aside-streak">
+        <div class="pc-aside-streak-val">${streak.count}</div>
+        <div>
+          <div style="font-size:.72rem;color:var(--text-muted)">
+            jours consécutifs</div>
+          <div style="font-size:.62rem;color:var(--text-muted);margin-top:2px">
+            Record : ${streak.max}j
+          </div>
+        </div>
+        <div style="margin-left:auto;font-size:1.8rem">🔥</div>
+      </div>
+    </div>
+
+    <!-- Mini heatmap -->
+    <div class="pc-aside-widget">
+      <div class="pc-aside-label">📅 14 derniers jours</div>
+      <div class="pc-aside-heatmap">${heatmapHTML}</div>
+      <div style="display:flex;gap:8px;margin-top:6px;font-size:.58rem;
+                  color:var(--text-muted)">
+        <span>⬜ Repos</span>
+        <span style="color:var(--cb1)">🟦 Séance</span>
+      </div>
+    </div>
+
+    <!-- Coach message -->
+    <div class="pc-aside-coach"
+         onclick="naviguer('coach')">
+      <div style="font-size:.58rem;font-weight:700;
+                  text-transform:uppercase;letter-spacing:.08em;
+                  color:var(--cb1);margin-bottom:6px">
+        ${msg.emoji} Coach IA
+      </div>
+      <div style="font-size:.75rem;line-height:1.5">
+        ${msg.message}
+      </div>
+      <div style="margin-top:8px;font-size:.62rem;
+                  color:rgba(0,207,255,0.4)">
+        Cliquer pour plus →
+      </div>
+    </div>
+
+    <!-- Top PR -->
+    ${topPR ? `
+      <div class="pc-aside-widget">
+        <div class="pc-aside-label">🏆 Meilleur record</div>
+        <div class="pc-aside-pr">
+          <div style="font-size:1.3rem;margin-bottom:6px">
+            ${window.EXERCICES?.[topPR[0]]?.emoji || '💪'}
+          </div>
+          <div style="font-size:.78rem;font-weight:700;
+                      margin-bottom:4px">
+            ${window.EXERCICES?.[topPR[0]]?.nom || topPR[0]}
+          </div>
+          <div class="pc-aside-pr-val">
+            ${topPR[1].poids}kg × ${topPR[1].reps}
+          </div>
+          <div style="font-size:.62rem;color:var(--text-muted);
+                      margin-top:4px">
+            1RM estimé : ~${topPR[1].rm1}kg
+          </div>
+        </div>
+      </div>` : ''}
+
+    <!-- Raccourcis rapides -->
+    <div class="pc-aside-widget">
+      <div class="pc-aside-label">⚡ Accès rapides</div>
+      <div class="pc-aside-shortcuts">
+        ${[
+          { page:'galerie',    emoji:'💪', label:'Galerie exercices' },
+          { page:'calculateur',emoji:'🧮', label:'Calculateur 1RM'  },
+          { page:'predict',    emoji:'📈', label:'Prédictions'       },
+          { page:'blessures',  emoji:'🩹', label:'Blessures'         },
+          { page:'export',     emoji:'📤', label:'Exporter données'  }
+        ].map(s => `
+          <div class="pc-aside-shortcut"
+               onclick="naviguer('${s.page}')">
+            <div class="pc-aside-shortcut-emoji">${s.emoji}</div>
+            <span>${s.label}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- XP Bar -->
+    <div class="pc-aside-widget">
+      <div class="pc-aside-label">⭐ Progression XP</div>
+      <div style="display:flex;justify-content:space-between;
+                  font-size:.65rem;margin-bottom:6px">
+        <span style="color:var(--cb1);font-weight:700">
+          Niv.${xp.niveau.numero}
+        </span>
+        <span style="color:var(--text-muted)">
+          ${xp.total.toLocaleString('fr-FR')} XP
+        </span>
+      </div>
+      <div style="height:6px;background:rgba(0,50,150,0.15);
+                  border-radius:3px;overflow:hidden">
+        <div style="height:100%;
+                    width:${xp.pourcentage || 0}%;
+                    background:linear-gradient(90deg,
+                      var(--cb2),var(--cb1));
+                    border-radius:3px;
+                    box-shadow:0 0 8px rgba(0,207,255,0.4)">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;
+                  font-size:.55rem;color:var(--text-muted);
+                  margin-top:4px">
+        <span>${xp.niveau.xpMin?.toLocaleString('fr-FR') || 0}</span>
+        <span>${xp.pourcentage || 0}%</span>
+        <span>${xp.niveau.xpSuivant?.toLocaleString('fr-FR') || '—'}</span>
+      </div>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════
+// ✅ RESIZE — Adapter nav selon taille écran
+// ════════════════════════════════════════════════════════════
+let _resizeTimeout = null;
+
+function _onResize() {
+  clearTimeout(_resizeTimeout);
+  _resizeTimeout = setTimeout(() => {
+    const isPC = window.innerWidth >= 1024;
+
+    // Re-render navbar selon taille
+    _rendreNavBar();
+
+    // Aside PC
+    if (isPC) {
+      _initAsidePC();
+    } else {
+      // Masquer aside sur mobile
+      const aside = document.getElementById('pc-aside');
+      if (aside) aside.style.display = 'none';
+    }
+
+    // Chrono sticky
+    const chrono = document.getElementById('chrono-sticky');
+    if (chrono && !chrono.classList.contains('hidden')) {
+      if (isPC) {
+        chrono.style.left  = '256px';
+        chrono.style.right = '316px';
+        chrono.style.transform = 'none';
+      } else {
+        chrono.style.left  = '';
+        chrono.style.right = '';
+        chrono.style.transform = 'translateX(-50%)';
+      }
+    }
+  }, 150);
+}
 // ════════════════════════════════════════════════════════════
 // DÉMARRAGE
 // ════════════════════════════════════════════════════════════
