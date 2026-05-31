@@ -133,11 +133,11 @@
       height:5px; background:rgba(255,255,255,.06);
       border-radius:99px; overflow:hidden;
     }
-    .pm-progress-fill {
-      height:100%; border-radius:99px;
-      background:linear-gradient(90deg,${theme.c2},${theme.c1});
-      animation:pm-progressFill .8s ease forwards;
-    }
+.pm-progress-fill {
+  height:100%; border-radius:99px;
+  background:linear-gradient(90deg,#0066ff,#00cfff);
+  animation:pm-progressFill .8s ease forwards;
+}
     .pm-btn {
       border:none; border-radius:99px; font-weight:700;
       cursor:pointer; transition:all .2s; font-size:.85rem;
@@ -3403,18 +3403,6 @@ PM.obTerminer = function() {
   //}
 //})();
 
-_getTheme() {
-  try {
-    const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
-    return window.Themes?.THEMES?.find(t => t.id === id)
-      || { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff',
-           bg:'#020610', id:'cyber-blue' };
-  } catch(e) {
-    return { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff',
-             bg:'#020610', id:'cyber-blue' };
-  }
-},
-
 const LiveUltra = {
 
   _actif:          false,
@@ -3430,6 +3418,18 @@ const LiveUltra = {
   _swipeStartX:    0,
   _swipeStartY:    0,
   _swipeStartT:    0,
+
+   _getTheme() {
+  try {
+    const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
+    return window.Themes?.THEMES?.find(t => t.id === id)
+      || { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff',
+           bg:'#020610', id:'cyber-blue' };
+  } catch(e) {
+    return { c1:'#00cfff', c2:'#0066ff', c3:'#7b00ff',
+             bg:'#020610', id:'cyber-blue' };
+  }
+},   
 
   // ── Init ──
   demarrer(seanceId, exercices) {
@@ -3506,6 +3506,7 @@ const LiveUltra = {
   // ── Overlay ──
   _creerOverlay() {
     document.getElementById('live-ultra-overlay')?.remove();
+    const theme = this._getTheme(); 
     const overlay = document.createElement('div');
     overlay.id    = 'live-ultra-overlay';
     overlay.style.cssText = `
@@ -4221,7 +4222,7 @@ background:${i===this._exoIdx
     const s = sec % 60;
     return m > 0 ? `${m}:${String(s).padStart(2,'0')}` : String(sec);
   },
-
+};
 window.LiveUltra = LiveUltra;
 
 // ═══════════════════════════════════════════════════════════
