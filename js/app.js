@@ -5153,8 +5153,7 @@ function _rendreChecklistPreSeance(container, options, seanceId) {
         <div id="checklist-progress-bar"
              style="height:100%;
                     width:${Math.round((exosVus.length/Math.max(exos.length,1))*100)}%;
-                    `background:linear-gradient(90deg,
-                     var(--fd-indigo),var(--fd-mint));`
+                    background:linear-gradient(90deg,var(--fd-indigo),var(--fd-mint));
                     border-radius:99px;
                     transition:width .5s ease">
         </div>
