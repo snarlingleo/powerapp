@@ -1282,17 +1282,21 @@ try {
   // ════════════════════════════════════════════════════════
   // ✅ RENDER PRINCIPAL v6.0 — Avec onglets RPG
   // ════════════════════════════════════════════════════════
-  _filtreCategorie: 'tous',
-  _ongletActif:     'profil',
+_filtreCategorie: 'tous',
+_ongletActif:     'profil',
 
-  _getContainer() {
-    return document.getElementById('stats-content')
-      || document.getElementById('gamification-content')
-      || document.getElementById('page-content');
-  },
+// ✅ Fix — garder l'onglet actif entre re-renders
+_getOngletActif() {
+  return Utils.storage.get('ft_gamif_onglet', 'profil');
+},
+_setOngletActif(val) {
+  this._ongletActif = val;
+  Utils.storage.set('ft_gamif_onglet', val);
+},
 
   renderGamificationTab(container) {
     if (!container) return;
+    this._ongletActif = this._getOngletActif(); 
 
     const xp       = this.getXP();
     const avatar   = this.AVATARS_RPG[xp.niveau.numero] || this.AVATARS_RPG[1];
@@ -1400,7 +1404,7 @@ try {
           { id:'saison',    label:'Saison',   emoji:'🏆' },
           { id:'coffres',   label:'Coffres',  emoji:'📦' }
         ].map(o => `
-          <button onclick="Gamification._ongletActif='${o.id}';
+          <button onclick="Gamification._setOngletActif('${o.id}');
                            const c=Gamification._getContainer();
                            if(c)Gamification.renderGamificationTab(c);"
                   style="padding:8px 14px;white-space:nowrap;
@@ -2025,12 +2029,12 @@ try {
       <div class="card mb-md">
         <div class="card-label mb-md">🏆 Rangs de la saison</div>
         ${this.SAISON.recompenses.map(r => {
-          const atteint = xp.niveau.numero >= this.NIVEAUX.findIndex(
-            n => n.numero >= (r.rang === 'S' ? 7
-               : r.rang === 'A' ? 6
-               : r.rang === 'B' ? 5
-               : r.rang === 'C' ? 4 : 1)
-          ) + 1;
+// ✅ Fix — calcul rang simplifié
+const niveauRequis = r.rang === 'S' ? 7
+  : r.rang === 'A' ? 6
+  : r.rang === 'B' ? 5
+  : r.rang === 'C' ? 4 : 1;
+const atteint = xp.niveau.numero >= niveauRequis;
           const actuel = saison.rang === r.rang;
           return `
             <div style="display:flex;align-items:center;gap:12px;
