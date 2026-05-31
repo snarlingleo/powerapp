@@ -16,64 +16,163 @@ const LavaBackground = {
   _theme:   null,
 
   // ── Palettes par thème ──
-  PALETTES: {
-    'cyber-blue': {
-      bg:     [2,   6,  16],
-      colors: [
-        [0,  102, 255, 0.18],
-        [0,  150, 255, 0.14],
-        [0,  207, 255, 0.12],
-        [123,  0, 255, 0.10],
-        [75,  75, 249, 0.15],
-        [0,   80, 200, 0.12]
-      ]
-    },
-    'lava-neon': {
-      bg:     [18, 6, 6],
-      colors: [
-        [255,  80,  20, 0.20],
-        [255,   0, 100, 0.16],
-        [255, 120,  30, 0.14],
-        [255,  50,   0, 0.18],
-        [200,   0,  80, 0.12],
-        [255, 150,  50, 0.10]
-      ]
-    },
-    'deep-purple': {
-      bg:     [8, 6, 18],
-      colors: [
-        [139,   0, 255, 0.18],
-        [191, 127, 255, 0.14],
-        [255,   0, 170, 0.12],
-        [100,   0, 200, 0.15],
-        [160,  50, 255, 0.12],
-        [80,    0, 180, 0.10]
-      ]
-    },
-    'matrix-green': {
-      bg:     [2, 12, 6],
-      colors: [
-        [0,  255, 136, 0.16],
-        [0,  200,  60, 0.18],
-        [0,  255, 200, 0.12],
-        [0,  150,  50, 0.14],
-        [50, 255, 100, 0.10],
-        [0,  180,  80, 0.12]
-      ]
-    },
-    'arctic-white': {
-      bg:     [232, 238, 255],
-      colors: [
-        [0,  102, 255, 0.04],
-        [0,   80, 200, 0.03],
-        [75,  75, 249, 0.03],
-        [0,  150, 255, 0.02],
-        [0,   60, 180, 0.02],
-        [100, 100, 255, 0.02]
-      ]
-    }
+PALETTES: {
+  'cyber-blue': {
+    bg:     [2, 6, 16],
+    colors: [
+      [0,  102, 255, 0.18],
+      [0,  150, 255, 0.14],
+      [0,  207, 255, 0.12],
+      [123,  0, 255, 0.10],
+      [75,  75, 249, 0.15],
+      [0,   80, 200, 0.12]
+    ]
+  },
+  'lava-neon': {
+    bg:     [18, 6, 6],
+    colors: [
+      [255,  80,  20, 0.20],
+      [255,   0, 100, 0.16],
+      [255, 120,  30, 0.14],
+      [255,  50,   0, 0.18],
+      [200,   0,  80, 0.12],
+      [255, 150,  50, 0.10]
+    ]
+  },
+  'deep-purple': {
+    bg:     [8, 6, 18],
+    colors: [
+      [139,   0, 255, 0.18],
+      [191, 127, 255, 0.14],
+      [255,   0, 170, 0.12],
+      [100,   0, 200, 0.15],
+      [160,  50, 255, 0.12],
+      [80,    0, 180, 0.10]
+    ]
+  },
+  'matrix-green': {
+    bg:     [2, 12, 6],
+    colors: [
+      [0,  255, 136, 0.16],
+      [0,  200,  60, 0.18],
+      [0,  255, 200, 0.12],
+      [0,  150,  50, 0.14],
+      [50, 255, 100, 0.10],
+      [0,  180,  80, 0.12]
+    ]
+  },
+  'arctic-white': {
+    bg:     [232, 238, 255],
+    colors: [
+      [0,  102, 255, 0.04],
+      [0,   80, 200, 0.03],
+      [75,  75, 249, 0.03],
+      [0,  150, 255, 0.02],
+      [0,   60, 180, 0.02],
+      [100, 100, 255, 0.02]
+    ]
   },
 
+  // ✅ NOUVEAUX THÈMES — à ajouter selon themes.js
+  'solar-gold': {
+    bg:     [16, 10, 2],
+    colors: [
+      [255, 200,  30, 0.18],
+      [255, 160,   0, 0.16],
+      [255, 120,  20, 0.14],
+      [220, 180,  50, 0.12],
+      [255, 220,  80, 0.10],
+      [200, 140,  10, 0.12]
+    ]
+  },
+  'rose-gold': {
+    bg:     [18, 8, 10],
+    colors: [
+      [255, 141, 150, 0.18],
+      [255, 100, 120, 0.16],
+      [220,  80, 100, 0.14],
+      [255, 180, 190, 0.12],
+      [200,  60,  90, 0.15],
+      [255, 120, 140, 0.10]
+    ]
+  },
+  'midnight-black': {
+    bg:     [4, 4, 8],
+    colors: [
+      [60,  60,  80, 0.20],
+      [80,  80, 100, 0.16],
+      [40,  40,  60, 0.18],
+      [100, 100, 120, 0.12],
+      [50,  50,  70, 0.14],
+      [30,  30,  50, 0.16]
+    ]
+  },
+  'ocean-teal': {
+    bg:     [2, 12, 14],
+    colors: [
+      [0,  200, 180, 0.18],
+      [0,  180, 200, 0.16],
+      [20, 220, 180, 0.14],
+      [0,  150, 160, 0.15],
+      [40, 210, 190, 0.12],
+      [0,  170, 150, 0.14]
+    ]
+  },
+  'cherry-red': {
+    bg:     [16, 4, 4],
+    colors: [
+      [220,  30,  50, 0.20],
+      [255,  50,  70, 0.16],
+      [180,  20,  40, 0.18],
+      [255,  80, 100, 0.14],
+      [200,  40,  60, 0.15],
+      [240,  60,  80, 0.12]
+    ]
+  },
+  'toxic-yellow': {
+    bg:     [12, 14, 2],
+    colors: [
+      [200, 255,   0, 0.16],
+      [180, 220,  20, 0.18],
+      [220, 255,  50, 0.14],
+      [160, 200,  10, 0.15],
+      [240, 255,  80, 0.12],
+      [170, 210,  30, 0.14]
+    ]
+  }
+},
+// ✅ NOUVEAU — Générer palette auto pour thèmes inconnus
+_genererPaletteAuto(themeId) {
+  try {
+    const theme = window.Themes?.THEMES?.find(t => t.id === themeId);
+    if (!theme) return null;
+
+    // Parser couleur hex → rgb
+    const hexToRgb = (hex) => {
+      const r = parseInt(hex.slice(1,3), 16);
+      const g = parseInt(hex.slice(3,5), 16);
+      const b = parseInt(hex.slice(5,7), 16);
+      return [r, g, b];
+    };
+
+    const c1 = hexToRgb(theme.c1 || '#4b4bf9');
+    const c2 = hexToRgb(theme.c2 || '#8bf0bb');
+    const c3 = hexToRgb(theme.c3 || '#4b4bf9');
+    const bg = hexToRgb(theme.bg || '#020610');
+
+    return {
+      bg,
+      colors: [
+        [...c1, 0.18],
+        [...c2, 0.14],
+        [...c3, 0.12],
+        [...c1, 0.10],
+        [...c2, 0.15],
+        [...c3, 0.12]
+      ]
+    };
+  } catch(e) { return null; }
+},
   // ── Init ──
   init() {
     this._canvas = document.getElementById('lava-canvas');
@@ -99,6 +198,28 @@ const LavaBackground = {
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['data-theme-style']
+    });
+
+    // ✅ Pause si onglet caché — économie batterie
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.pause();
+      } else {
+        this.reprendre();
+      }
+    });
+
+    // ✅ Pause si app en arrière-plan mobile
+    window.addEventListener('blur',  () => this.pause());
+    window.addEventListener('focus', () => this.reprendre());
+
+    // ✅ Sync avec changement thème via Themes.js
+    window.addEventListener('theme-changed', (e) => {
+      const id = e.detail?.id || 'cyber-blue';
+      this._theme = this.PALETTES[id]
+        || this._genererPaletteAuto(id)
+        || this.PALETTES['cyber-blue'];
+      this._creerBlobs();
     });
 
     console.log('[LavaBG] Initialisé ✅');
@@ -174,10 +295,16 @@ const LavaBackground = {
   },
 
   // ── Boucle animation ──
-  _loop() {
-    this._raf = requestAnimationFrame(() => this._loop());
-    this._draw();
-  },
+_loop() {
+  this._raf = requestAnimationFrame(() => this._loop());
+
+  // ✅ Throttle — max 30fps pour économiser la batterie
+  const now = Date.now();
+  if (now - (this._lastFrame || 0) < 33) return;
+  this._lastFrame = now;
+
+  this._draw();
+},
 
   // ── Dessiner ──
   _draw() {
