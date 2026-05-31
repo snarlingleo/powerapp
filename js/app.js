@@ -563,6 +563,7 @@ function _rendreNavBarPC(nav) {
     { section: 'OUTILS' },
     { id:'galerie',     label:'Exercices',   icon:'💪', color: theme.c1 },
     { id:'calculateur', label:'Calculateur', icon:'🧮', color: theme.c2 },
+    { id:'graphiques',  label:'Graphiques',  icon:'📈', color: '#8bf0bb' }, 
     { id:'gamification',label:'XP & Niveaux',icon:'⭐', color: '#f9ef77' },
     { id:'themes',      label:'Thèmes',      icon:'🎨', color: '#bfa1ff' },
     { id:'settings',    label:'Paramètres',  icon:'⚙️', color: theme.c2 }
@@ -1000,10 +1001,16 @@ case 'sounds':
   try { Sounds.renderSettings(container); }
   catch(e) { _rendrePlaceholder(container,'🔊','Sons',''); }
   break;  
-      case 'blessures':
-        try { Stats.renderBlessures(container); }
-        catch(e) { _rendrePlaceholder(container,'🩹','Blessures','Suivi de tes blessures.'); }
-        break;
+case 'blessures':
+  try { Stats.renderBlessures(container); }
+  catch(e) { _rendrePlaceholder(container,'🩹','Blessures','Suivi de tes blessures.'); }
+  break;
+
+// ✅ NOUVEAU — Graphiques interactifs
+case 'graphiques':
+  try { Charts.renderPage(container); }
+  catch(e) { _rendrePlaceholder(container,'📈','Graphiques','Module Charts non disponible.'); }
+  break;
       default: _rendreHome(container);
     }
   } catch(e) {
@@ -1147,7 +1154,8 @@ function rechercherDepuisHome(val) {
     { mots:['circuit'],                                            page:'circuit'       },
     { mots:['adaptatif','adaptation','intelligent'],               page:'adaptatif'     },
     { mots:['xp','niveau','gamification','trophee','trophée'],     page:'gamification'  },
-    { mots:['partage','share','export','exporter'],                page:'export' },
+    { mots:['partage','share','export','exporter'],                page:'export'        },
+    { mots:['graphique','graphiques','chart','courbe'],            page:'graphiques'    }, 
     { mots:['hors-ligne','offline','sync'],                        page:'offline'       }
   ];
 
