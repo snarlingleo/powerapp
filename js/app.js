@@ -5803,6 +5803,19 @@ window._liveExercices[seance.id] = seance.exercices || [];
                   onmouseup="this.style.transform=''">
             ▶ Démarrer le chrono
           </button>
+          <!-- ✅ Bouton voix -->
+<button id="btn-voice"
+        onclick="Voice.toggle()"
+        style="display:flex;align-items:center;gap:4px;
+               padding:5px 10px;
+               background:rgba(255,255,255,0.06);
+               border:1px solid rgba(255,255,255,0.1);
+               border-radius:var(--radius-full);
+               font-size:.68rem;font-weight:600;
+               color:rgba(255,255,255,0.5);
+               cursor:pointer;margin-top:4px">
+  🎙️ Voix
+</button>
           <button id="btn-mode-guide"
         onclick="_toggleModeGuide('${seance.id}')"
                   style="display:flex;align-items:center;gap:4px;
@@ -9046,6 +9059,11 @@ navigator.serviceWorker?.addEventListener('message',
     console.log('✅ PowerApp v4.0 — Prêt !');
 
   try { Sounds?.init?.(); } catch(e) {}
+
+// ✅ Voice init
+try {
+  if (Voice.estSupporte()) Voice.init();
+} catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════════
