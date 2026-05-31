@@ -859,9 +859,16 @@ case 'live': {
         catch(e) { _rendrePlaceholder(container,'📔','Journal','Ton journal d\'entraînement.'); }
         break;
       case 'objectifs':
-        try { Stats.renderObjectifs(container); }
-        catch(e) { _rendrePlaceholder(container,'🎯','Objectifs','Définis tes objectifs.'); }
-        break;
+  // ✅ Utiliser ObjectifsIA.renderPage si disponible
+  if (typeof ObjectifsIA !== 'undefined') {
+    ObjectifsIA.renderPage(container);
+  } else {
+    Stats.renderObjectifs(container);
+  }
+  break;
+        //try { Stats.renderObjectifs(container); }
+        //catch(e) { _rendrePlaceholder(container,'🎯','Objectifs','Définis tes objectifs.'); }
+        // break;
         // ✅ Cases à ajouter dans _rendreContenu()
 case 'themes':
   try { Themes.render(container); }
@@ -6744,8 +6751,15 @@ validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
     } catch(e) {}
 
     _confettiTheme(3000);
-    try { timerRepos?.jouerSon('pr'); } catch(e) {}
-    Utils.vibrer([200,100,200,100,400]);
+try { timerRepos?.jouerSon('pr'); } catch(e) {}
+Utils.vibrer([200,100,200,100,400]);
+
+// ✅ Event pour ObjectifsIA
+try {
+  window.dispatchEvent(new CustomEvent('seance-terminee', {
+    detail: { seanceId, date: Utils.aujourd_hui() }
+  }));
+} catch(e) {} 
 
     try { SeanceGuidee.annoncerFinSeance(volume, prs); } catch(e) {}
     try { SeanceGuidee.arreter(); } catch(e) {}
@@ -8700,6 +8714,7 @@ if (app) {
     try { Programme.getDateDebut();                  } catch(e) {}
     try { Gamification.verifierTrophees();           } catch(e) {}
     try { await Notifications.init();                } catch(e) {}
+    try { ObjectifsIA.init();                        } catch(e) {} 
     try { Offline.init?.();                          } catch(e) {}
     try { Offline.initInstall?.();                   } catch(e) {}
 
@@ -11706,6 +11721,466 @@ _creerSparks(count) {
     }
   };
 }
+
+// ════════════════════════════════════════════════════════════
+// ✅ NOUVEAU — OBJECTIFS INTELLIGENTS AUTO
+// ════════════════════════════════════════════════════════════
+const ObjectifsIA = {
+
+  genererSuggestions() {
+    try {
+      const prs       = Tracker.getAllPRs();
+      const seances   = Tracker.getTotalSeances();
+      const streak    = Tracker.getStreak();
+      const vol       = Tracker.getVolumeSemaine();
+      const objectifs = Tracker.getObjectifs();
+      const profil    = Tracker.getProfil();
+      const genre     = Utils.storage.get('ft_profil_onboarding', {}).genre || 'homme';
+      const suggestions   = [];
+      const dejaExistants = objectifs.map(o => o.titre?.toLowerCase() || '');
+
+      // ── Force basée sur PRs ──
+      const topPRs = Object.entries(prs)
+        .filter(([, v]) => v.rm1 > 0)
+        .sort(([, a], [, b]) => (b.rm1||0) - (a.rm1||0))
+        .slice(0, 3);
+
+      topPRs.forEach(([ref, pr]) => {
+        const ex = window.EXERCICES?.[ref];
+        if (!ex) return;
+        const palliers = [20,30,40,50,60,70,80,90,100,110,120,130,140,150];
+        const procPal  = palliers.find(p => p > pr.poids) || pr.poids + 10;
+        const titre    = `${ex.nom} — ${procPal}kg`;
+        if (!dejaExistants.includes(titre.toLowerCase())) {
+          suggestions.push({
+            id: `ia_force_${ref}`, titre,
+            description: `Atteindre ${procPal}kg au ${ex.nom}`,
+            emoji: ex.emoji || '💪', categorie: 'force',
+            valeurActuelle: pr.poids, valeurCible: procPal,
+            unite: 'kg', priorite: 1,
+            raison: `Tu es à ${pr.poids}kg — prochain palier : ${procPal}kg`,
+            xpRecompense: Math.round(procPal / 10) * 50
+          });
+        }
+      });
+
+      // ── Streak ──
+      const procStreak = streak.count < 7  ? 7
+                       : streak.count < 14 ? 14
+                       : streak.count < 30 ? 30
+                       : streak.count < 60 ? 60 : 100;
+      const titreStreak = `Streak de ${procStreak} jours`;
+      if (!dejaExistants.includes(titreStreak.toLowerCase())
+          && streak.count < procStreak) {
+        suggestions.push({
+          id: 'ia_streak', titre: titreStreak,
+          description: `Maintenir ${procStreak} jours consécutifs`,
+          emoji: '🔥', categorie: 'streak',
+          valeurActuelle: streak.count, valeurCible: procStreak,
+          unite: 'jours', priorite: 2,
+          raison: `Tu es à ${streak.count} jours — atteins ${procStreak} !`,
+          xpRecompense: procStreak * 10
+        });
+      }
+
+      // ── Volume ──
+      const volCible = vol < 5000  ? 5000
+                     : vol < 8000  ? 8000
+                     : vol < 12000 ? 12000 : 20000;
+      const titreVol = `Volume de ${Utils.formatVolume(volCible)} / semaine`;
+      if (!dejaExistants.includes(titreVol.toLowerCase())) {
+        suggestions.push({
+          id: 'ia_volume', titre: titreVol,
+          description: `Atteindre ${Utils.formatVolume(volCible)} hebdomadaire`,
+          emoji: '📦', categorie: 'volume',
+          valeurActuelle: Math.round(vol / 1000),
+          valeurCible:    Math.round(volCible / 1000),
+          unite: 'tonnes', priorite: 3,
+          raison: `Volume actuel : ${Utils.formatVolume(vol)} → cible : ${Utils.formatVolume(volCible)}`,
+          xpRecompense: 300
+        });
+      }
+
+      // ── Séances totales ──
+      const palliersSeances = [10,25,50,100,200,500];
+      const procSeances = palliersSeances.find(p => p > seances) || seances + 50;
+      const titreSeances = `${procSeances} séances totales`;
+      if (!dejaExistants.includes(titreSeances.toLowerCase())) {
+        suggestions.push({
+          id: 'ia_seances', titre: titreSeances,
+          description: `Atteindre ${procSeances} séances au total`,
+          emoji: '🏋️', categorie: 'seances',
+          valeurActuelle: seances, valeurCible: procSeances,
+          unite: 'séances', priorite: 4,
+          raison: `Tu as ${seances} séances — prochain palier : ${procSeances}`,
+          xpRecompense: procSeances * 5
+        });
+      }
+
+      // ── Poids corporel ──
+      try {
+        const mesure = Tracker.getDerniereMesure();
+        const poids  = mesure?.poids || profil.poids;
+        const obj    = Utils.storage.get('ft_profil_onboarding', {}).objectif;
+        if (poids && obj) {
+          let ciblePoids = null, titreP = null;
+          if (obj === 'perte_poids' && poids > 60) {
+            ciblePoids = Math.round((poids - 5) * 2) / 2;
+            titreP     = `Peser ${ciblePoids}kg`;
+          } else if (obj === 'prise_masse') {
+            ciblePoids = Math.round((poids + 5) * 2) / 2;
+            titreP     = `Peser ${ciblePoids}kg`;
+          }
+          if (titreP && !dejaExistants.includes(titreP.toLowerCase())) {
+            suggestions.push({
+              id: 'ia_poids', titre: titreP,
+              description: `Atteindre ${ciblePoids}kg`,
+              emoji: '⚖️', categorie: 'corps',
+              valeurActuelle: poids, valeurCible: ciblePoids,
+              unite: 'kg', priorite: 2,
+              raison: `Objectif ${obj === 'perte_poids' ? 'perte de poids' : 'prise de masse'} détecté`,
+              xpRecompense: 500
+            });
+          }
+        }
+      } catch(e) {}
+
+      // ── Hip Thrust (femme) ──
+      if (genre === 'femme') {
+        try {
+          const hip = prs['hip_thrust_sol'] || prs['hip_thrust'] || null;
+          if (hip?.poids) {
+            const cibleHip = hip.poids < 60  ? 60
+                           : hip.poids < 80  ? 80
+                           : hip.poids < 100 ? 100
+                           : hip.poids + 20;
+            const titreHip = `Hip Thrust ${cibleHip}kg`;
+            if (!dejaExistants.includes(titreHip.toLowerCase())) {
+              suggestions.push({
+                id: 'ia_hip', titre: titreHip,
+                description: `Atteindre ${cibleHip}kg au Hip Thrust`,
+                emoji: '🍑', categorie: 'force',
+                valeurActuelle: hip.poids, valeurCible: cibleHip,
+                unite: 'kg', priorite: 1,
+                raison: `Tu fais ${hip.poids}kg — vise ${cibleHip}kg !`,
+                xpRecompense: 400
+              });
+            }
+          }
+        } catch(e) {}
+      }
+
+      return suggestions.sort((a, b) => a.priorite - b.priorite);
+    } catch(e) { return []; }
+  },
+
+  accepterSuggestion(suggestion) {
+    try {
+      Tracker.ajouterObjectif({
+        titre:          suggestion.titre,
+        description:    suggestion.description,
+        emoji:          suggestion.emoji,
+        categorie:      suggestion.categorie,
+        valeurActuelle: suggestion.valeurActuelle,
+        valeurCible:    suggestion.valeurCible,
+        unite:          suggestion.unite,
+        source:         'ia',
+        xpRecompense:   suggestion.xpRecompense
+      });
+      try { Gamification.ajouterXP(25, 'Objectif IA ajouté'); } catch(e) {}
+      Utils.toast(`🎯 Objectif ajouté : ${suggestion.titre}`, 'success', 3000);
+      Utils.vibrerSuccess();
+      document.getElementById('modal-info')?.classList.add('hidden');
+      const pageObj = document.getElementById('page-objectifs');
+      if (pageObj?.classList.contains('active')) {
+        ObjectifsIA.renderPage(pageObj);
+      }
+      return true;
+    } catch(e) {
+      Utils.toast('❌ Erreur ajout objectif', 'error');
+      return false;
+    }
+  },
+
+  verifierObjectifsAtteints() {
+    try {
+      const objectifs = Tracker.getObjectifs().filter(o => !o.complete && o.valeurCible);
+      const prs       = Tracker.getAllPRs();
+      const seances   = Tracker.getTotalSeances();
+      const streak    = Tracker.getStreak();
+
+      objectifs.forEach(o => {
+        let valeurActuelle = o.valeurActuelle || 0;
+        let atteint        = false;
+
+        switch(o.categorie) {
+          case 'force': {
+            const ref = Object.keys(prs).find(r => {
+              const ex = window.EXERCICES?.[r];
+              return o.titre?.includes(ex?.nom || '');
+            });
+            if (ref) {
+              valeurActuelle = prs[ref].poids || 0;
+              atteint        = valeurActuelle >= o.valeurCible;
+            }
+            break;
+          }
+          case 'streak':
+            valeurActuelle = streak.count;
+            atteint        = valeurActuelle >= o.valeurCible;
+            break;
+          case 'seances':
+            valeurActuelle = seances;
+            atteint        = valeurActuelle >= o.valeurCible;
+            break;
+          case 'volume': {
+            const vol  = Tracker.getVolumeSemaine();
+            valeurActuelle = Math.round(vol / 1000);
+            atteint        = valeurActuelle >= o.valeurCible;
+            break;
+          }
+          case 'corps': {
+            const mesure   = Tracker.getDerniereMesure();
+            valeurActuelle = mesure?.poids || o.valeurActuelle || 0;
+            const profObjt = Utils.storage.get('ft_profil_onboarding', {}).objectif;
+            atteint = profObjt === 'perte_poids'
+              ? valeurActuelle <= o.valeurCible
+              : valeurActuelle >= o.valeurCible;
+            break;
+          }
+        }
+
+        Tracker.mettreAJourObjectif(o.id, { valeurActuelle });
+
+        if (atteint) {
+          Tracker.mettreAJourObjectif(o.id, {
+            complete: true, dateCompletion: Utils.aujourd_hui(), valeurActuelle
+          });
+          const xp = o.xpRecompense || 250;
+          try { Gamification.ajouterXP(xp, `Objectif atteint : ${o.titre}`); } catch(e) {}
+          try { Gamification.verifierTrophees(); } catch(e) {}
+          setTimeout(() => {
+            Utils.toast(`🎯 OBJECTIF ATTEINT ! ${o.emoji||''} ${o.titre} — +${xp} XP`, 'pr', 6000);
+            Utils.vibrerPR();
+            Utils.confetti(3000);
+          }, 500);
+        }
+      });
+    } catch(e) {}
+  },
+
+  renderPage(container) {
+    if (!container) return;
+    const suggestions = this.genererSuggestions();
+    const objectifs   = Tracker.getObjectifs();
+    const actifs      = objectifs.filter(o => !o.complete);
+    const completes   = objectifs.filter(o =>  o.complete);
+
+    container.innerHTML = `
+
+      ${suggestions.length > 0 ? `
+        <div style="background:linear-gradient(135deg,
+                    rgba(191,161,255,0.12),rgba(75,75,249,0.06));
+                    border:1px solid rgba(191,161,255,0.3);
+                    border-radius:var(--radius-xl);
+                    padding:16px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="font-size:1.2rem">🧠</span>
+            <div>
+              <div style="font-size:.7rem;font-weight:700;
+                          text-transform:uppercase;letter-spacing:.1em;
+                          color:var(--fd-lavender)">Suggestions IA</div>
+              <div style="font-size:.65rem;color:var(--text-muted)">
+                Basées sur ta progression réelle
+              </div>
+            </div>
+          </div>
+          ${suggestions.slice(0, 4).map(s => `
+            <div style="background:rgba(255,255,255,0.04);
+                        border:1px solid rgba(255,255,255,0.08);
+                        border-radius:var(--radius-lg);
+                        padding:12px 14px;margin-bottom:8px;
+                        display:flex;align-items:center;gap:12px">
+              <div style="font-size:1.5rem;flex-shrink:0">${s.emoji}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:.85rem;font-weight:700;
+                            white-space:nowrap;overflow:hidden;
+                            text-overflow:ellipsis">${s.titre}</div>
+                <div style="font-size:.65rem;color:var(--fd-lavender);margin-top:2px">
+                  ${s.raison}</div>
+                <div style="font-size:.6rem;color:var(--text-muted);margin-top:1px">
+                  +${s.xpRecompense} XP à l'accomplissement</div>
+              </div>
+              <button onclick="ObjectifsIA.accepterSuggestion(${
+                JSON.stringify(s).replace(/"/g, '&quot;')
+              })"
+                      style="padding:8px 14px;flex-shrink:0;
+                             background:var(--fd-lavender);
+                             border:none;border-radius:var(--radius-full);
+                             color:#09092d;font-size:.72rem;
+                             font-weight:800;cursor:pointer;
+                             white-space:nowrap">
+                + Ajouter
+              </button>
+            </div>`).join('')}
+          ${suggestions.length > 4 ? `
+            <div style="text-align:center;font-size:.68rem;
+                        color:var(--text-muted);margin-top:4px">
+              +${suggestions.length - 4} autres suggestions disponibles
+            </div>` : ''}
+        </div>` : ''}
+
+      <div class="card mb-md">
+        <div class="card-label">🎯 Nouvel objectif</div>
+        <div style="margin-top:var(--space-md)">
+          <div class="input-label">Description</div>
+          <input class="input mb-md" id="obj-titre"
+                 placeholder="ex: Bench press 100kg" />
+          <div style="display:grid;grid-template-columns:1fr 1fr;
+                      gap:var(--space-sm)">
+            <div>
+              <div class="input-label">Valeur actuelle</div>
+              <input class="input" id="obj-actuel" type="number" placeholder="80" />
+            </div>
+            <div>
+              <div class="input-label">Cible</div>
+              <input class="input" id="obj-cible" type="number" placeholder="100" />
+            </div>
+          </div>
+          <div style="margin-top:var(--space-sm)">
+            <div class="input-label">Unité</div>
+            <select class="input" id="obj-unite">
+              <option value="kg">kg</option>
+              <option value="reps">reps</option>
+              <option value="min">minutes</option>
+              <option value="km">km</option>
+              <option value="jours">jours</option>
+              <option value="%">%</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="Stats._ajouterObjectif()"
+                class="btn-primary mt-md" style="width:100%">
+          ➕ Ajouter
+        </button>
+      </div>
+
+      <div class="section-title">🎯 En cours (${actifs.length})</div>
+
+      ${actifs.length === 0 ? `
+        <div class="card mb-md"
+             style="text-align:center;padding:var(--space-xl)">
+          <div style="font-size:2.5rem;margin-bottom:8px">🎯</div>
+          <p style="color:var(--text-muted);font-size:.88rem">
+            Aucun objectif actif.<br>
+            Accepte une suggestion IA ou crée le tien !
+          </p>
+        </div>` :
+        actifs.map(o => {
+          const pct   = Tracker.calculerProgressionObjectif(o);
+          const color = o.source === 'ia'
+            ? 'var(--fd-lavender)' : 'var(--fd-indigo)';
+          return `
+            <div class="card mb-md">
+              <div style="display:flex;align-items:center;
+                          justify-content:space-between;margin-bottom:8px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:1.2rem">${o.emoji || '🎯'}</span>
+                  <div>
+                    <div style="font-weight:700;font-size:.88rem">${o.titre}</div>
+                    ${o.source === 'ia' ? `
+                      <span style="font-size:.55rem;padding:1px 5px;
+                                   background:rgba(191,161,255,0.15);
+                                   border:1px solid rgba(191,161,255,0.3);
+                                   border-radius:99px;
+                                   color:var(--fd-lavender)">
+                        🧠 IA
+                      </span>` : ''}
+                  </div>
+                </div>
+                <button onclick="ObjectifsIA._marquerAtteint('${o.id}')"
+                        class="btn-secondary btn-sm"
+                        style="font-size:.65rem">✓ Atteint</button>
+              </div>
+              ${o.valeurActuelle != null && o.valeurCible ? `
+                <div style="display:flex;justify-content:space-between;
+                            font-size:.72rem;margin-bottom:4px">
+                  <span style="color:var(--text-muted)">
+                    ${o.valeurActuelle} ${o.unite||''}</span>
+                  <span style="font-weight:700;color:${color}">${pct}%</span>
+                  <span style="color:var(--text-muted)">
+                    ${o.valeurCible} ${o.unite||''}</span>
+                </div>
+                <div class="progress-bar mb-sm">
+                  <div class="progress-fill"
+                       style="width:${pct}%;background:${color}"></div>
+                </div>` : ''}
+              <div style="font-size:.6rem;color:var(--text-muted)">
+                Créé le ${Utils.formatDateCourt(o.dateCreation)}
+                ${o.xpRecompense ? ` · +${o.xpRecompense} XP` : ''}
+              </div>
+            </div>`;
+        }).join('')}
+
+      ${completes.length > 0 ? `
+        <div class="section-title">✅ Accomplis (${completes.length})</div>
+        ${completes.map(o => `
+          <div class="card mb-md"
+               style="opacity:.7;border-color:var(--fd-mint);
+                      background:rgba(139,240,187,0.04)">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:1.2rem">${o.emoji||'✅'}</span>
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:.85rem;
+                            color:var(--fd-mint)">
+                  ✅ ${o.titre}</div>
+                <div style="font-size:.65rem;color:var(--text-muted)">
+                  Atteint le ${Utils.formatDateCourt(o.dateCompletion)}
+                  ${o.xpRecompense ? ` · +${o.xpRecompense} XP gagnés` : ''}
+                </div>
+              </div>
+            </div>
+          </div>`).join('')}` : ''}
+    `;
+  },
+
+  async _marquerAtteint(id) {
+    const ok = await Utils.confirmer(
+      '🎯 Objectif atteint ?',
+      'Félicitations ! Cet objectif sera marqué comme accompli.'
+    );
+    if (!ok) return;
+    const objectif = Tracker.getObjectifs().find(o => o.id === id);
+    Tracker.mettreAJourObjectif(id, {
+      complete: true, dateCompletion: Utils.aujourd_hui()
+    });
+    const xp = objectif?.xpRecompense || 250;
+    try { Gamification.ajouterXP(xp, 'Objectif atteint'); } catch(e) {}
+    try { Gamification.verifierTrophees(); } catch(e) {}
+    Utils.toast(`🎉 Objectif accompli ! +${xp} XP`, 'success', 4000);
+    Utils.vibrerPR();
+    Utils.confetti(2500);
+    const c = document.getElementById('page-objectifs')
+      || document.getElementById('stats-content');
+    if (c) this.renderPage(c);
+  },
+
+  init() {
+    setTimeout(() => {
+      try { this.verifierObjectifsAtteints(); } catch(e) {}
+    }, 5000);
+
+    window.addEventListener('seance-terminee', () => {
+      setTimeout(() => {
+        try { this.verifierObjectifsAtteints(); } catch(e) {}
+      }, 2000);
+    });
+
+    console.log('✅ ObjectifsIA initialisé');
+  }
+};
+
+window.ObjectifsIA = ObjectifsIA;
 
 window.CyberSparks = CyberSparks;
 
