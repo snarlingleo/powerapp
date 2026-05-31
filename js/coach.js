@@ -263,12 +263,18 @@ const Coach = {
 
     const reponse = this._raisonnerIAV7(q, ctx, ctx.prs);
 
-    const hist = this._historique;
-    hist.push({ role:'user', content:question }, { role:'assistant', content:reponse });
-    if (hist.length > 40) hist.splice(0, hist.length - 40);
-    this._historique = hist;
-    this._sauvegarderHistorique();
-
+// ✅ Fix — sauvegarder seulement la réponse (user déjà ajouté)
+const hist = this._historique;
+// Éviter doublon si déjà ajouté par _envoyerChat
+const dernierMsg = hist[hist.length - 1];
+if (!dernierMsg || dernierMsg.role !== 'user'
+    || dernierMsg.content !== question) {
+  hist.push({ role:'user', content:question });
+}
+hist.push({ role:'assistant', content:reponse });
+if (hist.length > 40) hist.splice(0, hist.length - 40);
+this._historique = hist;
+this._sauvegarderHistorique();
     return reponse;
   },
 
@@ -647,11 +653,6 @@ const Coach = {
   async _envoyerChat(question) {
     if (!question?.trim()) return;
     const q = question.trim();
-
-    const hist = this._historique;
-    hist.push({ role:'user', content:q });
-    this._historique = hist;
-
     const chatEl = document.getElementById('coach-chat-messages');
     if (chatEl) {
       chatEl.innerHTML += `
