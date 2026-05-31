@@ -43,6 +43,42 @@
     })();
   </script>
 
+  <style>
+  /* ✅ Fix LiveUltra — plein écran absolu */
+  #live-ultra-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-width: none !important;
+    margin: 0 !important;
+    transform: none !important;
+    z-index: 99999 !important;
+    overflow-y: auto !important;
+  }
+
+  /* ✅ Fix app-wrapper — ne pas bloquer les fixed */
+  #app-wrapper {
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  /* ✅ Fix app-main — ne pas bloquer les fixed */
+  .app-main,
+  #app-main {
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  /* ✅ Fix app-header — ne pas bloquer les fixed */
+  .app-header,
+  #app-header {
+    transform: none !important;
+  }
+</style>
+
 </head>
 
 <body>
