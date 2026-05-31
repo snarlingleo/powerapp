@@ -1530,18 +1530,23 @@ const Notifications = {
     return stats;
   },
 
-  _resetNotifsJour() {
-    const today = Utils.aujourd_hui();
-    [
-      'ft_rappel_',
-      'ft_motiv_',
-      'ft_verif_pr_',
-      'ft_notif_semaine_parf_',
-      'ft_notif_decharge_',
-      'ft_notif_surcharge_'
-    ].forEach(cle => Utils.storage.remove(cle + today));
-    Utils.toast('Notifs du jour réinitialisées', 'info');
-  }
+_resetNotifsJour() {
+  const today = Utils.aujourd_hui();
+  [
+    'ft_rappel_',
+    'ft_motiv_',
+    'ft_verif_pr_',
+    'ft_notif_semaine_parf_',
+    'ft_notif_decharge_',
+    'ft_notif_surcharge_'
+  ].forEach(cle => {
+    // ✅ Fix — Utils.storage.remove() polyfill
+    try {
+      localStorage.removeItem(cle + today);
+    } catch(e) {}
+  });
+  Utils.toast('✅ Notifs du jour réinitialisées', 'info');
+}
 };
 
 window.Notifications = Notifications;
