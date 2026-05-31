@@ -2446,9 +2446,8 @@ function _rendreHome(container) {
                           border-radius:99px;overflow:hidden;
                           margin-bottom:10px">
                 <div style="height:100%;width:${pct}%;
-                            `background:linear-gradient(90deg,
-  ${_liveStickyTheme.c2},
-  ${_liveStickyTheme.c1});`;
+                            background:linear-gradient(90deg,
+                                var(--fd-indigo),var(--fd-mint));
                             border-radius:99px;transition:width .5s">
                 </div>
               </div>
@@ -4654,6 +4653,8 @@ const LiveStickyBar = {
 _render() {
   const bar = document.getElementById('live-sticky-bar');
   if (!bar) return;
+
+  // ✅ Couleur thème actuel — DÉFINI ICI, PAS DANS LE HTML
   const _liveStickyTheme = (() => {
     try {
       const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
@@ -4661,108 +4662,98 @@ _render() {
     } catch(e) { return { c1:'#00cfff', c2:'#0066ff' }; }
   })();
 
-  const pct   = this._totalSeries > 0
+  const pct = this._totalSeries > 0
     ? Math.round((this._seriesFaites / this._totalSeries) * 100)
     : 0;
 
-    const exoActuel  = (this._exoActuel  || 0) + 1;
-    const totalExos  = this._totalExos   || 0;
+  const exoActuel = (this._exoActuel || 0) + 1;
+  const totalExos = this._totalExos || 0;
 
-    // Temps chrono
-    let temps = '00:00';
-    try {
-      if (Chrono?._actif) {
-        temps = Chrono.formaterDuree(Chrono.getDureeSecondes());
-      }
-    } catch(e) {}
-
-    const enPause = Chrono?._enPause || false;
-
-    bar.innerHTML = `
-
-      <!-- Ligne 1 : Chrono + Nom + Pause -->
-      <div style="display:flex;align-items:center;
-                  justify-content:space-between">
-
-        <!-- Chrono -->
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="font-size:1.1rem;font-weight:800;
-                      `color:${enPause
-  ? 'rgba(255,100,100,0.8)'
-  : _liveStickyTheme.c1};`
-                      font-variant-numeric:tabular-nums;
-                      letter-spacing:.02em">
-            ${enPause ? '⏸' : '⏱️'} ${temps}
-          </div>
-        </div>
-
-        <!-- Nom séance -->
-        <div style="font-size:.65rem;font-weight:700;
-                    color:var(--text-muted);
-                    text-align:center;flex:1;
-                    padding:0 8px;
-                    overflow:hidden;
-                    text-overflow:ellipsis;
-                    white-space:nowrap">
-          ${this._seance?.emoji || ''} ${this._seance?.nom || ''}
-        </div>
-
-        <!-- Bouton pause -->
-        <button onclick="ChronoSticky._togglePause();
-                         LiveStickyBar._render()"
-                style="padding:4px 10px;
-                      const _liveStickyTheme = (() => {
+  let temps = '00:00';
   try {
-    const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
-    return Themes.THEMES.find(t => t.id === id) || Themes.THEMES[0];
-  } catch(e) { return { c1:'#00cfff', c2:'#0066ff' }; }
-})();
-                       border:1px solid ${enPause
-                         ? 'rgba(139,240,187,0.3)'
-                         : 'rgba(255,255,255,0.1)'};
-                       border-radius:var(--radius-full);
-                       font-size:.65rem;font-weight:700;
-                       color:${enPause
-                         ? 'var(--fd-mint)'
-                         : 'var(--text-muted)'};
-                       cursor:pointer;white-space:nowrap">
-          ${enPause ? '▶ Reprendre' : '⏸ Pause'}
-        </button>
-      </div>
+    if (Chrono?._actif) {
+      temps = Chrono.formaterDuree(Chrono.getDureeSecondes());
+    }
+  } catch(e) {}
 
-      <!-- Ligne 2 : Barre progression + détail -->
-      <div>
-        <!-- Barre -->
-        <div style="height:5px;background:rgba(255,255,255,0.07);
-                    border-radius:99px;overflow:hidden;
-                    margin-bottom:4px">
-          <div style="height:100%;width:${pct}%;
-                      background:linear-gradient(90deg, ${_liveStickyTheme.c2}, ${_liveStickyTheme.c1});
-                      border-radius:99px;
-                      transition:width .5s ease">
-          </div>
-        </div>
+  const enPause = Chrono?._enPause || false;
 
-        <!-- Détail texte -->
-        <div style="display:flex;justify-content:space-between;
-                    align-items:center">
-          <div style="font-size:.6rem;color:var(--text-muted)">
-            ${totalExos > 0
-              ? `Exo ${Math.min(exoActuel, totalExos)}/${totalExos}`
-              : 'Démarrer la séance'}
-            ${this._seriesFaites > 0
-              ? ` · ${this._seriesFaites} série${this._seriesFaites > 1 ? 's' : ''} faite${this._seriesFaites > 1 ? 's' : ''}`
-              : ''}
-          </div>
-          <div style="font-size:.6rem;font-weight:700;
-                      color:var(--fd-indigo)">
-            ${this._seriesFaites}/${this._totalSeries} séries
-            · ${pct}%
-          </div>
+  // ✅ Toutes les variables calculées AVANT le template
+  const chronoColor    = enPause ? 'rgba(255,100,100,0.8)' : _liveStickyTheme.c1;
+  const pauseBg        = enPause ? `${_liveStickyTheme.c1}18` : 'rgba(255,255,255,0.06)';
+  const pauseColor     = enPause ? _liveStickyTheme.c1 : 'rgba(255,255,255,0.5)';
+  const pauseBorder    = enPause ? `${_liveStickyTheme.c1}44` : 'rgba(255,255,255,0.1)';
+  const barreGradient  = `linear-gradient(90deg,${_liveStickyTheme.c2},${_liveStickyTheme.c1})`;
+  const pctColor       = _liveStickyTheme.c1;
+  const chronoIcon     = enPause ? '⏸' : '⏱️';
+  const pauseLabel     = enPause ? '▶ Reprendre' : '⏸ Pause';
+
+  bar.innerHTML = `
+    <div style="display:flex;align-items:center;
+                justify-content:space-between">
+
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-size:1.1rem;font-weight:800;
+                    color:${chronoColor};
+                    font-variant-numeric:tabular-nums;
+                    letter-spacing:.02em">
+          ${chronoIcon} ${temps}
         </div>
       </div>
-    `;
-  },
+
+      <div style="font-size:.65rem;font-weight:700;
+                  color:var(--text-muted);
+                  text-align:center;flex:1;
+                  padding:0 8px;
+                  overflow:hidden;
+                  text-overflow:ellipsis;
+                  white-space:nowrap">
+        ${this._seance?.emoji || ''} ${this._seance?.nom || ''}
+      </div>
+
+      <button onclick="ChronoSticky._togglePause();
+                       LiveStickyBar._render()"
+              style="padding:4px 10px;
+                     background:${pauseBg};
+                     border:1px solid ${pauseBorder};
+                     border-radius:var(--radius-full);
+                     font-size:.65rem;font-weight:700;
+                     color:${pauseColor};
+                     cursor:pointer;white-space:nowrap">
+        ${pauseLabel}
+      </button>
+    </div>
+
+    <div>
+      <div style="height:5px;background:rgba(255,255,255,0.07);
+                  border-radius:99px;overflow:hidden;
+                  margin-bottom:4px">
+        <div style="height:100%;width:${pct}%;
+                    background:${barreGradient};
+                    border-radius:99px;
+                    transition:width .5s ease">
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;
+                  align-items:center">
+        <div style="font-size:.6rem;color:var(--text-muted)">
+          ${totalExos > 0
+            ? `Exo ${Math.min(exoActuel, totalExos)}/${totalExos}`
+            : 'Démarrer la séance'}
+          ${this._seriesFaites > 0
+            ? ` · ${this._seriesFaites} série${this._seriesFaites > 1 ? 's' : ''} faite${this._seriesFaites > 1 ? 's' : ''}`
+            : ''}
+        </div>
+        <div style="font-size:.6rem;font-weight:700;
+                    color:${pctColor}">
+          ${this._seriesFaites}/${this._totalSeries} séries
+          · ${pct}%
+        </div>
+      </div>
+    </div>
+  `;
+},
 
   _lancerUpdate() {
     clearInterval(this._interval);
@@ -5163,8 +5154,7 @@ function _rendreChecklistPreSeance(container, options, seanceId) {
              style="height:100%;
                     width:${Math.round((exosVus.length/Math.max(exos.length,1))*100)}%;
                     `background:linear-gradient(90deg,
-  ${_liveStickyTheme.c2},
-  ${_liveStickyTheme.c1});`
+                     var(--fd-indigo),var(--fd-mint));`
                     border-radius:99px;
                     transition:width .5s ease">
         </div>
@@ -7828,7 +7818,7 @@ _render() {
   const el = document.getElementById('chrono-sticky');
   if (!el) return;
 
-  // ✅ Couleurs thème actuel
+  // ✅ Thème — défini ICI
   const theme = (() => {
     try {
       const id = Utils.storage.get('ft_theme_style', 'cyber-blue');
@@ -7839,23 +7829,27 @@ _render() {
   const temps   = this._getTemps();
   const enPause = Chrono?._enPause || false;
 
+  // ✅ Variables calculées AVANT le template
+  const chronoColor = enPause ? 'rgba(255,100,100,0.8)' : theme.c1;
+  const pauseBg     = enPause ? `${theme.c1}18` : 'rgba(255,255,255,0.06)';
+  const pauseColor  = enPause ? theme.c1 : 'rgba(255,255,255,0.5)';
+  const pauseBorder = enPause ? `${theme.c1}44` : 'rgba(255,255,255,0.1)';
+  const arrowColor  = `${theme.c1}66`;
+  const labelColor  = `${theme.c1}66`;
+  const pauseLabel  = enPause ? '▶ Reprendre' : '⏸ Pause';
+
   el.innerHTML = `
-    <!-- ✅ Zone cliquable → renvoie au Live -->
     <div class="chrono-sticky-time"
          onclick="ChronoSticky._allerAuLive()"
          style="cursor:pointer;flex:1;
                 display:flex;align-items:center;gap:8px">
 
-      <span class="chrono-sticky-icon ${enPause ? 'paused' : ''}"
-            style="font-size:1.3rem">
+      <span style="font-size:1.3rem">
         ${enPause ? '⏸' : '⏱️'}
       </span>
 
       <div style="flex:1">
-        <div class="chrono-sticky-display ${enPause ? 'paused' : ''}"
-             style="color:${enPause
-               ? 'rgba(255,100,100,0.8)'
-               : theme.c1};
+        <div style="color:${chronoColor};
                     text-shadow:0 0 16px ${theme.c1}88;
                     font-family:'Orbitron',monospace;
                     font-size:1.8rem;font-weight:800;
@@ -7864,9 +7858,8 @@ _render() {
         </div>
 
         ${this._seanceNom ? `
-          <div class="chrono-sticky-label"
-               style="font-size:.6rem;
-                      color:${theme.c1}66;
+          <div style="font-size:.6rem;
+                      color:${labelColor};
                       font-family:'Orbitron',monospace;
                       letter-spacing:2px;
                       text-transform:uppercase">
@@ -7874,34 +7867,26 @@ _render() {
           </div>` : ''}
       </div>
 
-      <!-- Flèche → indique que c'est cliquable -->
       <div style="font-size:.7rem;
-                  color:${theme.c1}66;
+                  color:${arrowColor};
                   font-family:'Orbitron',monospace;
                   padding:0 4px">
         ▶
       </div>
     </div>
 
-    <!-- Bouton pause -->
     <div class="chrono-sticky-controls">
-      <button class="chrono-sticky-btn ${enPause ? 'resume' : 'pause'}"
-              onclick="ChronoSticky._togglePause();
+      <button onclick="ChronoSticky._togglePause();
                        ChronoSticky._render()"
-              style="
-                padding:6px 14px;
-                border-radius:99px;
-                font-size:.72rem;font-weight:700;
-                cursor:pointer;border:1px solid;
-                white-space:nowrap;
-                background:${enPause
-                  ? theme.c1 + '18'
-                  : 'rgba(255,255,255,0.06)'};
-                color: ${enPause ? 'rgba(255,100,100,0.8)' : _liveStickyTheme.c1};
-                border-color:${enPause
-                  ? theme.c1 + '44'
-                  : 'rgba(255,255,255,0.1)'}">
-        ${enPause ? '▶ Reprendre' : '⏸ Pause'}
+              style="padding:6px 14px;
+                     border-radius:99px;
+                     font-size:.72rem;font-weight:700;
+                     cursor:pointer;border:1px solid;
+                     white-space:nowrap;
+                     background:${pauseBg};
+                     color:${pauseColor};
+                     border-color:${pauseBorder}">
+        ${pauseLabel}
       </button>
     </div>
   `;
