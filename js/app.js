@@ -8311,8 +8311,9 @@ _lancerUpdate() {
     // ✅ Re-render complet chaque seconde
     // → prend les nouvelles couleurs thème automatiquement
     this._render();
-  }, 1000);
-},
+}, 1000);
+  }
+};
 window.ChronoSticky = ChronoSticky;
 
 // ════════════════════════════════════════════════════════════
