@@ -4798,14 +4798,18 @@ _render() {
   `;
 },
 
-  _lancerUpdate() {
-    clearInterval(this._interval);
-    this._interval = setInterval(() => {
-      const bar = document.getElementById('live-sticky-bar');
-      if (!bar) { clearInterval(this._interval); return; }
-      this._render();
-    }, 1000);
-  },
+_lancerUpdate() {
+  clearInterval(this._interval);
+  this._interval = setInterval(() => {
+    const bar = document.getElementById('live-sticky-bar');
+    if (!bar) {
+      clearInterval(this._interval);
+      return;
+    }
+    // ✅ Re-render complet → couleurs thème toujours à jour
+    this._render();
+  }, 1000);
+},
 
   masquer() {
     clearInterval(this._interval);
@@ -8297,10 +8301,18 @@ _allerAuLive() {
     } catch(e) {}
   },
 
-  _lancerUpdate() {
-    clearInterval(this._interval);
-    this._interval = setInterval(() => {
-      if (!this._visible) { clearInterval(this._interval); return; }
+_lancerUpdate() {
+  clearInterval(this._interval);
+  this._interval = setInterval(() => {
+    if (!this._visible) {
+      clearInterval(this._interval);
+      return;
+    }
+    // ✅ Re-render complet chaque seconde
+    // → prend les nouvelles couleurs thème automatiquement
+    this._render();
+  }, 1000);
+},
       const disp    = document.querySelector('.chrono-sticky-display');
       const icon    = document.querySelector('.chrono-sticky-icon');
       const btn     = document.querySelector('.chrono-sticky-btn');
