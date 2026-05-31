@@ -8313,27 +8313,6 @@ _lancerUpdate() {
     this._render();
   }, 1000);
 },
-      const disp    = document.querySelector('.chrono-sticky-display');
-      const icon    = document.querySelector('.chrono-sticky-icon');
-      const btn     = document.querySelector('.chrono-sticky-btn');
-      const enPause = Chrono?._enPause || false;
-      if (!Chrono?._actif) return;
-      if (disp) {
-        const sec = Chrono.getDureeSecondes?.() || 0;
-        disp.textContent = Chrono.formaterDuree?.(sec) || '00:00';
-        disp.className   = `chrono-sticky-display ${enPause ? 'paused' : ''}`;
-      }
-      if (icon) {
-        icon.textContent = enPause ? '⏸' : '⏱️';
-        icon.className   = `chrono-sticky-icon ${enPause ? 'paused' : ''}`;
-      }
-      if (btn) {
-        btn.textContent = enPause ? '▶ Reprendre' : '⏸ Pause';
-        btn.className   = `chrono-sticky-btn ${enPause ? 'resume' : 'pause'}`;
-      }
-    }, 1000);
-  }
-};
 window.ChronoSticky = ChronoSticky;
 
 // ════════════════════════════════════════════════════════════
