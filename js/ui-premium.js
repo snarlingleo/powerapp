@@ -3620,13 +3620,22 @@ if (!restaure) {
     const theme = this._getTheme(); 
     const overlay = document.createElement('div');
     overlay.id    = 'live-ultra-overlay';
-    overlay.style.cssText = `
-      position:fixed;inset:0;z-index:9999;
-      background:${theme.bg || '#020610'};
-      display:flex;flex-direction:column;
-      overflow:hidden;user-select:none;
-      -webkit-user-select:none;touch-action:pan-y;
-      animation:pm-fadeIn .3s ease`;
+overlay.style.cssText = `
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  width:100%;
+  max-width:100%;
+  z-index:9999;
+  background:${theme.bg || '#020610'};
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  overflow-y:auto;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:pan-y;
+  box-sizing:border-box;
+  animation:pm-fadeIn .3s ease`;
     overlay.innerHTML = this._htmlOverlay();
     document.body.appendChild(overlay);
     this._attacherEventsOverlay();
@@ -3649,8 +3658,22 @@ if (!restaure) {
     const pct = Math.round((seriesFaites / Math.max(totalSeries,1)) * 100);
 
     return `
-      <style>
-        @keyframes ultraPulse {
+<style>
+  /* ✅ Fix layout Ultra */
+  #live-ultra-overlay * {
+    box-sizing: border-box;
+  }
+  #live-ultra-overlay {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+  .ultra-input {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  @keyframes ultraPulse {
           0%,100%{transform:scale(1);}
           50%    {transform:scale(1.05);}
         }
@@ -3684,9 +3707,10 @@ if (!restaure) {
         }
       </style>
 
-      <!-- Header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;
-                  padding:16px 20px 8px;flex-shrink:0">
+<!-- Header -->
+<div style="display:flex;align-items:center;justify-content:space-between;
+            padding:16px 20px 8px;flex-shrink:0;
+            width:100%;box-sizing:border-box">
         <button onclick="LiveUltra.quitter()"
                 style="width:40px;height:40px;background:rgba(255,255,255,.08);
                        border:1px solid rgba(255,255,255,.1);border-radius:50%;
@@ -3710,8 +3734,9 @@ if (!restaure) {
         </button>
       </div>
 
-      <!-- Progress global -->
-      <div style="padding:0 20px;flex-shrink:0">
+<!-- Progress global -->
+<div style="padding:0 20px;flex-shrink:0;
+            width:100%;box-sizing:border-box">
         <div style="height:4px;background:rgba(255,255,255,.06);
                     border-radius:99px;overflow:hidden">
           <div style="height:100%;width:${pct}%;
@@ -3728,11 +3753,12 @@ if (!restaure) {
         </div>
       </div>
 
-      <!-- Zone exercice -->
-      <div style="flex:1;display:flex;flex-direction:column;
-                  align-items:center;justify-content:center;
-                  padding:8px 20px;overflow:hidden"
-           id="ultra-zone-exercice">
+<!-- Zone exercice -->
+<div style="flex:1;display:flex;flex-direction:column;
+            align-items:center;justify-content:center;
+            padding:8px 20px;overflow-y:auto;
+            width:100%;box-sizing:border-box"
+     id="ultra-zone-exercice">
 
         <!-- Emoji -->
         <div style="text-align:center;margin-bottom:12px">
@@ -3894,11 +3920,12 @@ style="width:100%;padding:22px;
         </div>
       </div>
 
-      <!-- Nav bas -->
-      <div style="display:flex;align-items:center;justify-content:space-between;
-                  padding:12px 20px;flex-shrink:0;
-                  background:rgba(255,255,255,.03);
-                  border-top:1px solid rgba(255,255,255,.06)">
+<!-- Nav bas -->
+<div style="display:flex;align-items:center;justify-content:space-between;
+            padding:12px 20px;flex-shrink:0;
+            background:rgba(255,255,255,.03);
+            border-top:1px solid rgba(255,255,255,.06);
+            width:100%;box-sizing:border-box">
         <button onclick="LiveUltra._exoPrecedent()"
                 style="padding:10px 16px;background:rgba(255,255,255,.06);
                        border:1px solid rgba(255,255,255,.1);border-radius:12px;
