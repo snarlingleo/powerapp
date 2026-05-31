@@ -1565,6 +1565,23 @@ const timerRepos = {
   style.textContent = css;
   document.head.appendChild(style);
 })();
+// ✅ Fix Notifications — méthodes manquantes
+if (!Utils.heureActuelle) {
+  Utils.heureActuelle = () => new Date().getHours();
+}
+
+if (!Utils.random) {
+  Utils.random = (arr) => {
+    if (!arr?.length) return '';
+    return arr[Math.floor(Math.random() * arr.length)];
+  };
+}
+
+if (!Utils.storage.remove) {
+  Utils.storage.remove = (cle) => {
+    try { localStorage.removeItem(cle); } catch(e) {}
+  };
+}
 
 // ✅ Init PWA install listener
 Utils.pwa.init();
