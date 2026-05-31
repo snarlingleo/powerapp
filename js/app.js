@@ -4080,6 +4080,20 @@ ${!derniereSerie ? `
   this._reposTotal      = secondes;
   this._reposActif      = true;
   this._transitionActif = false;
+  // ✅ Déléguer au SW pour fonctionner téléphone verrouillé
+try {
+  navigator.serviceWorker.ready.then(sw => {
+    sw.active?.postMessage({
+      type: 'TIMER_REPOS_START',
+      payload: {
+        duree:       secondes,
+        exoIdx,
+        serieIdx,
+        totalSeries
+      }
+    });
+  });
+} catch(e) {}   
 
   // ✅ FIX — Utiliser heure absolue au lieu de décompte
   const heureDeFin = Date.now() + (secondes * 1000);
@@ -4115,8 +4129,15 @@ ${!derniereSerie ? `
 
     // ✅ Timer terminé
     if (resteSec <= 0) {
-      clearInterval(this._reposInterval);
-      localStorage.removeItem('ft_timer_actif');
+clearInterval(this._reposInterval);
+localStorage.removeItem('ft_timer_actif');
+
+// ✅ Annuler le timer SW (plus nécessaire)
+try {
+  navigator.serviceWorker.ready.then(sw => {
+    sw.active?.postMessage({ type: 'TIMER_REPOS_CANCEL' });
+  });
+} catch(e) {}
       Utils.vibrer([200, 100, 200]);
       try { timerRepos?.jouerSon('rest'); } catch(e) {}
       try { SeanceGuidee.annoncerFinRepos(); } catch(e) {}
@@ -4516,9 +4537,16 @@ _verifierTimerAuRetour() {
   localStorage.removeItem('ft_timer_actif');
   localStorage.removeItem('ft_timer_fin');
   localStorage.removeItem('ft_timer_total');
-  localStorage.removeItem('ft_timer_seance');
+localStorage.removeItem('ft_timer_seance');
 
-  document.getElementById('repos-auto-overlay')?.remove();
+// ✅ Annuler SW timer
+try {
+  navigator.serviceWorker.ready.then(sw => {
+    sw.active?.postMessage({ type: 'TIMER_REPOS_CANCEL' });
+  });
+} catch(e) {}
+
+document.getElementById('repos-auto-overlay')?.remove();
 },
 
 // ✅ Sauvegarder l'état complet en localStorage
@@ -8714,7 +8742,24 @@ if (app) {
     try { Programme.getDateDebut();                  } catch(e) {}
     try { Gamification.verifierTrophees();           } catch(e) {}
     try { await Notifications.init();                } catch(e) {}
-    try { ObjectifsIA.init();                        } catch(e) {} 
+    try { ObjectifsIA.init(); } catch(e) {}
+
+// ✅ Enregistrer Periodic Background Sync
+try {
+  navigator.serviceWorker.ready.then(async sw => {
+    if ('periodicSync' in sw) {
+      // Streak check quotidien
+      await sw.periodicSync.register('powerapp-streak-check', {
+        minInterval: 24 * 60 * 60 * 1000
+      });
+      // Backup hebdomadaire
+      await sw.periodicSync.register('powerapp-weekly', {
+        minInterval: 7 * 24 * 60 * 60 * 1000
+      });
+      console.log('[App] Periodic sync enregistré ✅');
+    }
+  });
+} catch(e) {}
     try { Offline.init?.();                          } catch(e) {}
     try { Offline.initInstall?.();                   } catch(e) {}
 
@@ -8810,14 +8855,67 @@ try {
       try { _updateHeaderXP();             } catch(e) {}
     }, 300);
 
-    navigator.serviceWorker?.addEventListener('message',
-      event => {
-        const { type, page } = event.data || {};
-        if (type === 'NAVIGATE' && page) {
+navigator.serviceWorker?.addEventListener('message',
+  event => {
+    const { type, page } = event.data || {};
+
+    switch(type) {
+      case 'NAVIGATE':
+        if (page) {
           try { naviguer(page); } catch(e) {}
         }
-      }
-    );
+        break;
+
+      // ✅ Timer repos terminé depuis SW
+      case 'TIMER_REPOS_TERMINE':
+        try {
+          Utils.vibrer([200, 100, 200]);
+          // Si overlay repos visible → lancer countdown
+          const overlay = document.getElementById('repos-auto-overlay');
+          if (overlay) {
+            try { LiveRapide._lancerCountdown(''); } catch(e) {}
+          } else {
+            Utils.toast(
+              '⏱ Repos terminé ! Prêt pour la série suivante ?',
+              'success', 4000
+            );
+          }
+        } catch(e) {}
+        break;
+
+      // ✅ +15s depuis notif
+      case 'TIMER_REPOS_PLUS15':
+        try { LiveRapide._ajouterTemps(15); } catch(e) {}
+        break;
+
+      // ✅ Eau ajoutée depuis notif
+      case 'EAU_AJOUTEE':
+        try {
+          const { ml = 250 } = event.data;
+          const cle  = `ft_nutrition_eau_${Utils.aujourd_hui()}`;
+          const act  = Utils.storage.get(cle, 0);
+          Utils.storage.set(cle, act + ml);
+          Utils.toast(`💧 +${ml}ml ajouté !`, 'success', 1500);
+        } catch(e) {}
+        break;
+
+      // ✅ SW mis à jour
+      case 'SW_UPDATED':
+        console.log('[App] SW mis à jour:', event.data.version);
+        break;
+
+      // ✅ Backup hebdo depuis SW
+      case 'WEEKLY_BACKUP':
+        try { BackupAuto._effectuer(); } catch(e) {}
+        break;
+
+      // ✅ Check streak depuis SW
+      case 'STREAK_CHECK':
+        try { Notifications.verifierStreakDanger(); } catch(e) {}
+        break;
+    }
+  }
+);
 
     console.log('✅ PowerApp v4.0 — Prêt !');
 
