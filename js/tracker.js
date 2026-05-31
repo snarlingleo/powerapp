@@ -593,18 +593,23 @@ const Tracker = {
 
   getDerniereSéance() { return this.getDerniereSeance(); },
 
-  getSeanceDuJour(date = null) {
-    const d = date || Utils.aujourd_hui();
-    for (let i = 0; i < localStorage.length; i++) {
-      const cle = localStorage.key(i);
-      if (cle?.startsWith(`ft_seance_${d}`)) {
-        try {
-          return JSON.parse(localStorage.getItem(cle));
-        } catch(e) {}
-      }
-    }
-    return null;
-  },
+getSeanceDuJour(date = null) {
+  const d = date || Utils.aujourd_hui();
+  let meilleureSeance = null;
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const cle = localStorage.key(i);
+    if (!cle?.startsWith(`ft_seance_${d}`)) continue;
+    try {
+      const data = JSON.parse(localStorage.getItem(cle));
+      if (!data) continue;
+      // ✅ Fix — préférer la séance complète
+      if (data.complete) return data;
+      if (!meilleureSeance) meilleureSeance = data;
+    } catch(e) {}
+  }
+  return meilleureSeance;
+},
 
   getSeancesMois(mois = null) {
     const now     = new Date();
@@ -929,9 +934,14 @@ const Tracker = {
 
     for (let i = 0; i < nbJours; i++) {
       const date    = Utils.ajouterJours(Utils.aujourd_hui(), -i);
-      const planning = window.PLANNING_SEMAINE
-        ? window.PLANNING_SEMAINE[Utils.indexJourSemaine(date)]
-        : null;
+// ✅ Fix — vérifier Planning global avec fallback
+const planningGlobal = window.PLANNING_SEMAINE
+  || (typeof Programme !== 'undefined'
+      ? Programme.getPlanningSemaine?.() : null)
+  || null;
+const planning = planningGlobal
+  ? planningGlobal[Utils.indexJourSemaine(date)]
+  : null;
       const seance  = this.getSeanceDuJour(date);
 
       if (dateDebut && date < dateDebut) {
