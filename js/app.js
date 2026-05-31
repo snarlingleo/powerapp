@@ -678,6 +678,20 @@ function _updateHeaderXP() {
       </div>`;
   } catch(e) {}
 }
+// ✅ Bug 2 — Mise à jour automatique XP header
+(function _initHeaderXPAuto() {
+  // ✅ Interval toutes les 30s
+  setInterval(function() {
+    try { _updateHeaderXP(); } catch(e) {}
+  }, 30000);
+
+  // ✅ Event custom après gain XP
+  window.addEventListener('xp-gained', function() {
+    setTimeout(function() {
+      try { _updateHeaderXP(); } catch(e) {}
+    }, 200);
+  });
+})();
 // ════ TOAST CYBER — Override couleurs ════
 function _showToastCyber(msg, type = 'success', duration = 3000) {
   const container = document.getElementById('toast-container');
