@@ -311,6 +311,29 @@
       align-items:center; justify-content:center;
       animation:pm-fadeIn .3s ease;
     }
+    /* ✅ Fix LiveUltra plein écran absolu */
+  #live-ultra-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    margin: 0 !important;
+    transform: none !important;
+    z-index: 99999 !important;
+    overflow-y: auto !important;
+  }
+
+  /* ✅ Fix contenu centré dans Ultra */
+  #live-ultra-overlay > div {
+    width: 100% !important;
+    max-width: 480px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+  }
 
     /* ── Toast ── */
     #pm-toast-container {
