@@ -759,6 +759,10 @@ const Sounds = {
   },
 
   celebrerPR(nomExo = '', valeur = 0) {
+  // ✅ Fix F — Résoudre le nom si c'est une ref exercice
+  if (nomExo && window.EXERCICES?.[nomExo]) {
+    nomExo = window.EXERCICES[nomExo].nom || nomExo;
+  }
     this.jouer('pr');
     this.vibrer('pr');
     this.confetti(4000, 'fort');
@@ -928,6 +932,22 @@ const Sounds = {
   }
 };
 
+// ✅ Fix B — Sounds.init() manquant
+Sounds.init = function() {
+  try {
+    // Précharger le contexte audio sur interaction
+    document.addEventListener('touchstart', () => {
+      this._getCtx();
+    }, { once: true, passive: true });
+
+    document.addEventListener('click', () => {
+      this._getCtx();
+    }, { once: true });
+
+    console.log('[Sounds] ✅ Init OK');
+  } catch(e) {}
+};
+
 window.Sounds = Sounds;
 
 // Bridge PM.sons → Sounds
@@ -940,7 +960,83 @@ PM.sons = {
   niveau() { Sounds.jouer('levelup');   }
 };
 
-PM.confetti = (duree) => Sounds.confetti(duree || 3000, 'fort');
+// ✅ Fix C — Confetti couleur thème actif
+PM.confetti = function(duree) {
+  try {
+    const id    = Utils.storage.get('ft_theme_style', 'cyber-blue');
+    const theme = window.Themes?.THEMES?.find(t => t.id === id);
+
+    if (!theme) {
+      Sounds.confetti(duree || 3000, 'fort');
+      return;
+    }
+
+    const canvas  = document.createElement('canvas');
+    canvas.style.cssText = `
+      position:fixed;inset:0;z-index:9998;
+      pointer-events:none;width:100%;height:100%`;
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+
+    const ctx      = canvas.getContext('2d');
+    const dureeMs  = duree || 3000;
+    const couleurs = [
+      theme.c1, theme.c2, theme.c3,
+      '#ffffff', 'rgba(255,255,255,0.6)'
+    ];
+
+    const particules = Array.from({ length: 130 }, () => ({
+      x:     Math.random() * canvas.width,
+      y:     Math.random() * canvas.height * -1,
+      w:     Math.random() * 12 + 4,
+      h:     Math.random() * 6  + 2,
+      color: couleurs[Math.floor(Math.random() * couleurs.length)],
+      vx:    (Math.random() - .5) * 5,
+      vy:    Math.random() * 4  + 2,
+      vr:    (Math.random() - .5) * .3,
+      r:     Math.random() * Math.PI * 2,
+      op:    1,
+      forme: Math.random() > .4 ? 'rect' : 'cercle'
+    }));
+
+    let t0 = null;
+    const animer = ts => {
+      if (!t0) t0 = ts;
+      const el = ts - t0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particules.forEach(p => {
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.r  += p.vr;
+        p.vy += .07;
+        if (el > dureeMs * .7)
+          p.op = Math.max(0, 1 - (el - dureeMs * .7) / (dureeMs * .3));
+        ctx.save();
+        ctx.globalAlpha = p.op;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.r);
+        ctx.fillStyle   = p.color;
+        ctx.shadowBlur  = 8;
+        ctx.shadowColor = p.color;
+        if (p.forme === 'cercle') {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        }
+        ctx.restore();
+      });
+      if (el < dureeMs) requestAnimationFrame(animer);
+      else canvas.remove();
+    };
+    requestAnimationFrame(animer);
+
+  } catch(e) {
+    Sounds.confetti(duree || 3000, 'fort');
+  }
+};
 
 // ═══════════════════════════════════════════════════════════
 // 7. TIMER MANAGER — Fusion timer-manager.js v2.0
@@ -984,9 +1080,18 @@ const TimerManager = {
     this._mettreAJourDisplay();
     this._mettreAJourCercle();
 
-    this._timerInterval = setInterval(() => {
-      if (this._enPause) return;
-      this._secondesRestantes--;
+// ✅ Fix G — Heure absolue pour background
+this._heureFin = Date.now() + (secondes * 1000);
+
+this._timerInterval = setInterval(() => {
+  if (this._enPause) {
+    // ✅ Décaler heureFin pendant la pause
+    this._heureFin += 1000;
+    return;
+  }
+  // ✅ Calculer depuis heure réelle
+  const resteMs = this._heureFin - Date.now();
+  this._secondesRestantes = Math.ceil(resteMs / 1000);
       this._mettreAJourDisplay();
       this._mettreAJourCercle();
 
@@ -3439,9 +3544,15 @@ const LiveUltra = {
     this._exercices      = exercices || [];
     this._exoIdx         = 0;
     this._serieIdx       = 0;
-    this._seriesValidees = {};
-    this._reposActif     = false;
-    this._preRemplirCharges();
+this._seriesValidees = {};
+this._reposActif     = false;
+this._rpeActuel      = null;
+
+// ✅ Essayer de restaurer un état précédent
+const restaure = this._restaurerEtat(seanceId);
+if (!restaure) {
+  this._preRemplirCharges();
+}
     this._creerOverlay();
     this._attacherGestes();
     this._attacherClavier();
@@ -3744,7 +3855,26 @@ background:${
                     ontouchstart="LiveUltra._ajusterReps(2)">+2</button>
           </div>
         </div>
-
+        <!-- RPE -->
+<div style="width:100%;margin-bottom:14px">
+  <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;
+              letter-spacing:.1em;color:rgba(255,255,255,.3);
+              margin-bottom:8px;text-align:center">
+    😤 RPE (optionnel)
+  </div>
+  <div style="display:flex;gap:5px" id="ultra-rpe-row">
+    ${[6,7,8,9,10].map(r => `
+      <button onclick="LiveUltra._setRPE(${r},this)"
+              data-rpe="${r}"
+              style="flex:1;padding:8px 2px;font-size:.75rem;font-weight:700;
+                     background:rgba(255,255,255,.04);
+                     border:1px solid rgba(255,255,255,.08);
+                     border-radius:8px;color:rgba(255,255,255,.4);
+                     cursor:pointer;transition:all .15s;text-align:center">
+        ${r}
+      </button>`).join('')}
+  </div>
+</div> 
         <!-- Valider -->
         <button id="ultra-btn-valider"
                 onclick="LiveUltra._validerSerie()"
@@ -3818,12 +3948,20 @@ background:${i===this._exoIdx
       return;
     }
 
-    const ex     = this._exercices[this._exoIdx];
-    const key    = `${this._exoIdx}-${this._serieIdx}`;
-    const totalS = ex?.series || 3;
+const ex     = this._exercices[this._exoIdx];
+const key    = `${this._exoIdx}-${this._serieIdx}`;
+const totalS = ex?.series || 3;
+const rpe    = this._rpeActuel || null;
 
-    this._seriesValidees[key] = { poids, reps,
-      exoIdx:this._exoIdx, serieIdx:this._serieIdx };
+this._seriesValidees[key] = {
+  poids, reps, rpe,
+  exoIdx:   this._exoIdx,
+  serieIdx: this._serieIdx
+};
+this._rpeActuel = null; // ✅ Reset RPE après validation
+
+// ✅ Sauvegarder l'état
+this._sauvegarderEtat();
 
     let isPR = false;
     try {
@@ -3980,14 +4118,18 @@ background:${i===this._exoIdx
         }
       }
       if (reste <= 3 && reste > 0) Sounds.vibrer('leger');
-      if (reste <= 0) {
-        clearInterval(this._reposInterval);
-        this._reposActif = false;
-        Sounds.jouer('repos_fin');
-        Sounds.vibrer([200,100,200]);
-        if (this._voixActif) this._parler('Repos terminé ! Allez, on y va !');
-        this._rafraichir();
-      }
+if (reste <= 0) {
+  clearInterval(this._reposInterval);
+  this._reposActif = false;
+  Sounds.jouer('repos_fin');
+  Sounds.vibrer([200, 100, 200]);
+  if (this._voixActif) {
+    this._parler('Repos terminé ! Allez, on y va !');
+  }
+  // ✅ Fix E — Notification système
+  this._notifierFinRepos();
+  this._rafraichir();
+}
     }, 300);
   },
 
@@ -4215,7 +4357,89 @@ background:${i===this._exoIdx
       }
     }
   },
+// ✅ Fix D1 — RPE
+_setRPE(val, btn) {
+  this._rpeActuel = val;
+  document.querySelectorAll('#ultra-rpe-row button').forEach(b => {
+    b.style.background  = 'rgba(255,255,255,.04)';
+    b.style.borderColor = 'rgba(255,255,255,.08)';
+    b.style.color       = 'rgba(255,255,255,.4)';
+  });
+  if (btn) {
+    btn.style.background  = 'rgba(75,75,249,.25)';
+    btn.style.borderColor = 'rgba(75,75,249,.4)';
+    btn.style.color       = 'white';
+  }
+},
 
+// ✅ Fix D2 — Sauvegarde état localStorage
+_sauvegarderEtat() {
+  try {
+    localStorage.setItem('ft_ultra_etat', JSON.stringify({
+      seanceId:       this._seanceId,
+      exercices:      this._exercices,
+      exoIdx:         this._exoIdx,
+      serieIdx:       this._serieIdx,
+      seriesValidees: this._seriesValidees,
+      timestamp:      Date.now()
+    }));
+  } catch(e) {}
+},
+
+// ✅ Fix D3 — Restaurer état
+_restaurerEtat(seanceId) {
+  try {
+    const saved = localStorage.getItem('ft_ultra_etat');
+    if (!saved) return false;
+    const etat = JSON.parse(saved);
+    if (etat.seanceId !== seanceId) return false;
+    if (Date.now() - etat.timestamp > 4 * 60 * 60 * 1000) {
+      localStorage.removeItem('ft_ultra_etat');
+      return false;
+    }
+    this._exoIdx         = etat.exoIdx   || 0;
+    this._serieIdx       = etat.serieIdx || 0;
+    this._seriesValidees = etat.seriesValidees || {};
+    PM.toast(
+      `↩️ Progression restaurée !`,
+      'success', 2000
+    );
+    return true;
+  } catch(e) { return false; }
+},
+// ✅ Fix E — Notification système fin repos
+async _notifierFinRepos() {
+  try {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+    if (Notification.permission !== 'granted') return;
+
+    const ex      = this._exercices[this._exoIdx] || {};
+    const exoData = (window.EXERCICES || {})[ex.ref || ''] || {};
+    const serie   = this._serieIdx + 1;
+    const totalS  = ex.series || 3;
+
+    const notif = new Notification('⏱️ Repos terminé !', {
+      body:    `Série ${serie}/${totalS} — ${exoData.nom || 'Exercice'}\nAllez, c\'est reparti ! 💪`,
+      icon:    '/icon-192.png',
+      badge:   '/icon-192.png',
+      vibrate: [200, 100, 200],
+      tag:     'ultra-repos',
+      silent:  false,
+      requireInteraction: false
+    });
+
+    notif.onclick = () => {
+      window.focus();
+      notif.close();
+    };
+
+    setTimeout(() => notif.close(), 6000);
+
+  } catch(e) {}
+},
   _formatTemps(sec) {
     sec = Math.max(0, Math.round(sec));
     const m = Math.floor(sec/60);
@@ -4791,8 +5015,208 @@ const Profil = {
   },
 
   // ── renderPage (conservé pour compatibilité app.js) ──
-  renderPage(container) {
-  return;
+renderPage(container) {
+  if (!container) return;
+  const profil = this.get();
+  const resume = this.getResume(profil);
+  const reco   = this.getRecommandations(profil);
+
+  container.innerHTML = `
+
+    <!-- Hero -->
+    <div style="background:linear-gradient(135deg,var(--fd-indigo),#7b2ff7);
+                border-radius:22px;padding:24px 20px;text-align:center;
+                margin-bottom:14px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;
+                  border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.12),transparent 70%);
+                  pointer-events:none"></div>
+
+      <div style="width:80px;height:80px;border-radius:50%;margin:0 auto 12px;
+                  border:3px solid rgba(255,255,255,.3);
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:2.5rem;background:rgba(255,255,255,.1)">
+        ${profil.avatar || '💪'}
+      </div>
+
+      <div style="font-size:1.4rem;font-weight:800">${profil.nom || 'Athlète'}</div>
+
+      ${resume.genreLabel ? `
+        <div style="font-size:.75rem;opacity:.7;margin-top:4px">
+          ${resume.genreLabel}
+        </div>` : ''}
+
+      <!-- Badges -->
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;
+                  gap:6px;margin-top:12px">
+        ${[
+          { label: resume.objectif,  color: resume.objectifCouleur },
+          { label: resume.niveau,    color: '#4b4bf9'              },
+          { label: resume.lieu,      color: '#8bf0bb'              }
+        ].map(b => `
+          <span style="padding:4px 10px;
+                       background:${b.color}22;
+                       border:1px solid ${b.color}44;
+                       border-radius:99px;
+                       font-size:.62rem;font-weight:700;
+                       color:${b.color}">
+            ${b.label}
+          </span>`).join('')}
+      </div>
+    </div>
+
+    <!-- Stats corporelles -->
+    ${profil.poids || profil.taille ? `
+      <div style="display:grid;grid-template-columns:repeat(${profil.poids && profil.taille ? '3' : '2'},1fr);
+                  gap:8px;margin-bottom:14px">
+        ${profil.poids ? `
+          <div style="background:rgba(255,255,255,.04);
+                      border:1px solid rgba(255,255,255,.08);
+                      border-radius:14px;padding:12px;text-align:center">
+            <div style="font-size:1.2rem;font-weight:800;
+                        color:var(--fd-mint)">${profil.poids}kg</div>
+            <div style="font-size:.55rem;color:rgba(255,255,255,.4);
+                        margin-top:3px;text-transform:uppercase">Poids</div>
+          </div>` : ''}
+        ${profil.taille ? `
+          <div style="background:rgba(255,255,255,.04);
+                      border:1px solid rgba(255,255,255,.08);
+                      border-radius:14px;padding:12px;text-align:center">
+            <div style="font-size:1.2rem;font-weight:800;
+                        color:var(--fd-indigo)">${profil.taille}cm</div>
+            <div style="font-size:.55rem;color:rgba(255,255,255,.4);
+                        margin-top:3px;text-transform:uppercase">Taille</div>
+          </div>` : ''}
+        ${resume.imc ? `
+          <div style="background:rgba(255,255,255,.04);
+                      border:1px solid rgba(255,255,255,.08);
+                      border-radius:14px;padding:12px;text-align:center">
+            <div style="font-size:1.2rem;font-weight:800;
+                        color:${resume.imcLabel?.color || 'var(--fd-lemon)'}">
+              ${resume.imc}
+            </div>
+            <div style="font-size:.55rem;
+                        color:${resume.imcLabel?.color || 'rgba(255,255,255,.4)'};
+                        margin-top:3px;text-transform:uppercase">
+              IMC · ${resume.imcLabel?.label || ''}
+            </div>
+          </div>` : ''}
+      </div>` : ''}
+
+    <!-- Nutrition -->
+    <div style="background:rgba(255,255,255,.03);
+                border:1px solid rgba(255,255,255,.07);
+                border-radius:18px;padding:16px;margin-bottom:14px">
+      <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                  letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:12px">
+        🥗 Objectifs nutritionnels
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        ${[
+          { label:'Kcal',  val:resume.nutrition?.calories,  color:'var(--fd-lemon)'   },
+          { label:'Prot.', val:`${resume.nutrition?.proteines}g`, color:'var(--fd-coral)'   },
+          { label:'Gluc.', val:`${resume.nutrition?.glucides}g`,  color:'var(--fd-mint)'    },
+          { label:'Lip.',  val:`${resume.nutrition?.lipides}g`,   color:'var(--fd-lavender)'}
+        ].map(n => `
+          <div style="text-align:center;padding:8px 4px;
+                      background:${n.color}11;
+                      border:1px solid ${n.color}22;
+                      border-radius:10px">
+            <div style="font-size:.82rem;font-weight:800;color:${n.color}">
+              ${n.val || '—'}
+            </div>
+            <div style="font-size:.52rem;color:rgba(255,255,255,.4);margin-top:2px">
+              ${n.label}
+            </div>
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:8px;text-align:center;
+                  font-size:.65rem;color:var(--fd-indigo)">
+        💧 ${resume.nutrition?.eau || 2.5}L d'eau / jour
+      </div>
+    </div>
+
+    <!-- Recommandations programme -->
+    <div style="background:rgba(75,75,249,.06);
+                border:1px solid rgba(75,75,249,.15);
+                border-radius:18px;padding:16px;margin-bottom:14px">
+      <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                  letter-spacing:.1em;color:var(--fd-indigo);margin-bottom:10px">
+        📋 Recommandations programme
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${[
+          { label:'Séances/sem', val:reco.seancesParSemaine, emoji:'📅' },
+          { label:'Reps',        val:reco.reps,              emoji:'🔁' },
+          { label:'Repos',       val:reco.repos+'s',         emoji:'⏱️' },
+          { label:'Durée',       val:reco.dureeSeance+'min', emoji:'⏰' }
+        ].map(r => `
+          <div style="display:flex;align-items:center;gap:8px;
+                      padding:8px 10px;
+                      background:rgba(255,255,255,.03);
+                      border-radius:10px">
+            <span style="font-size:1rem">${r.emoji}</span>
+            <div>
+              <div style="font-size:.8rem;font-weight:700;
+                          color:var(--fd-indigo)">${r.val}</div>
+              <div style="font-size:.55rem;color:rgba(255,255,255,.4)">
+                ${r.label}
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+      ${resume.conseil ? `
+        <div style="margin-top:10px;padding:8px 12px;
+                    background:rgba(75,75,249,.08);
+                    border-radius:10px;font-size:.72rem;
+                    color:rgba(191,161,255,.8);line-height:1.5">
+          💡 ${resume.conseil}
+        </div>` : ''}
+    </div>
+
+    <!-- Muscles ciblés -->
+    ${resume.muscles?.length > 0 ? `
+      <div style="background:rgba(255,255,255,.03);
+                  border:1px solid rgba(255,255,255,.07);
+                  border-radius:18px;padding:16px;margin-bottom:14px">
+        <div style="font-size:.6rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:10px">
+          🎯 Muscles ciblés
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${resume.muscles.map(m => `
+            <span style="padding:5px 12px;
+                         background:rgba(75,75,249,.12);
+                         border:1px solid rgba(75,75,249,.25);
+                         border-radius:99px;font-size:.7rem;
+                         font-weight:700;color:var(--fd-lavender)">
+              💪 ${m}
+            </span>`).join('')}
+        </div>
+      </div>` : ''}
+
+    <!-- Bouton modifier -->
+    <button onclick="Profil._ouvrirEdition()"
+            style="width:100%;padding:16px;
+                   background:var(--fd-indigo);border:none;
+                   border-radius:14px;font-size:.9rem;font-weight:800;
+                   color:white;cursor:pointer;
+                   box-shadow:0 4px 20px rgba(75,75,249,.4);
+                   margin-bottom:14px">
+      ✏️ Modifier mon profil
+    </button>
+
+    <!-- Danger zone -->
+    <button onclick="typeof UI!=='undefined' && UI.confirmerReset()"
+            style="width:100%;padding:12px;
+                   background:rgba(255,141,150,.06);
+                   border:1px solid rgba(255,141,150,.15);
+                   border-radius:14px;color:var(--fd-coral);
+                   font-size:.82rem;font-weight:600;cursor:pointer">
+      🗑️ Réinitialiser toutes les données
+    </button>
+
+    <div style="height:8px"></div>
+  `;
 }
 };
 
