@@ -8692,6 +8692,8 @@ if (app) {
   app.style.display       = 'flex';
   app.style.flexDirection = 'column';
   app.style.minHeight     = '100vh';
+  app.style.overflow      = 'visible';
+  app.style.position      = 'relative';
 }
 
     try { Tracker.init?.();                          } catch(e) {}
