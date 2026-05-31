@@ -439,6 +439,13 @@ try {
     ChronoSticky._render();
   }
 
+   // ✅ Sync LavaBackground avec nouveau thème
+  try {
+    window.dispatchEvent(new CustomEvent('theme-changed', {
+      detail: { id }
+    }));
+  } catch(e) {}
+
   // ✅ Re-render LiveStickyBar si visible
   const lsb = document.getElementById('live-sticky-bar');
   if (lsb && typeof LiveStickyBar !== 'undefined') {
