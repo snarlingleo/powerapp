@@ -459,8 +459,12 @@ const Photos = {
       || document.getElementById('page-content');
   },
 
-  render(container) {
+render(container) {
+  // ✅ Fix — fallback automatique si container null
+  if (!container) {
+    container = this._getContainer();
     if (!container) return;
+  }
 
     const stats  = this.getStats();
     const toutes = this.getToutes();
