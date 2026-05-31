@@ -418,11 +418,45 @@ const Themes = {
   _selectionnerTheme: function(id) {
     this.appliquer(id);
 
-    try {
-      var oldNavCss = document.getElementById('cb-nav-css');
-      if (oldNavCss) oldNavCss.remove();
-      if (typeof _rendreNavBar === 'function') _rendreNavBar();
-    } catch(e) {}
+try {
+  // ✅ Supprimer l'ancien CSS nav pour forcer re-render
+  var oldNavCss = document.getElementById('cb-nav-css');
+  if (oldNavCss) oldNavCss.remove();
+
+  // ✅ Re-render navbar avec nouvelles couleurs
+  if (typeof _rendreNavBar === 'function') {
+    _rendreNavBar();
+  }
+
+  // ✅ Re-render header
+  if (typeof _updateHeader === 'function') {
+    _updateHeader(window._pageActive || 'home');
+  }
+
+  // ✅ Re-render ChronoSticky si visible
+  if (typeof ChronoSticky !== 'undefined'
+      && ChronoSticky._visible) {
+    ChronoSticky._render();
+  }
+
+  // ✅ Re-render LiveStickyBar si visible
+  const lsb = document.getElementById('live-sticky-bar');
+  if (lsb && typeof LiveStickyBar !== 'undefined') {
+    LiveStickyBar._render();
+  }
+
+  // ✅ Mettre à jour les sparks
+  try {
+    const styleEl = document.getElementById('cb-sparks-theme');
+    if (styleEl) {
+      const theme = this.THEMES.find(
+        function(t) { return t.id === id; }
+      );
+      if (theme) this._updateSparks(theme);
+    }
+  } catch(e) {}
+
+} catch(e) {}
 
     try {
       if (typeof _updateHeader === 'function') {
