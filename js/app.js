@@ -568,7 +568,8 @@ function _rendreNavBarPC(nav) {
     { id:'gamification',label:'XP & Niveaux',icon:'⭐', color: '#f9ef77' },
     { id:'themes',      label:'Thèmes',      icon:'🎨', color: '#bfa1ff' },
     { id:'custom_exercices', label:'Mes exercices', icon:'⭐', color: theme.c1 },
-    { id:'report', label:'Rapport hebdo', icon:'📊', color:'#8bf0bb' }, 
+    { id:'report', label:'Rapport hebdo', icon:'📊', color:'#8bf0bb' },
+    { id:'music', label:'Musique', icon:'🎵', color:'#FC3C44' },  
     { id:'settings',    label:'Paramètres',  icon:'⚙️', color: theme.c2 },
 
     // Section social
@@ -687,11 +688,12 @@ function _updateHeader(page) {
   settings:     { emoji:'⚙️', titre:'Paramètres',          cat:'SETTINGS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
   themes:       { emoji:'🎨', titre:'Thèmes',              cat:'SETTINGS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
   sounds:       { emoji:'🔊', titre:'Sons',                cat:'SETTINGS', c1:'#0099ff', c2:'#0044cc' },
-  report:       { emoji:'📊', titre:'Rapport hebdo', cat:'TOOLS', c1:_themeHeader.c1, c2:_themeHeader.c2 },   
+  report:       { emoji:'📊', titre:'Rapport hebdo',       cat:'TOOLS',    c1:_themeHeader.c1, c2:_themeHeader.c2 },   
   offline:      { emoji:'📵', titre:'Hors-ligne',          cat:'SETTINGS', c1:'#7700ff', c2:'#0033cc' },
   profil:       { emoji:'👤', titre:'Profil',              cat:'CORE',     c1:_themeHeader.c1, c2:_themeHeader.c2 },
   mon_profil:   { emoji:'👤', titre:'Mon Profil',          cat:'SETTINGS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
-  duo:          { emoji:'👥', titre:'Mode Duo',            cat:'SOCIAL', c1:'#bfa1ff', c2:'#4b4bf9' }, 
+  duo:          { emoji:'👥', titre:'Mode Duo',            cat:'SOCIAL',   c1:'#bfa1ff', c2:'#4b4bf9' },
+  music:        { emoji:'🎵', titre:'Musique Workout',     cat:'TOOLS',    c1:'#FC3C44', c2:'#4b4bf9' }, 
 };
 
   const cfg = configs[page] || configs.home;
@@ -1044,7 +1046,11 @@ case 'blessures':
 case 'duo':
   try { Duo.render(container); }
   catch(e) { _rendrePlaceholder(container,'👥','Duo',''); }
-  break;          
+  break;
+case 'music':
+  try { Music.render(container); }
+  catch(e) { _rendrePlaceholder(container,'🎵','Musique',''); }
+  break;
 
 // ✅ NOUVEAU — Graphiques interactifs
 case 'graphiques':
@@ -1255,7 +1261,8 @@ function rechercherDepuisHome(val) {
     { mots:['partage','share','export','exporter'],                page:'export'        },
     { mots:['graphique','graphiques','chart','courbe'],            page:'graphiques'    }, 
     { mots:['hors-ligne','offline','sync'],                        page:'offline'       },
-    { mots:['duo','ami','amis','défi','challenge'],                page:'duo'           }, 
+    { mots:['duo','ami','amis','défi','challenge'],                page:'duo'           },
+    { mots:['musique','music','playlist','spotify','apple','deezer'], page:'music'      }, 
   ];
 
   // ✅ Chercher une page correspondante
@@ -7082,9 +7089,12 @@ try {
   _demarrerSeanceManuellement(seanceId) {
     try {
       // Démarrer le tracker
-      try {
+    try {  
         Tracker.demarrerSeance(seanceId);
       } catch(e) {}
+    try { 
+         Music.autoPlaySiActif('normal'); 
+      } catch(e) {}   
 
       // Démarrer le chrono
       try {
