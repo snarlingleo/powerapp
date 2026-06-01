@@ -567,6 +567,7 @@ function _rendreNavBarPC(nav) {
     { id:'graphiques',  label:'Graphiques',  icon:'📈', color: '#8bf0bb' }, 
     { id:'gamification',label:'XP & Niveaux',icon:'⭐', color: '#f9ef77' },
     { id:'themes',      label:'Thèmes',      icon:'🎨', color: '#bfa1ff' },
+    { id:'custom_exercices', label:'Mes exercices', icon:'⭐', color: theme.c1 }, 
     { id:'settings',    label:'Paramètres',  icon:'⚙️', color: theme.c2 }
   ];
 
@@ -968,10 +969,27 @@ case 'live': {
     ); }
   }
   break;
-      case 'galerie':
-        try { GalerieExercices.render(container); }
-        catch(e) { _rendrePlaceholder(container,'💪','Galerie exercices','Tous les exercices disponibles.'); }
-        break;
+case 'galerie':
+  try {
+    // ✅ Onglets : Tous les exercices | Mes exercices perso
+    const hasCustm = Object.keys(
+      CustomExercices?.getAll() || {}
+    ).length > 0;
+
+    if (hasCustm) {
+      // Render avec tabs
+      _rendreGalerieAvecTabs(container);
+    } else {
+      GalerieExercices.render(container);
+    }
+  } catch(e) {
+    _rendrePlaceholder(container,'💪','Galerie exercices','');
+  }
+  break;
+      case 'custom_exercices':
+  try { CustomExercices.render(container); }
+  catch(e) { _rendrePlaceholder(container,'⭐','Mes exercices',''); }
+  break;    
       case 'journal':
         try { Stats.renderJournal(container); }
         catch(e) { _rendrePlaceholder(container,'📔','Journal','Ton journal d\'entraînement.'); }
@@ -1032,6 +1050,64 @@ case 'graphiques':
           </button>
         </p>
       </div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// ✅ GALERIE AVEC TABS — Tous + Exercices perso
+// ════════════════════════════════════════════════════════════
+function _rendreGalerieAvecTabs(container) {
+  const nbTous  = Object.keys(window.EXERCICES || {}).length;
+  const nbPerso = Object.keys(CustomExercices?.getAll() || {}).length;
+
+  container.innerHTML = `
+    <div class="tabs-container mb-md">
+      <button class="tab-btn active"
+              onclick="_switchGalerieTab('tous',this)">
+        💪 Tous (${nbTous})
+      </button>
+      <button class="tab-btn"
+              onclick="_switchGalerieTab('perso',this)">
+        ⭐ Mes exercices (${nbPerso})
+      </button>
+    </div>
+    <div id="galerie-tab-tous"></div>
+    <div id="galerie-tab-perso" style="display:none"></div>
+  `;
+
+  // ✅ Render onglet "Tous" immédiatement
+  const tousEl = document.getElementById('galerie-tab-tous');
+  if (tousEl) GalerieExercices.render(tousEl);
+}
+
+function _switchGalerieTab(tab, btn) {
+  document.querySelectorAll('.tabs-container .tab-btn')
+    .forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const tousEl  = document.getElementById('galerie-tab-tous');
+  const persoEl = document.getElementById('galerie-tab-perso');
+
+  if (tab === 'tous') {
+    if (tousEl)  tousEl.style.display  = 'block';
+    if (persoEl) persoEl.style.display = 'none';
+  } else {
+    if (tousEl)  tousEl.style.display  = 'none';
+    if (persoEl) {
+      persoEl.style.display = 'block';
+      // ✅ Render exercices perso
+      try {
+        CustomExercices.render(persoEl);
+      } catch(e) {
+        persoEl.innerHTML = `
+          <div class="card" style="text-align:center;padding:30px">
+            <div style="font-size:2rem;margin-bottom:8px">⭐</div>
+            <div style="font-size:.85rem;color:var(--text-muted)">
+              Module exercices perso non chargé
+            </div>
+          </div>`;
+      }
+    }
   }
 }
 
