@@ -9123,7 +9123,14 @@ try {
   );
 }  
       try {
-  setTimeout(() => BackupAuto.verifier(), 10000);
+  // ✅ APRÈS
+setTimeout(() => {
+  try {
+    if (typeof BackupAuto !== 'undefined') {
+      BackupAuto.verifier();
+    }
+  } catch(e) {}
+}, 10000);
 } catch(e) {}
     try { TimerManager.initAlarme?.(); } catch(e) {}
 
