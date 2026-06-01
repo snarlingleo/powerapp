@@ -238,9 +238,10 @@ const Report = {
           {
             emoji:'📦', label:'Volume total',
             val:Utils.formatVolume(data.volumeTotal),
-            sub:deltaVol !== 0
-              ? `${deltaVol>0?'+':`'}${deltaVol}% vs sem. préc.`
-              : 'Pas de comparaison',
+            // ✅ CORRIGÉ
+sub: deltaVol !== 0
+  ? `${deltaVol > 0 ? '+' : ''}${deltaVol}% vs sem. préc.`
+  : 'Pas de comparaison',
             color: deltaVol >= 0
               ? 'var(--fd-mint)' : 'var(--fd-coral)',
             bg: deltaVol >= 0
