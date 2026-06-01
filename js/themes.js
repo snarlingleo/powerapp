@@ -286,8 +286,70 @@ const Themes = {
         '--fd-mint': '#0066ff',
         '--fd-lavender': '#4b4bf9'
       }
-    }
+    },
+    // ✅ Ajoute à la fin du tableau THEMES
+{
+  id:       'crimson-dark',
+  nom:      'Crimson Dark',
+  emoji:    '🔴',
+  desc:     'Rouge profond intense',
+  c1:       '#ff2244',
+  c2:       '#cc0022',
+  c3:       '#ff6688',
+  preview:  ['#ff2244', '#cc0022', '#0e0206']
+},
+{
+  id:       'neon-pink',
+  nom:      'Neon Pink',
+  emoji:    '🩷',
+  desc:     'Rose néon électrique',
+  c1:       '#ff2d9b',
+  c2:       '#cc006e',
+  c3:       '#ff88cc',
+  preview:  ['#ff2d9b', '#cc006e', '#0f0208']
+},
+{
+  id:       'ocean-deep',
+  nom:      'Ocean Deep',
+  emoji:    '🌊',
+  desc:     'Bleu turquoise abyssal',
+  c1:       '#00e5ff',
+  c2:       '#0097a7',
+  c3:       '#00bcd4',
+  preview:  ['#00e5ff', '#0097a7', '#010d12']
+},
+{
+  id:       'galaxy',
+  nom:      'Galaxy',
+  emoji:    '🌌',
+  desc:     'Violet cosmique étoilé',
+  c1:       '#c084fc',
+  c2:       '#7c3aed',
+  c3:       '#e879f9',
+  preview:  ['#c084fc', '#7c3aed', '#07030f']
+},
+{
+  id:       'solar-gold',
+  nom:      'Solar Gold',
+  emoji:    '☀️',
+  desc:     'Doré solaire puissant',
+  c1:       '#ffd700',
+  c2:       '#ff8c00',
+  c3:       '#ffec6e',
+  preview:  ['#ffd700', '#ff8c00', '#0d0800']
+},
+{
+  id:       'shadow-black',
+  nom:      'Shadow Black',
+  emoji:    '🖤',
+  desc:     'Noir absolu minimaliste',
+  c1:       '#e0e0e0',
+  c2:       '#9e9e9e',
+  c3:       '#ffffff',
+  preview:  ['#222222', '#444444', '#000000']
+} 
   ],
+   
 
   // ════════════════════════════════════════════════
   // MÉTHODES
