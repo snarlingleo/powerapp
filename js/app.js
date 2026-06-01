@@ -567,7 +567,8 @@ function _rendreNavBarPC(nav) {
     { id:'graphiques',  label:'Graphiques',  icon:'📈', color: '#8bf0bb' }, 
     { id:'gamification',label:'XP & Niveaux',icon:'⭐', color: '#f9ef77' },
     { id:'themes',      label:'Thèmes',      icon:'🎨', color: '#bfa1ff' },
-    { id:'custom_exercices', label:'Mes exercices', icon:'⭐', color: theme.c1 }, 
+    { id:'custom_exercices', label:'Mes exercices', icon:'⭐', color: theme.c1 },
+    { id:'report', label:'Rapport hebdo', icon:'📊', color:'#8bf0bb' }, 
     { id:'settings',    label:'Paramètres',  icon:'⚙️', color: theme.c2 }
   ];
 
@@ -682,6 +683,7 @@ function _updateHeader(page) {
   settings:     { emoji:'⚙️', titre:'Paramètres',          cat:'SETTINGS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
   themes:       { emoji:'🎨', titre:'Thèmes',              cat:'SETTINGS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
   sounds:       { emoji:'🔊', titre:'Sons',                cat:'SETTINGS', c1:'#0099ff', c2:'#0044cc' },
+  report:       { emoji:'📊', titre:'Rapport hebdo', cat:'TOOLS', c1:_themeHeader.c1, c2:_themeHeader.c2 },   
   offline:      { emoji:'📵', titre:'Hors-ligne',          cat:'SETTINGS', c1:'#7700ff', c2:'#0033cc' },
   profil:       { emoji:'👤', titre:'Profil',              cat:'CORE',     c1:_themeHeader.c1, c2:_themeHeader.c2 },
   mon_profil:   { emoji:'👤', titre:'Mon Profil',          cat:'SETTINGS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
@@ -986,6 +988,10 @@ case 'galerie':
     _rendrePlaceholder(container,'💪','Galerie exercices','');
   }
   break;
+      case 'report':
+  try { Report.render(container); }
+  catch(e) { _rendrePlaceholder(container,'📊','Rapport',''); }
+  break;    
       case 'custom_exercices':
   try { CustomExercices.render(container); }
   catch(e) { _rendrePlaceholder(container,'⭐','Mes exercices',''); }
