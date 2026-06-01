@@ -6608,35 +6608,51 @@ const App = {
     btn.style.background  = 'var(--fd-indigo-dim)';
   },
 
-  sauvegarderProfil() {
-    try {
-      const nom    = document.getElementById('profil-edit-nom')?.value?.trim();
-      const poids  = parseFloat(document.getElementById('profil-edit-poids')?.value);
-      const taille = parseFloat(document.getElementById('profil-edit-taille')?.value);
+sauvegarderProfil() {
+  try {
+    const nom     = document.getElementById('profil-edit-nom')?.value?.trim();
+    const poids   = parseFloat(document.getElementById('profil-edit-poids')?.value);
+    const taille  = parseFloat(document.getElementById('profil-edit-taille')?.value);
+    const age     = parseInt(document.getElementById('profil-edit-age')?.value);
+    const niveau  = document.getElementById('profil-edit-niveau')?.value;
+    const lieu    = document.getElementById('profil-edit-lieu')?.value;
+    const objectif= document.getElementById('profil-edit-objectif')?.value;
 
-      if (!nom) { Utils.toast('Entre ton prénom !', 'error'); return; }
+    if (!nom) { Utils.toast('Entre ton prénom !', 'error'); return; }
 
-      const profil  = Tracker.getProfil();
-      const updates = {
-        nom,
-        poids:  isNaN(poids)  ? profil.poids  : poids,
-        taille: isNaN(taille) ? profil.taille : taille
-      };
+    const profil  = Tracker.getProfil();
+    const updates = {
+      nom,
+      poids:  isNaN(poids)  ? profil.poids  : poids,
+      taille: isNaN(taille) ? profil.taille : taille,
+      age:    isNaN(age)    ? profil.age    : age
+    };
 
-      if (this._avatarChoisi)   updates.avatar   = this._avatarChoisi;
-      if (this._objectifChoisi) updates.objectif = this._objectifChoisi;
+    if (this._avatarChoisi)   updates.avatar   = this._avatarChoisi;
+    if (this._objectifChoisi) updates.objectif = this._objectifChoisi;
+    if (niveau)  updates.niveau  = niveau;
+    if (lieu)    updates.lieu    = lieu;
+    if (objectif && !this._objectifChoisi) updates.objectif = objectif;
 
-      Tracker.sauvegarderProfil(updates);
-      Utils.toast('✅ Profil sauvegardé !', 'success');
-      Utils.vibrerSuccess();
-      this._avatarChoisi   = null;
-      this._objectifChoisi = null;
-      naviguer('profil');
-    } catch(e) {
-      console.error('[App] Erreur sauvegarde profil:', e);
-      Utils.toast('❌ Erreur sauvegarde', 'error');
-    }
-  },
+    Tracker.sauvegarderProfil(updates);
+
+    // ✅ Mettre à jour aussi ft_onboarding_data
+    _syncProfilVersOnboarding(updates);
+
+    Utils.toast('✅ Profil sauvegardé !', 'success');
+    Utils.vibrerSuccess();
+    this._avatarChoisi   = null;
+    this._objectifChoisi = null;
+
+    // ✅ Regénérer le programme
+    _regenererProgrammeDepuisProfil();
+
+    naviguer('profil');
+  } catch(e) {
+    console.error('[App] Erreur sauvegarde profil:', e);
+    Utils.toast('❌ Erreur sauvegarde', 'error');
+  }
+},
 
   // ✅ NOUVEAU — validerSerieLR remplace validerSerie
 validerSerieLR(seanceId, exoRef, exoIdx, serieIdx,
@@ -12841,6 +12857,150 @@ const ObjectifsIA = {
     console.log('✅ ObjectifsIA initialisé');
   }
 };
+
+// ════════════════════════════════════════════════════════════
+// ✅ HELPER — Nb jours selon niveau
+// ════════════════════════════════════════════════════════════
+function _getNbJoursParNiveau(niveau) {
+  return { debutant: 3, intermediaire: 4, avance: 5 }[niveau] || 4;
+}
+
+// ✅ HELPER — Déterminer style programme
+function _determinerStyle(muscles, niveau, objectif, genre) {
+  if (!muscles || muscles.length === 0) {
+    if (niveau === 'debutant') return 'full_body';
+    if (objectif === 'force')  return 'upper_lower';
+    return 'ppl';
+  }
+  const hasPush = muscles.some(m =>
+    ['pectoraux','deltoides','triceps'].includes(m));
+  const hasPull = muscles.some(m =>
+    ['dorsal','biceps','trapeze'].includes(m));
+  const hasLegs = muscles.some(m =>
+    ['quadriceps','fessiers','ischio','mollets'].includes(m));
+  const hasCore = muscles.some(m =>
+    ['abdominaux','lombaires'].includes(m));
+
+  if (hasPush && hasPull && hasLegs) return 'ppl';
+  if (hasPush && hasPull)            return 'upper_lower';
+  if (hasLegs && genre === 'femme')  return 'lower_focus';
+  if (hasPush)  return 'push_focus';
+  if (hasPull)  return 'pull_focus';
+  if (hasLegs)  return 'legs_focus';
+  if (hasCore)  return 'core_focus';
+  return 'full_body';
+}
+
+// ════════════════════════════════════════════════════════════
+// ✅ SYNC PROFIL → ONBOARDING DATA
+// ════════════════════════════════════════════════════════════
+function _syncProfilVersOnboarding(updates) {
+  try {
+    const obData = Utils.storage.get('ft_onboarding_data', {})
+                || Utils.storage.get('ft_profil_onboarding', {})
+                || {};
+    const merged = { ...obData, ...updates };
+    Utils.storage.set('ft_onboarding_data',   merged);
+    Utils.storage.set('ft_profil_onboarding', merged);
+    console.log('[App] Profil sync ✅', merged);
+  } catch(e) {
+    console.warn('[App] _syncProfilVersOnboarding:', e);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// ✅ REGÉNÉRATION PROGRAMME DEPUIS PROFIL
+// ════════════════════════════════════════════════════════════
+function _regenererProgrammeDepuisProfil() {
+  try {
+    const data = Utils.storage.get('ft_onboarding_data', null)
+              || Utils.storage.get('ft_profil_onboarding', null)
+              || Utils.storage.get('ft_profil', null);
+
+    if (!data) return;
+
+    const age      = data.age      || 25;
+    const niveau   = data.niveau   || 'intermediaire';
+    const objectif = data.objectif || 'forme';
+    const muscles  = data.muscles_cibles || [];
+    const genre    = data.genre    || 'homme';
+
+    // ✅ Nb jours adapté
+    let nbJours = _getNbJoursParNiveau(niveau);
+    if (age < 18)  nbJours = Math.min(nbJours, 3);
+    if (age >= 50) nbJours = Math.min(nbJours, 3);
+    if (age >= 40 && age < 50) nbJours = Math.min(nbJours, 4);
+
+    // ✅ Style programme
+    const style = _determinerStyle(muscles, niveau, objectif, genre);
+
+    // ✅ Générer planning
+    const planning = _genererPlanningDepuisAujourdhui(
+      style, nbJours, objectif
+    );
+
+    // ✅ Sauvegarder
+    Utils.storage.set('ft_planning', planning);
+    Utils.storage.set('ft_programme_config', {
+      style, nbJours, objectif, niveau,
+      lieu: data.lieu || 'salle',
+      muscles_cibles: muscles, age
+    });
+
+    // ✅ Coach IA si disponible
+    try {
+      if (typeof Coach !== 'undefined' && Coach?.ProgrammeIA) {
+        Coach.ProgrammeIA.generer({
+          objectif, niveau, style, nbJours,
+          lieu: data.lieu || 'salle',
+          muscles_cibles: muscles,
+          genre,
+          jours_specifiques: planning
+            .filter(j => j.seanceEmoji)
+            .map(j => j.jour)
+        });
+      }
+    } catch(e) {}
+
+    // ✅ Labels pour le toast
+    const styleLabel = {
+      ppl:         'Push/Pull/Legs',
+      full_body:   'Full Body',
+      upper_lower: 'Upper/Lower',
+      lower_focus: 'Lower Focus',
+      push_focus:  'Push Focus',
+      pull_focus:  'Pull Focus',
+      legs_focus:  'Legs Focus',
+      core_focus:  'Core & Gainage'
+    }[style] || style;
+
+    const ageMsg = age >= 40 ? ` · adapté ${age} ans` : '';
+
+    setTimeout(() => {
+      Utils.toast(
+        `🔄 Programme mis à jour — ${styleLabel} · ${nbJours}j/sem${ageMsg}`,
+        'success', 3500
+      );
+    }, 400);
+
+    // ✅ Rafraîchir les pages
+    setTimeout(() => {
+      const pageHome = document.getElementById('page-home');
+      if (pageHome?.classList.contains('active')) {
+        _rendreHome(pageHome);
+      }
+      const pageTrain = document.getElementById('page-training');
+      if (pageTrain?.classList.contains('active')) {
+        _rendreTraining(pageTrain);
+      }
+    }, 600);
+
+    console.log('[App] Programme regénéré ✅', { style, nbJours, age });
+
+  } catch(e) {
+    console.error('[App] _regenererProgrammeDepuisProfil:', e);
+  }
+}
 
 window.ObjectifsIA = ObjectifsIA;
 
