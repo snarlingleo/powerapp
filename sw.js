@@ -55,6 +55,11 @@ const STATIC_ASSETS = [
   './js/voice.js',
   './js/charts.js', 
   './js/app.js',
+   '/js/report.js',
+  '/js/duo.js',
+  '/js/music.js',
+  '/js/widget.js',
+  '/js/custom-exercises.js' 
 
   // Icons
   './assets/icons/icon-72.png',
