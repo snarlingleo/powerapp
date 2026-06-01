@@ -43,39 +43,344 @@
     })();
   </script>
 
-  <style>
+<style>
   /* ✅ Fix LiveUltra — plein écran absolu */
   #live-ultra-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    max-width: none !important;
-    margin: 0 !important;
-    transform: none !important;
-    z-index: 99999 !important;
+    position:   fixed !important;
+    top:        0 !important;
+    left:       0 !important;
+    width:      100vw !important;
+    height:     100vh !important;
+    height:     100dvh !important;
+    max-width:  none !important;
+    margin:     0 !important;
+    transform:  none !important;
+    z-index:    99999 !important;
     overflow-y: auto !important;
   }
 
-  /* ✅ Fix app-wrapper — ne pas bloquer les fixed */
+  /* ✅ Fix wrappers */
   #app-wrapper {
-    overflow: visible !important;
+    overflow: visible;
+    transform: none;
+  }
+
+  .app-header, #app-header {
     transform: none !important;
   }
 
-  /* ✅ Fix app-main — ne pas bloquer les fixed */
-  .app-main,
-  #app-main {
-    overflow: visible !important;
-    transform: none !important;
+  /* ════════════════════════════════════
+     MOBILE — max 1023px
+  ════════════════════════════════════ */
+  @media (max-width: 1023px) {
+    #pc-aside {
+      display: none !important;
+    }
+
+    .app-main, #app-main {
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+    }
   }
 
-  /* ✅ Fix app-header — ne pas bloquer les fixed */
-  .app-header,
-  #app-header {
-    transform: none !important;
+  /* ════════════════════════════════════
+     PC — 1024px+
+  ════════════════════════════════════ */
+  @media (min-width: 1024px) {
+
+    /* Wrapper */
+    #app-wrapper {
+      max-width:  100% !important;
+      width:      100% !important;
+      display:    block !important;
+      overflow:   visible !important;
+    }
+
+    /* Header */
+    .app-header, #app-header {
+      position:      fixed !important;
+      top:           0 !important;
+      left:          0 !important;
+      right:         0 !important;
+      width:         100% !important;
+      max-width:     100% !important;
+      transform:     none !important;
+      height:        64px !important;
+      z-index:       1000 !important;
+      border-radius: 0 !important;
+      padding:       0 32px !important;
+      display:       flex !important;
+      align-items:   center !important;
+    }
+
+    /* Sidebar */
+    .app-nav, #app-nav {
+      position:        fixed !important;
+      top:             64px !important;
+      left:            0 !important;
+      right:           auto !important;
+      bottom:          0 !important;
+      width:           230px !important;
+      height:          calc(100vh - 64px) !important;
+      transform:       none !important;
+      display:         flex !important;
+      flex-direction:  column !important;
+      align-items:     stretch !important;
+      justify-content: flex-start !important;
+      overflow-y:      auto !important;
+      overflow-x:      hidden !important;
+      padding:         20px 10px !important;
+      gap:             3px !important;
+      background:      linear-gradient(180deg,
+                         rgba(2,10,24,0.99),
+                         rgba(3,12,32,0.99)) !important;
+      border-right:    1px solid rgba(0,100,255,0.15) !important;
+      border-top:      none !important;
+      border-bottom:   none !important;
+      z-index:         900 !important;
+      scrollbar-width: none !important;
+    }
+
+    .app-nav::-webkit-scrollbar,
+    #app-nav::-webkit-scrollbar {
+      display: none !important;
+    }
+
+    /* Main */
+    .app-main, #app-main {
+      display:       block !important;
+      margin-top:    64px !important;
+      margin-left:   230px !important;
+      margin-right:  270px !important;
+      margin-bottom: 0 !important;
+      padding:       24px 32px !important;
+      min-height:    calc(100vh - 64px) !important;
+      width:         auto !important;
+      max-width:     none !important;
+      overflow-y:    auto !important;
+      overflow-x:    hidden !important;
+      transform:     none !important;
+    }
+
+    /* Pages */
+    .page {
+      max-width: 860px !important;
+      margin:    0 auto !important;
+      padding:   0 !important;
+    }
+
+    /* Aside */
+    #pc-aside {
+      display:         block !important;
+      position:        fixed !important;
+      top:             64px !important;
+      right:           0 !important;
+      left:            auto !important;
+      width:           270px !important;
+      height:          calc(100vh - 64px) !important;
+      overflow-y:      auto !important;
+      overflow-x:      hidden !important;
+      padding:         20px 14px !important;
+      background:      linear-gradient(180deg,
+                         rgba(2,10,24,0.99),
+                         rgba(3,12,32,0.99)) !important;
+      border-left:     1px solid rgba(0,100,255,0.1) !important;
+      z-index:         800 !important;
+      scrollbar-width: none !important;
+    }
+
+    #pc-aside::-webkit-scrollbar { display: none !important; }
+
+    /* Nav buttons verticaux */
+    #app-nav .nav-btn {
+      flex-direction:  row !important;
+      align-items:     center !important;
+      justify-content: flex-start !important;
+      gap:             10px !important;
+      padding:         10px 12px !important;
+      min-height:      42px !important;
+      width:           100% !important;
+      border-radius:   10px !important;
+      text-align:      left !important;
+      flex:            none !important;
+    }
+
+    #app-nav .nav-btn:hover {
+      background: rgba(0,100,255,0.08) !important;
+    }
+
+    #app-nav .nav-btn.active {
+      background: rgba(0,100,255,0.12) !important;
+      border:     1px solid rgba(0,207,255,0.2) !important;
+    }
+
+    /* Label nav visible */
+    #app-nav .nav-btn .nav-label {
+      font-size:      .8rem !important;
+      font-weight:    600 !important;
+      text-transform: none !important;
+      letter-spacing: .02em !important;
+      opacity:        1 !important;
+      display:        block !important;
+      white-space:    nowrap !important;
+    }
+
+    /* Icon nav */
+    #app-nav .nav-btn .nav-icon {
+      font-size:   1.1rem !important;
+      width:       24px !important;
+      flex-shrink: 0 !important;
+      text-align:  center !important;
+      filter:      none !important;
+      transform:   none !important;
+    }
+
+    #app-nav .nav-btn.active .nav-icon {
+      filter: drop-shadow(0 0 5px currentColor) !important;
+    }
+
+    /* Sections sidebar */
+    #app-nav .pc-nav-section {
+      font-family:    'Orbitron', monospace !important;
+      font-size:      .55rem !important;
+      font-weight:    700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: .15em !important;
+      color:          rgba(0,150,255,0.3) !important;
+      padding:        12px 16px 4px !important;
+    }
+
+    /* Logo sidebar */
+    #app-nav .pc-nav-logo {
+      display:       flex !important;
+      align-items:   center !important;
+      gap:           10px !important;
+      padding:       8px 12px 20px !important;
+      margin-bottom: 8px !important;
+      border-bottom: 1px solid rgba(0,100,255,0.1) !important;
+    }
+
+    /* Live button */
+    #app-nav .nav-btn-live .nav-icon {
+      width:        38px !important;
+      height:       38px !important;
+      border-radius:10px !important;
+      transform:    none !important;
+      background:   linear-gradient(135deg,
+                      var(--cb2), var(--cb1)) !important;
+      display:      flex !important;
+      align-items:  center !important;
+      justify-content: center !important;
+      font-size:    1.1rem !important;
+      box-shadow:   0 0 14px rgba(0,207,255,0.4) !important;
+    }
+
+    /* Modals centrées */
+    .modal {
+      align-items:     center !important;
+      justify-content: center !important;
+    }
+
+    .modal-inner {
+      max-width:     560px !important;
+      width:         90% !important;
+      margin:        auto !important;
+      border-radius: 20px !important;
+      max-height:    85vh !important;
+    }
+
+    /* Toast */
+    #toast-container {
+      position:  fixed !important;
+      right:     280px !important;
+      top:       72px !important;
+      left:      auto !important;
+      bottom:    auto !important;
+      transform: none !important;
+      max-width: 340px !important;
+    }
+
+    /* Chrono sticky */
+    #chrono-sticky {
+      position:  fixed !important;
+      bottom:    20px !important;
+      left:      240px !important;
+      right:     280px !important;
+      width:     auto !important;
+      transform: none !important;
+      z-index:   500 !important;
+    }
+
+    /* Overlays */
+    #repos-auto-overlay,
+    #serie-overlay {
+      left:      230px !important;
+      right:     270px !important;
+      width:     auto !important;
+      transform: none !important;
+    }
+
+    /* Grilles */
+    .exercice-galerie-grid {
+      grid-template-columns: repeat(3, 1fr) !important;
+    }
+    .trophy-grid {
+      grid-template-columns: repeat(5, 1fr) !important;
+    }
+    .stats-grid {
+      grid-template-columns: repeat(4, 1fr) !important;
+    }
+
+    /* Cards hover */
+    .card {
+      transition: all .2s ease !important;
+    }
+    .card:hover {
+      border-color: rgba(0,207,255,0.2) !important;
+      transform:    translateY(-1px) !important;
+      box-shadow:   0 8px 32px rgba(0,100,255,0.12) !important;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar       { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background:    rgba(0,150,255,0.25);
+      border-radius: 3px;
+    }
+
+    /* Light theme */
+    [data-theme-style="arctic-white"] .app-nav,
+    [data-theme-style="arctic-white"] #app-nav {
+      background: rgba(240,244,255,0.98) !important;
+    }
+
+    [data-theme-style="arctic-white"] #pc-aside {
+      background: rgba(245,248,255,0.98) !important;
+    }
+  }
+
+  /* ════════════════════════════════════
+     GRAND ÉCRAN 1440px+
+  ════════════════════════════════════ */
+  @media (min-width: 1440px) {
+    .app-nav, #app-nav {
+      width: 250px !important;
+    }
+
+    .app-main, #app-main {
+      margin-left:  250px !important;
+      margin-right: 300px !important;
+      padding:      28px 40px !important;
+    }
+
+    #pc-aside {
+      width: 300px !important;
+    }
+
+    .page {
+      max-width: 960px !important;
+    }
   }
 </style>
 
