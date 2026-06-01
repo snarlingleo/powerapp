@@ -569,7 +569,11 @@ function _rendreNavBarPC(nav) {
     { id:'themes',      label:'Thèmes',      icon:'🎨', color: '#bfa1ff' },
     { id:'custom_exercices', label:'Mes exercices', icon:'⭐', color: theme.c1 },
     { id:'report', label:'Rapport hebdo', icon:'📊', color:'#8bf0bb' }, 
-    { id:'settings',    label:'Paramètres',  icon:'⚙️', color: theme.c2 }
+    { id:'settings',    label:'Paramètres',  icon:'⚙️', color: theme.c2 },
+
+    // Section social
+    { section: 'SOCIAL' },
+    { id:'duo', label:'Mode Duo', icon:'👥', color:'#bfa1ff' }
   ];
 
   nav.innerHTML = `
@@ -687,6 +691,7 @@ function _updateHeader(page) {
   offline:      { emoji:'📵', titre:'Hors-ligne',          cat:'SETTINGS', c1:'#7700ff', c2:'#0033cc' },
   profil:       { emoji:'👤', titre:'Profil',              cat:'CORE',     c1:_themeHeader.c1, c2:_themeHeader.c2 },
   mon_profil:   { emoji:'👤', titre:'Mon Profil',          cat:'SETTINGS', c1:_themeHeader.c1, c2:_themeHeader.c2 },
+  duo:          { emoji:'👥', titre:'Mode Duo',            cat:'SOCIAL', c1:'#bfa1ff', c2:'#4b4bf9' }, 
 };
 
   const cfg = configs[page] || configs.home;
@@ -1036,6 +1041,10 @@ case 'blessures':
   try { Stats.renderBlessures(container); }
   catch(e) { _rendrePlaceholder(container,'🩹','Blessures','Suivi de tes blessures.'); }
   break;
+case 'duo':
+  try { Duo.render(container); }
+  catch(e) { _rendrePlaceholder(container,'👥','Duo',''); }
+  break;          
 
 // ✅ NOUVEAU — Graphiques interactifs
 case 'graphiques':
@@ -1232,8 +1241,8 @@ function rechercherDepuisHome(val) {
     { mots:['galerie','exercice','mouvement'],                     page:'galerie'       },
     { mots:['coach','ia','conseil'],                               page:'coach'         },
     { mots:['défis','defis','challenge'],                          page:'defis'         },
-   { mots:['profil','modifier','avatar'], page:'profil' },
-   { mots:['parametre','paramètres','settings','notif'],          page:'settings'      },
+    { mots:['profil','modifier','avatar'],                         page:'profil'        },  
+    { mots:['parametre','paramètres','settings','notif'],          page:'settings'      },  
     { mots:['historique','history'],                               page:'history'       },
     { mots:['photos','photo','corps'],                             page:'photos'        },
     { mots:['objectif','objectifs','but'],                         page:'objectifs'     },
@@ -1245,7 +1254,8 @@ function rechercherDepuisHome(val) {
     { mots:['xp','niveau','gamification','trophee','trophée'],     page:'gamification'  },
     { mots:['partage','share','export','exporter'],                page:'export'        },
     { mots:['graphique','graphiques','chart','courbe'],            page:'graphiques'    }, 
-    { mots:['hors-ligne','offline','sync'],                        page:'offline'       }
+    { mots:['hors-ligne','offline','sync'],                        page:'offline'       },
+    { mots:['duo','ami','amis','défi','challenge'],                page:'duo'           }, 
   ];
 
   // ✅ Chercher une page correspondante
