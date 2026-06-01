@@ -151,7 +151,82 @@ const Utils = {
       });
     }
   },
+// ════════════════════════════════════════════════════════
+// ✅ HELPERS SEMAINE — Pour report.js
+// ════════════════════════════════════════════════════════
 
+// ✅ Début de semaine (Lundi)
+debutSemaine(date, offsetSemaines = 0) {
+  try {
+    const d   = new Date(date);
+    const day = d.getDay(); // 0=dim, 1=lun...
+    const diff = (day === 0 ? -6 : 1 - day);
+    d.setDate(d.getDate() + diff + (offsetSemaines * 7));
+    return d.toISOString().split('T')[0];
+  } catch(e) { return date; }
+},
+
+// ✅ Fin de semaine (Dimanche)
+finSemaine(date, offsetSemaines = 0) {
+  try {
+    const debut = new Date(
+      this.debutSemaine(date, offsetSemaines)
+    );
+    debut.setDate(debut.getDate() + 6);
+    return debut.toISOString().split('T')[0];
+  } catch(e) { return date; }
+},
+
+// ✅ Index jour semaine (Lundi = 0)
+indexJourSemaine(date) {
+  try {
+    const d = new Date(date);
+    return (d.getDay() + 6) % 7;
+  } catch(e) { return 0; }
+},
+
+// ✅ Ajouter des jours à une date
+ajouterJours(date, nb) {
+  try {
+    const d = new Date(date);
+    d.setDate(d.getDate() + nb);
+    return d.toISOString().split('T')[0];
+  } catch(e) { return date; }
+},
+
+// ✅ Différence en jours entre 2 dates
+diffJours(date1, date2) {
+  try {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return Math.round(
+      (d2 - d1) / (1000 * 60 * 60 * 24)
+    );
+  } catch(e) { return 0; }
+},
+
+// ✅ Format date long
+formatDateLong(date) {
+  try {
+    return new Date(date).toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day:     'numeric',
+      month:   'long',
+      year:    'numeric'
+    });
+  } catch(e) { return date; }
+},
+
+// ✅ Format date court
+formatDateCourt(date) {
+  try {
+    return new Date(date).toLocaleDateString('fr-FR', {
+      day:   'numeric',
+      month: 'short'
+    });
+  } catch(e) { return date || '—'; }
+},
+   
   // ════════════════════════════════════════════════════════
   // DATES — ✅ v5.0 ajouterJours null-safe
   // ════════════════════════════════════════════════════════
