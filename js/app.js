@@ -8924,15 +8924,17 @@ try {
     } catch(e) {}
 
 setTimeout(() => {
+  // ✅ Créer l'aside PC AVANT de naviguer
+  if (window.innerWidth >= 1024) {
+    _initAsidePC();
+  }
+
   naviguer('home');
+
   try { CyberSparks.init();    } catch(e) {}
   try { LavaBackground.init(); } catch(e) {}
   _updateHeaderXP();
 
-  // ✅ Injecter le panel aside PC
-  _initAsidePC();
-
-  // ✅ Écouter redimensionnement
   window.addEventListener('resize', _onResize);
 }, 100);
     if (!document.getElementById('cb-fonts')) {
