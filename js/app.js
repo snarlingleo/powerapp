@@ -11681,12 +11681,12 @@ window.CyberAnimations = CyberAnimations;
 function _initAsidePC() {
   if (window.innerWidth < 1024) return;
 
-  // Créer le panel aside s'il n'existe pas
   let aside = document.getElementById('pc-aside');
   if (!aside) {
     aside    = document.createElement('div');
     aside.id = 'pc-aside';
-    document.getElementById('app-wrapper')?.appendChild(aside);
+    // ✅ Ajouter au body, pas au app-wrapper
+    document.body.appendChild(aside);
   }
 
   _rendreAsidePC(aside);
