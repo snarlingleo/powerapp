@@ -558,6 +558,7 @@ function _rendreNavBarPC(nav) {
     { id:'objectifs', label:'Objectifs',    icon:'🎯', color: '#ff8d96' },
     { id:'photos',    label:'Photos',       icon:'📸', color: '#bfa1ff' },
     { id:'journal',   label:'Journal',      icon:'📔', color: '#f9ef77' },
+    { id:'recovery', label:'Récupération',  icon:'🧘', color:'#8bf0bb' }, 
 
     // Section outils
     { section: 'OUTILS' },
@@ -1000,7 +1001,13 @@ case 'export':
 case 'sounds':
   try { Sounds.renderSettings(container); }
   catch(e) { _rendrePlaceholder(container,'🔊','Sons',''); }
-  break;  
+  break;
+          
+case 'recovery':
+  try { Recovery.render(container); }
+  catch(e) { _rendrePlaceholder(container,'🧘','Récupération',''); }
+  break;
+          
 case 'blessures':
   try { Stats.renderBlessures(container); }
   catch(e) { _rendrePlaceholder(container,'🩹','Blessures','Suivi de tes blessures.'); }
