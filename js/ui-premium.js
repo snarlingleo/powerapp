@@ -4502,7 +4502,7 @@ window.LiveUltra = LiveUltra;
 // ═══════════════════════════════════════════════════════════
 // 21. PROFIL — Fusion profil.js v3.0
 // ═══════════════════════════════════════════════════════════
-const Profil = {
+const ProfilUI = {
 
   CLE:            'ft_profil_complet',
   CLE_ONBOARDING: 'ft_profil_onboarding',
