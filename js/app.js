@@ -6616,18 +6616,34 @@ function _rendreSettings(container) {
       <div class="card-label">🎯 Objectif séances/semaine</div>
       <div style="margin-top:var(--space-md)">
         <div style="display:flex;gap:var(--space-sm);justify-content:center">
-          ${[2,3,4,5,6].map(n => {
-            const current = Utils.storage.get('ft_objectif_seances_semaine', 4);
-            return `
-              <button onclick="Utils.storage.set('ft_objectif_seances_semaine',${n});naviguer('settings')"
-                      style="width:44px;height:44px;border-radius:50%;
-                             font-weight:700;font-size:.9rem;cursor:pointer;
-                             background:${current === n ? 'var(--fd-indigo)' : 'var(--bg-input)'};
-                             color:${current === n ? 'white' : 'var(--text-muted)'};
-                             border:2px solid ${current === n ? 'var(--fd-indigo)' : 'var(--border-color)'}">
-                ${n}
-              </button>`;
-          }).join('')}
+${[2,3,4,5,6].map(n => {
+  const current = Utils.storage.get('ft_objectif_seances_semaine', 4);
+  return `
+    <button
+      id="btn-obj-seances-${n}"
+      onclick="
+        Utils.storage.set('ft_objectif_seances_semaine', ${n});
+        _mettreAJourObjectifSeances(${n});
+        // ✅ Update visuel immédiat sans re-render
+        document.querySelectorAll('[id^=btn-obj-seances-]')
+          .forEach(b => {
+            b.style.background  = 'var(--bg-input)';
+            b.style.color       = 'var(--text-muted)';
+            b.style.border      = '2px solid var(--border-color)';
+          });
+        this.style.background = 'var(--fd-indigo)';
+        this.style.color      = 'white';
+        this.style.border     = '2px solid var(--fd-indigo)'"
+      style="width:44px;height:44px;border-radius:50%;
+             font-weight:700;font-size:.9rem;cursor:pointer;
+             background:${current === n
+               ? 'var(--fd-indigo)' : 'var(--bg-input)'};
+             color:${current === n ? 'white' : 'var(--text-muted)'};
+             border:2px solid ${current === n
+               ? 'var(--fd-indigo)' : 'var(--border-color)'}">
+      ${n}
+    </button>`;
+}).join('')}
         </div>
       </div>
     </div>
@@ -12113,6 +12129,52 @@ function _onResize() {
     }
   }, 150);
 }
+// ════════════════════════════════════════════════════════
+// ✅ Mise à jour objectif séances → Home + Planning
+// ════════════════════════════════════════════════════════
+function _mettreAJourObjectifSeances(nb) {
+  try {
+    // ✅ Sauvegarder
+    Utils.storage.set('ft_objectif_seances_semaine', nb);
+
+    // ✅ Toast confirmation
+    Utils.toast(
+      `🎯 Objectif mis à jour : ${nb} séances/semaine`,
+      'success', 2000
+    );
+    Utils.vibrer([20]);
+
+    // ✅ Mettre à jour la home si active
+    const pageHome = document.getElementById('page-home');
+    if (pageHome?.classList.contains('active')) {
+      _rendreHome(pageHome);
+    }
+
+    // ✅ Mettre à jour l'aside PC si visible
+    const aside = document.getElementById('pc-aside');
+    if (aside) {
+      _rendreAsidePC(aside);
+    }
+
+    // ✅ Mettre à jour Report si actif
+    try {
+      const pageReport = document.getElementById('page-report');
+      if (pageReport?.classList.contains('active')) {
+        Report.render(pageReport);
+      }
+    } catch(e) {}
+
+    // ✅ Dispatcher un event custom
+    window.dispatchEvent(new CustomEvent('objectif-seances-changed', {
+      detail: { nb }
+    }));
+
+  } catch(e) {
+    console.warn('[App] _mettreAJourObjectifSeances:', e);
+  }
+}
+
+window._mettreAJourObjectifSeances = _mettreAJourObjectifSeances;
 // ════════════════════════════════════════════════════════════
 // DÉMARRAGE
 // ════════════════════════════════════════════════════════════
