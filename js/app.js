@@ -5083,14 +5083,20 @@ _lancerUpdate() {
   }, 1000);
 },
 
-  masquer() {
-    clearInterval(this._interval);
-    const bar = document.getElementById('live-sticky-bar');
-    if (bar) {
-      bar.style.animation = 'fadeOut .3s ease forwards';
-      setTimeout(() => bar.remove(), 300);
-    }
+masquer() {
+  clearInterval(this._interval);
+  this._interval = null;
+
+  // ✅ Suppression immédiate + animation
+  const bar = document.getElementById('live-sticky-bar');
+  if (bar) {
+    bar.style.transition = 'opacity .3s ease';
+    bar.style.opacity    = '0';
+    setTimeout(() => {
+      bar.remove(); // ← suppression DOM réelle
+    }, 320);
   }
+}
 };
 
 // ════════════════════════════════════════════════════════════
@@ -7018,6 +7024,13 @@ validerSerie(seanceId, exoRef, exoIdx, serieIdx) {
     try { Tracker.terminerSeance(seanceId); } catch(e) {}
     try { ChronoSticky.masquer(); Chrono.reset?.(); } catch(e) {}
     try { LiveStickyBar.masquer(); } catch(e) {}
+    // ✅ Reset état global séance
+window._seanceActive   = null;
+window._seanceDemarree = false;
+
+// ✅ Fermer overlays si encore ouverts
+document.getElementById('repos-auto-overlay')?.remove();
+document.getElementById('serie-overlay')?.remove(); 
 
     try {
       const secondes = TempsSalle.getDureeChronoSecondes();
@@ -7066,14 +7079,40 @@ try {
   }
 },
 
-  async arreterSeance(seanceId) {
-    const ok = await Utils.confirmer('Arrêter la séance ?', 'Ta progression sera sauvegardée.');
-    if (!ok) return;
-    try { Tracker.terminerSeance?.(seanceId); } catch(e) {}
-    try { ChronoSticky.masquer(); Chrono.reset?.(); } catch(e) {}
-    Utils.toast('Séance arrêtée.', 'info');
-    naviguer('home');
-  },
+async arreterSeance(seanceId) {
+  const ok = await Utils.confirmer(
+    'Arrêter la séance ?',
+    'Ta progression sera sauvegardée.'
+  );
+  if (!ok) return;
+
+  try { Tracker.terminerSeance?.(seanceId);   } catch(e) {}
+  try { ChronoSticky.masquer();                } catch(e) {}
+  try { Chrono.reset?.();                      } catch(e) {}
+  try { LiveStickyBar.masquer();               } catch(e) {}
+  try { LiveRapide.reset();                    } catch(e) {}
+  try { ChronoSerie.reset();                   } catch(e) {}
+  try { SeanceGuidee.arreter();                } catch(e) {}
+  try { LiveRapide.relacherWakeLock();         } catch(e) {}
+
+  // ✅ Nettoyer localStorage timer
+  localStorage.removeItem('ft_timer_actif');
+  localStorage.removeItem('ft_timer_fin');
+  localStorage.removeItem('ft_timer_total');
+  localStorage.removeItem('ft_live_etat');
+
+  // ✅ Fermer overlay repos si ouvert
+  try { LiveRapide._fermerRepos?.(); } catch(e) {}
+  document.getElementById('repos-auto-overlay')?.remove();
+  document.getElementById('serie-overlay')?.remove();
+
+  // ✅ Reset flag séance
+  window._seanceActive  = null;
+  window._seanceDemarree = false;
+
+  Utils.toast('Séance arrêtée.', 'info');
+  naviguer('home');
+},
 
   setHumeur(humeur) {
     try {
