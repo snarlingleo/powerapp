@@ -12137,37 +12137,31 @@ function _mettreAJourObjectifSeances(nb) {
     // ✅ Sauvegarder
     Utils.storage.set('ft_objectif_seances_semaine', nb);
 
-    // ✅ Toast confirmation
+    // ✅ Regénérer le planning avec le nouveau nb de jours
+    _regenererPlanningAvecNbJours(nb);
+
+    // ✅ Toast
     Utils.toast(
-      `🎯 Objectif mis à jour : ${nb} séances/semaine`,
+      `🎯 Planning mis à jour : ${nb} séances/semaine`,
       'success', 2000
     );
     Utils.vibrer([20]);
 
-    // ✅ Mettre à jour la home si active
+    // ✅ Re-render home si active
     const pageHome = document.getElementById('page-home');
     if (pageHome?.classList.contains('active')) {
       _rendreHome(pageHome);
     }
 
-    // ✅ Mettre à jour l'aside PC si visible
-    const aside = document.getElementById('pc-aside');
-    if (aside) {
-      _rendreAsidePC(aside);
+    // ✅ Re-render training si active
+    const pageTrain = document.getElementById('page-training');
+    if (pageTrain?.classList.contains('active')) {
+      _rendreTraining(pageTrain);
     }
 
-    // ✅ Mettre à jour Report si actif
-    try {
-      const pageReport = document.getElementById('page-report');
-      if (pageReport?.classList.contains('active')) {
-        Report.render(pageReport);
-      }
-    } catch(e) {}
-
-    // ✅ Dispatcher un event custom
-    window.dispatchEvent(new CustomEvent('objectif-seances-changed', {
-      detail: { nb }
-    }));
+    // ✅ Aside PC
+    const aside = document.getElementById('pc-aside');
+    if (aside) _rendreAsidePC(aside);
 
   } catch(e) {
     console.warn('[App] _mettreAJourObjectifSeances:', e);
@@ -12175,6 +12169,122 @@ function _mettreAJourObjectifSeances(nb) {
 }
 
 window._mettreAJourObjectifSeances = _mettreAJourObjectifSeances;
+
+// ════════════════════════════════════════════════════════
+// ✅ Regénérer le planning avec un nouveau nb de jours
+// ════════════════════════════════════════════════════════
+function _regenererPlanningAvecNbJours(nbJours) {
+  try {
+
+    // ✅ Récupérer le style actuel du programme
+    const config = Utils.storage.get('ft_programme_config', null);
+    const style  = config?.style || 'ppl';
+    const objectif = config?.objectif
+      || Utils.storage.get('ft_profil_onboarding', {}).objectif
+      || 'forme';
+
+    // ✅ Récupérer le planning actuel
+    const planningActuel = Programme.getPlanningActuel?.() || [];
+
+    // ✅ Compter les séances actuelles
+    const seancesActuelles = planningActuel
+      .filter(j => j.seanceId)
+      .map(j => ({
+        jourIdx:  j.seanceId ? planningActuel.indexOf(j) : -1,
+        seanceId: j.seanceId
+      }));
+
+    const nbActuel = seancesActuelles.length;
+
+    if (nbJours === nbActuel) return; // Pas de changement
+
+    const nouveauPlanning = [...planningActuel];
+    const aujourdhuiIdx  = Utils.indexJourSemaine(Utils.aujourd_hui());
+
+    if (nbJours > nbActuel) {
+      // ✅ AJOUTER des jours — trouver les jours de repos à convertir
+      const joursRepos = nouveauPlanning
+        .map((j, idx) => ({ idx, jour: j }))
+        .filter(j => !j.jour.seanceId)
+        .sort((a, b) => {
+          // Priorité aux jours proches d'aujourd'hui
+          const distA = (a.idx - aujourdhuiIdx + 7) % 7;
+          const distB = (b.idx - aujourdhuiIdx + 7) % 7;
+          return distA - distB;
+        });
+
+      // ✅ Trouver les séances disponibles non encore placées
+      let toutesSeances = [];
+      try { toutesSeances = Programme.getAllSeances(); } catch(e) {}
+
+      const seancesDejaPlacees = nouveauPlanning
+        .filter(j => j.seanceId)
+        .map(j => j.seanceId);
+
+      const seancesDispos = toutesSeances
+        .filter(s => !seancesDejaPlacees.includes(s.id));
+
+      let ajoutees = 0;
+      const aAjouter = nbJours - nbActuel;
+
+      for (const jourRepos of joursRepos) {
+        if (ajoutees >= aAjouter) break;
+
+        // ✅ Éviter 2 jours consécutifs si possible
+        const prevIdx = (jourRepos.idx - 1 + 7) % 7;
+        const nextIdx = (jourRepos.idx + 1) % 7;
+        const prevOccupe = nouveauPlanning[prevIdx]?.seanceId;
+        const nextOccupe = nouveauPlanning[nextIdx]?.seanceId;
+
+        if (prevOccupe && nextOccupe && aAjouter < 5) continue;
+
+        // ✅ Choisir une séance à placer
+        const seanceAplacer = seancesDispos[ajoutees % seancesDispos.length];
+        if (!seanceAplacer) break;
+
+        nouveauPlanning[jourRepos.idx] = {
+          ...nouveauPlanning[jourRepos.idx],
+          seanceId: seanceAplacer.id
+        };
+        ajoutees++;
+      }
+
+    } else {
+      // ✅ RETIRER des jours — enlever les séances en trop
+      const joursSeance = nouveauPlanning
+        .map((j, idx) => ({ idx, jour: j }))
+        .filter(j => j.jour.seanceId)
+        .sort((a, b) => {
+          // Retirer en priorité les jours les plus éloignés d'aujourd'hui
+          const distA = (a.idx - aujourdhuiIdx + 7) % 7;
+          const distB = (b.idx - aujourdhuiIdx + 7) % 7;
+          return distB - distA;
+        });
+
+      const aSupprimer = nbActuel - nbJours;
+      for (let i = 0; i < aSupprimer; i++) {
+        if (!joursSeance[i]) break;
+        nouveauPlanning[joursSeance[i].idx] = {
+          ...nouveauPlanning[joursSeance[i].idx],
+          seanceId: null
+        };
+      }
+    }
+
+    // ✅ Sauvegarder le nouveau planning
+    Programme.sauvegarderPlanning?.(nouveauPlanning);
+
+    console.log(
+      `[App] Planning mis à jour : ${nbJours} jours ✅`,
+      nouveauPlanning
+    );
+
+  } catch(e) {
+    console.warn('[App] _regenererPlanningAvecNbJours:', e);
+  }
+}
+
+window._regenererPlanningAvecNbJours = _regenererPlanningAvecNbJours;
 // ════════════════════════════════════════════════════════════
 // DÉMARRAGE
 // ════════════════════════════════════════════════════════════
