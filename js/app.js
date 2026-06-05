@@ -1379,6 +1379,14 @@ const WidgetsHome = {
       bloqué:  false
     },
     {
+  id:     'acces_rapides',
+  label:  'Accès rapides',
+  emoji:  '⚡',
+  desc:   'Raccourcis vers les outils',
+  actif:  true,
+  bloqué: false
+}, 
+    {
       id:      'coach_jour',
       label:   'Coach du jour',
       emoji:   '🤖',
@@ -2936,6 +2944,45 @@ function _rendreHome(container) {
                           letter-spacing:.04em">${s.label}</div>
             </div>`).join('')}
         </div>`;
+      // Dans le widget 'stats_semaine' ou après
+case 'acces_rapides': return `
+  <div style="margin-bottom:14px">
+    <div style="font-size:.58rem;font-weight:700;
+                text-transform:uppercase;letter-spacing:.1em;
+                color:var(--text-muted);margin-bottom:8px;
+                display:flex;align-items:center;gap:8px">
+      ⚡ Accès rapides
+      <div style="flex:1;height:1px;background:var(--border-color)"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+      ${[
+        { page:'calculateur',     emoji:'🧮', label:'Calc.'     },
+        { page:'report',          emoji:'📊', label:'Rapport'   },
+        { page:'music',           emoji:'🎵', label:'Musique'   },
+        { page:'custom_exercices',emoji:'⭐', label:'Mes exos'  },
+        { page:'graphiques',      emoji:'📈', label:'Graphs'    },
+        { page:'recovery',        emoji:'🧘', label:'Récup.'    },
+        { page:'widget',          emoji:'📱', label:'Widgets'   },
+        { page:'gamification',    emoji:'🏆', label:'XP'        }
+      ].map(r => `
+        <div onclick="naviguer('${r.page}')"
+             style="display:flex;flex-direction:column;
+                    align-items:center;gap:4px;
+                    padding:10px 6px;
+                    background:rgba(255,255,255,0.04);
+                    border:1px solid rgba(255,255,255,0.08);
+                    border-radius:var(--radius-md);
+                    cursor:pointer;transition:all .2s"
+             onmousedown="this.style.transform='scale(.94)'"
+             onmouseup="this.style.transform=''">
+          <span style="font-size:1.3rem">${r.emoji}</span>
+          <span style="font-size:.55rem;color:var(--text-muted);
+                       font-weight:600;text-align:center">
+            ${r.label}
+          </span>
+        </div>`).join('')}
+    </div>
+  </div>`;
 
       // ── COACH DU JOUR ─────────────────────────────────
       case 'coach_jour': return `
@@ -12401,11 +12448,24 @@ const MenuGlobal = {
         ]
       },
       {
+  titre: '🛠️ Outils',
+  items: [
+    { page:'calculateur',     emoji:'🧮', label:'Calculateur',      color:'#8bf0bb' },
+    { page:'graphiques',      emoji:'📈', label:'Graphiques',        color:'#8bf0bb' },
+    { page:'report',          emoji:'📊', label:'Rapport hebdo',     color:'#8bf0bb' },
+    { page:'custom_exercices',emoji:'⭐', label:'Mes exercices',     color:'#f9ef77' },
+    { page:'music',           emoji:'🎵', label:'Musique',           color:'#FC3C44' },
+    { page:'widget',          emoji:'📱', label:'Widgets',           color:'#bfa1ff' },
+    { page:'recovery',        emoji:'🧘', label:'Récupération',      color:'#8bf0bb' }
+  ]
+},
+      {
         titre: '⚙️ App',
         items: [
-          { page:'themes',      emoji:'🎨', label:'Thèmes',             color:'#bfa1ff' },
-          { page:'sounds',      emoji:'🔊', label:'Sons',               color:'#8bf0bb' },
-          { page:'settings',    emoji:'⚙️', label:'Paramètres',         color:'#bfa1ff' }
+    { page:'themes',          emoji:'🎨', label:'Thèmes',            color:'#bfa1ff' },
+    { page:'gamification',    emoji:'⭐', label:'XP & Niveaux',      color:'#f9ef77' },
+    { page:'sounds',          emoji:'🔊', label:'Sons',              color:'#8bf0bb' },
+    { page:'settings',        emoji:'⚙️', label:'Paramètres',        color:'#bfa1ff' }
         ]
       }
     ];
