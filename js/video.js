@@ -38,8 +38,8 @@ videos: {
     seated_row:          'GZbfZ033f74', // alias ✅
     bent_over_row:       '9efgcAjQe7E', // alias ✅
     tbar_row:            'j3G1dQbnABQ', // ScottHerman — T-Bar Row ✅
-    soulevé_terre:       'op9kVnSso6Q', // Jeff Nippard — Deadlift ✅
-    deadlift:            'op9kVnSso6Q', // alias ✅
+    souvele_terre:       'op9kVnSso6Q',
+    deadlift:            'op9kVnSso6Q',  
     romanian_deadlift:   'JCXUYuzwNrM', // Jeff Nippard — RDL ✅
     pullover:            'FK2SqQxNRmA', // ScottHerman — Pullover ✅
     face_pull:           'HSoHeSjovMQ', // AthleanX — Face Pull ✅ (ancien ID mort)
@@ -245,9 +245,13 @@ gifs: {
 
 getGifUrl(ref) {
   if (!ref) return null;
-
-  // ✅ 1. Lookup direct
   if (this.gifs[ref]) return this.gifs[ref];
+    const cleaned = ref.toLowerCase()
+    .replace(/[éèê]/g, 'e')
+    .replace(/[àâ]/g, 'a')
+    .replace(/[ùû]/g, 'u');
+
+  if (this.gifs[cleaned]) return this.gifs[cleaned]; 
 
   // ✅ 2. Lookup depuis EXERCICES (si gif défini)
   const exo = window.EXERCICES?.[ref];
@@ -286,17 +290,21 @@ getGifUrl(ref) {
   // ✅ NOUVEAU v2.0 — getVideoId(ref)
   // Méthode appelée par Live.js et Stats.js
   // ════════════════════════════════════════════════════════
-  getVideoId(ref) {
-    if (!ref) return null;
-    // Essai direct
-    if (this.videos[ref]) return this.videos[ref];
-    // Nettoyage ref (remplace tirets, espaces)
-    const cleaned = ref.toLowerCase()
-      .replace(/[-\s]/g, '_')
-      .replace(/[éè]/g, 'e')
-      .replace(/[à]/g, 'a');
-    return this.videos[cleaned] || null;
-  },
+getVideoId(ref) {
+  if (!ref) return null;
+  if (this.videos[ref]) return this.videos[ref];
+
+  // ✅ Nettoyage complet
+  const cleaned = ref.toLowerCase()
+    .replace(/[-\s]/g, '_')
+    .replace(/[éèê]/g, 'e')
+    .replace(/[àâ]/g, 'a')
+    .replace(/[ùû]/g, 'u')
+    .replace(/[îï]/g, 'i')
+    .replace(/[ôö]/g, 'o');
+
+  return this.videos[cleaned] || null;
+},
 
   // ✅ hasVideo(ref) — vérifier si une vidéo existe
   hasVideo(ref) {
