@@ -165,7 +165,7 @@ gifs: {
   rowing_barre:       'https://fitnessprogramer.com/wp-content/uploads/2021/04/Barbell-Row.gif',
   lat_pulldown:       'https://fitnessprogramer.com/wp-content/uploads/2021/02/LAT-Pulldown.gif',
   rowing_machine:     'https://fitnessprogramer.com/wp-content/uploads/2021/06/Seated-Cable-Row.gif',
-  'soulevé_terre':    'https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Deadlift.gif',
+  souvele_terre:      'https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Deadlift.gif',
   chin_up:            'https://fitnessprogramer.com/wp-content/uploads/2021/04/Chin-Up.gif',
   rack_pull:          'https://fitnessprogramer.com/wp-content/uploads/2021/06/Rack-Pull.gif',
   inverted_row:       'https://fitnessprogramer.com/wp-content/uploads/2021/04/Inverted-Row.gif',
