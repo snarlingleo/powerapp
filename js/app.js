@@ -12175,45 +12175,24 @@ window._mettreAJourObjectifSeances = _mettreAJourObjectifSeances;
 // ════════════════════════════════════════════════════════
 function _regenererPlanningAvecNbJours(nbJours) {
   try {
-
-    // ✅ Récupérer le style actuel du programme
-    const config = Utils.storage.get('ft_programme_config', null);
-    const style  = config?.style || 'ppl';
-    const objectif = config?.objectif
-      || Utils.storage.get('ft_profil_onboarding', {}).objectif
-      || 'forme';
-
-    // ✅ Récupérer le planning actuel
     const planningActuel = Programme.getPlanningActuel?.() || [];
+    const nbActuel = planningActuel.filter(j => j.seanceId).length;
 
-    // ✅ Compter les séances actuelles
-    const seancesActuelles = planningActuel
-      .filter(j => j.seanceId)
-      .map(j => ({
-        jourIdx:  j.seanceId ? planningActuel.indexOf(j) : -1,
-        seanceId: j.seanceId
-      }));
-
-    const nbActuel = seancesActuelles.length;
-
-    if (nbJours === nbActuel) return; // Pas de changement
+    if (nbJours === nbActuel) return;
 
     const nouveauPlanning = [...planningActuel];
     const aujourdhuiIdx  = Utils.indexJourSemaine(Utils.aujourd_hui());
 
     if (nbJours > nbActuel) {
-      // ✅ AJOUTER des jours — trouver les jours de repos à convertir
       const joursRepos = nouveauPlanning
         .map((j, idx) => ({ idx, jour: j }))
-        .filter(j => !j.jour.seanceId)
+        .filter(x => !x.jour.seanceId)
         .sort((a, b) => {
-          // Priorité aux jours proches d'aujourd'hui
           const distA = (a.idx - aujourdhuiIdx + 7) % 7;
           const distB = (b.idx - aujourdhuiIdx + 7) % 7;
           return distA - distB;
         });
 
-      // ✅ Trouver les séances disponibles non encore placées
       let toutesSeances = [];
       try { toutesSeances = Programme.getAllSeances(); } catch(e) {}
 
@@ -12224,38 +12203,61 @@ function _regenererPlanningAvecNbJours(nbJours) {
       const seancesDispos = toutesSeances
         .filter(s => !seancesDejaPlacees.includes(s.id));
 
-      let ajoutees = 0;
+      // ✅ FIX — si toutes déjà placées, réutiliser toutes
+      const seancesAUtiliser = seancesDispos.length > 0
+        ? seancesDispos
+        : toutesSeances;
+
+      if (!seancesAUtiliser.length) {
+        console.warn('[App] Aucune séance disponible');
+        return;
+      }
+
+      let ajoutees   = 0;
       const aAjouter = nbJours - nbActuel;
 
-      for (const jourRepos of joursRepos) {
+      for (const { idx } of joursRepos) {
         if (ajoutees >= aAjouter) break;
 
-        // ✅ Éviter 2 jours consécutifs si possible
-        const prevIdx = (jourRepos.idx - 1 + 7) % 7;
-        const nextIdx = (jourRepos.idx + 1) % 7;
-        const prevOccupe = nouveauPlanning[prevIdx]?.seanceId;
-        const nextOccupe = nouveauPlanning[nextIdx]?.seanceId;
+        // Éviter jours consécutifs sauf si 5+ jours
+        if (aAjouter < 5) {
+          const prevOccupe = nouveauPlanning[(idx - 1 + 7) % 7]?.seanceId;
+          const nextOccupe = nouveauPlanning[(idx + 1) % 7]?.seanceId;
+          if (prevOccupe && nextOccupe) continue;
+        }
 
-        if (prevOccupe && nextOccupe && aAjouter < 5) continue;
+        // ✅ FIX — utiliser seancesAUtiliser
+        const seanceAplacer =
+          seancesAUtiliser[ajoutees % seancesAUtiliser.length];
 
-        // ✅ Choisir une séance à placer
-        const seanceAplacer = seancesDispos[ajoutees % seancesDispos.length];
-        if (!seanceAplacer) break;
-
-        nouveauPlanning[jourRepos.idx] = {
-          ...nouveauPlanning[jourRepos.idx],
+        nouveauPlanning[idx] = {
+          ...nouveauPlanning[idx],
           seanceId: seanceAplacer.id
         };
         ajoutees++;
       }
 
+      // ✅ FIX — si toujours pas assez (contrainte consécutif trop stricte)
+      // Forcer sans contrainte
+      if (ajoutees < aAjouter) {
+        for (let i = 0; i < 7 && ajoutees < aAjouter; i++) {
+          if (!nouveauPlanning[i].seanceId) {
+            const seance =
+              seancesAUtiliser[ajoutees % seancesAUtiliser.length];
+            nouveauPlanning[i] = {
+              ...nouveauPlanning[i],
+              seanceId: seance.id
+            };
+            ajoutees++;
+          }
+        }
+      }
+
     } else {
-      // ✅ RETIRER des jours — enlever les séances en trop
       const joursSeance = nouveauPlanning
         .map((j, idx) => ({ idx, jour: j }))
-        .filter(j => j.jour.seanceId)
+        .filter(x => x.jour.seanceId)
         .sort((a, b) => {
-          // Retirer en priorité les jours les plus éloignés d'aujourd'hui
           const distA = (a.idx - aujourdhuiIdx + 7) % 7;
           const distB = (b.idx - aujourdhuiIdx + 7) % 7;
           return distB - distA;
@@ -12271,16 +12273,13 @@ function _regenererPlanningAvecNbJours(nbJours) {
       }
     }
 
-    // ✅ Sauvegarder le nouveau planning
-    Programme.sauvegarderPlanning?.(nouveauPlanning);
+    Programme.sauvegarderPlanning(nouveauPlanning);
 
-    console.log(
-      `[App] Planning mis à jour : ${nbJours} jours ✅`,
-      nouveauPlanning
-    );
+    const nbFinal = nouveauPlanning.filter(j => j.seanceId).length;
+    console.log(`[App] ✅ Planning : ${nbFinal} séances`);
 
   } catch(e) {
-    console.warn('[App] _regenererPlanningAvecNbJours:', e);
+    console.error('[App] _regenererPlanningAvecNbJours:', e);
   }
 }
 
