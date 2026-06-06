@@ -13,11 +13,12 @@
   <meta name="description"
         content="PowerApp — Ton coach fitness personnel"/>
 
-  <title>PowerApp ⚡</title>
+  <title>PowerApp</title>
 
   <!-- ✅ Manifest -->
   <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="assets/icon-192.png"/>
+  <link rel="apple-touch-icon" href="assets/icon-powerapp.png"/>
+  <link rel="icon" type="image/png" href="assets/icon-powerapp.png"/>
 
   <!-- ✅ Fonts Cyber — EN PREMIER -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -396,16 +397,32 @@
   <!-- ════════════════════════════════════════════════════
        SPLASH SCREEN
   ════════════════════════════════════════════════════ -->
-  <div id="splash-screen">
-    <div class="splash-content">
-      <div class="splash-logo">⚡</div>
-      <div class="splash-title">PowerApp</div>
-      <div class="splash-subtitle">Ton coach fitness personnel</div>
-      <div class="splash-loader">
-        <div class="splash-bar"></div>
-      </div>
+<div id="splash-screen">
+  <div class="splash-content">
+   <div class="splash-logo">
+      <img 
+        src="assets/icon-powerapp.png" 
+        alt="PowerApp Logo"
+        style="
+          width: 120px;
+          height: 120px;
+          border-radius: 28px;
+          object-fit: cover;
+          animation: splashGlow 2s ease-in-out infinite;
+          box-shadow: 
+            0 0 30px rgba(191, 97, 255, 0.6),
+            0 0 60px rgba(139, 240, 187, 0.3);
+        "
+      />
+    </div>
+
+    <div class="splash-title">PowerApp</div>
+    <div class="splash-subtitle">Ton coach fitness personnel</div>
+    <div class="splash-loader">
+      <div class="splash-bar"></div>
     </div>
   </div>
+</div>
 
   <!-- ════════════════════════════════════════════════════
        ONBOARDING
@@ -432,7 +449,27 @@
       <!-- Left -->
       <div class="cb-header-left">
         <div class="cb-icon-bubble" id="cb-icon-bubble">
-          <span id="header-emoji">⚡</span>
+          <!-- ✅ NOUVEAU : Logo neon dans le header bubble -->
+<div class="cb-icon-bubble" id="cb-icon-bubble" style="
+  padding: 0;
+  overflow: hidden;
+  background: #09092d;
+  box-shadow: 
+    0 0 12px rgba(191, 97, 255, 0.5),
+    0 0 24px rgba(139, 240, 187, 0.25);
+">
+  <img 
+    id="header-emoji"
+    src="assets/icon-powerapp.png" 
+    alt="⚡"
+    style="
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: inherit;
+    "
+  />
+</div>
         </div>
         <div class="cb-header-text">
           <div class="cb-header-meta">
