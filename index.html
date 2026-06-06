@@ -5,7 +5,7 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0,
                  viewport-fit=cover"/>
-  <meta name="theme-color" content="#020610"/>
+  <meta name="theme-color" content="#09092d"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style"
         content="black-translucent"/>
@@ -15,28 +15,28 @@
 
   <title>PowerApp</title>
 
-  <!-- ✅ Manifest -->
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="assets/icon-powerapp.png"/>
+  <!-- ✅ Favicon & Apple Icon -->
   <link rel="icon" type="image/png" href="assets/icon-powerapp.png"/>
+  <link rel="apple-touch-icon"      href="assets/icon-powerapp.png"/>
+  <link rel="manifest"              href="manifest.json"/>
 
-  <!-- ✅ Fonts Cyber — EN PREMIER -->
+  <!-- ✅ Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap"
         rel="stylesheet"/>
- 
-  <!-- ✅ CSS -->
-   <link rel="stylesheet" href="./css/style.css" />
 
-    <!-- Chart.js — AVANT tous les scripts -->
+  <!-- ✅ CSS -->
+  <link rel="stylesheet" href="./css/style.css"/>
+
+  <!-- ✅ Scripts externes -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/maphilight@1.4.0/jquery.maphilight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/image-map-resizer@1.0.10/js/imageMapResizer.min.js"></script>
 
-  <!-- ✅ Thème appliqué immédiatement avant tout rendu -->
+  <!-- ✅ Thème immédiat -->
   <script>
     (function() {
       const t = localStorage.getItem('ft_theme_style') || 'cyber-blue';
@@ -44,687 +44,902 @@
     })();
   </script>
 
-<style>
-  /* ✅ Fix LiveUltra — plein écran absolu */
-  #live-ultra-overlay {
-    position:   fixed !important;
-    top:        0 !important;
-    left:       0 !important;
-    width:      100vw !important;
-    height:     100vh !important;
-    height:     100dvh !important;
-    max-width:  none !important;
-    margin:     0 !important;
-    transform:  none !important;
-    z-index:    99999 !important;
-    overflow-y: auto !important;
-  }
+  <style>
 
-  /* ✅ Fix wrappers */
-  #app-wrapper {
-    overflow: visible;
-    transform: none;
-  }
-
-  .app-header, #app-header {
-    transform: none !important;
-  }
-
-  /* ════════════════════════════════════
-     MOBILE — max 1023px
-  ════════════════════════════════════ */
-  @media (max-width: 1023px) {
-    #pc-aside {
-      display: none !important;
+    /* ══════════════════════════════════════
+       SPLASH SCREEN — NEON LOGO
+    ══════════════════════════════════════ */
+    #splash-screen {
+      position:        fixed;
+      inset:           0;
+      background:      #09092d;
+      display:         flex;
+      align-items:     center;
+      justify-content: center;
+      z-index:         99999;
+      transition:      opacity .6s ease, visibility .6s ease;
     }
 
-    .app-main, #app-main {
+    #splash-screen.hidden {
+      opacity:    0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-content {
+      display:        flex;
+      flex-direction: column;
+      align-items:    center;
+      gap:            20px;
+    }
+
+    /* ── Logo container ── */
+    .splash-logo-wrap {
+      position:      relative;
+      width:         130px;
+      height:        130px;
+      display:       flex;
+      align-items:   center;
+      justify-content: center;
+    }
+
+    /* Halo tournant */
+    .splash-logo-wrap::before {
+      content:       '';
+      position:      absolute;
+      inset:         -6px;
+      border-radius: 30px;
+      background:    conic-gradient(
+        rgba(191,97,255,0.8),
+        rgba(139,240,187,0.8),
+        rgba(75,75,249,0.8),
+        rgba(191,97,255,0.8)
+      );
+      animation:     spinHalo 3s linear infinite;
+      z-index:       0;
+    }
+
+    /* Fond derrière l'image */
+    .splash-logo-wrap::after {
+      content:       '';
+      position:      absolute;
+      inset:         2px;
+      border-radius: 26px;
+      background:    #09092d;
+      z-index:       1;
+    }
+
+    @keyframes spinHalo {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* Image du logo */
+    .splash-logo-img {
+      position:      relative;
+      width:         118px;
+      height:        118px;
+      border-radius: 24px;
+      object-fit:    cover;
+      z-index:       2;
+      animation:     splashPulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes splashPulse {
+      0%, 100% {
+        filter: drop-shadow(0 0 12px rgba(191,97,255,0.7))
+                drop-shadow(0 0 30px rgba(139,240,187,0.3));
+        transform: scale(1);
+      }
+      50% {
+        filter: drop-shadow(0 0 24px rgba(191,97,255,1))
+                drop-shadow(0 0 50px rgba(139,240,187,0.6))
+                drop-shadow(0 0 80px rgba(75,75,249,0.4));
+        transform: scale(1.04);
+      }
+    }
+
+    /* Particules glow autour */
+    .splash-particles {
+      position: absolute;
+      inset:    -40px;
+      z-index:  0;
+      pointer-events: none;
+    }
+
+    .splash-particle {
+      position:      absolute;
+      width:         4px;
+      height:        4px;
+      border-radius: 50%;
+      animation:     floatParticle 3s ease-in-out infinite;
+    }
+
+    .splash-particle:nth-child(1) {
+      background: rgba(191,97,255,0.8);
+      top: 10%; left: 5%;
+      animation-delay: 0s;
+    }
+    .splash-particle:nth-child(2) {
+      background: rgba(139,240,187,0.8);
+      top: 20%; right: 8%;
+      animation-delay: .5s;
+    }
+    .splash-particle:nth-child(3) {
+      background: rgba(75,75,249,0.9);
+      bottom: 15%; left: 10%;
+      animation-delay: 1s;
+    }
+    .splash-particle:nth-child(4) {
+      background: rgba(191,97,255,0.6);
+      bottom: 10%; right: 5%;
+      animation-delay: 1.5s;
+    }
+    .splash-particle:nth-child(5) {
+      background: rgba(139,240,187,0.7);
+      top: 50%; left: 2%;
+      animation-delay: .8s;
+    }
+    .splash-particle:nth-child(6) {
+      background: rgba(191,97,255,0.5);
+      top: 50%; right: 2%;
+      animation-delay: 1.2s;
+    }
+
+    @keyframes floatParticle {
+      0%, 100% { transform: translateY(0)  scale(1);   opacity: .6; }
+      50%       { transform: translateY(-12px) scale(1.5); opacity: 1; }
+    }
+
+    /* Titre splash */
+    .splash-title {
+      font-family:    'Orbitron', monospace;
+      font-size:      1.6rem;
+      font-weight:    900;
+      letter-spacing: .15em;
+      background:     linear-gradient(135deg,
+                        rgba(191,97,255,1),
+                        rgba(75,75,249,1),
+                        rgba(139,240,187,1));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: titleGlow 2.5s ease-in-out infinite;
+    }
+
+    @keyframes titleGlow {
+      0%, 100% { filter: brightness(1); }
+      50%       { filter: brightness(1.3) drop-shadow(0 0 10px rgba(191,97,255,0.5)); }
+    }
+
+    .splash-subtitle {
+      font-family: 'Rajdhani', sans-serif;
+      font-size:   .85rem;
+      font-weight: 500;
+      color:       rgba(255,255,255,0.35);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    /* Barre de chargement */
+    .splash-loader {
+      width:         200px;
+      height:        3px;
+      background:    rgba(255,255,255,0.06);
+      border-radius: 99px;
+      overflow:      hidden;
+      margin-top:    8px;
+    }
+
+    .splash-bar {
+      height:        100%;
+      border-radius: 99px;
+      background:    linear-gradient(90deg,
+                       rgba(191,97,255,0.8),
+                       rgba(75,75,249,1),
+                       rgba(139,240,187,0.8));
+      animation:     loadBar 2s ease-in-out forwards;
+    }
+
+    @keyframes loadBar {
+      0%   { width: 0%; }
+      60%  { width: 80%; }
+      90%  { width: 95%; }
+      100% { width: 100%; }
+    }
+
+    /* Version tag */
+    .splash-version {
+      font-family: 'Orbitron', monospace;
+      font-size:   .5rem;
+      color:       rgba(75,75,249,0.4);
+      letter-spacing: .2em;
+      margin-top:  4px;
+    }
+
+
+    /* ══════════════════════════════════════
+       HEADER — LOGO NEON
+    ══════════════════════════════════════ */
+
+    /* Icon bubble avec logo image */
+    .cb-icon-bubble {
+      padding:       0 !important;
+      overflow:      hidden !important;
+      background:    #09092d !important;
+      border:        1px solid rgba(191,97,255,0.3) !important;
+      transition:    box-shadow .3s ease !important;
+    }
+
+    .cb-icon-bubble:hover {
+      box-shadow:
+        0 0 16px rgba(191,97,255,0.6),
+        0 0 32px rgba(139,240,187,0.3) !important;
+    }
+
+    .cb-icon-bubble img {
+      width:         100%;
+      height:        100%;
+      object-fit:    cover;
+      border-radius: inherit;
+      display:       block;
+    }
+
+    /* Glow animation header icon */
+    @keyframes headerIconGlow {
+      0%, 100% {
+        box-shadow:
+          0 0 8px rgba(191,97,255,0.4),
+          0 0 16px rgba(139,240,187,0.2);
+      }
+      50% {
+        box-shadow:
+          0 0 16px rgba(191,97,255,0.7),
+          0 0 32px rgba(139,240,187,0.4),
+          0 0 48px rgba(75,75,249,0.3);
+      }
+    }
+
+    .cb-icon-bubble {
+      animation: headerIconGlow 3s ease-in-out infinite !important;
+    }
+
+
+    /* ══════════════════════════════════════
+       PC SIDEBAR — LOGO NAV
+    ══════════════════════════════════════ */
+    .pc-nav-logo-img {
+      width:         36px;
+      height:        36px;
+      border-radius: 10px;
+      object-fit:    cover;
+      box-shadow:
+        0 0 10px rgba(191,97,255,0.5),
+        0 0 20px rgba(139,240,187,0.25);
+      animation: headerIconGlow 3s ease-in-out infinite;
+    }
+
+    .pc-nav-logo-title {
+      font-family:    'Orbitron', monospace;
+      font-size:      .75rem;
+      font-weight:    900;
+      letter-spacing: .1em;
+      background:     linear-gradient(135deg,
+                        rgba(191,97,255,1),
+                        rgba(139,240,187,1));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+
+    /* ══════════════════════════════════════
+       LAYOUT & RESPONSIVE (inchangé)
+    ══════════════════════════════════════ */
+    #live-ultra-overlay {
+      position:   fixed !important;
+      top:        0 !important;
+      left:       0 !important;
+      width:      100vw !important;
+      height:     100vh !important;
+      height:     100dvh !important;
+      max-width:  none !important;
+      margin:     0 !important;
+      transform:  none !important;
+      z-index:    99999 !important;
       overflow-y: auto !important;
-      overflow-x: hidden !important;
     }
-  }
 
-  /* ════════════════════════════════════
-     PC — 1024px+
-  ════════════════════════════════════ */
-  @media (min-width: 1024px) {
-
-    /* Wrapper */
     #app-wrapper {
-      max-width:  100% !important;
-      width:      100% !important;
-      display:    block !important;
-      overflow:   visible !important;
+      overflow: visible;
+      transform: none;
     }
 
-    /* Header */
     .app-header, #app-header {
-      position:      fixed !important;
-      top:           0 !important;
-      left:          0 !important;
-      right:         0 !important;
-      width:         100% !important;
-      max-width:     100% !important;
-      transform:     none !important;
-      height:        64px !important;
-      z-index:       1000 !important;
-      border-radius: 0 !important;
-      padding:       0 32px !important;
-      display:       flex !important;
-      align-items:   center !important;
-    }
-
-    /* Sidebar */
-    .app-nav, #app-nav {
-      position:        fixed !important;
-      top:             64px !important;
-      left:            0 !important;
-      right:           auto !important;
-      bottom:          0 !important;
-      width:           230px !important;
-      height:          calc(100vh - 64px) !important;
-      transform:       none !important;
-      display:         flex !important;
-      flex-direction:  column !important;
-      align-items:     stretch !important;
-      justify-content: flex-start !important;
-      overflow-y:      auto !important;
-      overflow-x:      hidden !important;
-      padding:         20px 10px !important;
-      gap:             3px !important;
-      background:      linear-gradient(180deg,
-                         rgba(2,10,24,0.99),
-                         rgba(3,12,32,0.99)) !important;
-      border-right:    1px solid rgba(0,100,255,0.15) !important;
-      border-top:      none !important;
-      border-bottom:   none !important;
-      z-index:         900 !important;
-      scrollbar-width: none !important;
-    }
-
-    .app-nav::-webkit-scrollbar,
-    #app-nav::-webkit-scrollbar {
-      display: none !important;
-    }
-
-    /* Main */
-.app-main, #app-main {
-  display:       block !important;
-  position:      relative !important;
-  margin-top:    64px !important;
-  margin-left:   230px !important;
-  margin-right:  270px !important;
-      margin-bottom: 0 !important;
-      padding:       24px 32px !important;
-      min-height:    calc(100vh - 64px) !important;
-      width:         auto !important;
-      max-width:     none !important;
-      overflow-y:    auto !important;
-      overflow-x:    hidden !important;
-      transform:     none !important;
-    }
-
-    /* Pages */
-    .page {
-      max-width: 860px !important;
-      margin:    0 auto !important;
-      padding:   0 !important;
-    }
-
-    /* Aside */
-    #pc-aside {
-      display:         block !important;
-      position:        fixed !important;
-      top:             64px !important;
-      right:           0 !important;
-      left:            auto !important;
-      width:           270px !important;
-      height:          calc(100vh - 64px) !important;
-      overflow-y:      auto !important;
-      overflow-x:      hidden !important;
-      padding:         20px 14px !important;
-      background:      linear-gradient(180deg,
-                         rgba(2,10,24,0.99),
-                         rgba(3,12,32,0.99)) !important;
-      border-left:     1px solid rgba(0,100,255,0.1) !important;
-      z-index:         800 !important;
-      scrollbar-width: none !important;
-    }
-
-    #pc-aside::-webkit-scrollbar { display: none !important; }
-
-    /* Nav buttons verticaux */
-    #app-nav .nav-btn {
-      flex-direction:  row !important;
-      align-items:     center !important;
-      justify-content: flex-start !important;
-      gap:             10px !important;
-      padding:         10px 12px !important;
-      min-height:      42px !important;
-      width:           100% !important;
-      border-radius:   10px !important;
-      text-align:      left !important;
-      flex:            none !important;
-    }
-
-    #app-nav .nav-btn:hover {
-      background: rgba(0,100,255,0.08) !important;
-    }
-
-    #app-nav .nav-btn.active {
-      background: rgba(0,100,255,0.12) !important;
-      border:     1px solid rgba(0,207,255,0.2) !important;
-    }
-
-    /* Label nav visible */
-    #app-nav .nav-btn .nav-label {
-      font-size:      .8rem !important;
-      font-weight:    600 !important;
-      text-transform: none !important;
-      letter-spacing: .02em !important;
-      opacity:        1 !important;
-      display:        block !important;
-      white-space:    nowrap !important;
-    }
-
-    /* Icon nav */
-    #app-nav .nav-btn .nav-icon {
-      font-size:   1.1rem !important;
-      width:       24px !important;
-      flex-shrink: 0 !important;
-      text-align:  center !important;
-      filter:      none !important;
-      transform:   none !important;
-    }
-
-    #app-nav .nav-btn.active .nav-icon {
-      filter: drop-shadow(0 0 5px currentColor) !important;
-    }
-
-    /* Sections sidebar */
-    #app-nav .pc-nav-section {
-      font-family:    'Orbitron', monospace !important;
-      font-size:      .55rem !important;
-      font-weight:    700 !important;
-      text-transform: uppercase !important;
-      letter-spacing: .15em !important;
-      color:          rgba(0,150,255,0.3) !important;
-      padding:        12px 16px 4px !important;
-    }
-
-    /* Logo sidebar */
-    #app-nav .pc-nav-logo {
-      display:       flex !important;
-      align-items:   center !important;
-      gap:           10px !important;
-      padding:       8px 12px 20px !important;
-      margin-bottom: 8px !important;
-      border-bottom: 1px solid rgba(0,100,255,0.1) !important;
-    }
-
-    /* Live button */
-    #app-nav .nav-btn-live .nav-icon {
-      width:        38px !important;
-      height:       38px !important;
-      border-radius:10px !important;
-      transform:    none !important;
-      background:   linear-gradient(135deg,
-                      var(--cb2), var(--cb1)) !important;
-      display:      flex !important;
-      align-items:  center !important;
-      justify-content: center !important;
-      font-size:    1.1rem !important;
-      box-shadow:   0 0 14px rgba(0,207,255,0.4) !important;
-    }
-
-    /* Modals centrées */
-    .modal {
-      align-items:     center !important;
-      justify-content: center !important;
-    }
-
-    .modal-inner {
-      max-width:     560px !important;
-      width:         90% !important;
-      margin:        auto !important;
-      border-radius: 20px !important;
-      max-height:    85vh !important;
-    }
-
-    /* Toast */
-    #toast-container {
-      position:  fixed !important;
-      right:     280px !important;
-      top:       72px !important;
-      left:      auto !important;
-      bottom:    auto !important;
-      transform: none !important;
-      max-width: 340px !important;
-    }
-
-    /* Chrono sticky */
-    #chrono-sticky {
-      position:  fixed !important;
-      bottom:    20px !important;
-      left:      240px !important;
-      right:     280px !important;
-      width:     auto !important;
-      transform: none !important;
-      z-index:   500 !important;
-    }
-
-    /* Overlays */
-    #repos-auto-overlay,
-    #serie-overlay {
-      left:      230px !important;
-      right:     270px !important;
-      width:     auto !important;
       transform: none !important;
     }
 
-    /* Grilles */
-    .exercice-galerie-grid {
-      grid-template-columns: repeat(3, 1fr) !important;
-    }
-    .trophy-grid {
-      grid-template-columns: repeat(5, 1fr) !important;
-    }
-    .stats-grid {
-      grid-template-columns: repeat(4, 1fr) !important;
+    @media (max-width: 1023px) {
+      #pc-aside { display: none !important; }
+      .app-main, #app-main {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
     }
 
-    /* Cards hover */
-    .card {
-      transition: all .2s ease !important;
-    }
-    .card:hover {
-      border-color: rgba(0,207,255,0.2) !important;
-      transform:    translateY(-1px) !important;
-      box-shadow:   0 8px 32px rgba(0,100,255,0.12) !important;
+    @media (min-width: 1024px) {
+      #app-wrapper {
+        max-width: 100% !important;
+        width:     100% !important;
+        display:   block !important;
+        overflow:  visible !important;
+      }
+
+      .app-header, #app-header {
+        position:      fixed !important;
+        top:           0 !important;
+        left:          0 !important;
+        right:         0 !important;
+        width:         100% !important;
+        max-width:     100% !important;
+        transform:     none !important;
+        height:        64px !important;
+        z-index:       1000 !important;
+        border-radius: 0 !important;
+        padding:       0 32px !important;
+        display:       flex !important;
+        align-items:   center !important;
+      }
+
+      .app-nav, #app-nav {
+        position:        fixed !important;
+        top:             64px !important;
+        left:            0 !important;
+        right:           auto !important;
+        bottom:          0 !important;
+        width:           230px !important;
+        height:          calc(100vh - 64px) !important;
+        transform:       none !important;
+        display:         flex !important;
+        flex-direction:  column !important;
+        align-items:     stretch !important;
+        justify-content: flex-start !important;
+        overflow-y:      auto !important;
+        overflow-x:      hidden !important;
+        padding:         20px 10px !important;
+        gap:             3px !important;
+        background:      linear-gradient(180deg,
+                           rgba(2,10,24,0.99),
+                           rgba(3,12,32,0.99)) !important;
+        border-right:    1px solid rgba(0,100,255,0.15) !important;
+        border-top:      none !important;
+        border-bottom:   none !important;
+        z-index:         900 !important;
+        scrollbar-width: none !important;
+      }
+
+      .app-nav::-webkit-scrollbar,
+      #app-nav::-webkit-scrollbar { display: none !important; }
+
+      .app-main, #app-main {
+        display:       block !important;
+        position:      relative !important;
+        margin-top:    64px !important;
+        margin-left:   230px !important;
+        margin-right:  270px !important;
+        margin-bottom: 0 !important;
+        padding:       24px 32px !important;
+        min-height:    calc(100vh - 64px) !important;
+        width:         auto !important;
+        max-width:     none !important;
+        overflow-y:    auto !important;
+        overflow-x:    hidden !important;
+        transform:     none !important;
+      }
+
+      .page {
+        max-width: 860px !important;
+        margin:    0 auto !important;
+        padding:   0 !important;
+      }
+
+      #pc-aside {
+        display:         block !important;
+        position:        fixed !important;
+        top:             64px !important;
+        right:           0 !important;
+        left:            auto !important;
+        width:           270px !important;
+        height:          calc(100vh - 64px) !important;
+        overflow-y:      auto !important;
+        overflow-x:      hidden !important;
+        padding:         20px 14px !important;
+        background:      linear-gradient(180deg,
+                           rgba(2,10,24,0.99),
+                           rgba(3,12,32,0.99)) !important;
+        border-left:     1px solid rgba(0,100,255,0.1) !important;
+        z-index:         800 !important;
+        scrollbar-width: none !important;
+      }
+
+      #pc-aside::-webkit-scrollbar { display: none !important; }
+
+      #app-nav .nav-btn {
+        flex-direction:  row !important;
+        align-items:     center !important;
+        justify-content: flex-start !important;
+        gap:             10px !important;
+        padding:         10px 12px !important;
+        min-height:      42px !important;
+        width:           100% !important;
+        border-radius:   10px !important;
+        text-align:      left !important;
+        flex:            none !important;
+      }
+
+      #app-nav .nav-btn:hover {
+        background: rgba(0,100,255,0.08) !important;
+      }
+
+      #app-nav .nav-btn.active {
+        background: rgba(0,100,255,0.12) !important;
+        border:     1px solid rgba(0,207,255,0.2) !important;
+      }
+
+      #app-nav .nav-btn .nav-label {
+        font-size:      .8rem !important;
+        font-weight:    600 !important;
+        text-transform: none !important;
+        letter-spacing: .02em !important;
+        opacity:        1 !important;
+        display:        block !important;
+        white-space:    nowrap !important;
+      }
+
+      #app-nav .nav-btn .nav-icon {
+        font-size:   1.1rem !important;
+        width:       24px !important;
+        flex-shrink: 0 !important;
+        text-align:  center !important;
+        filter:      none !important;
+        transform:   none !important;
+      }
+
+      #app-nav .nav-btn.active .nav-icon {
+        filter: drop-shadow(0 0 5px currentColor) !important;
+      }
+
+      #app-nav .pc-nav-section {
+        font-family:    'Orbitron', monospace !important;
+        font-size:      .55rem !important;
+        font-weight:    700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: .15em !important;
+        color:          rgba(0,150,255,0.3) !important;
+        padding:        12px 16px 4px !important;
+      }
+
+      #app-nav .pc-nav-logo {
+        display:       flex !important;
+        align-items:   center !important;
+        gap:           10px !important;
+        padding:       8px 12px 20px !important;
+        margin-bottom: 8px !important;
+        border-bottom: 1px solid rgba(0,100,255,0.1) !important;
+      }
+
+      #app-nav .nav-btn-live .nav-icon {
+        width:           38px !important;
+        height:          38px !important;
+        border-radius:   10px !important;
+        transform:       none !important;
+        background:      linear-gradient(135deg,
+                           var(--cb2), var(--cb1)) !important;
+        display:         flex !important;
+        align-items:     center !important;
+        justify-content: center !important;
+        font-size:       1.1rem !important;
+        box-shadow:      0 0 14px rgba(0,207,255,0.4) !important;
+      }
+
+      .modal {
+        align-items:     center !important;
+        justify-content: center !important;
+      }
+
+      .modal-inner {
+        max-width:     560px !important;
+        width:         90% !important;
+        margin:        auto !important;
+        border-radius: 20px !important;
+        max-height:    85vh !important;
+      }
+
+      #toast-container {
+        position:  fixed !important;
+        right:     280px !important;
+        top:       72px !important;
+        left:      auto !important;
+        bottom:    auto !important;
+        transform: none !important;
+        max-width: 340px !important;
+      }
+
+      #chrono-sticky {
+        position:  fixed !important;
+        bottom:    20px !important;
+        left:      240px !important;
+        right:     280px !important;
+        width:     auto !important;
+        transform: none !important;
+        z-index:   500 !important;
+      }
+
+      #repos-auto-overlay,
+      #serie-overlay {
+        left:      230px !important;
+        right:     270px !important;
+        width:     auto !important;
+        transform: none !important;
+      }
+
+      .exercice-galerie-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+      .trophy-grid {
+        grid-template-columns: repeat(5, 1fr) !important;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+      }
+
+      .card {
+        transition: all .2s ease !important;
+      }
+      .card:hover {
+        border-color: rgba(0,207,255,0.2) !important;
+        transform:    translateY(-1px) !important;
+        box-shadow:   0 8px 32px rgba(0,100,255,0.12) !important;
+      }
+
+      ::-webkit-scrollbar       { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb {
+        background:    rgba(0,150,255,0.25);
+        border-radius: 3px;
+      }
+
+      [data-theme-style="arctic-white"] .app-nav,
+      [data-theme-style="arctic-white"] #app-nav {
+        background: rgba(240,244,255,0.98) !important;
+      }
+
+      [data-theme-style="arctic-white"] #pc-aside {
+        background: rgba(245,248,255,0.98) !important;
+      }
     }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar       { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb {
-      background:    rgba(0,150,255,0.25);
-      border-radius: 3px;
+    @media (min-width: 1440px) {
+      .app-nav, #app-nav  { width: 250px !important; }
+      .app-main, #app-main {
+        margin-left:  250px !important;
+        margin-right: 300px !important;
+        padding:      28px 40px !important;
+      }
+      #pc-aside           { width: 300px !important; }
+      .page               { max-width: 960px !important; }
     }
 
-    /* Light theme */
-    [data-theme-style="arctic-white"] .app-nav,
-    [data-theme-style="arctic-white"] #app-nav {
-      background: rgba(240,244,255,0.98) !important;
-    }
-
-    [data-theme-style="arctic-white"] #pc-aside {
-      background: rgba(245,248,255,0.98) !important;
-    }
-  }
-
-  /* ════════════════════════════════════
-     GRAND ÉCRAN 1440px+
-  ════════════════════════════════════ */
-  @media (min-width: 1440px) {
-    .app-nav, #app-nav {
-      width: 250px !important;
-    }
-
-    .app-main, #app-main {
-      margin-left:  250px !important;
-      margin-right: 300px !important;
-      padding:      28px 40px !important;
-    }
-
-    #pc-aside {
-      width: 300px !important;
-    }
-
-    .page {
-      max-width: 960px !important;
-    }
-  }
-</style>
-
+  </style>
 </head>
 
 <body>
-<!-- ════ LAVA BACKGROUND ════ -->
+
+<!-- ════ BACKGROUND ════ -->
 <canvas id="lava-canvas"></canvas>
 <div class="bg-scanlines"></div>
 <div class="bg-vignette"></div>
 
-  <!-- ════════════════════════════════════════════════════
-       SPLASH SCREEN
-  ════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════
+     ✅ SPLASH SCREEN — LOGO NEON ANIMÉ
+════════════════════════════════════════════════════ -->
 <div id="splash-screen">
   <div class="splash-content">
-   <div class="splash-logo">
-      <img 
-        src="assets/icon-powerapp.png" 
-        alt="PowerApp Logo"
-        style="
-          width: 120px;
-          height: 120px;
-          border-radius: 28px;
-          object-fit: cover;
-          animation: splashGlow 2s ease-in-out infinite;
-          box-shadow: 
-            0 0 30px rgba(191, 97, 255, 0.6),
-            0 0 60px rgba(139, 240, 187, 0.3);
+
+    <!-- Logo avec halo tournant -->
+    <div class="splash-logo-wrap">
+
+      <!-- Particules -->
+      <div class="splash-particles">
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+        <div class="splash-particle"></div>
+      </div>
+
+      <!-- Image logo -->
+      <img
+        class="splash-logo-img"
+        src="assets/icon-powerapp.png"
+        alt="PowerApp"
+        onerror="
+          this.style.display='none';
+          this.parentElement.innerHTML += '<div style=\'font-size:4rem;z-index:2;position:relative\'>⚡</div>';
         "
       />
     </div>
 
+    <!-- Titre -->
     <div class="splash-title">PowerApp</div>
     <div class="splash-subtitle">Ton coach fitness personnel</div>
+
+    <!-- Loader -->
     <div class="splash-loader">
       <div class="splash-bar"></div>
     </div>
+
+    <div class="splash-version">v2.0 · NEON EDITION</div>
+
   </div>
 </div>
 
-  <!-- ════════════════════════════════════════════════════
-       ONBOARDING
-  ════════════════════════════════════════════════════ -->
-  <div id="onboarding-screen" class="onboarding hidden"></div>
+<!-- ════════════════════════════════════════════════════
+     ONBOARDING
+════════════════════════════════════════════════════ -->
+<div id="onboarding-screen" class="onboarding hidden"></div>
 
-  <!-- ════════════════════════════════════════════════════
-       APP WRAPPER
-  ════════════════════════════════════════════════════ -->
-  <div id="app-wrapper" style="display:none">
+<!-- ════════════════════════════════════════════════════
+     APP WRAPPER
+════════════════════════════════════════════════════ -->
+<div id="app-wrapper" style="display:none">
 
-    <!-- ── HEADER CYBER BLOCK ── -->
-    <header class="app-header" id="app-header">
+  <!-- ── HEADER ── -->
+  <header class="app-header" id="app-header">
 
-      <!-- Cyber elements -->
-      <div class="cb-left-bar"   id="cb-left-bar"></div>
-      <div class="cb-ambient"    id="cb-ambient"></div>
-      <div class="cb-top-stripe" id="cb-top-stripe"></div>
-      <div class="cb-corner cb-corner-tl"></div>
-      <div class="cb-corner cb-corner-tr"></div>
-      <div class="cb-corner cb-corner-bl"></div>
-      <div class="cb-corner cb-corner-br"></div>
+    <div class="cb-left-bar"   id="cb-left-bar"></div>
+    <div class="cb-ambient"    id="cb-ambient"></div>
+    <div class="cb-top-stripe" id="cb-top-stripe"></div>
+    <div class="cb-corner cb-corner-tl"></div>
+    <div class="cb-corner cb-corner-tr"></div>
+    <div class="cb-corner cb-corner-bl"></div>
+    <div class="cb-corner cb-corner-br"></div>
 
-      <!-- Left -->
-      <div class="cb-header-left">
-        <div class="cb-icon-bubble" id="cb-icon-bubble">
-          <!-- ✅ NOUVEAU : Logo neon dans le header bubble -->
-<div class="cb-icon-bubble" id="cb-icon-bubble" style="
-  padding: 0;
-  overflow: hidden;
-  background: #09092d;
-  box-shadow: 
-    0 0 12px rgba(191, 97, 255, 0.5),
-    0 0 24px rgba(139, 240, 187, 0.25);
-">
-  <img 
-    id="header-emoji"
-    src="assets/icon-powerapp.png" 
-    alt="⚡"
-    style="
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: inherit;
-    "
-  />
-</div>
-        </div>
-        <div class="cb-header-text">
-          <div class="cb-header-meta">
-            <span class="cb-cat-label" id="header-cat">CORE</span>
-            <div class="cb-dot"        id="cb-dot"></div>
-            <span class="cb-key-label" id="cb-key">HOME</span>
-          </div>
-          <div class="cb-header-title" id="header-title">PowerApp</div>
-        </div>
+    <!-- Left — ✅ Logo neon dans la bubble -->
+    <div class="cb-header-left">
+      <div class="cb-icon-bubble" id="cb-icon-bubble">
+        <img
+          id="header-emoji"
+          src="assets/icon-powerapp.png"
+          alt="PowerApp"
+          onerror="
+            this.outerHTML='<span id=\'header-emoji\'>⚡</span>';
+          "
+        />
       </div>
-
-      <!-- Right -->
-      <div class="cb-header-right">
-        <div class="cb-xp-badge" id="header-xp"></div>
-        <!-- <div class="cb-badge"    id="cb-badge">HOME</div>-->
-        <button class="cb-menu-btn"
-                id="btn-menu-global"
-                onclick="MenuGlobal.toggle()">☰</button>
+      <div class="cb-header-text">
+        <div class="cb-header-meta">
+          <span class="cb-cat-label" id="header-cat">CORE</span>
+          <div class="cb-dot"        id="cb-dot"></div>
+          <span class="cb-key-label" id="cb-key">HOME</span>
+        </div>
+        <div class="cb-header-title" id="header-title">PowerApp</div>
       </div>
-
-    </header>
-
-    <!-- ── NAV BAS ── -->
-    <nav class="app-nav" id="app-nav"></nav>
-
-    <!-- ── MAIN ── -->
-    <main class="app-main" id="app-main">
-
-      <!-- Pages -->
-      <div id="page-home"         class="page"></div>
-      <div id="page-training"     class="page"></div>
-      <div id="page-live"         class="page"></div>
-      <div id="page-stats"        class="page"></div>
-      <div id="page-coach"        class="page"></div>
-      <div id="page-defis"        class="page"></div>
-      <div id="page-predict"      class="page"></div>
-      <div id="page-calculateur"  class="page"></div>
-      <div id="page-share"        class="page"></div>
-      <div id="page-gamification" class="page"></div>
-      <div id="page-history"      class="page"></div>
-      <div id="page-photos"       class="page"></div>
-      <div id="page-social"       class="page"></div>
-      <div id="page-supersets"    class="page"></div>
-      <div id="page-offline"      class="page"></div>
-      <div id="page-settings"     class="page"></div>
-      <div id="page-nutrition"    class="page"></div>
-      <div id="page-circuit"      class="page"></div>
-      <div id="page-adaptatif"    class="page"></div>
-      <div id="page-galerie"      class="page"></div>
-      <div id="page-journal"      class="page"></div>
-      <div id="page-objectifs"    class="page"></div>
-      <div id="page-themes"       class="page"></div>
-      <div id="page-export"       class="page"></div>
-      <div id="page-sounds"       class="page"></div>
-      <div id="page-blessures"    class="page"></div>
-      <div id="page-profil"       class="page"></div>
-      <div id="page-mon_profil"   class="page"></div>
-      <div id="page-recovery"     class="page"></div>
-
-    </main>
-
-  </div><!-- /app-wrapper -->
-
-  <!-- ════════════════════════════════════════════════════
-       CHRONO STICKY
-  ════════════════════════════════════════════════════ -->
-  <div id="chrono-sticky" class="hidden"></div>
-
-  <!-- ════════════════════════════════════════════════════
-       MODALS
-  ════════════════════════════════════════════════════ -->
-
-  <!-- Modal Info / Planning / Résumé -->
-  <div id="modal-info" class="modal hidden">
-    <div class="modal-overlay"
-         onclick="document.getElementById('modal-info')
-                  .classList.add('hidden')"></div>
-    <div class="modal-inner">
-      <button class="modal-close"
-              id="modal-info-close">✕</button>
-      <div class="modal-content"
-           id="modal-info-content"></div>
     </div>
-  </div>
 
-  <!-- Modal Confirmation -->
-  <div id="modal-confirm" class="modal hidden">
-    <div class="modal-overlay"></div>
-    <div class="modal-inner modal-sm">
-      <div class="modal-content" id="modal-confirm-content">
-        <div style="text-align:center;padding:var(--space-lg)">
-          <div style="font-size:1.5rem;margin-bottom:var(--space-md)"
-               id="modal-confirm-icon">⚠️</div>
-          <div style="font-size:1rem;font-weight:700;
-                      margin-bottom:var(--space-sm)"
-               id="modal-confirm-title">
-            Confirmer
-          </div>
-          <p style="font-size:.82rem;color:var(--text-muted);
-                    margin-bottom:var(--space-lg)"
-             id="modal-confirm-msg"></p>
-          <div style="display:flex;gap:var(--space-sm)">
-            <button id="modal-confirm-cancel"
-                    class="btn-secondary"
-                    style="flex:1">
-              Annuler
-            </button>
-            <button id="modal-confirm-ok"
-                    class="btn-primary"
-                    style="flex:1">
-              Confirmer
-            </button>
-          </div>
+    <!-- Right -->
+    <div class="cb-header-right">
+      <div class="cb-xp-badge" id="header-xp"></div>
+      <button class="cb-menu-btn"
+              id="btn-menu-global"
+              onclick="MenuGlobal.toggle()">☰</button>
+    </div>
+
+  </header>
+
+  <!-- ── NAV ── -->
+  <nav class="app-nav" id="app-nav">
+    <!--
+      ✅ Le logo dans la sidebar PC est injecté dynamiquement
+         par app.js — on ajoute juste le HTML de référence ici.
+         Si ton app.js génère le .pc-nav-logo, remplace l'emoji
+         par ce bloc dans ton js :
+
+         `<div class="pc-nav-logo">
+            <img class="pc-nav-logo-img" src="assets/icon-powerapp.png" alt="PowerApp"/>
+            <span class="pc-nav-logo-title">PowerApp</span>
+          </div>`
+    -->
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="app-main" id="app-main">
+    <div id="page-home"         class="page"></div>
+    <div id="page-training"     class="page"></div>
+    <div id="page-live"         class="page"></div>
+    <div id="page-stats"        class="page"></div>
+    <div id="page-coach"        class="page"></div>
+    <div id="page-defis"        class="page"></div>
+    <div id="page-predict"      class="page"></div>
+    <div id="page-calculateur"  class="page"></div>
+    <div id="page-share"        class="page"></div>
+    <div id="page-gamification" class="page"></div>
+    <div id="page-history"      class="page"></div>
+    <div id="page-photos"       class="page"></div>
+    <div id="page-social"       class="page"></div>
+    <div id="page-supersets"    class="page"></div>
+    <div id="page-offline"      class="page"></div>
+    <div id="page-settings"     class="page"></div>
+    <div id="page-nutrition"    class="page"></div>
+    <div id="page-circuit"      class="page"></div>
+    <div id="page-adaptatif"    class="page"></div>
+    <div id="page-galerie"      class="page"></div>
+    <div id="page-journal"      class="page"></div>
+    <div id="page-objectifs"    class="page"></div>
+    <div id="page-themes"       class="page"></div>
+    <div id="page-export"       class="page"></div>
+    <div id="page-sounds"       class="page"></div>
+    <div id="page-blessures"    class="page"></div>
+    <div id="page-profil"       class="page"></div>
+    <div id="page-mon_profil"   class="page"></div>
+    <div id="page-recovery"     class="page"></div>
+  </main>
+
+</div><!-- /app-wrapper -->
+
+<!-- ════ CHRONO STICKY ════ -->
+<div id="chrono-sticky" class="hidden"></div>
+
+<!-- ════ MODALS ════ -->
+<div id="modal-info" class="modal hidden">
+  <div class="modal-overlay"
+       onclick="document.getElementById('modal-info').classList.add('hidden')">
+  </div>
+  <div class="modal-inner">
+    <button class="modal-close" id="modal-info-close">✕</button>
+    <div class="modal-content"  id="modal-info-content"></div>
+  </div>
+</div>
+
+<div id="modal-confirm" class="modal hidden">
+  <div class="modal-overlay"></div>
+  <div class="modal-inner modal-sm">
+    <div class="modal-content" id="modal-confirm-content">
+      <div style="text-align:center;padding:var(--space-lg)">
+        <div style="font-size:1.5rem;margin-bottom:var(--space-md)"
+             id="modal-confirm-icon">⚠️</div>
+        <div style="font-size:1rem;font-weight:700;
+                    margin-bottom:var(--space-sm)"
+             id="modal-confirm-title">Confirmer</div>
+        <p style="font-size:.82rem;color:var(--text-muted);
+                  margin-bottom:var(--space-lg)"
+           id="modal-confirm-msg"></p>
+        <div style="display:flex;gap:var(--space-sm)">
+          <button id="modal-confirm-cancel"
+                  class="btn-secondary" style="flex:1">Annuler</button>
+          <button id="modal-confirm-ok"
+                  class="btn-primary"   style="flex:1">Confirmer</button>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ════════════════════════════════════════════════════
-       TOAST CONTAINER
-  ════════════════════════════════════════════════════ -->
-  <div id="toast-container"></div>
+<!-- ════ TOAST ════ -->
+<div id="toast-container"></div>
 
-  <!-- ════════════════════════════════════════════════════
-       CANVAS CONFETTI
-  ════════════════════════════════════════════════════ -->
-  <canvas id="confetti-canvas"
-          style="position:fixed;inset:0;
-                 pointer-events:none;z-index:9999">
-  </canvas>
+<!-- ════ CONFETTI ════ -->
+<canvas id="confetti-canvas"
+        style="position:fixed;inset:0;pointer-events:none;z-index:9999">
+</canvas>
 
-  <!-- ════════════════════════════════════════════════════
-       BANNERS
-  ════════════════════════════════════════════════════ -->
-  <div id="offline-banner"
-       style="display:none;position:fixed;bottom:80px;
-              left:50%;transform:translateX(-50%);
-              background:rgba(0,20,60,0.95);
-              border:1px solid rgba(0,207,255,0.25);
-              border-radius:var(--radius-full);
-              padding:8px 16px;font-size:.75rem;
-              color:rgba(0,207,255,0.7);z-index:500;
-              backdrop-filter:blur(12px)">
-    📵 Mode hors-ligne
-  </div>
+<!-- ════ BANNERS ════ -->
+<div id="offline-banner"
+     style="display:none;position:fixed;bottom:80px;
+            left:50%;transform:translateX(-50%);
+            background:rgba(0,20,60,0.95);
+            border:1px solid rgba(0,207,255,0.25);
+            border-radius:var(--radius-full);
+            padding:8px 16px;font-size:.75rem;
+            color:rgba(0,207,255,0.7);z-index:500;
+            backdrop-filter:blur(12px)">
+  📵 Mode hors-ligne
+</div>
 
-  <div id="sync-banner"
-       style="display:none;position:fixed;bottom:80px;
-              left:50%;transform:translateX(-50%);
-              background:rgba(0,20,60,0.95);
-              border:1px solid rgba(0,207,255,0.25);
-              border-radius:var(--radius-full);
-              padding:8px 16px;font-size:.75rem;
-              color:rgba(0,207,255,0.7);z-index:500;
-              backdrop-filter:blur(12px)">
-    🔄 Synchronisation...
-  </div>
+<div id="sync-banner"
+     style="display:none;position:fixed;bottom:80px;
+            left:50%;transform:translateX(-50%);
+            background:rgba(0,20,60,0.95);
+            border:1px solid rgba(0,207,255,0.25);
+            border-radius:var(--radius-full);
+            padding:8px 16px;font-size:.75rem;
+            color:rgba(0,207,255,0.7);z-index:500;
+            backdrop-filter:blur(12px)">
+  🔄 Synchronisation...
+</div>
 
-  <!-- ════════════════════════════════════════════════════
-       UPDATE BANNER
-  ════════════════════════════════════════════════════ -->
-  <div id="update-banner"
-       style="display:none;position:fixed;top:0;left:0;right:0;
-              background:linear-gradient(135deg,#0066ff,#00cfff);
-              color:#020610;padding:10px 16px;
-              display:none;align-items:center;
-              justify-content:space-between;z-index:9999;
-              font-family:'Orbitron',monospace;font-size:9px;
-              letter-spacing:2px">
-    <span>🆕 NOUVELLE VERSION DISPONIBLE !</span>
-    <button onclick="window.location.reload()"
-            style="background:rgba(0,0,0,0.2);
-                   border:1px solid rgba(0,0,0,0.3);
-                   border-radius:6px;padding:4px 10px;
-                   font-family:'Orbitron',monospace;
-                   font-size:8px;cursor:pointer;
-                   color:#020610;letter-spacing:1px">
-      METTRE À JOUR
-    </button>
-  </div>
+<div id="update-banner"
+     style="display:none;position:fixed;top:0;left:0;right:0;
+            background:linear-gradient(135deg,#0066ff,#00cfff);
+            color:#020610;padding:10px 16px;
+            align-items:center;justify-content:space-between;
+            z-index:9999;font-family:'Orbitron',monospace;
+            font-size:9px;letter-spacing:2px">
+  <span>🆕 NOUVELLE VERSION DISPONIBLE !</span>
+  <button onclick="window.location.reload()"
+          style="background:rgba(0,0,0,0.2);
+                 border:1px solid rgba(0,0,0,0.3);
+                 border-radius:6px;padding:4px 10px;
+                 font-family:'Orbitron',monospace;
+                 font-size:8px;cursor:pointer;
+                 color:#020610;letter-spacing:1px">
+    METTRE À JOUR
+  </button>
+</div>
 
-  <!-- ════════════════════════════════════════════════════
-       SCRIPTS — Ordre obligatoire
-  ════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════════════════ -->
+<script src="js/utils.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/tracker.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/programme.js"></script>
+<script src="js/chrono.js"></script>
+<script src="js/gamification.js"></script>
+<script src="js/nutrition.js"></script>
+<script src="js/coach.js"></script>
+<script src="js/predict.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/history.js"></script>
+<script src="js/photos.js"></script>
+<script src="js/defis.js"></script>
+<script src="js/social.js"></script>
+<script src="js/superset.js"></script>
+<script src="js/circuit.js"></script>
+<script src="js/hiit.js"></script>
+<script src="js/calculateur.js"></script>
+<script src="js/export.js"></script>
+<script src="js/share.js"></script>
+<script src="js/offline.js"></script>
+<script src="js/video.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/recovery.js"></script>
+<script src="js/profil.js"></script>
+<script src="js/custom-exercises.js"></script>
+<script src="js/report.js"></script>
+<script src="js/duo.js"></script>
+<script src="js/music.js"></script>
+<script src="js/widget.js"></script>
+<script src="js/ui-premium.js"></script>
+<script src="js/lava.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/app.js"></script>
 
-  <!-- 1. Utils de base -->
-  <script src="js/utils.js"></script>
-  <script src="js/i18n.js"></script>
-
-  <!-- 2. Core data -->
-  <script src="js/tracker.js"></script>
-  <script src="js/notifications.js"></script>
-  <script src="js/programme.js"></script>
-  <script src="js/chrono.js"></script>
-
-  <!-- 3. Modules métier -->
-  <script src="js/gamification.js"></script>
-  <script src="js/nutrition.js"></script>
-  <script src="js/coach.js"></script>
-  <script src="js/predict.js"></script>
-  <script src="js/stats.js"></script>
-  <script src="js/history.js"></script>
-  <script src="js/photos.js"></script>
-  <script src="js/defis.js"></script>
-  <script src="js/social.js"></script>
-  <script src="js/superset.js"></script>
-  <script src="js/circuit.js"></script>
-  <script src="js/hiit.js"></script>
-  <script src="js/calculateur.js"></script>
-  <script src="js/export.js"></script>
-  <script src="js/share.js"></script>
-  <script src="js/offline.js"></script>
-  <script src="js/video.js"></script>
-  <script src="js/voice.js"></script>
-  <script src="js/charts.js"></script>
-  <script src="js/recovery.js"></script>
-  <script src="js/profil.js"></script>
-  <script src="js/custom-exercises.js"></script>
-  <script src="js/report.js"></script>
-  <script src="js/duo.js"></script>
-  <script src="js/music.js"></script>
-  <script src="js/widget.js"></script>
-
-  <!-- 4. UI Premium -->
-  <script src="js/ui-premium.js"></script>
-  <script src="js/lava.js"></script>
-
-  <script src="js/themes.js"></script>
-  <script src="js/app.js"></script>
-
-  <!-- ════════════════════════════════════════════════════
-       SERVICE WORKER
-  ════════════════════════════════════════════════════ -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/sw.js')
-          .then(reg => {
-            reg.addEventListener('updatefound', () => {
-              const newWorker = reg.installing;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed'
-                    && navigator.serviceWorker.controller) {
-                  const banner =
-                    document.getElementById('update-banner');
-                  if (banner) banner.style.display = 'flex';
-                }
-              });
+<!-- ════ SERVICE WORKER ════ -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then(reg => {
+          reg.addEventListener('updatefound', () => {
+            const nw = reg.installing;
+            nw.addEventListener('statechange', () => {
+              if (nw.state === 'installed'
+                  && navigator.serviceWorker.controller) {
+                const b = document.getElementById('update-banner');
+                if (b) b.style.display = 'flex';
+              }
             });
-          })
-          .catch(e => console.warn('SW:', e));
-      });
-    }
-  </script>
+          });
+        })
+        .catch(e => console.warn('SW:', e));
+    });
+  }
+</script>
 
 </body>
 </html>
