@@ -1,12 +1,24 @@
 // ════════════════════════════════════════════════════
-//  PowerApp — Service Worker v3.0 NEON EDITION
-//  ✅ Cache busting automatique sur nouvelle version
+//  PowerApp — Service Worker v3.1 NEON EDITION
+//  ✅ Fix: Promise.allSettled — précache robuste
+//  ✅ Fix: Chemins icônes unifiés → assets/icons/
+//  ✅ Fix: Fichiers manquants gérés individuellement
+//  ✅ Fix: cacheFirst fallback amélioré
 // ════════════════════════════════════════════════════
 
-const APP_VERSION   = 'powerapp-v3-neon';
+const APP_VERSION   = 'powerapp-v3-neon-1';
 const CACHE_STATIC  = `${APP_VERSION}-static`;
 const CACHE_DYNAMIC = `${APP_VERSION}-dynamic`;
 const CACHE_IMAGES  = `${APP_VERSION}-images`;
+
+// ── CDN autorisés (maintenir en sync avec index.html) ──
+const ALLOWED_CDN = [
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
+  'cdn.jsdelivr.net',
+  'unpkg.com',
+  'code.jquery.com',
+];
 
 // ── Fichiers à mettre en cache immédiatement ──
 const PRECACHE_URLS = [
@@ -15,19 +27,17 @@ const PRECACHE_URLS = [
   '/css/style.css',
   '/manifest.json',
 
-  // ✅ Toutes les icônes neon
-  '/assets/icon-powerapp.png',
-  '/assets/icon-32.png',
-  '/assets/icon-40.png',
-  '/assets/icon-60.png',
-  '/assets/icon-76.png',
-  '/assets/icon-96.png',
-  '/assets/icon-120.png',
-  '/assets/icon-144.png',
-  '/assets/icon-180.png',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png',
-  '/assets/icon-1024.png',
+  // ✅ Icônes — chemin unifié assets/icons/
+  '/assets/icons/icon-powerapp.png',
+  '/assets/icons/icon-96.png',
+  '/assets/icons/icon-120.png',
+  '/assets/icons/icon-144.png',
+  '/assets/icons/icon-180.png',
+  '/assets/icons/icon-192.png',
+  '/assets/icons/icon-192-maskable.png',
+  '/assets/icons/icon-512.png',
+  '/assets/icons/icon-512-maskable.png',
+  '/assets/icons/icon-1024.png',
 
   // JS modules
   '/js/utils.js',
@@ -69,25 +79,37 @@ const PRECACHE_URLS = [
 ];
 
 // ════════════════════════════════════════════════════
-//  INSTALL — Précache tous les assets
+//  INSTALL — Précache robuste avec Promise.allSettled
 // ════════════════════════════════════════════════════
 self.addEventListener('install', event => {
   console.log(`[SW] 🚀 Install — ${APP_VERSION}`);
 
   event.waitUntil(
     caches.open(CACHE_STATIC)
-      .then(cache => {
+      .then(async cache => {
         console.log('[SW] 📦 Précache des assets...');
-        return cache.addAll(
-          PRECACHE_URLS.map(url => new Request(url, { cache: 'reload' }))
+
+        // ✅ Promise.allSettled → un fichier manquant
+        //    n'annule plus tout le précache
+        const results = await Promise.allSettled(
+          PRECACHE_URLS.map(url =>
+            cache.add(new Request(url, { cache: 'reload' }))
+              .catch(err => {
+                console.warn(`[SW] ⚠️ Fichier ignoré: ${url}`, err);
+              })
+          )
         );
-      })
-      .then(() => {
-        console.log('[SW] ✅ Précache terminé');
-        // Force l'activation immédiate sans attendre
+
+        const failed = results.filter(r => r.status === 'rejected');
+        if (failed.length) {
+          console.warn(`[SW] ⚠️ ${failed.length} fichier(s) non mis en cache`);
+        } else {
+          console.log('[SW] ✅ Précache complet');
+        }
+
         return self.skipWaiting();
       })
-      .catch(err => console.warn('[SW] ⚠️ Précache partiel:', err))
+      .catch(err => console.error('[SW] ❌ Erreur install:', err))
   );
 });
 
@@ -100,12 +122,9 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(keys => {
+        const validCaches = [CACHE_STATIC, CACHE_DYNAMIC, CACHE_IMAGES];
         const deleteOld = keys
-          .filter(key =>
-            key !== CACHE_STATIC  &&
-            key !== CACHE_DYNAMIC &&
-            key !== CACHE_IMAGES
-          )
+          .filter(key => !validCaches.includes(key))
           .map(key => {
             console.log(`[SW] 🗑️ Suppression ancien cache: ${key}`);
             return caches.delete(key);
@@ -114,7 +133,6 @@ self.addEventListener('activate', event => {
       })
       .then(() => {
         console.log('[SW] ✅ Anciens caches supprimés');
-        // Prend le contrôle immédiatement
         return self.clients.claim();
       })
   );
@@ -132,12 +150,11 @@ self.addEventListener('fetch', event => {
 
   // ── Ignorer extensions Chrome, devtools ──
   if (url.protocol === 'chrome-extension:') return;
-  if (url.hostname !== location.hostname &&
-      !url.hostname.includes('fonts.googleapis') &&
-      !url.hostname.includes('fonts.gstatic') &&
-      !url.hostname.includes('cdn.jsdelivr') &&
-      !url.hostname.includes('unpkg.com') &&
-      !url.hostname.includes('code.jquery')) return;
+
+  // ── Vérifier domaine autorisé ──
+  const isLocal = url.hostname === location.hostname;
+  const isCDN   = ALLOWED_CDN.some(cdn => url.hostname.includes(cdn));
+  if (!isLocal && !isCDN) return;
 
   // ── Stratégie : Images → Cache First ──
   if (request.destination === 'image') {
@@ -146,8 +163,8 @@ self.addEventListener('fetch', event => {
   }
 
   // ── Stratégie : Fonts CDN → Cache First ──
-  if (url.hostname.includes('fonts.googleapis') ||
-      url.hostname.includes('fonts.gstatic')) {
+  if (url.hostname.includes('fonts.googleapis.com') ||
+      url.hostname.includes('fonts.gstatic.com')) {
     event.respondWith(cacheFirst(request, CACHE_STATIC));
     return;
   }
@@ -186,7 +203,11 @@ async function cacheFirst(request, cacheName) {
     }
     return response;
   } catch {
-    return new Response('', { status: 408 });
+    // ✅ Fix: retourne la page offline plutôt qu'une réponse vide
+    console.warn('[SW] ⚠️ cacheFirst fetch failed:', request.url);
+    return request.destination === 'document'
+      ? offlineFallback()
+      : new Response('', { status: 408, statusText: 'Network timeout' });
   }
 }
 
